@@ -69,6 +69,7 @@ const CustomerAdd = () => {
   const evaluationRef = useRef(null);
   const businessRef = useRef(null);
   const referencesRef = useRef(null);
+const documentsRef = useRef();
 
   const navigate = useNavigate();
   const { customerId } = useParams();
