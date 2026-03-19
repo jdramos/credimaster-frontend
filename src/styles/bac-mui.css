@@ -1,0 +1,585 @@
+/* src/styles/bac-mui.css */
+/* Reutiliza tokens definidos en bac-prime.css */
+
+.bac-dialog .MuiPaper-root{
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--bac-border);
+  box-shadow: 0 12px 34px rgba(12, 36, 68, 0.12);
+}
+
+/* Header (DialogTitle) */
+.bac-dialog .bac-dialog-title{
+  padding: 0 !important;
+  color: var(--bac-white);
+  background: linear-gradient(90deg, var(--bac-primary), var(--bac-primary-dark));
+}
+.bac-dialog .bac-dialog-title__inner{
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Content background */
+.bac-dialog .MuiDialogContent-root{
+  background: var(--bac-bg);
+}
+
+/* Sections as cards */
+.bac-section{
+  background: var(--bac-white);
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(12, 36, 68, 0.08);
+}
+.bac-section__head{
+  background: var(--bac-soft);
+  border-bottom: 1px solid var(--bac-border);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bac-section__body{ padding: 14px; }
+
+/* Inputs (TextField outlined) */
+.bac-dialog .MuiOutlinedInput-root{
+  border-radius: 12px;
+  background: var(--bac-white);
+}
+.bac-dialog .MuiOutlinedInput-notchedOutline{
+  border-color: var(--bac-border) !important;
+}
+.bac-dialog .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{
+  border-color: var(--bac-primary) !important;
+}
+.bac-dialog .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  border-color: var(--bac-primary) !important;
+}
+.bac-dialog .MuiInputLabel-root.Mui-focused{
+  color: var(--bac-primary) !important;
+}
+
+/* Actions */
+.bac-dialog .MuiDialogActions-root{
+  background: var(--bac-white);
+  border-top: 1px solid var(--bac-border);
+  padding: 14px 20px;
+}
+
+/* Buttons */
+.bac-btn-primary{
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  padding: 10px 16px !important;
+  background: linear-gradient(90deg, var(--bac-primary), var(--bac-primary-dark)) !important;
+}
+.bac-btn-primary:hover{
+  filter: brightness(0.95);
+}
+
+.bac-btn-ghost{
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  padding: 10px 16px !important;
+  color: var(--bac-primary) !important;
+  border-color: var(--bac-border) !important;
+}
+/* src/styles/bac-mui.css */
+
+/* ===== LoanInfo BAC ===== */
+.bac-loan-card{
+  border: 1px solid var(--bac-border) !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(12, 36, 68, 0.08) !important;
+  background: var(--bac-white);
+}
+
+.bac-loan-card__head{
+  background: var(--bac-soft);
+  border-bottom: 1px solid var(--bac-border);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bac-loan-title{
+  color: var(--bac-text);
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.bac-loan-subtitle{
+  color: var(--bac-muted);
+  font-size: 12px;
+}
+
+/* Chips BAC */
+.bac-chip{
+  font-weight: 900 !important;
+  border-radius: 999px !important;
+}
+.bac-chip--outline{
+  border-color: var(--bac-border) !important;
+  color: var(--bac-text) !important;
+  background: #fff !important;
+}
+.bac-chip--solid{
+  color: #fff !important;
+  background: linear-gradient(90deg, var(--bac-primary), var(--bac-primary-dark)) !important;
+}
+
+/* Summary tiles */
+.bac-tiles{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bac-tile{
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.92), var(--bac-white));
+  padding: 12px 14px;
+}
+
+.bac-tile__top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bac-tile__label{
+  color: var(--bac-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.bac-icon-muted{
+  color: var(--bac-muted) !important;
+}
+
+.bac-tile__value{
+  margin-top: 6px;
+  color: var(--bac-text);
+  font-weight: 950;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+/* Table container */
+.bac-table{
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.bac-table thead th{
+  background: var(--bac-soft);
+  color: var(--bac-text);
+  font-weight: 900 !important;
+  border-bottom: 1px solid var(--bac-border) !important;
+  padding: 10px 14px !important;
+}
+
+.bac-table tbody td{
+  border-bottom: 1px solid var(--bac-border) !important;
+  padding: 10px 14px !important;
+  color: var(--bac-text);
+  font-size: 13px;
+}
+
+.bac-table tbody tr:hover{
+  background: rgba(0, 87, 184, 0.06);
+}
+
+.bac-table .bac-table-total td{
+  background: rgba(0, 87, 184, 0.08) !important;
+  font-weight: 950 !important;
+  border-top: 1px solid var(--bac-border) !important;
+}
+
+.bac-footer{
+  color: var(--bac-muted);
+  font-size: 12px;
+}
+
+/* ===== PaymentList BAC ===== */
+.bac-page{
+  background: transparent;
+}
+
+.bac-page-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.bac-page-title{
+  color: var(--bac-text);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.bac-page-subtitle{
+  color: var(--bac-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.bac-btn-primary{
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  padding: 10px 16px !important;
+  background: linear-gradient(90deg, var(--bac-primary), var(--bac-primary-dark)) !important;
+}
+.bac-btn-primary:hover{ filter: brightness(0.95); }
+
+/* Table container */
+.bac-table-card{
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bac-white);
+  box-shadow: 0 8px 22px rgba(12, 36, 68, 0.08);
+}
+
+/* Table itself */
+.bac-table{
+  width: 100%;
+}
+
+.bac-table thead th{
+  background: var(--bac-soft);
+  color: var(--bac-text);
+  font-weight: 900 !important;
+  border-bottom: 1px solid var(--bac-border) !important;
+  padding: 10px 14px !important;
+}
+
+.bac-table tbody td{
+  border-bottom: 1px solid var(--bac-border) !important;
+  padding: 10px 14px !important;
+  color: var(--bac-text);
+  font-size: 13px;
+}
+
+.bac-table tbody tr:hover{
+  background: rgba(0, 87, 184, 0.06);
+}
+
+/* ===== PaymentList filters (BAC) ===== */
+.bac-filters{
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  background: var(--bac-white);
+  box-shadow: 0 8px 22px rgba(12, 36, 68, 0.08);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.bac-filters__head{
+  background: var(--bac-soft);
+  border-bottom: 1px solid var(--bac-border);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bac-filters__body{
+  padding: 14px;
+}
+
+.bac-btn-muted{
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  text-transform: none !important;
+  padding: 10px 16px !important;
+  color: var(--bac-primary) !important;
+  border-color: var(--bac-border) !important;
+}
+
+.bac-summary-card{
+  border:1px solid var(--bac-border);
+  border-radius:12px;
+  padding:14px 16px;
+  background:var(--bac-white);
+  box-shadow:0 4px 14px rgba(0,0,0,0.06);
+}
+
+.bac-summary-card h6{
+  font-weight:900;
+  color:var(--bac-primary);
+}
+
+/* ===== Navbar BAC ===== */
+.bac-appbar.MuiAppBar-root{
+  background: linear-gradient(90deg, var(--bac-primary), var(--bac-primary-dark)) !important;
+  box-shadow: 0 10px 26px rgba(12, 36, 68, 0.16) !important;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.bac-toolbar{
+  min-height: 64px;
+}
+
+.bac-brand{
+  font-weight: 950 !important;
+  letter-spacing: .2px;
+}
+
+.bac-user{
+  color: rgba(255,255,255,.92);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.bac-avatar{
+  background: rgba(255,255,255,.16) !important;
+  border: 1px solid rgba(255,255,255,.25);
+  font-weight: 950 !important;
+  color: #fff !important;
+}
+
+.bac-menu .MuiPaper-root{
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(12, 36, 68, 0.18);
+}
+
+.bac-menu .MuiMenuItem-root{
+  font-weight: 800;
+  color: var(--bac-text);
+}
+
+.bac-menu .MuiMenuItem-root:hover{
+  background: rgba(0, 87, 184, 0.08);
+}
+
+.bac-menu-item-danger{
+  color: #B42318 !important;
+}   
+
+/* ===== Navbar BAC PRO ===== */
+.bac-appbar.MuiAppBar-root{
+  background: linear-gradient(90deg, var(--bac-primary), var(--bac-primary-dark)) !important;
+  box-shadow: 0 10px 26px rgba(12, 36, 68, 0.16) !important;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.bac-toolbar{ min-height: 64px; }
+
+.bac-brand{
+  font-weight: 950 !important;
+  letter-spacing: .2px;
+  white-space: nowrap;
+}
+
+/* Search */
+.bac-nav-search{
+  width: min(560px, 52vw);
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.bac-nav-search .MuiOutlinedInput-root{
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.14) !important;
+  color: #fff !important;
+}
+.bac-nav-search .MuiOutlinedInput-notchedOutline{
+  border-color: rgba(255,255,255,.22) !important;
+}
+.bac-nav-search .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{
+  border-color: rgba(255,255,255,.35) !important;
+}
+.bac-nav-search .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  border-color: rgba(255,255,255,.55) !important;
+}
+.bac-nav-search input::placeholder{ color: rgba(255,255,255,.78); opacity: 1; }
+.bac-nav-search .MuiSvgIcon-root{ color: rgba(255,255,255,.86) !important; }
+
+/* Branch badge */
+.bac-branch-badge{
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 900;
+  font-size: 12px;
+  color: rgba(255,255,255,.95);
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.22);
+  white-space: nowrap;
+}
+
+/* User text */
+.bac-user{
+  color: rgba(255,255,255,.92);
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Avatar */
+.bac-avatar{
+  background: rgba(255,255,255,.16) !important;
+  border: 1px solid rgba(255,255,255,.25);
+  font-weight: 950 !important;
+  color: #fff !important;
+}
+
+/* Menu */
+.bac-menu .MuiPaper-root{
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(12, 36, 68, 0.18);
+}
+.bac-menu .MuiMenuItem-root{
+  font-weight: 800;
+  color: var(--bac-text);
+}
+.bac-menu .MuiMenuItem-root:hover{
+  background: rgba(0, 87, 184, 0.08);
+}
+.bac-menu-item-danger{ color: #B42318 !important; }
+
+/* Notification badge (MUI) */
+.bac-notify .MuiBadge-badge{
+  background: #EF4444 !important;
+  color: #fff !important;
+  font-weight: 950 !important;
+  border: 2px solid rgba(255,255,255,.35);
+}
+
+/* ===== Sidebar BAC ===== */
+
+.bac-drawer .MuiDrawer-paper{
+  background: var(--bac-white) !important;
+  border-right: 1px solid var(--bac-border) !important;
+  box-shadow: 0 10px 26px rgba(12, 36, 68, 0.10);
+}
+
+.bac-drawer-header{
+  padding: 14px 14px 10px 14px;
+  border-bottom: 1px solid var(--bac-border);
+  background: linear-gradient(180deg, rgba(234,242,255,.9), rgba(255,255,255,1));
+}
+
+.bac-drawer-search .MuiOutlinedInput-root{
+  border-radius: 12px !important;
+  background: var(--bac-white) !important;
+}
+.bac-drawer-search .MuiOutlinedInput-notchedOutline{
+  border-color: var(--bac-border) !important;
+}
+.bac-drawer-search .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{
+  border-color: var(--bac-primary) !important;
+}
+.bac-drawer-search .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  border-color: var(--bac-primary) !important;
+}
+.bac-drawer-search .MuiInputLabel-root.Mui-focused{
+  color: var(--bac-primary) !important;
+}
+
+/* Section header (Catálogos/Operaciones/etc) */
+.bac-section-btn{
+  margin: 6px 8px !important;
+  border-radius: 12px !important;
+}
+.bac-section-btn:hover{
+  background: rgba(0,87,184,0.06) !important;
+}
+.bac-section-title{
+  font-weight: 950 !important;
+  color: var(--bac-text) !important;
+}
+
+/* Menu item */
+.bac-item{
+  margin: 2px 8px !important;
+  border-radius: 12px !important;
+  padding-left: 14px !important;
+}
+.bac-item:hover{
+  background: rgba(0,87,184,0.06) !important;
+}
+
+/* Active (NavLink) */
+.bac-item.active{
+  background: rgba(0,87,184,0.10) !important;
+}
+.bac-item.active .bac-item-text{
+  color: var(--bac-primary) !important;
+  font-weight: 950 !important;
+}
+.bac-item.active .bac-item-icon{
+  color: var(--bac-primary) !important;
+}
+
+/* Icon/text */
+.bac-item-icon{
+  min-width: 36px !important;
+  color: var(--bac-muted) !important;
+}
+.bac-item-text{
+  color: var(--bac-text) !important;
+  font-weight: 750 !important;
+}
+
+/* More menu icon */
+.bac-item-more{
+  color: var(--bac-muted) !important;
+}
+.bac-item-more:hover{
+  background: rgba(0,87,184,0.06) !important;
+}
+
+/* Dividers */
+.bac-divider{
+  border-color: var(--bac-border) !important;
+  opacity: 1;
+}
+
+/* Footer switch area */
+.bac-drawer-footer{
+  border-top: 1px solid var(--bac-border);
+  padding: 12px 14px;
+  background: var(--bac-white);
+}
+
+/* Favorites star color */
+.bac-star{
+  color: #f4b400 !important; /* puedes dejarlo así como tu original */
+}
+
+/* Context menu */
+.bac-context-menu .MuiPaper-root{
+  border: 1px solid var(--bac-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(12, 36, 68, 0.18);
+}
+.bac-context-menu .MuiMenuItem-root{
+  font-weight: 850;
+  color: var(--bac-text);
+}
+.bac-context-menu .MuiMenuItem-root:hover{
+  background: rgba(0,87,184,0.08);
+}
