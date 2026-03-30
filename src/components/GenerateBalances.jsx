@@ -224,6 +224,7 @@ const GenerateBalances = () => {
             <Button
                 variant="contained"
                 color="primary"
+                fullWidth
                 sx={{ mt: 3 }}
                 onClick={handleConfirm}
                 disabled={loading}
