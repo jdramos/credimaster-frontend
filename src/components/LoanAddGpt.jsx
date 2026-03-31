@@ -595,7 +595,7 @@ const LoanAdd = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" },
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
               alignItems: "start",
               gap: 2,
               width: "100%",

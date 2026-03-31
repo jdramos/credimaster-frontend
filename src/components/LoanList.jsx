@@ -25,6 +25,7 @@ const columns = [
 	{ accessorKey: 'customer_name', header: 'Nombre del cliente', size: 80 },
 	{ accessorKey: 'date', header: 'Fecha solicitud', size: 150 },
 	{ accessorKey: 'amount', header: 'Monto solicitado', size: 150, number: true },
+	{ accessorKey: 'current_balance', header: 'Saldo actual', size: 150, number: true },
 	{ accessorKey: 'approval_status', header: 'Estado aprobación', size: 100 },
 {
   accessorKey: "payment_progress",

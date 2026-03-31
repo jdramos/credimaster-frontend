@@ -52,6 +52,7 @@ import EconomicActivitiesPage from './pages/EconomicActivitiesPage';
 import GenrePage from './pages/GenrePage';
 import MaritalStatusPage from './pages/MaritalStatusPage';
 import CustomerAddGpt from './components/Customer/CustomerAddGpt';
+import RibbonMenu from './components/RibbonMenu';
 
 
 
@@ -69,10 +70,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
   }
 
   return (
-    
-    <ResponsiveSidebar themeMode={themeMode} setThemeMode={setThemeMode}>
-      <Navbar handleLogout={handleLogout} />
-      
+    <>
+      <RibbonMenu themeMode={themeMode} setThemeMode={setThemeMode} />
       <Box sx={{ p: 2 }}>
         <Routes>
           <Route path='/' element={<Home />} />
@@ -114,7 +113,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path='/usuarios/agregar' element={<UserAdd />} />
         </Routes>
       </Box>
-    </ResponsiveSidebar>
+    </>
     
   );
 }
