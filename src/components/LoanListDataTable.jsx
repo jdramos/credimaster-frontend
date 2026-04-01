@@ -26,6 +26,7 @@ import {
   Stack,
 } from "@mui/material";
 import Show from "@mui/icons-material/Visibility";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -37,6 +38,8 @@ import PaymentForm from "./PaymentForm";
 import AccountStatementModal from "./AccountStatementModal";
 import axios from "axios";
 import dayjs from "dayjs";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const API_URL = process.env.REACT_APP_API_BASE_URL;
 const token = process.env.REACT_APP_API_TOKEN;
@@ -48,13 +51,12 @@ function LoanListDataTable({
   columns,
   data = [],
   onUpdate,
-
+  onModifyLoan,
   rowCount = 0,
   page = 0,
   onPageChange,
   pageSize = 10,
   onPageSizeChange,
-
   sortBy,
   sortOrder,
   setSortBy,
@@ -111,15 +113,27 @@ function LoanListDataTable({
     return resp?.data || null;
   };
 
-  const handleShowDetails = async (loanId, customerId, customerIdentification) => {
+  const handleShowDetails = async (
+    loanId,
+    customerId,
+    customerIdentification,
+  ) => {
     setLoadingDetails(true);
     setSelectedLoan(null);
     setGuarantees([]);
-    setSelectedClient({ id: customerId, identification: customerIdentification });
+    setSelectedClient({
+      id: customerId,
+      identification: customerIdentification,
+    });
 
     try {
-      const loanResponse = await axios.get(`${API_URL}/api/loans/${loanId}`, { headers });
-      const guaranteeResponse = await axios.get(`${urlGuarantee}/${customerIdentification}`, { headers });
+      const loanResponse = await axios.get(`${API_URL}/api/loans/${loanId}`, {
+        headers,
+      });
+      const guaranteeResponse = await axios.get(
+        `${urlGuarantee}/${customerIdentification}`,
+        { headers },
+      );
 
       const loanData = normalizeLoanResponse(loanResponse);
 
@@ -166,15 +180,19 @@ function LoanListDataTable({
       ]);
 
       const loanData = normalizeLoanResponse(loanResp);
-      const approvals = Array.isArray(approvalsResp.data) ? approvalsResp.data : [];
+      const approvals = Array.isArray(approvalsResp.data)
+        ? approvalsResp.data
+        : [];
 
       const pendingApproval =
         approvals.find(
           (item) =>
             String(item.approver_id) === String(currentUserId) &&
-            String(item.status).toUpperCase() === "PENDING"
+            String(item.status).toUpperCase() === "PENDING",
         ) ||
-        approvals.find((item) => String(item.status).toUpperCase() === "PENDING") ||
+        approvals.find(
+          (item) => String(item.status).toUpperCase() === "PENDING",
+        ) ||
         null;
 
       if (!loanData) {
@@ -183,7 +201,10 @@ function LoanListDataTable({
       }
 
       if (!pendingApproval) {
-        openSnack("No se encontró una aprobación pendiente para este crédito.", "warning");
+        openSnack(
+          "No se encontró una aprobación pendiente para este crédito.",
+          "warning",
+        );
         return;
       }
 
@@ -203,7 +224,7 @@ function LoanListDataTable({
         error?.response?.data?.error ||
           error?.response?.data?.message ||
           "No se pudo cargar la aprobación.",
-        "error"
+        "error",
       );
     }
   };
@@ -248,14 +269,14 @@ function LoanListDataTable({
       await axios.put(
         `${API_URL}/api/approvals/${selectedApproval.id}`,
         payload,
-        { headers }
+        { headers },
       );
 
       openSnack(
         approvalMode === "approve"
           ? "Aprobación registrada correctamente."
           : "Rechazo registrado correctamente.",
-        "success"
+        "success",
       );
 
       handleCloseApprovalDialog();
@@ -266,7 +287,7 @@ function LoanListDataTable({
         error?.response?.data?.error ||
           error?.response?.data?.message ||
           "No se pudo actualizar la aprobación.",
-        "error"
+        "error",
       );
     } finally {
       setApprovalLoading(false);
@@ -275,7 +296,9 @@ function LoanListDataTable({
 
   const handleOpenDisburseDialog = async (row) => {
     try {
-      const loanResp = await axios.get(`${API_URL}/api/loans/${row.id}`, { headers });
+      const loanResp = await axios.get(`${API_URL}/api/loans/${row.id}`, {
+        headers,
+      });
       const loanData = normalizeLoanResponse(loanResp);
 
       if (!loanData) {
@@ -310,7 +333,7 @@ function LoanListDataTable({
         {
           disbursed_by: currentUserId,
         },
-        { headers }
+        { headers },
       );
 
       openSnack("Crédito desembolsado correctamente.", "success");
@@ -322,7 +345,7 @@ function LoanListDataTable({
         error?.response?.data?.error ||
           error?.response?.data?.message ||
           "No se pudo desembolsar el crédito.",
-        "error"
+        "error",
       );
     } finally {
       setDisburseLoading(false);
@@ -362,8 +385,8 @@ function LoanListDataTable({
         raw === "APPROVED" || raw === "APROBADO"
           ? "APROBADO"
           : raw === "REJECTED" || raw === "RECHAZADO"
-          ? "RECHAZADO"
-          : "PENDIENTE";
+            ? "RECHAZADO"
+            : "PENDIENTE";
 
       const map = {
         APROBADO: {
@@ -389,7 +412,14 @@ function LoanListDataTable({
         icon: null,
       };
 
-      return <Chip label={chip.label} color={chip.color} icon={chip.icon} size="small" />;
+      return (
+        <Chip
+          label={chip.label}
+          color={chip.color}
+          icon={chip.icon}
+          size="small"
+        />
+      );
     }
 
     if (col.accessorKey === "status") {
@@ -439,7 +469,14 @@ function LoanListDataTable({
         icon: null,
       };
 
-      return <Chip label={chip.label} color={chip.color} icon={chip.icon} size="small" />;
+      return (
+        <Chip
+          label={chip.label}
+          color={chip.color}
+          icon={chip.icon}
+          size="small"
+        />
+      );
     }
 
     return value ?? "";
@@ -485,6 +522,11 @@ function LoanListDataTable({
     permissions.includes("creditos.desembolsar") ||
     permissions.includes("loans.disburse");
 
+  const canModifyNormative =
+    role === 1 ||
+    permissions.includes("creditos.modificar_normativo") ||
+    permissions.includes("loans.modify_normative");
+
   return (
     <TableContainer component={Paper}>
       <Table size="small">
@@ -519,8 +561,16 @@ function LoanListDataTable({
         <TableBody>
           {data.map((row, rowIndex) => {
             const rowStatus = String(row.status || "").toUpperCase();
-            const canApproveRow = ["SUBMITTED", "UNDER_REVIEW"].includes(rowStatus);
+            const canApproveRow = ["SUBMITTED", "UNDER_REVIEW"].includes(
+              rowStatus,
+            );
             const canDisburseRow = ["APPROVED", "A"].includes(rowStatus);
+
+            const canModifyNormativeRow =
+              !!onModifyLoan &&
+              (rowStatus === "DISBURSED" ||
+                String(row.disbursed || "").toUpperCase() === "Y") &&
+              !["CANCELLED"].includes(rowStatus);
 
             return (
               <TableRow key={row.id ?? rowIndex} hover>
@@ -536,13 +586,19 @@ function LoanListDataTable({
                       <Tooltip title="Mostrar detalles del préstamo">
                         <IconButton
                           size="small"
-                          onClick={() => handleShowDetails(row.id, row.customer_id, row.customer_identification)}
+                          onClick={() =>
+                            handleShowDetails(
+                              row.id,
+                              row.customer_id,
+                              row.customer_identification,
+                            )
+                          }
                         >
                           <Show fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
-
+                    {/* 
                     {canApprove && (
                       <Tooltip title="Aprobar crédito">
                         <span>
@@ -587,7 +643,7 @@ function LoanListDataTable({
                         </span>
                       </Tooltip>
                     )}
-
+                */}
                     {canPay && (
                       <Tooltip title="Agregar pago">
                         <IconButton
@@ -611,6 +667,18 @@ function LoanListDataTable({
                         </IconButton>
                       </Tooltip>
                     )}
+
+                    {canModifyNormative && (
+                      <Tooltip title="Prórroga / Refinanciamiento / Reestructuración">
+                        <IconButton
+                          size="small"
+                          color="warning"
+                          onClick={() => onModifyLoan(row)}
+                        >
+                          <AutorenewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Box>
                 </TableCell>
               </TableRow>
@@ -619,7 +687,11 @@ function LoanListDataTable({
 
           {!loadingDetails && data.length === 0 && (
             <TableRow>
-              <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 3 }}>
+              <TableCell
+                colSpan={columns.length + 1}
+                align="center"
+                sx={{ py: 3 }}
+              >
                 No hay datos para mostrar.
               </TableCell>
             </TableRow>
@@ -633,7 +705,9 @@ function LoanListDataTable({
         page={page}
         onPageChange={(_, newPage) => onPageChange?.(newPage)}
         rowsPerPage={pageSize}
-        onRowsPerPageChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
+        onRowsPerPageChange={(e) =>
+          onPageSizeChange?.(parseInt(e.target.value, 10))
+        }
         rowsPerPageOptions={[5, 10, 25, 50, 100]}
         labelRowsPerPage="Filas por página"
       />
@@ -702,11 +776,12 @@ function LoanListDataTable({
                 </Typography>
                 <Typography variant="body2">
                   <strong>Cliente:</strong>{" "}
-                  {selectedLoan.customer_name || selectedLoan.customer_identification}
+                  {selectedLoan.customer_name ||
+                    selectedLoan.customer_identification}
                 </Typography>
               </Stack>
             </Alert>
-          )}  
+          )}
 
           {approvalMode === "approve" ? (
             <Grid container spacing={2}>
@@ -744,29 +819,51 @@ function LoanListDataTable({
               </Grid>
 
               <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Fecha aprobación"
-                  name="date"
-                  value={approvalForm.date}
-                  onChange={handleApprovalFormChange}
-                  InputLabelProps={{ shrink: true }}
-                />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Fecha de aprobación "
+                    inputFormat="DD/MM/YYYY"
+                    value={approvalForm.date || null}
+                    onChange={(newValue) => {
+                      setTmpDate(newValue || dayjs());
+                      handleInputChange({
+                        target: { name: "date", value: newValue },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        sx={{ width: 150, m: 1 }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
               </Grid>
             </Grid>
           ) : (
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Fecha decisión"
-                  name="date"
-                  value={approvalForm.date}
-                  onChange={handleApprovalFormChange}
-                  InputLabelProps={{ shrink: true }}
-                />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Fecha de decisión"
+                    inputFormat="DD/MM/YYYY"
+                    value={approvalForm.date || null}
+                    onChange={(newValue) => {
+                      setTmpDate(newValue || dayjs());
+                      handleInputChange({
+                        target: { name: "date", value: newValue },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        sx={{ width: 150, m: 1 }}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
               </Grid>
             </Grid>
           )}
@@ -808,7 +905,9 @@ function LoanListDataTable({
                 <Typography variant="body2">
                   <strong>Monto:</strong> C${" "}
                   {Number(
-                    selectedDisburseLoan.approved_amount || selectedDisburseLoan.amount || 0
+                    selectedDisburseLoan.approved_amount ||
+                      selectedDisburseLoan.amount ||
+                      0,
                   ).toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -819,8 +918,8 @@ function LoanListDataTable({
           )}
 
           <Typography variant="body2">
-            Esta acción marcará el crédito como desembolsado y generará su plan final según
-            las condiciones aprobadas.
+            Esta acción marcará el crédito como desembolsado y generará su plan
+            final según las condiciones aprobadas.
           </Typography>
         </DialogContent>
 

@@ -30,6 +30,15 @@ import dayjs from "dayjs";
 import BranchSelect from "./BranchSelect";
 import LoanAmortization from "./LoanAmortization";
 import API from "../api";
+import Visibility from "@mui/icons-material/Visibility";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Grid from "@mui/material/Grid";
+import CustomerFinancialEvaluationTab from "./Customer/CustomerFinancialEvaluationTab";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
@@ -74,7 +83,6 @@ const LoanAdd = () => {
 
   const [loan, setLoan] = useState({
     customer_id: "",
-    customer_identification: "",
     requestDate: today(),
     branch_id: "",
     vendor_id: "",
@@ -97,7 +105,8 @@ const LoanAdd = () => {
     status: "",
     guaranteeValue: 0,
     credit_evaluation_id: "",
-    created_by: currentUser?.user_name || currentUser?.username || currentUser?.id || "",
+    created_by:
+      currentUser?.user_name || currentUser?.username || currentUser?.id || "",
   });
 
   const [guaranteeValue, setGuaranteeValue] = useState(0);
@@ -119,6 +128,30 @@ const LoanAdd = () => {
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
   };
+
+  const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
+
+  const selectedEvaluation = useMemo(() => {
+    return (
+      evaluations.find(
+        (ev) => String(ev.id) === String(loan.credit_evaluation_id),
+      ) || null
+    );
+  }, [evaluations, loan.credit_evaluation_id]);
+
+  const evaluationCustomer = useMemo(() => {
+    if (!selectedEvaluation) return null;
+
+    return {
+      business_type_name: selectedEvaluation.business_type_name || "—",
+      total_loans: selectedEvaluation.total_loans || 0,
+      productOrService: selectedEvaluation.productOrService || "—",
+      creditLimit: selectedEvaluation.creditLimit || "—",
+      chanel: selectedEvaluation.chanel || "—",
+      province_name: selectedEvaluation.province_name || "—",
+      scores: selectedEvaluation.scores || {},
+    };
+  }, [selectedEvaluation]);
 
   useEffect(() => {
     const fetchPolicies = async () => {
@@ -158,7 +191,10 @@ const LoanAdd = () => {
           throw new Error(data?.error || "Error al obtener garantías");
         }
 
-        const totalValue = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
+        const totalValue = data.reduce(
+          (sum, item) => sum + Number(item.value || 0),
+          0,
+        );
         setGuaranteeValue(totalValue);
         setGuarantees(data);
       } catch (error) {
@@ -181,22 +217,25 @@ const LoanAdd = () => {
 
       try {
         const res = await API.get(
-          `api/customer-credit-evaluations/${loan.customer_id}/current`
+          `api/customer-credit-evaluations/${loan.customer_id}/current`,
         );
 
-        const rows = Array.isArray(res.data) ? res.data : [];
-        setEvaluations(rows);
-        console.log(evaluations);
-        
+        const row = res.data;
 
-        if (rows.length === 1) {
+        if (row) {
+          setEvaluations([row]);
           setLoan((prev) => ({
             ...prev,
-            credit_evaluation_id: rows[0].id,
+            credit_evaluation_id: row.id,
           }));
+        } else {
+          setEvaluations([]);
+          setLoan((prev) => ({ ...prev, credit_evaluation_id: "" }));
         }
-      } catch {
+      } catch (error) {
+        console.error("Error obteniendo evaluación vigente:", error);
         setEvaluations([]);
+        setLoan((prev) => ({ ...prev, credit_evaluation_id: "" }));
       }
     };
 
@@ -247,12 +286,15 @@ const LoanAdd = () => {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data?.error || "Error al obtener la tabla de amortización");
+          throw new Error(
+            data?.error || "Error al obtener la tabla de amortización",
+          );
         }
 
         setAmortizationTable(Array.isArray(data) ? data : []);
 
-        const firstInstallment = data.find((row) => Number(row.paymentNumber) === 1) || null;
+        const firstInstallment =
+          data.find((row) => Number(row.paymentNumber) === 1) || null;
         setInstallment(firstInstallment);
 
         const lastPayment = data[data.length - 1];
@@ -264,11 +306,14 @@ const LoanAdd = () => {
             prevLoan.frequency_id === "V"
               ? prevLoan.due_date
               : lastPaymentDate
-              ? dayjs(lastPaymentDate).format("YYYY-MM-DD")
-              : prevLoan.due_date,
+                ? dayjs(lastPaymentDate).format("YYYY-MM-DD")
+                : prevLoan.due_date,
         }));
       } catch (error) {
-        toast.error(error.message || "Error de conexión al obtener la tabla de amortización");
+        toast.error(
+          error.message ||
+            "Error de conexión al obtener la tabla de amortización",
+        );
       } finally {
         setLoading(false);
       }
@@ -293,8 +338,8 @@ const LoanAdd = () => {
   const validateForm = (data) => {
     const nextErrors = {};
 
-    if (!data.customer_identification) {
-      nextErrors.customer_identification = "La identificación del cliente es requerida";
+    if (!data.customer_id) {
+      nextErrors.customer_id = "El cliente es requerido";
     }
 
     if (!data.requestDate) {
@@ -326,10 +371,14 @@ const LoanAdd = () => {
     }
 
     if (!data.credit_evaluation_id) {
-      nextErrors.credit_evaluation_id = "Debe seleccionar una evaluación financiera";
+      nextErrors.credit_evaluation_id =
+        "Debe seleccionar una evaluación financiera";
     }
 
-    if (getPolicy("max_amount") && Number(data.amount) > Number(getPolicy("max_amount"))) {
+    if (
+      getPolicy("max_amount") &&
+      Number(data.amount) > Number(getPolicy("max_amount"))
+    ) {
       nextErrors.amount = `El monto excede el máximo permitido: C$${getPolicy("max_amount")}`;
     }
 
@@ -361,7 +410,10 @@ const LoanAdd = () => {
       nextErrors.term = `El plazo es menor al mínimo permitido: ${getPolicy("min_term_months")} meses`;
     }
 
-    if (getPolicy("min_amount") && Number(data.amount) < Number(getPolicy("min_amount"))) {
+    if (
+      getPolicy("min_amount") &&
+      Number(data.amount) < Number(getPolicy("min_amount"))
+    ) {
       nextErrors.amount = `El monto es menor al mínimo permitido: C$${getPolicy("min_amount")}`;
     }
 
@@ -383,7 +435,7 @@ const LoanAdd = () => {
       const cobertura = (Number(data.amount) / Number(guaranteeValue)) * 100;
       if (cobertura > Number(getPolicy("min_guarantee_coverage"))) {
         nextErrors.amount = `Monto excede cobertura de garantías: ${getPolicy(
-          "min_guarantee_coverage"
+          "min_guarantee_coverage",
         )}%`;
       }
     }
@@ -398,8 +450,9 @@ const LoanAdd = () => {
     const nextLoan = {
       ...loan,
       [name]: value,
-      frequency_name: selectedOption ? selectedOption.name : loan.frequency_name,
-      
+      frequency_name: selectedOption
+        ? selectedOption.name
+        : loan.frequency_name,
     };
 
     setLoan(nextLoan);
@@ -407,7 +460,7 @@ const LoanAdd = () => {
 
   const buildPayload = () => {
     return {
-      customer_identification: loan.customer_identification,
+      customer_id: Number(loan.customer_id),
       requestDate: dayjs(loan.requestDate).format("YYYY-MM-DD"),
       branch_id: Number(loan.branch_id),
       vendor_id: loan.vendor_id ? Number(loan.vendor_id) : null,
@@ -450,7 +503,10 @@ const LoanAdd = () => {
       const responseData = await response.json();
 
       if (!response.ok) {
-        showSnackbar(responseData?.error || "Error al guardar la solicitud.", "error");
+        showSnackbar(
+          responseData?.error || "Error al guardar la solicitud.",
+          "error",
+        );
         return;
       }
 
@@ -496,27 +552,27 @@ const LoanAdd = () => {
 
   const totalPaymentAmount = amortizationTable.reduce(
     (acc, row) => acc + Number(row.paymentAmount ?? 0),
-    0
+    0,
   );
   const totalPrincipal = amortizationTable.reduce(
     (acc, row) => acc + Number(row.principal ?? 0),
-    0
+    0,
   );
   const totalInterest = amortizationTable.reduce(
     (acc, row) => acc + Number(row.interest ?? 0),
-    0
+    0,
   );
   const totalFee = amortizationTable.reduce(
     (acc, row) => acc + Number(row.feeByPayment ?? 0),
-    0
+    0,
   );
   const totalInsurance = amortizationTable.reduce(
     (acc, row) => acc + Number(row.insuranceByPayment ?? 0),
-    0
+    0,
   );
   const totalOtherCharges = amortizationTable.reduce(
     (acc, row) => acc + Number(row.otherChargesByPayment ?? 0),
-    0
+    0,
   );
 
   return (
@@ -547,25 +603,35 @@ const LoanAdd = () => {
               Solicitud de préstamo
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Complete los datos y verifique amortización, evaluación y garantías.
+              Complete los datos y verifique amortización, evaluación y
+              garantías.
             </Typography>
           </Box>
 
           <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
             <Chip
-              label={`Garantías: C$ ${Number(guaranteeValue || 0).toLocaleString(undefined, {
+              label={`Garantías: C$ ${Number(
+                guaranteeValue || 0,
+              ).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
               })}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
             <Chip
-              label={`Cuota: C$ ${Number(installment?.paymentAmount || 0).toLocaleString(
-                undefined,
-                {
-                  minimumFractionDigits: 2,
-                }
-              )}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              label={`Cuota: C$ ${Number(
+                installment?.paymentAmount || 0,
+              ).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}`}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
           </Box>
         </Box>
@@ -587,7 +653,8 @@ const LoanAdd = () => {
             Datos principales
           </Typography>
           <Typography variant="body2" sx={{ color: BAC.muted, mb: 1 }}>
-            Los campos se validan contra políticas de crédito y el backend valida evaluación y expediente.
+            Los campos se validan contra políticas de crédito y el backend
+            valida evaluación y expediente.
           </Typography>
 
           <Divider sx={{ my: 2, borderColor: BAC.border }} />
@@ -595,7 +662,11 @@ const LoanAdd = () => {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "repeat(4, 1fr)",
+              },
               alignItems: "start",
               gap: 2,
               width: "100%",
@@ -672,8 +743,14 @@ const LoanAdd = () => {
                 branch_id={loan.branch_id}
               />
             </Box>
-
-            <Box sx={fieldSx}>
+            <Box
+              sx={{
+                ...fieldSx,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1,
+              }}
+            >
               <TextField
                 select
                 fullWidth
@@ -685,7 +762,7 @@ const LoanAdd = () => {
                 error={!!errors.credit_evaluation_id}
                 helperText={
                   errors.credit_evaluation_id ||
-                  (loan.customer_identification && evaluations.length === 0
+                  (loan.customer_id && evaluations.length === 0
                     ? "No se encontraron evaluaciones para este cliente"
                     : "")
                 }
@@ -694,10 +771,28 @@ const LoanAdd = () => {
                 {evaluations.map((ev) => (
                   <MenuItem key={ev.id} value={ev.id}>
                     #{ev.id} - {dayjs(ev.evaluation_date).format("DD/MM/YYYY")}
-                    {ev.status ? ` - ${ev.status}` : ""}
                   </MenuItem>
                 ))}
               </TextField>
+
+              <Tooltip title="Ver evaluación">
+                <span>
+                  <IconButton
+                    onClick={() => setEvaluationModalOpen(true)}
+                    disabled={!selectedEvaluation}
+                    sx={{
+                      mt: "2px",
+                      border: `1px solid ${BAC.border}`,
+                      borderRadius: 2,
+                      color: BAC.primary,
+                      backgroundColor: BAC.white,
+                      "&:hover": { backgroundColor: BAC.soft },
+                    }}
+                  >
+                    <Visibility />
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Box>
           </Box>
 
@@ -705,7 +800,11 @@ const LoanAdd = () => {
             sx={{
               mt: 2,
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "repeat(4, 1fr)",
+              },
               gap: 2,
               width: "100%",
               maxWidth: "100%",
@@ -731,7 +830,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -758,7 +860,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -785,7 +890,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -812,7 +920,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -835,7 +946,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -862,7 +976,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -921,7 +1038,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="end"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     %
                   </InputAdornment>
                 ),
@@ -948,7 +1068,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>
+                  <InputAdornment
+                    position="end"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     %
                   </InputAdornment>
                 ),
@@ -1072,8 +1195,62 @@ const LoanAdd = () => {
         cancel={() => setOpenDialog(false)}
         cancelOperation={cancelDialog}
       />
+      <Dialog
+        open={evaluationModalOpen}
+        onClose={() => setEvaluationModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 900,
+            color: BAC.white,
+            background: `linear-gradient(135deg, ${BAC.primary} 0%, ${BAC.primaryDark} 100%)`,
+          }}
+        >
+          Detalle de evaluación financiera
+        </DialogTitle>
 
-      <Backdrop open={loading} sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        {evaluationCustomer ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              border: `1px solid ${BAC.border}`,
+              backgroundColor: BAC.white,
+            }}
+          >
+            <CustomerFinancialEvaluationTab
+              customerId={loan.customer_id}
+              customerIdentification={loan.customerIdentification}
+              customerName={loan.customerName}
+            />
+          </Paper>
+        ) : (
+          <Alert severity="info">No hay evaluación seleccionada.</Alert>
+        )}
+
+        <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
+          <Button
+            onClick={() => setEvaluationModalOpen(false)}
+            variant="contained"
+            sx={{
+              borderRadius: 2,
+              fontWeight: 900,
+              bgcolor: BAC.primary,
+              "&:hover": { bgcolor: BAC.primaryDark },
+            }}
+          >
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Backdrop
+        open={loading}
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <CircularProgress color="inherit" />
       </Backdrop>
     </Box>

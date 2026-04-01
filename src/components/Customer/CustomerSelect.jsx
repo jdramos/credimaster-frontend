@@ -1,5 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FormControl, Autocomplete, TextField, Typography, Box, CircularProgress } from "@mui/material";
+import {
+  FormControl,
+  Autocomplete,
+  TextField,
+  Typography,
+  Box,
+  CircularProgress,
+} from "@mui/material";
 import debounce from "lodash.debounce";
 
 const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -14,16 +21,19 @@ const CustomerSelect = (props) => {
   const [error, setError] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
-const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const normalize = (json) => {
     // ✅ soporta varias formas comunes
-    const arr =
-      Array.isArray(json) ? json :
-      Array.isArray(json?.data) ? json.data :
-      Array.isArray(json?.rows) ? json.rows :
-      Array.isArray(json?.result) ? json.result :
-      [];
+    const arr = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.data)
+        ? json.data
+        : Array.isArray(json?.rows)
+          ? json.rows
+          : Array.isArray(json?.result)
+            ? json.result
+            : [];
     return arr;
   };
 
@@ -56,7 +66,7 @@ const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const debouncedFetch = useCallback(
     debounce((q) => fetchApi(q), 400),
-    []
+    [],
   );
 
   useEffect(() => {
@@ -75,74 +85,68 @@ const [selectedCustomer, setSelectedCustomer] = useState(null);
   return (
     <FormControl sx={{ mt: 0, mr: 1, minWidth: 500 }}>
       <Autocomplete
-  size={props.size}
-  options={customers}
-  value={selectedCustomer}  // ✅ CLAVE
-  filterOptions={(options) => options}
-  loading={loading}
+        size={props.size}
+        options={customers}
+        value={selectedCustomer} // ✅ CLAVE
+        filterOptions={(options) => options}
+        loading={loading}
+        getOptionLabel={(option) =>
+          option
+            ? ` ${option.id ?? ""} ${option.customer_name ?? ""} (${option.identification ?? ""})`
+            : ""
+        }
+        inputValue={inputValue}
+        onInputChange={(event, newInputValue) => {
+          setInputValue(newInputValue);
+        }}
+        onChange={(event, newValue) => {
+          setError(null);
 
-  getOptionLabel={(option) =>
-    option
-      ? ` ${option.id ?? ""} ${option.customer_name ?? ""} (${option.identification ?? ""})`
-      : ""
-  }
+          setSelectedCustomer(newValue); // ✅ ahora sí queda seleccionado
 
-  inputValue={inputValue}
+          // opcional: deja el texto bonito en el input
+          if (newValue) {
+            setInputValue(
+              `${newValue.id ?? ""} ${newValue.customer_name ?? ""} (${newValue.identification ?? ""})`,
+            );
+          } else {
+            setInputValue("");
+          }
 
-  onInputChange={(event, newInputValue) => {
-    setInputValue(newInputValue);
-  }}
-
-  onChange={(event, newValue) => {
-    setError(null);
-
-    setSelectedCustomer(newValue); // ✅ ahora sí queda seleccionado
-
-    // opcional: deja el texto bonito en el input
-    if (newValue) {
-      setInputValue(
-        `${newValue.id ?? ""} ${newValue.customer_name ?? ""} (${newValue.identification ?? ""})`
-      );
-    } else {
-      setInputValue("");
-    }
-
-    props.onChange?.({
-      target: {
-        name: props.name,
-        value: newValue ? newValue.identification : "",
-      },
-    });
-  }}
-
-  noOptionsText={
-    selectedCustomer
-      ? ""              // ✅ si ya seleccionó, no mostrar mensaje
-      : inputValue.trim().length
-      ? "Sin resultados"
-      : "Escribe para buscar"
-  }
-
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      label={props.label}
-      variant="outlined"
-      error={Boolean(error)}
-      helperText={error ? error : ""}
-      FormHelperTextProps={{ sx: { minHeight: 18, m: 0 } }}
-      InputProps={{
-        ...params.InputProps,
-        endAdornment: (
-          <>
-            {loading ? <CircularProgress size={18} /> : null}
-            {params.InputProps.endAdornment}
-          </>
-        ),
-      }}
-    />
-  )}
-/>
+          props.onChange?.({
+            target: {
+              name: props.name,
+              value: newValue ? newValue.id : "",
+            },
+          });
+        }}
+        noOptionsText={
+          selectedCustomer
+            ? "" // ✅ si ya seleccionó, no mostrar mensaje
+            : inputValue.trim().length
+              ? "Sin resultados"
+              : "Escribe para buscar"
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={props.label}
+            variant="outlined"
+            error={Boolean(error)}
+            helperText={error ? error : ""}
+            FormHelperTextProps={{ sx: { minHeight: 18, m: 0 } }}
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading ? <CircularProgress size={18} /> : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+      />
 
       {props.error ? (
         <span className="form-text text-danger">{props.error}</span>

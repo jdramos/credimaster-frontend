@@ -42,34 +42,134 @@ const sectionLabels = {
 
 const menuItems = {
   main: [
-    { label: "Clientes", iconName: "FaPeopleArrows", to: "/clientes", group: "Clientes" },
-    { label: "Sucursales", iconName: "FaRegBuilding", to: "/sucursales", group: "Estructura" },
-    { label: "Riesgos", iconName: "FaPeopleCarry", to: "/riesgos", group: "Riesgo" },
-    { label: "Departamentos", iconName: "FaBuilding", to: "/departamentos", group: "Estructura" },
-    { label: "Colectores", iconName: "FaRegMoneyBillAlt", to: "/colectores", group: "Personal" },
-    { label: "Promotores", iconName: "FaPersonBooth", to: "/promotores", group: "Personal" },
+    {
+      label: "Clientes",
+      iconName: "FaPeopleArrows",
+      to: "/clientes",
+      group: "Clientes",
+    },
+    {
+      label: "Sucursales",
+      iconName: "FaRegBuilding",
+      to: "/sucursales",
+      group: "Estructura",
+    },
+    {
+      label: "Riesgos",
+      iconName: "FaPeopleCarry",
+      to: "/riesgos",
+      group: "Riesgo",
+    },
+    {
+      label: "Departamentos",
+      iconName: "FaBuilding",
+      to: "/departamentos",
+      group: "Estructura",
+    },
+    {
+      label: "Colectores",
+      iconName: "FaRegMoneyBillAlt",
+      to: "/colectores",
+      group: "Personal",
+    },
+    {
+      label: "Promotores",
+      iconName: "FaPersonBooth",
+      to: "/promotores",
+      group: "Personal",
+    },
   ],
   management: [
-    { label: "Créditos", iconName: "FaMoneyBillWaveAlt", to: "/creditos", group: "Créditos" },
-    { label: "Pagos", iconName: "FaCashRegister", to: "/pagos", group: "Cobranza" },
-    { label: "Crear saldos", iconName: "FaCalculator", to: "/crear-saldos", group: "Procesos" },
-    { label: "Políticas de crédito", iconName: "FaFileSignature", to: "/creditos/politicas", group: "Créditos" },
+    {
+      label: "Créditos",
+      iconName: "FaMoneyBillWaveAlt",
+      to: "/creditos",
+      group: "Créditos",
+    },
+    {
+      label: "Pagos",
+      iconName: "FaCashRegister",
+      to: "/pagos",
+      group: "Cobranza",
+    },
+    {
+      label: "Crear saldos",
+      iconName: "FaCalculator",
+      to: "/crear-saldos",
+      group: "Procesos",
+    },
+    {
+      label: "Políticas crédito",
+      iconName: "FaFileSignature",
+      to: "/creditos/politicas",
+      group: "Créditos",
+    },
   ],
   users: [
-    { label: "Usuarios", iconName: "FaUser", to: "/usuarios", group: "Seguridad" },
-    { label: "Roles", iconName: "FaUserShield", to: "/roles", group: "Seguridad" },
-    { label: "Permisos", iconName: "FaKey", to: "/permisos", group: "Seguridad" },
-    { label: "Aprobadores", iconName: "FaUserCheck", to: "/aprobadores", group: "Aprobaciones" },
+    {
+      label: "Usuarios",
+      iconName: "FaUser",
+      to: "/usuarios",
+      group: "Seguridad",
+    },
+    {
+      label: "Roles",
+      iconName: "FaUserShield",
+      to: "/roles",
+      group: "Seguridad",
+    },
+    {
+      label: "Permisos",
+      iconName: "FaKey",
+      to: "/permisos",
+      group: "Seguridad",
+    },
+    {
+      label: "Aprobadores",
+      iconName: "FaUserCheck",
+      to: "/aprobadores",
+      group: "Aprobaciones",
+    },
   ],
   queries: [
-    { label: "Saldos", iconName: "FaChartBar", to: "/saldos", group: "Reportes" },
-    { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones", group: "Reportes" },
-    { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos", group: "Control" },
+    {
+      label: "Saldos",
+      iconName: "FaChartBar",
+      to: "/saldos",
+      group: "Reportes",
+    },
+    {
+      label: "Provisiones",
+      iconName: "FaChartLine",
+      to: "/provisiones",
+      group: "Reportes",
+    },
+    {
+      label: "Sin riesgo",
+      iconName: "FaShieldAlt",
+      to: "/sinriesgos",
+      group: "Control",
+    },
   ],
   conami_tables: [
-    { label: "Actividad económica", iconName: "FaIndustry", to: "/conami/actividad-economica", group: "Catálogos CONAMI" },
-    { label: "Géneros", iconName: "FaUsers", to: "/generos", group: "Catálogos CONAMI" },
-    { label: "Estado civil", iconName: "FaAddressCard", to: "/conami/estado-civil", group: "Catálogos CONAMI" },
+    {
+      label: "Actividad económica",
+      iconName: "FaIndustry",
+      to: "/conami/actividad-economica",
+      group: "Catálogos CONAMI",
+    },
+    {
+      label: "Géneros",
+      iconName: "FaUsers",
+      to: "/generos",
+      group: "Catálogos CONAMI",
+    },
+    {
+      label: "Estado civil",
+      iconName: "FaAddressCard",
+      to: "/conami/estado-civil",
+      group: "Catálogos CONAMI",
+    },
   ],
 };
 
@@ -108,23 +208,22 @@ function RibbonMenu({
   const userCtx = useContext(UserContext) || {};
 
   const {
-  favorites = [],
-  addFavorite,
-  removeFavorite,
-  user,
-  fullName,
-  role,
-  userBranches = [],
-} = userCtx;
+    favorites = [],
+    addFavorite,
+    removeFavorite,
+    user,
+    fullName,
+    role,
+    userBranches = [],
+    logout,
+  } = userCtx;
 
-const userId = user;
-const userName = fullName || "Usuario";
-const userRole =
-  typeof role === "object"
-    ? role?.name || role?.label || role?.description || "Sin rol"
-    : role || "Sin rol";
-
-const userEmail = "";
+  const userId = user;
+  const userName = fullName || "Usuario";
+  const userRole =
+    typeof role === "object"
+      ? role?.name || role?.label || role?.description || "Sin rol"
+      : role || "Sin rol";
 
   const [activeTab, setActiveTab] = useState("home");
   const [searchTerm, setSearchTerm] = useState("");
@@ -147,21 +246,28 @@ const userEmail = "";
 
   const fullMenu = useMemo(
     () => ({
-      home: [{ label: "Inicio", iconName: "FaHome", to: "/", group: "Principal" }],
+      home: [
+        { label: "Inicio", iconName: "FaHome", to: "/", group: "Principal" },
+      ],
       ...(favoritesSection.length > 0 ? { favorites: favoritesSection } : {}),
       ...menuItems,
     }),
-    [favoritesSection]
+    [favoritesSection],
   );
 
   const filteredMenu = useMemo(() => {
-    const term = String(searchTerm || "").trim().toLowerCase();
+    const term = String(searchTerm || "")
+      .trim()
+      .toLowerCase();
+
     if (!term) return fullMenu;
 
     const result = {};
     Object.entries(fullMenu).forEach(([section, items]) => {
       const matched = (items || []).filter((item) =>
-        String(item.label || "").toLowerCase().includes(term)
+        String(item.label || "")
+          .toLowerCase()
+          .includes(term),
       );
       if (matched.length) result[section] = matched;
     });
@@ -169,6 +275,7 @@ const userEmail = "";
   }, [fullMenu, searchTerm]);
 
   const visibleTabs = Object.keys(filteredMenu);
+
   const currentTab = visibleTabs.includes(activeTab)
     ? activeTab
     : visibleTabs[0] || "home";
@@ -220,11 +327,25 @@ const userEmail = "";
       return;
     }
 
+    if (logout) {
+      logout();
+      return;
+    }
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("session");
+    localStorage.removeItem("fullName");
+    localStorage.removeItem("role");
     window.location.href = "/login";
   };
+
+  const initials = String(userName || "U")
+    .split(" ")
+    .map((x) => x[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   const RibbonButton = ({ item, section }) => {
     const IconComp = FaIcons[item.iconName] || FaIcons.FaQuestionCircle;
@@ -234,21 +355,25 @@ const userEmail = "";
       <Paper
         elevation={0}
         sx={{
-          width: 120,
-          minWidth: 120,
-          height: 96,
-          p: 1,
-          borderRadius: 3,
-          border: isActive ? "1px solid #1E73BE" : "1px solid rgba(15, 23, 42, 0.08)",
+          width: 88,
+          minWidth: 88,
+          height: 74,
+          p: 0.75,
+          borderRadius: 2.5,
+          border: isActive
+            ? "1px solid #1E73BE"
+            : "1px solid rgba(15, 23, 42, 0.08)",
           background: isActive
             ? "linear-gradient(180deg, rgba(30,115,190,0.12), rgba(30,115,190,0.04))"
             : "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
           position: "relative",
-          transition: "all .2s ease",
-          boxShadow: isActive ? "0 8px 22px rgba(30,115,190,.16)" : "0 4px 12px rgba(15,23,42,.05)",
+          transition: "all .18s ease",
+          boxShadow: isActive
+            ? "0 6px 14px rgba(30,115,190,.14)"
+            : "0 2px 8px rgba(15,23,42,.05)",
           "&:hover": {
-            transform: "translateY(-2px)",
-            boxShadow: "0 10px 24px rgba(15,23,42,.10)",
+            transform: "translateY(-1px)",
+            boxShadow: "0 8px 16px rgba(15,23,42,.09)",
           },
         }}
       >
@@ -264,33 +389,38 @@ const userEmail = "";
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            px: 0.5,
+            px: 0.25,
           }}
         >
           <Box
             sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 2.5,
+              width: 28,
+              height: 28,
+              borderRadius: 2,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#fff",
               background: getRibbonColor(section),
-              boxShadow: "0 8px 18px rgba(15,76,129,.25)",
-              mb: 1,
+              boxShadow: "0 4px 10px rgba(15,76,129,.20)",
+              mb: 0.6,
             }}
           >
-            <IconComp size={18} />
+            <IconComp size={13} />
           </Box>
 
           <Typography
             sx={{
-              fontSize: 12.2,
+              fontSize: 10.5,
               fontWeight: 800,
-              lineHeight: 1.15,
+              lineHeight: 1.05,
               textAlign: "center",
               color: "#1F2937",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              wordBreak: "break-word",
             }}
           >
             {item.label}
@@ -303,26 +433,20 @@ const userEmail = "";
             onClick={(e) => handleItemMenuClick(e, item)}
             sx={{
               position: "absolute",
-              top: 4,
-              right: 4,
-              width: 24,
-              height: 24,
+              top: 1,
+              right: 1,
+              width: 18,
+              height: 18,
               color: "#64748B",
+              p: 0,
             }}
           >
-            <MoreVertIcon fontSize="small" />
+            <MoreVertIcon sx={{ fontSize: 14 }} />
           </IconButton>
         )}
       </Paper>
     );
   };
-
-  const initials = String(userName || "U")
-    .split(" ")
-    .map((x) => x[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <>
@@ -330,14 +454,14 @@ const userEmail = "";
         position="sticky"
         elevation={0}
         sx={{
-          background: "linear-gradient(90deg, #0B1F3A 0%, #0F4C81 45%, #1E73BE 100%)",
+          background:
+            "linear-gradient(90deg, #0B1F3A 0%, #0F4C81 45%, #1E73BE 100%)",
           borderBottom: "1px solid rgba(255,255,255,0.10)",
-          backdropFilter: "blur(10px)",
         }}
       >
         <Toolbar
           sx={{
-            minHeight: "70px !important",
+            minHeight: "60px !important",
             px: 2,
             display: "flex",
             alignItems: "center",
@@ -345,64 +469,75 @@ const userEmail = "";
             gap: 2,
           }}
         >
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+            sx={{ minWidth: 0 }}
+          >
             <Box
               sx={{
-                width: 44,
-                height: 44,
-                borderRadius: 3,
+                width: 38,
+                height: 38,
+                borderRadius: 2.5,
                 background: "linear-gradient(135deg, #ffffff 0%, #dbeafe 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 8px 18px rgba(0,0,0,.18)",
+                boxShadow: "0 6px 14px rgba(0,0,0,.16)",
               }}
             >
-              <FaIcons.FaUniversity size={18} color="#0F4C81" />
+              <FaIcons.FaUniversity size={16} color="#0F4C81" />
             </Box>
 
             <Box sx={{ minWidth: 0 }}>
               <Typography
                 sx={{
                   color: "#fff",
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: 900,
-                  lineHeight: 1.1,
-                  letterSpacing: 0.3,
+                  lineHeight: 1.05,
+                  letterSpacing: 0.2,
                 }}
               >
                 {appName}
               </Typography>
               <Typography
                 sx={{
-                  color: "rgba(255,255,255,0.78)",
-                  fontSize: 12.5,
+                  color: "rgba(255,255,255,0.76)",
+                  fontSize: 11.5,
                   fontWeight: 600,
                 }}
               >
-                Plataforma de gestión crediticia
+                Gestión crediticia
               </Typography>
             </Box>
           </Stack>
 
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ flexWrap: "wrap" }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+            sx={{ flexWrap: "wrap" }}
+          >
             <TextField
               size="small"
-              placeholder="Buscar opción del menú..."
+              placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{
-                minWidth: 300,
+                minWidth: 220,
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 3,
+                  height: 36,
+                  borderRadius: 2.5,
                   backgroundColor: "rgba(255,255,255,0.96)",
-                  fontSize: 14,
+                  fontSize: 13,
                 },
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchRoundedIcon fontSize="small" />
+                    <SearchRoundedIcon sx={{ fontSize: 18 }} />
                   </InputAdornment>
                 ),
               }}
@@ -413,24 +548,25 @@ const userEmail = "";
                 onClick={(e) => setUserMenuAnchor(e.currentTarget)}
                 elevation={0}
                 sx={{
-                  px: 1.2,
-                  py: 0.8,
+                  px: 1,
+                  py: 0.5,
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
-                  borderRadius: 3,
+                  borderRadius: 2.5,
                   cursor: "pointer",
                   background: "rgba(255,255,255,0.12)",
                   border: "1px solid rgba(255,255,255,0.14)",
                   color: "#fff",
-                  minWidth: 220,
+                  minWidth: 180,
+                  maxWidth: 240,
                 }}
               >
                 <Avatar
                   sx={{
-                    width: 36,
-                    height: 36,
-                    fontSize: 13,
+                    width: 30,
+                    height: 30,
+                    fontSize: 11,
                     fontWeight: 900,
                     bgcolor: "#fff",
                     color: "#0F4C81",
@@ -442,9 +578,9 @@ const userEmail = "";
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: 900,
-                      lineHeight: 1.1,
+                      lineHeight: 1.05,
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -454,7 +590,7 @@ const userEmail = "";
                   </Typography>
                   <Typography
                     sx={{
-                      fontSize: 11.5,
+                      fontSize: 10.5,
                       color: "rgba(255,255,255,0.80)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -471,7 +607,7 @@ const userEmail = "";
 
         <Box
           sx={{
-            px: 2,
+            px: 1.5,
             background: "rgba(255,255,255,0.06)",
             borderTop: "1px solid rgba(255,255,255,0.08)",
           }}
@@ -490,13 +626,14 @@ const userEmail = "";
               },
             }}
             sx={{
-              minHeight: 48,
+              minHeight: 42,
               "& .MuiTab-root": {
-                minHeight: 48,
+                minHeight: 42,
+                px: 1.5,
                 color: "rgba(255,255,255,0.80)",
                 fontWeight: 800,
                 textTransform: "none",
-                fontSize: 13.5,
+                fontSize: 12.5,
               },
               "& .Mui-selected": {
                 color: "#fff !important",
@@ -510,11 +647,11 @@ const userEmail = "";
                 label={sectionLabels[section] || section}
                 icon={
                   section === "home" ? (
-                    <HomeRoundedIcon sx={{ fontSize: 16 }} />
+                    <HomeRoundedIcon sx={{ fontSize: 15 }} />
                   ) : section === "favorites" ? (
-                    <StarRoundedIcon sx={{ fontSize: 16 }} />
+                    <StarRoundedIcon sx={{ fontSize: 15 }} />
                   ) : (
-                    <FaIcons.FaBars size={13} />
+                    <FaIcons.FaBars size={12} />
                   )
                 }
                 iconPosition="start"
@@ -526,8 +663,8 @@ const userEmail = "";
 
       <Box
         sx={{
-          px: 2,
-          py: 1.5,
+          px: 1.5,
+          py: 1,
           background: "linear-gradient(180deg, #F8FAFC 0%, #EEF4FB 100%)",
           borderBottom: "1px solid rgba(15,23,42,0.08)",
         }}
@@ -536,7 +673,7 @@ const userEmail = "";
           sx={{
             display: "flex",
             flexWrap: "wrap",
-            gap: 1.5,
+            gap: 1,
             alignItems: "stretch",
           }}
         >
@@ -545,21 +682,20 @@ const userEmail = "";
               key={groupName}
               elevation={0}
               sx={{
-                p: 1.2,
-                borderRadius: 3,
+                p: 0.8,
+                borderRadius: 2.5,
                 border: "1px solid rgba(15,23,42,0.08)",
-                background: "rgba(255,255,255,0.78)",
-                minWidth: 180,
+                background: "rgba(255,255,255,0.82)",
+                minWidth: 120,
               }}
             >
               <Box
                 sx={{
                   display: "flex",
-                  gap: 1,
+                  gap: 0.75,
                   flexWrap: "wrap",
                   alignItems: "stretch",
                   justifyContent: "flex-start",
-                  minHeight: 96,
                 }}
               >
                 {items.map((item, idx) => (
@@ -571,16 +707,17 @@ const userEmail = "";
                 ))}
               </Box>
 
-              <Divider sx={{ mt: 1.2, mb: 0.8 }} />
+              <Divider sx={{ mt: 0.8, mb: 0.5 }} />
 
               <Typography
                 sx={{
-                  fontSize: 11.5,
+                  fontSize: 10,
                   fontWeight: 900,
                   textAlign: "center",
                   color: "#475569",
                   textTransform: "uppercase",
-                  letterSpacing: 0.4,
+                  letterSpacing: 0.35,
+                  lineHeight: 1,
                 }}
               >
                 {groupName}
@@ -613,9 +750,9 @@ const userEmail = "";
         PaperProps={{
           sx: {
             mt: 1,
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: "0 14px 30px rgba(15,23,42,.14)",
+            minWidth: 260,
+            borderRadius: 2.5,
+            boxShadow: "0 12px 28px rgba(15,23,42,.14)",
           },
         }}
       >
@@ -623,9 +760,9 @@ const userEmail = "";
           <Stack direction="row" spacing={1.5} alignItems="center">
             <Avatar
               sx={{
-                width: 44,
-                height: 44,
-                fontSize: 14,
+                width: 40,
+                height: 40,
+                fontSize: 13,
                 fontWeight: 900,
                 bgcolor: "#0F4C81",
               }}
@@ -634,17 +771,18 @@ const userEmail = "";
             </Avatar>
 
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 900, fontSize: 14 }}>
+              <Typography sx={{ fontWeight: 900, fontSize: 13.5 }}>
                 {userName}
               </Typography>
-              <Typography sx={{ color: "text.secondary", fontSize: 12.5 }}>
+              <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
                 {userRole}
               </Typography>
-              {userEmail ? (
-                <Typography sx={{ color: "text.secondary", fontSize: 12 }}>
-                  {userEmail}
-                </Typography>
-              ) : null}
+              <Typography sx={{ color: "text.secondary", fontSize: 11.5 }}>
+                ID usuario: {userId || "-"}
+              </Typography>
+              <Typography sx={{ color: "text.secondary", fontSize: 11.5 }}>
+                Sucursales: {userBranches?.length || 0}
+              </Typography>
             </Box>
           </Stack>
         </Box>
@@ -652,7 +790,7 @@ const userEmail = "";
         <Divider />
 
         <MenuItem onClick={() => setUserMenuAnchor(null)}>
-          <AccountCircleRoundedIcon sx={{ mr: 1.2, fontSize: 19 }} />
+          <AccountCircleRoundedIcon sx={{ mr: 1.2, fontSize: 18 }} />
           Mi perfil
         </MenuItem>
 
@@ -662,7 +800,7 @@ const userEmail = "";
             setThemeMode(themeMode === "light" ? "dark" : "light");
           }}
         >
-          <DarkModeRoundedIcon sx={{ mr: 1.2, fontSize: 19 }} />
+          <DarkModeRoundedIcon sx={{ mr: 1.2, fontSize: 18 }} />
           {themeMode === "dark" ? "Modo claro" : "Modo oscuro"}
         </MenuItem>
 
@@ -690,7 +828,7 @@ const userEmail = "";
             fontWeight: 800,
           }}
         >
-          <LogoutRoundedIcon sx={{ mr: 1.2, fontSize: 19 }} />
+          <LogoutRoundedIcon sx={{ mr: 1.2, fontSize: 18 }} />
           Cerrar sesión
         </MenuItem>
       </Menu>
