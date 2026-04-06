@@ -61,6 +61,7 @@ import MaritalStatusPage from "./pages/MaritalStatusPage";
 import CustomerAddGpt from "./components/Customer/CustomerAddGpt";
 import LoanAdd from "./components/LoanAddGpt";
 import RibbonMenu from "./components/RibbonMenu";
+import ApprovalInbox from "./components/ApprovalInbox";
 
 function PageContainer({ children }) {
   return (
@@ -450,6 +451,15 @@ function AppRoutes({ themeMode, setThemeMode }) {
           element={
             <PageContainer>
               <UserAdd />
+            </PageContainer>
+          }
+        />
+
+        <Route
+          path="/bandeja-de-aprobacion"
+          element={
+            <PageContainer>
+              <ApprovalInbox />
             </PageContainer>
           }
         />

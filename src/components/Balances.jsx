@@ -81,79 +81,77 @@ const CustomerBalanceViewer = () => {
     setStmtLoan(null);
   }, []);
 
-
   // ✅ Modal crédito
-const [creditModalOpen, setCreditModalOpen] = useState(false);
-const [selectedCredit, setSelectedCredit] = useState(null);
+  const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [selectedCredit, setSelectedCredit] = useState(null);
 
-const openCreditModal = useCallback((row) => {
-  // row = data del nodo (customer.data)
-  if (!row?.loan) return;
+  const openCreditModal = useCallback((row) => {
+    // row = data del nodo (customer.data)
+    if (!row?.loan) return;
 
-  setSelectedCredit({
-    loan_id: row.loan,
-    id: row.loan, // por compatibilidad con LoanDetailsModal
-    customer_name: row.name,
-    identification: row.identification,
-  });
-  setCreditModalOpen(true);
-}, []);
+    setSelectedCredit({
+      loan_id: row.loan,
+      id: row.loan, // por compatibilidad con LoanDetailsModal
+      customer_name: row.name,
+      identification: row.identification,
+    });
+    setCreditModalOpen(true);
+  }, []);
 
-const closeCreditModal = useCallback(() => {
-  setCreditModalOpen(false);
-  setSelectedCredit(null);
-}, []);
+  const closeCreditModal = useCallback(() => {
+    setCreditModalOpen(false);
+    setSelectedCredit(null);
+  }, []);
 
+  const loanBody = useCallback(
+    (node) => {
+      const isCustomerRow = !!node?.leaf && !!node?.data?.loan;
+      if (!isCustomerRow) return node?.data?.loan || "";
 
-const loanBody = useCallback(
-  (node) => {
-    const isCustomerRow = !!node?.leaf && !!node?.data?.loan;
-    if (!isCustomerRow) return node?.data?.loan || "";
-
-    return (
-      <Tooltip title="Ver detalle del crédito" arrow>
-        <Button
-          variant="text"
-          size="small"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            openCreditModal(node.data);
-          }}
-          startIcon={<VisibilityOutlinedIcon sx={{ fontSize: 16 }} />}
-          sx={{
-            p: 0,
-            minWidth: 0,
-            textTransform: "none",
-            fontWeight: 900,
-            fontSize: 13,
-            color: BAC.blue,
-            borderRadius: 2,
-            justifyContent: "flex-start",
-            "& .MuiButton-startIcon": {
-              mr: 0.5,
-            },
-            "&:hover": {
-              bgcolor: "transparent",
-              color: BAC.blue2,
-              textDecoration: "underline",
-            },
-          }}
-        >
-          {node.data.loan}
-        </Button>
-      </Tooltip>
-    );
-  },
-  [openCreditModal]
-);
+      return (
+        <Tooltip title="Ver detalle del crédito" arrow>
+          <Button
+            variant="text"
+            size="small"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openCreditModal(node.data);
+            }}
+            startIcon={<VisibilityOutlinedIcon sx={{ fontSize: 16 }} />}
+            sx={{
+              p: 0,
+              minWidth: 0,
+              textTransform: "none",
+              fontWeight: 900,
+              fontSize: 13,
+              color: BAC.blue,
+              borderRadius: 2,
+              justifyContent: "flex-start",
+              "& .MuiButton-startIcon": {
+                mr: 0.5,
+              },
+              "&:hover": {
+                bgcolor: "transparent",
+                color: BAC.blue2,
+                textDecoration: "underline",
+              },
+            }}
+          >
+            {node.data.loan}
+          </Button>
+        </Tooltip>
+      );
+    },
+    [openCreditModal],
+  );
 
   const daysRange = 30;
 
   const allDates = useMemo(() => {
     const today = dayjs();
     return Array.from({ length: daysRange }, (_, i) =>
-      today.subtract(daysRange - 1 - i, "day").format("YYYY-MM-DD")
+      today.subtract(daysRange - 1 - i, "day").format("YYYY-MM-DD"),
     );
   }, []);
 
@@ -192,7 +190,7 @@ const loanBody = useCallback(
         acc.overdue += Number(c.overdue_capital || 0);
         return acc;
       },
-      { capital: 0, interest: 0, defaulted: 0, overdue: 0 }
+      { capital: 0, interest: 0, defaulted: 0, overdue: 0 },
     );
 
   const buildExpandedAll = useCallback((branchNodes) => {
@@ -216,9 +214,17 @@ const loanBody = useCallback(
       if (selectedVendor) params.vendor_id = selectedVendor;
 
       try {
-        const res = await API.get(`${API_URL}/api/balances/vendors-balance`, { params });
+        const res = await API.get(`${API_URL}/api/balances/vendors-balance`, {
+          params,
+        });
 
-        let grand = { capital: 0, interest: 0, defaulted: 0, overdue: 0, count: 0 };
+        let grand = {
+          capital: 0,
+          interest: 0,
+          defaulted: 0,
+          overdue: 0,
+          count: 0,
+        };
 
         const branchNodes = (res.data?.data || []).map((branch) => {
           const vendorNodes = (branch.vendors || []).map((vendor) => {
@@ -271,7 +277,9 @@ const loanBody = useCallback(
             };
           });
 
-          const allCustomers = (branch.vendors || []).flatMap((v) => v.customers || []);
+          const allCustomers = (branch.vendors || []).flatMap(
+            (v) => v.customers || [],
+          );
           const totals = calculateTotals(allCustomers);
 
           return {
@@ -314,7 +322,7 @@ const loanBody = useCallback(
         setLoading(false);
       }
     },
-    [balanceType, selectedBranch, selectedVendor, search, buildExpandedAll]
+    [balanceType, selectedBranch, selectedVendor, search, buildExpandedAll],
   );
 
   useEffect(() => {
@@ -373,26 +381,25 @@ const loanBody = useCallback(
 
   // KPI Card pequeña
   const Kpi = ({ label, value }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      border: `1px solid ${BAC.border}`,
-      borderRadius: 2,
-      px: 2,
-      py: 1,
-      minWidth: 150,
-      bgcolor: "#fff",
-    }}
-  >
-    <Typography sx={{ fontSize: 11, fontWeight: 700, color: BAC.sub }}>
-      {label}
-    </Typography>
-    <Typography sx={{ fontSize: 15, fontWeight: 900, lineHeight: 1.1 }}>
-      {value}
-    </Typography>
-  </Paper>
-);
-  
+    <Paper
+      elevation={0}
+      sx={{
+        border: `1px solid ${BAC.border}`,
+        borderRadius: 2,
+        px: 2,
+        py: 1,
+        minWidth: 150,
+        bgcolor: "#fff",
+      }}
+    >
+      <Typography sx={{ fontSize: 11, fontWeight: 700, color: BAC.sub }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 900, lineHeight: 1.1 }}>
+        {value}
+      </Typography>
+    </Paper>
+  );
 
   return (
     <Box sx={{ p: 2, bgcolor: BAC.bg, minHeight: "100vh" }}>
@@ -408,20 +415,30 @@ const loanBody = useCallback(
           color: "#fff",
         }}
       >
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center" justifyContent="space-between">
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Box>
             <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
               Consulta de Saldos por Cliente
             </Typography>
             <Typography sx={{ opacity: 0.9, fontSize: 13 }}>
-              Corte: {dayjs(date).format("DD/MM/YYYY")} · Tipo: {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}
+              Corte: {dayjs(date).format("DD/MM/YYYY")} · Tipo:{" "}
+              {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}
             </Typography>
           </Box>
 
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip
               label={`Clientes: ${globalTotals.count}`}
-              sx={{ bgcolor: "rgba(255,255,255,.18)", color: "#fff", fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,.18)",
+                color: "#fff",
+                fontWeight: 800,
+              }}
             />
             <Tooltip title="Exportar a Excel">
               <Button
@@ -455,14 +472,26 @@ const loanBody = useCallback(
           bgcolor: "#fff",
         }}
       >
-        <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
-        {/* KPIs */}
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ mb: 2, flexWrap: "wrap" }}>
-          <Kpi label="Saldo Capital" value={money(globalTotals.capital)} />
-          <Kpi label="Saldo Interés" value={money(globalTotals.interest)} />
-          <Kpi label="Capital en Mora" value={money(globalTotals.defaulted)} />
-          <Kpi label="Capital Vencido" value={money(globalTotals.overdue)} />
-        </Stack>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          justifyContent="center"
+        >
+          {/* KPIs */}
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1.5}
+            sx={{ mb: 2, flexWrap: "wrap" }}
+          >
+            <Kpi label="Saldo Capital" value={money(globalTotals.capital)} />
+            <Kpi label="Saldo Interés" value={money(globalTotals.interest)} />
+            <Kpi
+              label="Capital en Mora"
+              value={money(globalTotals.defaulted)}
+            />
+            <Kpi label="Capital Vencido" value={money(globalTotals.overdue)} />
+          </Stack>
 
           <IconButton
             onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
@@ -499,7 +528,9 @@ const loanBody = useCallback(
           </Stack>
 
           <IconButton
-            onClick={() => setCurrentIndex((i) => Math.min(allDates.length - 1, i + 1))}
+            onClick={() =>
+              setCurrentIndex((i) => Math.min(allDates.length - 1, i + 1))
+            }
             disabled={currentIndex >= allDates.length - 1}
             sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}
           >
@@ -507,8 +538,6 @@ const loanBody = useCallback(
           </IconButton>
         </Stack>
       </Paper>
-
-   
 
       {/* Filtros */}
       <Paper
@@ -521,7 +550,11 @@ const loanBody = useCallback(
           bgcolor: "#fff",
         }}
       >
-        <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center">
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          alignItems="center"
+        >
           <TextField
             label="Fecha"
             type="date"
@@ -538,12 +571,20 @@ const loanBody = useCallback(
 
           <FormControl sx={{ minWidth: 220 }}>
             <InputLabel>Sucursal</InputLabel>
-            <BranchSelect size="small" value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} />
+            <BranchSelect
+              size="small"
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+            />
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Vendedor</InputLabel>
-            <Select value={selectedVendor} label="Vendedor" onChange={(e) => setSelectedVendor(e.target.value)}>
+            <Select
+              value={selectedVendor}
+              label="Vendedor"
+              onChange={(e) => setSelectedVendor(e.target.value)}
+            >
               <MenuItem value="">Todos</MenuItem>
               {vendors.map((v) => (
                 <MenuItem key={v.id} value={v.id}>
@@ -553,49 +594,47 @@ const loanBody = useCallback(
             </Select>
           </FormControl>
 
-      
-
           <FormControl size="small" sx={{ minWidth: 190 }}>
             <InputLabel>Tipo de Saldo</InputLabel>
-            <Select value={balanceType} label="Tipo de Saldo" onChange={(e) => setBalanceType(e.target.value)}>
+            <Select
+              value={balanceType}
+              label="Tipo de Saldo"
+              onChange={(e) => setBalanceType(e.target.value)}
+            >
               <MenuItem value="INITIAL">Saldo Inicial</MenuItem>
               <MenuItem value="FINAL">Saldo Final</MenuItem>
             </Select>
           </FormControl>
 
-   
-            <Button
-              variant="contained"
-              onClick={() => fetchData(date)}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={18} /> : null}
-              sx={{
-                bgcolor: BAC.blue,
-                "&:hover": { bgcolor: BAC.blue2 },
-                borderRadius: 2,
-                fontWeight: 900,
-                textTransform: "none",
-              }}
-            >
-              Consultar
-            </Button>
-            
-           <TextField
-              label="Buscar Cliente"
-              size="small"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{ minWidth: 400 }}
-            />
-    
-         
-        </Stack>
-                 
-              <Typography sx={{ mt: 1.5, fontSize: 12, color: BAC.sub }}>
-                Tip: escribe parte del nombre o cédula. La tabla se recalcula al consultar.
-                 <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
-     
+          <Button
+            variant="contained"
+            onClick={() => fetchData(date)}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={18} /> : null}
+            sx={{
+              bgcolor: BAC.blue,
+              "&:hover": { bgcolor: BAC.blue2 },
+              borderRadius: 2,
+              fontWeight: 900,
+              textTransform: "none",
+            }}
+          >
+            Consultar
+          </Button>
 
+          <TextField
+            label="Buscar Cliente"
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ minWidth: 400 }}
+          />
+        </Stack>
+
+        <Typography sx={{ mt: 1.5, fontSize: 12, color: BAC.sub }}>
+          Tip: escribe parte del nombre o cédula. La tabla se recalcula al
+          consultar.
+          <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
             <Button
               variant="text"
               onClick={() => setExpandedKeys({})}
@@ -612,10 +651,8 @@ const loanBody = useCallback(
               Expandir
             </Button>
           </Stack>
-              </Typography>
-        <Divider sx={{ mt: 1 }} />       
-
-          
+        </Typography>
+        <Divider sx={{ mt: 1 }} />
       </Paper>
 
       {/* Tabla */}
@@ -639,13 +676,42 @@ const loanBody = useCallback(
           rowHover
           className="p-treetable-hoverable-rows bac-compact"
         >
-          <Column field="name" header="Cliente / Grupo" expander style={{ width: "28%" }} />
-          <Column field="identification" header="Identificación" style={{ width: "14%" }} />
-          <Column header="Crédito No." body={loanBody} style={{ width: "10%" }} />
-          <Column field="capital" header="Saldo Capital" style={{ width: "12%" }} />
-          <Column field="interest" header="Saldo Interés" style={{ width: "12%" }} />
-          <Column field="defaulted" header="Capital en Mora" style={{ width: "12%" }} />
-          <Column field="overdue" header="Capital Vencido" style={{ width: "12%" }} />
+          <Column
+            field="name"
+            header="Cliente / Grupo"
+            expander
+            style={{ width: "28%" }}
+          />
+          <Column
+            field="identification"
+            header="Identificación"
+            style={{ width: "14%" }}
+          />
+          <Column
+            header="Crédito No."
+            body={loanBody}
+            style={{ width: "10%" }}
+          />
+          <Column
+            field="capital"
+            header="Saldo Capital"
+            style={{ width: "12%" }}
+          />
+          <Column
+            field="interest"
+            header="Saldo Interés"
+            style={{ width: "12%" }}
+          />
+          <Column
+            field="defaulted"
+            header="Capital en Mora"
+            style={{ width: "12%" }}
+          />
+          <Column
+            field="overdue"
+            header="Capital Vencido"
+            style={{ width: "12%" }}
+          />
           <Column field="count" header="# Clientes" style={{ width: "8%" }} />
         </TreeTable>
       </Paper>

@@ -87,6 +87,12 @@ const menuItems = {
       group: "Créditos",
     },
     {
+      label: "Bandeja de aprobación",
+      iconName: "FaInbox",
+      to: "/bandeja-de-aprobacion",
+      group: "Aprobaciones",
+    },
+    {
       label: "Pagos",
       iconName: "FaCashRegister",
       to: "/pagos",

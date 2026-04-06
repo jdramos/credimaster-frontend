@@ -61,6 +61,7 @@ import today from "../functions/today";
 import LoanInfo from "./LoanInfo";
 import LoanDocuments from "./Loan/LoanDocuments";
 import CustomerFinancialEvaluationTab from "./Customer/CustomerFinancialEvaluationTab";
+import LoanModificationSection from "./Loan/LoanModificationSection";
 
 const urlGuarantee = process.env.REACT_APP_API_BASE_URL + "/api/guarantees";
 
@@ -195,7 +196,7 @@ const LoanDetailsModal = ({
 
   const totalGuaranteeValue = useMemo(
     () => guarantees.reduce((sum, item) => sum + (Number(item.value) || 0), 0),
-    [guarantees]
+    [guarantees],
   );
 
   const loadApprovals = async () => {
@@ -272,7 +273,7 @@ const LoanDetailsModal = ({
           totalFee: 0,
           totalInsurance: 0,
           totalOtherCharges: 0,
-        }
+        },
       );
 
       setTotalPaymentAmount(totals.totalPaymentAmount);
@@ -291,7 +292,7 @@ const LoanDetailsModal = ({
   };
 
   const hasUserApproved = approvals.some(
-    (a) => Number(a.approver_id) === Number(user) && a.status === "APPROVED"
+    (a) => Number(a.approver_id) === Number(user) && a.status === "APPROVED",
   );
 
   const isReadOnly =
@@ -300,7 +301,7 @@ const LoanDetailsModal = ({
 
   const canEditFinancialEvaluation = useMemo(() => {
     return approvals.some(
-      (a) => Number(a.approver_id) === Number(user) && a.status === "PENDING"
+      (a) => Number(a.approver_id) === Number(user) && a.status === "PENDING",
     );
   }, [approvals, user]);
 
@@ -327,7 +328,10 @@ const LoanDetailsModal = ({
     if (editableAmount <= 0) {
       setAmountError("Debe ser mayor a 0");
       valid = false;
-    } else if (editableAmount > totalGuaranteeValue && totalGuaranteeValue > 0) {
+    } else if (
+      editableAmount > totalGuaranteeValue &&
+      totalGuaranteeValue > 0
+    ) {
       setAmountError("No debe exceder el valor total de garantías");
       valid = false;
     } else {
@@ -388,7 +392,9 @@ const LoanDetailsModal = ({
     const approvalsNow = resApprovals.data || [];
     setApprovals(approvalsNow);
 
-    const pendingCount = approvalsNow.filter((a) => a.status === "PENDING").length;
+    const pendingCount = approvalsNow.filter(
+      (a) => a.status === "PENDING",
+    ).length;
     const anyRejected = approvalsNow.some((a) => a.status === "REJECTED");
     const allApproved =
       approvalsNow.length > 0 &&
@@ -455,7 +461,9 @@ const LoanDetailsModal = ({
       await API.put(`/api/approvals/${approvalId}`, { status: "REJECTED" });
 
       const approvalsNow = await refreshApprovalState();
-      const pendingCount = approvalsNow.filter((a) => a.status === "PENDING").length;
+      const pendingCount = approvalsNow.filter(
+        (a) => a.status === "PENDING",
+      ).length;
 
       onLoanUpdated?.({
         id: loan.id,
@@ -490,8 +498,8 @@ const LoanDetailsModal = ({
   const globalStatusUI = anyRejectedUI
     ? "RECHAZADO"
     : allApprovedUI
-    ? "APROBADO"
-    : "PENDIENTE";
+      ? "APROBADO"
+      : "PENDIENTE";
 
   const financialEvaluation = compliance?.financial_evaluation || null;
 
@@ -504,10 +512,16 @@ const LoanDetailsModal = ({
               <AccountBalanceIcon />
             </Avatar>
             <Box>
-              <Typography variant="subtitle2" sx={{ opacity: 0.9, lineHeight: 1.1 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ opacity: 0.9, lineHeight: 1.1 }}
+              >
                 Gestión de Crédito
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 800, lineHeight: 1.1 }}
+              >
                 Detalle de Préstamo
               </Typography>
             </Box>
@@ -530,14 +544,24 @@ const LoanDetailsModal = ({
 
         <DialogContent sx={{ bgcolor: (t) => t.palette.grey[50] }}>
           {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" height={160}>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              height={160}
+            >
               <CircularProgress />
             </Box>
           ) : !loan ? (
-            <Alert severity="error">Error al cargar los detalles del préstamo.</Alert>
+            <Alert severity="error">
+              Error al cargar los detalles del préstamo.
+            </Alert>
           ) : (
             <>
-              <Card elevation={0} sx={{ mb: 2, border: "1px solid", borderColor: "divider" }}>
+              <Card
+                elevation={0}
+                sx={{ mb: 2, border: "1px solid", borderColor: "divider" }}
+              >
                 <CardContent sx={{ py: 1.5 }}>
                   <Stack
                     direction={{ xs: "column", md: "row" }}
@@ -545,7 +569,12 @@ const LoanDetailsModal = ({
                     alignItems={{ md: "center" }}
                     justifyContent="space-between"
                   >
-                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
+                      flexWrap="wrap"
+                    >
                       <Chip
                         icon={<MonetizationOnIcon fontSize="small" />}
                         label={`Monto: C$ ${formatMoney(editableAmount)}`}
@@ -569,8 +598,8 @@ const LoanDetailsModal = ({
                           globalStatusUI === "APROBADO"
                             ? "success"
                             : globalStatusUI === "RECHAZADO"
-                            ? "error"
-                            : "warning"
+                              ? "error"
+                              : "warning"
                         }
                         size="small"
                       />
@@ -594,7 +623,9 @@ const LoanDetailsModal = ({
                     </Stack>
 
                     <Muted variant="body2">
-                      {loan.branch_name ? `Sucursal: ${loan.branch_name}` : "Sucursal no asignada"}
+                      {loan.branch_name
+                        ? `Sucursal: ${loan.branch_name}`
+                        : "Sucursal no asignada"}
                     </Muted>
                   </Stack>
                 </CardContent>
@@ -602,30 +633,49 @@ const LoanDetailsModal = ({
 
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
-                  <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <Card
+                    elevation={0}
+                    sx={{ border: "1px solid", borderColor: "divider" }}
+                  >
                     <CardContent>
                       <SectionTitle variant="subtitle1">Solicitud</SectionTitle>
                       <Grid container spacing={1.25}>
                         <Grid item xs={12} sm={6}>
                           <Muted variant="caption">Cliente</Muted>
-                          <Typography sx={{ fontWeight: 700 }}>{loan.customer_name}</Typography>
-                          <Muted variant="body2">{loan.customer_identification}</Muted>
+                          <Typography sx={{ fontWeight: 700 }}>
+                            {loan.customer_name}
+                          </Typography>
+                          <Muted variant="body2">
+                            {loan.customer_identification}
+                          </Muted>
                         </Grid>
 
                         <Grid item xs={12} sm={6}>
                           <Muted variant="caption">Sucursal / Promotor</Muted>
                           <Typography sx={{ fontWeight: 700 }}>
-                            {loan.branch_id ?? "N/A"} - {loan.branch_name ?? "No asignado"}
+                            {loan.branch_id ?? "N/A"} -{" "}
+                            {loan.branch_name ?? "No asignado"}
                           </Typography>
                           <Muted variant="body2">
-                            {loan.promoter_id ?? "N/A"} - {loan.promoter_name ?? "No asignado"}
+                            {loan.promoter_id ?? "N/A"} -{" "}
+                            {loan.promoter_name ?? "No asignado"}
                           </Muted>
                         </Grid>
 
                         <Grid item xs={12}>
                           <Divider sx={{ my: 1.5 }} />
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Avatar sx={{ width: 28, height: 28, bgcolor: "primary.light" }}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Avatar
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                bgcolor: "primary.light",
+                              }}
+                            >
                               <PersonIcon fontSize="small" />
                             </Avatar>
                             <Typography sx={{ fontWeight: 700 }}>
@@ -642,9 +692,14 @@ const LoanDetailsModal = ({
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                  <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <Card
+                    elevation={0}
+                    sx={{ border: "1px solid", borderColor: "divider" }}
+                  >
                     <CardContent>
-                      <SectionTitle variant="subtitle1">Condiciones</SectionTitle>
+                      <SectionTitle variant="subtitle1">
+                        Condiciones
+                      </SectionTitle>
 
                       <Grid container spacing={1.25} alignItems="center">
                         <Grid item xs={12} sm={4}>
@@ -679,7 +734,9 @@ const LoanDetailsModal = ({
                         </Grid>
                         <Grid item xs={12} sm={8}>
                           {isReadOnly ? (
-                            <Typography sx={{ fontWeight: 700 }}>{editableTerm}</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>
+                              {editableTerm}
+                            </Typography>
                           ) : (
                             <NumericFormat
                               customInput={TextField}
@@ -732,7 +789,8 @@ const LoanDetailsModal = ({
                             gap={1}
                           >
                             <Muted variant="body2">
-                              Frecuencia: <b>{loan.frecuency_name ?? "No especificada"}</b>
+                              Frecuencia:{" "}
+                              <b>{loan.frecuency_name ?? "No especificada"}</b>
                             </Muted>
                             <Muted variant="body2">
                               Vence:{" "}
@@ -750,7 +808,8 @@ const LoanDetailsModal = ({
                             Garantías
                           </SectionTitle>
                           <Muted variant="body2" sx={{ mb: 1 }}>
-                            Total garantías: <b>C$ {formatMoney(totalGuaranteeValue)}</b>
+                            Total garantías:{" "}
+                            <b>C$ {formatMoney(totalGuaranteeValue)}</b>
                           </Muted>
 
                           <GuarenteesGet
@@ -777,7 +836,8 @@ const LoanDetailsModal = ({
 
                       setSnackbar({
                         open: true,
-                        message: "Evaluación financiera actualizada correctamente.",
+                        message:
+                          "Evaluación financiera actualizada correctamente.",
                         severity: "success",
                       });
                     }}
@@ -792,7 +852,10 @@ const LoanDetailsModal = ({
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <Card
+                    elevation={0}
+                    sx={{ border: "1px solid", borderColor: "divider" }}
+                  >
                     <CardContent>
                       <Stack
                         direction={{ xs: "column", sm: "row" }}
@@ -827,7 +890,8 @@ const LoanDetailsModal = ({
                         </Box>
                       ) : !compliance ? (
                         <Alert severity="warning" sx={{ mt: 2 }}>
-                          No se pudo verificar el cumplimiento normativo del crédito.
+                          No se pudo verificar el cumplimiento normativo del
+                          crédito.
                         </Alert>
                       ) : (
                         <>
@@ -917,7 +981,12 @@ const LoanDetailsModal = ({
 
                           {!!financialEvaluation && (
                             <Box sx={{ mt: 2 }}>
-                              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                flexWrap="wrap"
+                                useFlexGap
+                              >
                                 <Chip
                                   icon={<TrendingUpIcon />}
                                   label={`Score: ${financialEvaluation.final_score ?? 0}`}
@@ -931,9 +1000,10 @@ const LoanDetailsModal = ({
                                   color={
                                     financialEvaluation.risk_level === "BAJO"
                                       ? "success"
-                                      : financialEvaluation.risk_level === "MEDIO"
-                                      ? "warning"
-                                      : "error"
+                                      : financialEvaluation.risk_level ===
+                                          "MEDIO"
+                                        ? "warning"
+                                        : "error"
                                   }
                                 />
                                 <Chip
@@ -943,7 +1013,8 @@ const LoanDetailsModal = ({
                                 />
                                 <Chip
                                   label={`Referencias: ${
-                                    financialEvaluation.references_result ?? "N/A"
+                                    financialEvaluation.references_result ??
+                                    "N/A"
                                   }`}
                                   size="small"
                                   variant="outlined"
@@ -952,20 +1023,23 @@ const LoanDetailsModal = ({
                             </Box>
                           )}
 
-                          {!isComplianceValid && complianceMissingItems.length > 0 && (
-                            <Alert severity="error" sx={{ mt: 2 }}>
-                              <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
-                                No se puede aprobar este crédito todavía.
-                              </Typography>
-                              <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                                {complianceMissingItems.map((item, index) => (
-                                  <li key={index}>
-                                    <Typography variant="body2">{item}</Typography>
-                                  </li>
-                                ))}
-                              </Box>
-                            </Alert>
-                          )}
+                          {!isComplianceValid &&
+                            complianceMissingItems.length > 0 && (
+                              <Alert severity="error" sx={{ mt: 2 }}>
+                                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>
+                                  No se puede aprobar este crédito todavía.
+                                </Typography>
+                                <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                                  {complianceMissingItems.map((item, index) => (
+                                    <li key={index}>
+                                      <Typography variant="body2">
+                                        {item}
+                                      </Typography>
+                                    </li>
+                                  ))}
+                                </Box>
+                              </Alert>
+                            )}
                         </>
                       )}
                     </CardContent>
@@ -973,7 +1047,10 @@ const LoanDetailsModal = ({
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider" }}>
+                  <Card
+                    elevation={0}
+                    sx={{ border: "1px solid", borderColor: "divider" }}
+                  >
                     <CardContent>
                       <Stack
                         direction="row"
@@ -982,7 +1059,9 @@ const LoanDetailsModal = ({
                         flexWrap="wrap"
                         gap={1}
                       >
-                        <SectionTitle variant="subtitle1">Aprobaciones</SectionTitle>
+                        <SectionTitle variant="subtitle1">
+                          Aprobaciones
+                        </SectionTitle>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Chip
                             label={
@@ -994,12 +1073,21 @@ const LoanDetailsModal = ({
                             color={pendingCountUI > 0 ? "warning" : "success"}
                             variant="outlined"
                           />
-                          <Chip label={`Total: ${approvals.length}`} size="small" variant="outlined" />
+                          <Chip
+                            label={`Total: ${approvals.length}`}
+                            size="small"
+                            variant="outlined"
+                          />
                         </Stack>
                       </Stack>
 
                       {loadingApprovals ? (
-                        <Box display="flex" justifyContent="center" alignItems="center" height={70}>
+                        <Box
+                          display="flex"
+                          justifyContent="center"
+                          alignItems="center"
+                          height={70}
+                        >
                           <CircularProgress size={26} />
                         </Box>
                       ) : approvals.length === 0 ? (
@@ -1007,14 +1095,27 @@ const LoanDetailsModal = ({
                           No hay aprobaciones registradas.
                         </Alert>
                       ) : (
-                        <TableContainer component={Paper} variant="outlined" sx={{ mt: 1 }}>
+                        <TableContainer
+                          component={Paper}
+                          variant="outlined"
+                          sx={{ mt: 1 }}
+                        >
                           <Table size="small">
                             <TableHead>
                               <TableRow sx={{ bgcolor: "grey.100" }}>
-                                <TableCell sx={{ fontWeight: 800 }}>Aprobador</TableCell>
-                                <TableCell sx={{ fontWeight: 800 }}>Estado</TableCell>
-                                <TableCell sx={{ fontWeight: 800 }}>Fecha</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 800 }}>
+                                <TableCell sx={{ fontWeight: 800 }}>
+                                  Aprobador
+                                </TableCell>
+                                <TableCell sx={{ fontWeight: 800 }}>
+                                  Estado
+                                </TableCell>
+                                <TableCell sx={{ fontWeight: 800 }}>
+                                  Fecha
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{ fontWeight: 800 }}
+                                >
                                   Acciones
                                 </TableCell>
                               </TableRow>
@@ -1029,8 +1130,8 @@ const LoanDetailsModal = ({
                                 const approveTooltip = !isFormConsistentlyValid
                                   ? "Corrige monto, plazo o tasa"
                                   : !isComplianceValid
-                                  ? "Faltan requisitos de cumplimiento CONAMI"
-                                  : "Aprobar solicitud";
+                                    ? "Faltan requisitos de cumplimiento CONAMI"
+                                    : "Aprobar solicitud";
 
                                 return (
                                   <TableRow key={idx} hover>
@@ -1038,7 +1139,9 @@ const LoanDetailsModal = ({
                                       <Typography sx={{ fontWeight: 700 }}>
                                         {a.full_name}
                                       </Typography>
-                                      <Muted variant="caption">ID: {a.approver_id}</Muted>
+                                      <Muted variant="caption">
+                                        ID: {a.approver_id}
+                                      </Muted>
                                     </TableCell>
 
                                     <TableCell>
@@ -1047,13 +1150,19 @@ const LoanDetailsModal = ({
 
                                     <TableCell>
                                       {a.updated_at
-                                        ? dayjs(a.updated_at).format("DD/MM/YYYY HH:mm")
+                                        ? dayjs(a.updated_at).format(
+                                            "DD/MM/YYYY HH:mm",
+                                          )
                                         : "—"}
                                     </TableCell>
 
                                     <TableCell align="right">
                                       {canAct ? (
-                                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                        <Stack
+                                          direction="row"
+                                          spacing={1}
+                                          justifyContent="flex-end"
+                                        >
                                           <Tooltip title={approveTooltip} arrow>
                                             <span>
                                               <IconButton
@@ -1074,11 +1183,16 @@ const LoanDetailsModal = ({
                                             </span>
                                           </Tooltip>
 
-                                          <Tooltip title="Rechazar solicitud" arrow>
+                                          <Tooltip
+                                            title="Rechazar solicitud"
+                                            arrow
+                                          >
                                             <span>
                                               <IconButton
                                                 color="error"
-                                                onClick={() => handleReject(a.id)}
+                                                onClick={() =>
+                                                  handleReject(a.id)
+                                                }
                                                 disabled={actionLoading}
                                                 size="small"
                                               >
@@ -1111,7 +1225,11 @@ const LoanDetailsModal = ({
                         <SectionTitle variant="subtitle1" sx={{ mb: 0 }}>
                           Tabla de amortización
                         </SectionTitle>
-                        <Button variant="outlined" onClick={toggleAmortization} size="small">
+                        <Button
+                          variant="outlined"
+                          onClick={toggleAmortization}
+                          size="small"
+                        >
                           {showAmortization ? "Ocultar" : "Mostrar"}
                         </Button>
                       </Stack>
@@ -1158,7 +1276,12 @@ const LoanDetailsModal = ({
           </Alert>
         </Snackbar>
 
-        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogContent sx={{ pt: 3 }}>
             <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
               Confirmar aprobación
@@ -1166,7 +1289,8 @@ const LoanDetailsModal = ({
 
             {!isComplianceValid && (
               <Alert severity="error" sx={{ mb: 2 }}>
-                No puedes aprobar este crédito porque faltan requisitos regulatorios.
+                No puedes aprobar este crédito porque faltan requisitos
+                regulatorios.
               </Alert>
             )}
 
@@ -1238,10 +1362,14 @@ const LoanDetailsModal = ({
             {!!financialEvaluation?.analyst_comment && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  <CommentIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
+                  <CommentIcon
+                    sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }}
+                  />
                   Comentario del analista
                 </Typography>
-                <Typography variant="body2">{financialEvaluation.analyst_comment}</Typography>
+                <Typography variant="body2">
+                  {financialEvaluation.analyst_comment}
+                </Typography>
               </Box>
             )}
           </DialogContent>
@@ -1261,12 +1389,15 @@ const LoanDetailsModal = ({
                 }
               }}
               variant="contained"
-              disabled={!isFormConsistentlyValid || !isComplianceValid || actionLoading}
+              disabled={
+                !isFormConsistentlyValid || !isComplianceValid || actionLoading
+              }
             >
               Aprobar
             </Button>
           </DialogActions>
         </Dialog>
+        <LoanModificationSection loan={loan} user={user} />
       </Dialog>
     </>
   );

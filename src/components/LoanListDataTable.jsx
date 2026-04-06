@@ -40,6 +40,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import LoanModificationStatusChip from "./Loan/LoanModificationStatusChip";
 
 const API_URL = process.env.REACT_APP_API_BASE_URL;
 const token = process.env.REACT_APP_API_TOKEN;
@@ -696,6 +697,8 @@ function LoanListDataTable({
               </TableCell>
             </TableRow>
           )}
+
+          <LoanModificationStatusChip />
         </TableBody>
       </Table>
 
