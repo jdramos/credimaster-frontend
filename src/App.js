@@ -62,6 +62,7 @@ import CustomerAddGpt from "./components/Customer/CustomerAddGpt";
 import LoanAdd from "./components/LoanAddGpt";
 import RibbonMenu from "./components/RibbonMenu";
 import ApprovalInbox from "./components/ApprovalInbox";
+import CustomerClaimsList from "./components/Claims/CustomerClaimsList";
 
 function PageContainer({ children }) {
   return (
@@ -460,6 +461,15 @@ function AppRoutes({ themeMode, setThemeMode }) {
           element={
             <PageContainer>
               <ApprovalInbox />
+            </PageContainer>
+          }
+        />
+
+        <Route
+          path="/reclamos"
+          element={
+            <PageContainer>
+              <CustomerClaimsList />
             </PageContainer>
           }
         />

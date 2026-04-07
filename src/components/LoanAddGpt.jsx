@@ -83,6 +83,7 @@ const LoanAdd = () => {
 
   const [loan, setLoan] = useState({
     customer_id: "",
+    customer_identification: "",
     requestDate: today(),
     branch_id: "",
     vendor_id: "",
@@ -600,7 +601,7 @@ const LoanAdd = () => {
         >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Solicitud de préstamo
+              Solicitud de préstamos
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
               Complete los datos y verifique amortización, evaluación y

@@ -215,7 +215,8 @@ const LoanAdd = (props) => {
     let valid = true;
 
     if (!data.customer_identification) {
-      errors.customer_identification = "La identificacion del cliente es requerida";
+      errors.customer_identification =
+        "La identificacion del cliente es requerida";
       valid = false;
     }
 
@@ -246,42 +247,66 @@ const LoanAdd = (props) => {
 
     const get = (key) => policies[key]?.policy_value;
 
-    if (get("max_amount") && parseFloat(data.amount) > parseFloat(get("max_amount"))) {
+    if (
+      get("max_amount") &&
+      parseFloat(data.amount) > parseFloat(get("max_amount"))
+    ) {
       errors.amount = `El monto excede el máximo permitido: C$${get("max_amount")}`;
       valid = false;
     }
 
-    if (get("max_interest_rate") && parseFloat(data.interest_rate) * 12 > parseFloat(get("max_interest_rate"))) {
+    if (
+      get("max_interest_rate") &&
+      parseFloat(data.interest_rate) * 12 > parseFloat(get("max_interest_rate"))
+    ) {
       errors.interest_rate = `La tasa anual excede lo permitido: ${get("max_interest_rate")}%`;
       valid = false;
     }
 
-    if (get("max_defaulted_rate") && parseFloat(data.defaulted_rate) > parseFloat(get("max_defaulted_rate"))) {
+    if (
+      get("max_defaulted_rate") &&
+      parseFloat(data.defaulted_rate) > parseFloat(get("max_defaulted_rate"))
+    ) {
       errors.defaulted_rate = `La tasa de mora excede el máximo permitido: ${get("max_defaulted_rate")}%`;
       valid = false;
     }
 
-    if (get("max_term_months") && parseInt(data.term) > parseInt(get("max_term_months"))) {
+    if (
+      get("max_term_months") &&
+      parseInt(data.term) > parseInt(get("max_term_months"))
+    ) {
       errors.term = `El plazo excede el máximo permitido: ${get("max_term_months")} meses`;
       valid = false;
     }
 
-    if (get("min_term_months") && parseInt(data.term) < parseInt(get("min_term_months"))) {
+    if (
+      get("min_term_months") &&
+      parseInt(data.term) < parseInt(get("min_term_months"))
+    ) {
       errors.term = `El plazo es menor al mínimo permitido: ${get("min_term_months")} meses`;
       valid = false;
     }
 
-    if (get("min_amount") && parseFloat(data.amount) < parseFloat(get("min_amount"))) {
+    if (
+      get("min_amount") &&
+      parseFloat(data.amount) < parseFloat(get("min_amount"))
+    ) {
       errors.amount = `El monto es menor al mínimo permitido: C$${get("min_amount")}`;
       valid = false;
     }
 
-    if (get("min_interest_rate") && parseFloat(data.interest_rate) < parseFloat(get("min_interest_rate"))) {
+    if (
+      get("min_interest_rate") &&
+      parseFloat(data.interest_rate) < parseFloat(get("min_interest_rate"))
+    ) {
       errors.interest_rate = `La tasa de interés es menor al mínimo permitido: ${get("min_interest_rate")}%`;
       valid = false;
     }
 
-    if (get("max_late_interest_rate") && parseFloat(data.defaulted_rate) > loan.interest_rate / 4) {
+    if (
+      get("max_late_interest_rate") &&
+      parseFloat(data.defaulted_rate) > loan.interest_rate / 4
+    ) {
       errors.defaulted_rate = `La tasa de mora excede el máximo permitido`;
       valid = false;
     }
@@ -339,7 +364,9 @@ const LoanAdd = (props) => {
     e.preventDefault();
 
     if (loan.approvers.length === 0) {
-      toast.error("No hay aprobadores disponibles para la sucursal seleccionada.");
+      toast.error(
+        "No hay aprobadores disponibles para la sucursal seleccionada.",
+      );
       return;
     }
 
@@ -378,7 +405,9 @@ const LoanAdd = (props) => {
     setLoan({
       ...loan,
       [name]: value,
-      frequency_name: selectedOption ? selectedOption.name : loan.frequency_name,
+      frequency_name: selectedOption
+        ? selectedOption.name
+        : loan.frequency_name,
     });
 
     const newErrors = validateForm({ ...loan, [name]: value });
@@ -389,10 +418,13 @@ const LoanAdd = (props) => {
     if (!loan.customer_identification) return;
     setLoading(true);
     try {
-      const response = await fetch(`${urlGuarantee}/${loan.customer_identification}`, {
-        method: "GET",
-        headers: { Authorization: token },
-      });
+      const response = await fetch(
+        `${urlGuarantee}/${loan.customer_identification}`,
+        {
+          method: "GET",
+          headers: { Authorization: token },
+        },
+      );
       const data = await response.json();
       if (response.ok) {
         const totalValue = data.reduce((sum, item) => sum + item.value, 0);
@@ -419,7 +451,9 @@ const LoanAdd = (props) => {
       const data = await response.json();
       if (response.ok) {
         if (data.length === 0) {
-          toast.error("No hay aprobadores disponibles para la sucursal seleccionada.");
+          toast.error(
+            "No hay aprobadores disponibles para la sucursal seleccionada.",
+          );
         } else {
           setLoan((prevLoan) => ({
             ...prevLoan,
@@ -427,7 +461,9 @@ const LoanAdd = (props) => {
           }));
         }
       } else {
-        toast.error("Error al obtener los aprobadores de la sucursal seleccionada.");
+        toast.error(
+          "Error al obtener los aprobadores de la sucursal seleccionada.",
+        );
       }
     } catch (error) {
       toast.error("Error al obtener los aprobadores: " + error.message);
@@ -436,12 +472,30 @@ const LoanAdd = (props) => {
     }
   };
 
-  const totalPaymentAmount = amortizationTable.reduce((acc, row) => acc + Number(row.paymentAmount ?? 0), 0);
-  const totalPrincipal = amortizationTable.reduce((acc, row) => acc + Number(row.principal ?? 0), 0);
-  const totalInterest = amortizationTable.reduce((acc, row) => acc + Number(row.interest ?? 0), 0);
-  const totalFee = amortizationTable.reduce((acc, row) => acc + Number(row.feeByPayment ?? 0), 0);
-  const totalInsurance = amortizationTable.reduce((acc, row) => acc + Number(row.insuranceByPayment ?? 0), 0);
-  const totalOtherCharges = amortizationTable.reduce((acc, row) => acc + Number(row.otherChargesByPayment ?? 0), 0);
+  const totalPaymentAmount = amortizationTable.reduce(
+    (acc, row) => acc + Number(row.paymentAmount ?? 0),
+    0,
+  );
+  const totalPrincipal = amortizationTable.reduce(
+    (acc, row) => acc + Number(row.principal ?? 0),
+    0,
+  );
+  const totalInterest = amortizationTable.reduce(
+    (acc, row) => acc + Number(row.interest ?? 0),
+    0,
+  );
+  const totalFee = amortizationTable.reduce(
+    (acc, row) => acc + Number(row.feeByPayment ?? 0),
+    0,
+  );
+  const totalInsurance = amortizationTable.reduce(
+    (acc, row) => acc + Number(row.insuranceByPayment ?? 0),
+    0,
+  );
+  const totalOtherCharges = amortizationTable.reduce(
+    (acc, row) => acc + Number(row.otherChargesByPayment ?? 0),
+    0,
+  );
 
   return (
     <Box sx={{ background: BAC.bg, minHeight: "calc(100vh - 64px)", p: 1 }}>
@@ -454,30 +508,44 @@ const LoanAdd = (props) => {
           color: BAC.white,
           background: `linear-gradient(135deg, ${BAC.primary} 0%, ${BAC.primaryDark} 100%)`,
           boxShadow: "0 10px 24px rgba(0,0,0,0.12)",
-		      overflowX: "visible",      // ✅ evita salida horizontal
-			    boxSizing: "border-box",  // ✅
-			    width: "100%",            // ✅
-			    maxWidth: "100%", 
+          overflowX: "visible", // ✅ evita salida horizontal
+          boxSizing: "border-box", // ✅
+          width: "100%", // ✅
+          maxWidth: "100%",
         }}
       >
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={2}
+        >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Solicitud de préstamo
+              Solicitud de préstamosss
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Complete los datos y verifique amortización y garantías.
+              Complete los datos y verifique amortización y garantías.ssssss
             </Typography>
           </Box>
 
           <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
             <Chip
               label={`Garantías: C$ ${Number(guaranteeValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
             <Chip
               label={`Cuota: C$ ${Number(installment?.paymentAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
           </Box>
         </Box>
@@ -506,354 +574,403 @@ const LoanAdd = (props) => {
           <Divider sx={{ my: 2, borderColor: BAC.border }} />
 
           {/* Grid de campos (BAC) */}
-         {/* Grid de campos (BAC) */}
-<Box
-  sx={{
-    display: "grid",
-    gridTemplateColumns: { shrink: true, xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" },
-    alignItems: "start",
-    gap: 2,
-    width: "100%",
-    maxWidth: "100%",
-  }}
->
+          {/* Grid de campos (BAC) */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                shrink: true,
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "repeat(3, 1fr)",
+              },
+              alignItems: "start",
+              gap: 2,
+              width: "100%",
+              maxWidth: "100%",
+            }}
+          >
+            <Box sx={{ ...fieldSx }}>
+              <TextField
+                label="Fecha de solicitud"
+                variant="outlined"
+                type="date"
+                size="small"
+                id="requestDate"
+                name="requestDate"
+                onChange={handleInputChange}
+                value={loan.requestDate}
+                error={!!errors.requestDate}
+                helperText={errors.requestDate}
+                InputLabelProps={{
+                  max: new Date().toISOString().split("T")[0],
+                }}
+                disabled={true}
+              />
+            </Box>
+            <Box sx={{ ...fieldSx }}>
+              <BranchSelect
+                onChange={(e) => {
+                  handleInputChange(e);
+                  fetchApproversByBranch(e.target.value);
+                }}
+                size="small"
+                value={loan.branch_id}
+                name="branch_id"
+                multiple={false}
+                label="Sucursal"
+              />
+            </Box>
 
-  <Box sx={{ ...fieldSx}}>
-  <TextField
-    label="Fecha de solicitud"  
-    variant="outlined"
-    type="date"
-    size="small"
-    id="requestDate"
-    name="requestDate"
-    onChange={handleInputChange}
-    value={loan.requestDate}
-    error={!!errors.requestDate}
-    helperText={errors.requestDate}
-    InputLabelProps={{ max: new Date().toISOString().split("T")[0] }}
-    disabled={true}
-  />
-</Box>
-    <Box sx={{ ...fieldSx}}>
-    <BranchSelect
-      onChange={(e) => {
-        handleInputChange(e);
-        fetchApproversByBranch(e.target.value);
-      }}
-      size="small"
-      value={loan.branch_id}
-      name="branch_id"
-      multiple={false}
-      label="Sucursal"
-    />
-  </Box>
+            <Box sx={{ ...fieldSx }}>
+              <CustomerSelect
+                id="customer_code"
+                name="customer_identification"
+                value={loan.customer_identification}
+                onChange={handleInputChange}
+                size="small"
+                label="Nombre del cliente"
+                onBlur={fetchGuaranteesByCustomer}
+              />
+            </Box>
 
-  <Box sx={{ ...fieldSx}}>
-    <CustomerSelect
-      id="customer_code"
-      name="customer_identification"
-      value={loan.customer_identification}
-      onChange={handleInputChange}
-      size="small"
-      label="Nombre del cliente"
-      onBlur={fetchGuaranteesByCustomer}
-    />
-  </Box>
+            <Box sx={{ ...fieldSx }}>
+              <PromoterSelect
+                name="promoter_id"
+                onChange={handleInputChange}
+                value={loan.promoter_id}
+                branch_id={loan.branch_id}
+                size="small"
+                label="Nombre del promotor"
+              />
+            </Box>
 
-  <Box sx={{ ...fieldSx }}>
-    <PromoterSelect 
-      name="promoter_id"
-      onChange={handleInputChange}
-      value={loan.promoter_id}
-      branch_id={loan.branch_id}
-      size="small"
-      label="Nombre del promotor"
-    />
-  </Box>
+            <Box sx={{ ...fieldSx }}>
+              <CollectorSelect
+                name="vendor_id"
+                onChange={handleInputChange}
+                label="Nombre del gestor"
+                value={loan.vendor_id}
+                branch_id={loan.branch_id}
+              />
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 2,
+              alignItems: "space-between",
+              width: "100%",
+              maxWidth: "100%",
+            }}
+          >
+            <NumericFormat
+              id="amount"
+              customInput={TextField}
+              label="Monto solicitado"
+              variant="outlined"
+              type="text"
+              name="amount"
+              value={loan.amount}
+              onBlur={({ value }) =>
+                handleInputChange({ target: { name: "amount", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.amount}
+              helperText={errors.amount}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0, maxWidth: "100%" }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    C$
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <Box sx={{ ...fieldSx}}>
-    <CollectorSelect
-      name="vendor_id"
-      onChange={handleInputChange}
-      label="Nombre del gestor"
-      value={loan.vendor_id}
-      branch_id={loan.branch_id}
-    />
-  </Box>
-  </Box>
-<Box
-  sx={{
-    display: "grid",
-    gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(4, 1fr)" },
-    gap: 2,
-    alignItems: "space-between",
-    width: "100%",
-    maxWidth: "100%",
-  }}
->
+            <NumericFormat
+              id="fee"
+              customInput={TextField}
+              label="Comisión por desembolso"
+              variant="outlined"
+              type="text"
+              name="fee"
+              value={loan.fee}
+              onValueChange={({ value }) =>
+                handleInputChange({ target: { name: "fee", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.fee}
+              helperText={errors.fee}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0, maxWidth: "100%" }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    C$
+                  </InputAdornment>
+                ),
+              }}
+            />
 
+            <NumericFormat
+              id="insurance"
+              customInput={TextField}
+              label="Cargos por seguros"
+              variant="outlined"
+              type="text"
+              name="insurance"
+              value={loan.insurance}
+              onValueChange={({ value }) =>
+                handleInputChange({ target: { name: "insurance", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.insurance}
+              helperText={errors.insurance}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    C$
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <NumericFormat
-    id="amount"
-    customInput={TextField}
-    label="Monto solicitado"
-    variant="outlined"
-    type="text"
-    name="amount"
-    value={loan.amount}
-    onBlur={({ value }) => handleInputChange({ target: { name: "amount", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.amount}
-    helperText={errors.amount}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0, maxWidth: "100%" }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          C$
-        </InputAdornment>
-      ),
-    }}
-  />
+            <NumericFormat
+              id="other_charges"
+              customInput={TextField}
+              label="Cargos administrativos"
+              variant="outlined"
+              type="text"
+              name="other_charges"
+              value={loan.other_charges}
+              onValueChange={({ value }) =>
+                handleInputChange({ target: { name: "other_charges", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.other_charges}
+              helperText={errors.other_charges}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    C$
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <NumericFormat
-    id="fee"
-    customInput={TextField}
-    label="Comisión por desembolso"
-    variant="outlined"
-    type="text"
-    name="fee"
-    value={loan.fee}
-    onValueChange={({ value }) => handleInputChange({ target: { name: "fee", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.fee}
-    helperText={errors.fee}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0, maxWidth: "100%" }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          C$
-        </InputAdornment>
-      ),
-    }}
-  />
+            <NumericFormat
+              id="installment"
+              customInput={TextField}
+              label={`Cuota ${loan.frequency_name || ""}`.trim()}
+              variant="outlined"
+              type="text"
+              name="installment"
+              disabled
+              value={installment?.paymentAmount}
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    C$
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <NumericFormat
-    id="insurance"
-    customInput={TextField}
-    label="Cargos por seguros"
-    variant="outlined"
-    type="text"
-    name="insurance"
-    value={loan.insurance}
-    onValueChange={({ value }) => handleInputChange({ target: { name: "insurance", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.insurance}
-    helperText={errors.insurance}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          C$
-        </InputAdornment>
-      ),
-    }}
-  />
+            <NumericFormat
+              id="deduction"
+              customInput={TextField}
+              label="Deducción"
+              variant="outlined"
+              name="deduction"
+              value={loan.deduction}
+              onValueChange={({ value }) =>
+                handleInputChange({ target: { name: "deduction", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.deduction}
+              helperText={errors.deduction}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    C$
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <NumericFormat
-    id="other_charges"
-    customInput={TextField}
-    label="Cargos administrativos"
-    variant="outlined"
-    type="text"
-    name="other_charges"
-    value={loan.other_charges}
-    onValueChange={({ value }) => handleInputChange({ target: { name: "other_charges", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.other_charges}
-    helperText={errors.other_charges}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          C$
-        </InputAdornment>
-      ),
-    }}
-  />
+            <TextField
+              id="term"
+              label="Plazo en meses"
+              variant="outlined"
+              type="number"
+              size="small"
+              name="term"
+              onChange={handleInputChange}
+              value={loan.term}
+              error={!!errors.term}
+              helperText={errors.term}
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+            />
 
-  <NumericFormat
-    id="installment"
-    customInput={TextField}
-    label={`Cuota ${loan.frequency_name || ""}`.trim()}
-    variant="outlined"
-    type="text"
-    name="installment"
-    disabled
-    value={installment?.paymentAmount}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          C$
-        </InputAdornment>
-      ),
-    }}
-  />
+            <TextField
+              id="due_date"
+              label="Fecha de Vencimiento"
+              variant="outlined"
+              type="date"
+              name="due_date"
+              disabled={loan.frequency_id === "V" ? false : true}
+              onChange={handleInputChange}
+              value={loan.due_date}
+              error={!!errors.due_date}
+              helperText={errors.due_date}
+              InputLabelProps={{
+                shrink: true,
+                max: new Date().toISOString().split("T")[0],
+              }}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+            />
 
-  <NumericFormat
-    id="deduction"
-    customInput={TextField}
-    label="Deducción"
-    variant="outlined"
-    name="deduction"
-    value={loan.deduction}
-    onValueChange={({ value }) => handleInputChange({ target: { name: "deduction", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.deduction}
-    helperText={errors.deduction}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          C$
-        </InputAdornment>
-      ),
-    }}
-  />
+            <NumericFormat
+              id="interest_rate"
+              customInput={TextField}
+              label="Tasa de Interés mensual"
+              variant="outlined"
+              name="interest_rate"
+              value={loan.interest_rate}
+              onValueChange={({ value }) =>
+                handleInputChange({ target: { name: "interest_rate", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.interest_rate}
+              helperText={errors.interest_rate}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment
+                    position="end"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    %
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <TextField
-    id="term"
-    label="Plazo en meses"
-    variant="outlined"
-    type="number"
-    size="small"
-    name="term"
-    onChange={handleInputChange}
-    value={loan.term}
-    error={!!errors.term}
-    helperText={errors.term}
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-  />
+            <NumericFormat
+              id="defaulted_rate"
+              customInput={TextField}
+              label="Tasa de Interés mora"
+              variant="outlined"
+              name="defaulted_rate"
+              value={loan.defaulted_rate}
+              onValueChange={({ value }) =>
+                handleInputChange({ target: { name: "defaulted_rate", value } })
+              }
+              thousandSeparator
+              decimalSeparator="."
+              decimalScale={2}
+              fixedDecimalScale
+              error={!!errors.defaulted_rate}
+              helperText={errors.defaulted_rate}
+              size="small"
+              fullWidth
+              sx={{ ...fieldSx, minWidth: 0 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment
+                    position="end"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
+                    %
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-  <TextField
-    id="due_date"
-    label="Fecha de Vencimiento"
-    variant="outlined"
-    type="date"
-    name="due_date"
-    disabled={loan.frequency_id === "V" ? false : true}
-    onChange={handleInputChange}
-    value={loan.due_date}
-    error={!!errors.due_date}
-    helperText={errors.due_date}
-    InputLabelProps={{ shrink: true, max: new Date().toISOString().split("T")[0] }}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-  />
+            <Box sx={{ ...fieldSx }}>
+              <FrecuencySelect
+                label="Frecuencia de pago"
+                name="frequency_id"
+                value={loan.frequency_id}
+                onChange={handleInputChange}
+              />
+            </Box>
 
-  <NumericFormat
-    id="interest_rate"
-    customInput={TextField}
-    label="Tasa de Interés mensual"
-    variant="outlined"
-    name="interest_rate"
-    value={loan.interest_rate}
-    onValueChange={({ value }) => handleInputChange({ target: { name: "interest_rate", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.interest_rate}
-    helperText={errors.interest_rate}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-    InputProps={{
-      endAdornment: (
-        <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          %
-        </InputAdornment>
-      ),
-    }}
-  />
-
-  <NumericFormat
-    id="defaulted_rate"
-    customInput={TextField}
-    label="Tasa de Interés mora"
-    variant="outlined"
-    name="defaulted_rate"
-    value={loan.defaulted_rate}
-    onValueChange={({ value }) => handleInputChange({ target: { name: "defaulted_rate", value } })}
-    thousandSeparator
-    decimalSeparator="."
-    decimalScale={2}
-    fixedDecimalScale
-    error={!!errors.defaulted_rate}
-    helperText={errors.defaulted_rate}
-    size="small"
-    fullWidth
-    sx={{ ...fieldSx, minWidth: 0 }}
-    InputProps={{
-      endAdornment: (
-        <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>
-          %
-        </InputAdornment>
-      ),
-    }}
-  />
-
-  <Box sx={{ ...fieldSx }}>
-    <FrecuencySelect
-      label="Frecuencia de pago"
-      name="frequency_id"
-      value={loan.frequency_id}
-      onChange={handleInputChange}
-    />
-  </Box>
-
-  <Box sx={{ ...fieldSx }}>
-    <LoanGroupSelect
-      label="Grupo de crédito"
-      value={loan.loan_group_id}
-      name="loan_group_id"
-      onChange={handleInputChange}
-    />
-  </Box>
-</Box>
+            <Box sx={{ ...fieldSx }}>
+              <LoanGroupSelect
+                label="Grupo de crédito"
+                value={loan.loan_group_id}
+                name="loan_group_id"
+                onChange={handleInputChange}
+              />
+            </Box>
+          </Box>
 
           {/* Garantías */}
           <Box sx={{ mt: 2 }}>
@@ -952,7 +1069,10 @@ const LoanAdd = (props) => {
         cancelOperation={cancelDialog}
       />
 
-      <Backdrop open={loading} sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <Backdrop
+        open={loading}
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
         <CircularProgress color="inherit" />
       </Backdrop>
     </Box>

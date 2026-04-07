@@ -110,6 +110,12 @@ const menuItems = {
       to: "/creditos/politicas",
       group: "Créditos",
     },
+    {
+      label: "Reclamos",
+      iconName: "FaExclamationCircle",
+      to: "/reclamos",
+      group: "Atención al cliente",
+    },
   ],
   users: [
     {

@@ -56,7 +56,6 @@ const money = (value) =>
   `C$ ${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
 const CustomerBalanceViewer = () => {
-  const [branches, setBranches] = useState([]);
   const [vendors, setVendors] = useState([]);
 
   const [selectedBranch, setSelectedBranch] = useState("");
@@ -177,7 +176,6 @@ const CustomerBalanceViewer = () => {
 
   // Cargar catálogos
   useEffect(() => {
-    API.get(`${API_URL}/api/branches`).then((res) => setBranches(res.data));
     API.get(`${API_URL}/api/vendors`).then((res) => setVendors(res.data));
   }, []);
 

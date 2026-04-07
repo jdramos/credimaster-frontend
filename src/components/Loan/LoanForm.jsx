@@ -15,6 +15,7 @@ import LoanAmortizationModal from "./LoanAmortizationModal";
 import { loanApi } from "../../api/loanApi";
 
 const initialState = {
+  customer_id: "",
   customer_identification: "",
   vendor_id: "",
   promoter_id: "",
@@ -57,7 +58,11 @@ export default function LoanForm({ onCreated }) {
       setPreviewRows(data || []);
       setOpenPreview(true);
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || "Error al generar amortización.");
+      setError(
+        err?.response?.data?.error ||
+          err.message ||
+          "Error al generar amortización.",
+      );
     } finally {
       setLoadingPreview(false);
     }
@@ -71,7 +76,9 @@ export default function LoanForm({ onCreated }) {
       if (onCreated) onCreated(resp);
       setForm(initialState);
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || "Error al crear crédito.");
+      setError(
+        err?.response?.data?.error || err.message || "Error al crear crédito.",
+      );
     } finally {
       setLoadingSave(false);
     }
@@ -86,7 +93,11 @@ export default function LoanForm({ onCreated }) {
 
         <Divider sx={{ mb: 2 }} />
 
-        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        ) : null}
 
         <Grid container spacing={2}>
           <Grid item xs={12} md={4}>
@@ -122,19 +133,46 @@ export default function LoanForm({ onCreated }) {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Monto" name="amount" type="number" value={form.amount} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Monto"
+              name="amount"
+              type="number"
+              value={form.amount}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Plazo" name="term" type="number" value={form.term} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Plazo"
+              name="term"
+              type="number"
+              value={form.term}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Tasa interés" name="interest_rate" type="number" value={form.interest_rate} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Tasa interés"
+              name="interest_rate"
+              type="number"
+              value={form.interest_rate}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField fullWidth label="Frecuencia" name="frequency_id" value={form.frequency_id} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Frecuencia"
+              name="frequency_id"
+              value={form.frequency_id}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
@@ -153,23 +191,58 @@ export default function LoanForm({ onCreated }) {
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField fullWidth label="Comisión" name="fee" type="number" value={form.fee} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Comisión"
+              name="fee"
+              type="number"
+              value={form.fee}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField fullWidth label="Seguro" name="insurance" type="number" value={form.insurance} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Seguro"
+              name="insurance"
+              type="number"
+              value={form.insurance}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField fullWidth label="Otros cargos" name="other_charges" type="number" value={form.other_charges} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Otros cargos"
+              name="other_charges"
+              type="number"
+              value={form.other_charges}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField fullWidth label="Deducción" name="deduction" type="number" value={form.deduction} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Deducción"
+              name="deduction"
+              type="number"
+              value={form.deduction}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField fullWidth label="Tasa mora" name="defaulted_rate" type="number" value={form.defaulted_rate} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Tasa mora"
+              name="defaulted_rate"
+              type="number"
+              value={form.defaulted_rate}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={3}>
@@ -185,15 +258,33 @@ export default function LoanForm({ onCreated }) {
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Vendedor" name="vendor_id" value={form.vendor_id} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Vendedor"
+              name="vendor_id"
+              value={form.vendor_id}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Promotor" name="promoter_id" value={form.promoter_id} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Promotor"
+              name="promoter_id"
+              value={form.promoter_id}
+              onChange={handleChange}
+            />
           </Grid>
 
           <Grid item xs={12} md={4}>
-            <TextField fullWidth label="Evaluación crediticia" name="credit_evaluation_id" value={form.credit_evaluation_id} onChange={handleChange} />
+            <TextField
+              fullWidth
+              label="Evaluación crediticia"
+              name="credit_evaluation_id"
+              value={form.credit_evaluation_id}
+              onChange={handleChange}
+            />
           </Grid>
         </Grid>
 
