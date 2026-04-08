@@ -59,7 +59,7 @@ import EconomicActivitiesPage from "./pages/EconomicActivitiesPage";
 import GenrePage from "./pages/GenrePage";
 import MaritalStatusPage from "./pages/MaritalStatusPage";
 import CustomerAddGpt from "./components/Customer/CustomerAddGpt";
-import LoanAdd from "./components/LoanAddGpt";
+import LoanAdd from "./components/Loan/LoanAddGpt";
 import RibbonMenu from "./components/RibbonMenu";
 import ApprovalInbox from "./components/ApprovalInbox";
 import CustomerClaimsList from "./components/Claims/CustomerClaimsList";

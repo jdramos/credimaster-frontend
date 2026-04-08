@@ -117,6 +117,8 @@ const CustomerSelect = (props) => {
             target: {
               name: props.name,
               value: newValue ? newValue.id : "",
+              customer_identification: newValue ? newValue.identification : "", // ✅ pasa la identificación también
+              customer_name: newValue ? newValue.customer_name : "", // ✅ pasa el nombre también
             },
           });
         }}

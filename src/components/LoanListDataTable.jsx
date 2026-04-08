@@ -33,7 +33,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import PaidIcon from "@mui/icons-material/Paid";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { UserContext } from "../contexts/UserContext";
-import LoanDetailsModal from "./LoanDetailsModal";
+import LoanDetailsModal from "./Loan/LoanDetailsModal";
 import PaymentForm from "./PaymentForm";
 import AccountStatementModal from "./AccountStatementModal";
 import axios from "axios";

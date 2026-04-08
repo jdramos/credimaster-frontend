@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   Button,
   Typography,
   Grid,
@@ -30,8 +31,8 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
-import API from "../api";
-import { UserContext } from "../contexts/UserContext";
+import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -54,14 +55,16 @@ import ScoreIcon from "@mui/icons-material/Score";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CommentIcon from "@mui/icons-material/Comment";
-import LoanAmortization from "./LoanAmortization";
+import LoanAmortization from "../LoanAmortization";
 import { NumericFormat } from "react-number-format";
-import GuarenteesGet from "./GuarenteesGet";
-import today from "../functions/today";
-import LoanInfo from "./LoanInfo";
-import LoanDocuments from "./Loan/LoanDocuments";
-import CustomerFinancialEvaluationTab from "./Customer/CustomerFinancialEvaluationTab";
-import LoanModificationSection from "./Loan/LoanModificationSection";
+import GuarenteesGet from "../GuarenteesGet";
+import today from "../../functions/today";
+import LoanInfo from "../LoanInfo";
+import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
+import LoanModificationSection from "../Loan/LoanModificationSection";
+import CustomerDocuments from "../Customer/CustomerDocuments";
+import CustomerChecklist from "../Customer/CustomerCheckList";
+import BAC from "../../styles/bac";
 
 const urlGuarantee = process.env.REACT_APP_API_BASE_URL + "/api/guarantees";
 
@@ -193,6 +196,7 @@ const LoanDetailsModal = ({
 
   const [compliance, setCompliance] = useState(null);
   const [loadingCompliance, setLoadingCompliance] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
 
   const totalGuaranteeValue = useMemo(
     () => guarantees.reduce((sum, item) => sum + (Number(item.value) || 0), 0),
@@ -813,7 +817,7 @@ const LoanDetailsModal = ({
                           </Muted>
 
                           <GuarenteesGet
-                            apiUrl={`${urlGuarantee}/${clientIdentification}`}
+                            apiUrl={`${urlGuarantee}/${clientId}`}
                             TotalGuarenteeValue={totalGuaranteeValue}
                           />
                         </Grid>
@@ -842,11 +846,7 @@ const LoanDetailsModal = ({
                       });
                     }}
                     onViewChecklist={() => {
-                      setSnackbar({
-                        open: true,
-                        message: "Aquí puedes abrir el checklist documental.",
-                        severity: "info",
-                      });
+                      setShowDocuments(true);
                     }}
                   />
                 </Grid>
@@ -864,7 +864,7 @@ const LoanDetailsModal = ({
                         gap={1}
                       >
                         <SectionTitle variant="subtitle1" sx={{ mb: 0 }}>
-                          Cumplimiento Normativo (CONAMI)dd
+                          Cumplimiento Normativo (CONAMI)
                         </SectionTitle>
 
                         {isComplianceValid ? (
@@ -1398,6 +1398,48 @@ const LoanDetailsModal = ({
           </DialogActions>
         </Dialog>
         <LoanModificationSection loan={loan} user={user} />
+
+        {/* MODAL DOCUMENTOS */}
+        <Dialog
+          open={showDocuments}
+          onClose={() => setShowDocuments(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          {showDocuments ? (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: `1px solid ${BAC.border}`,
+                backgroundColor: BAC.white,
+              }}
+            >
+              <CustomerChecklist
+                customerId={loan.customer_id}
+                customerName={loan.customer_name}
+              />
+            </Paper>
+          ) : (
+            <Alert severity="info">No hay documentos disponibles.</Alert>
+          )}
+
+          <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
+            <Button
+              onClick={() => setShowDocuments(false)}
+              variant="contained"
+              sx={{
+                borderRadius: 2,
+                fontWeight: 900,
+                bgcolor: BAC.primary,
+                "&:hover": { bgcolor: BAC.primaryDark },
+              }}
+            >
+              Cerrar
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Dialog>
     </>
   );

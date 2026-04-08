@@ -523,7 +523,7 @@ const LoanAdd = (props) => {
         >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Solicitud de préstamosss
+              Solicitud de préstamos.
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
               Complete los datos y verifique amortización y garantías.ssssss

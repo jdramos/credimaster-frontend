@@ -28,7 +28,7 @@ import { saveAs } from "file-saver";
 import API from "../api";
 import BranchSelect from "./BranchSelect";
 import AccountStatementModal from "./AccountStatementModal";
-import LoanDetailsModal from "./LoanDetailsModal";
+import LoanDetailsModal from "./Loan/LoanDetailsModal";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 // PrimeReact CSS base (tu ya lo tenías)

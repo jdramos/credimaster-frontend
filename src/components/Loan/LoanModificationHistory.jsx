@@ -40,7 +40,7 @@ export default function LoanModificationHistory({ loanId, onView }) {
     try {
       setLoading(true);
       setError("");
-      const res = await API.get(`/api/loans/${loanId}/modifications`);
+      const res = await API.get(`/api/loan-modifications/${loanId}`);
       setRows(res.data?.data || []);
     } catch (err) {
       setError(

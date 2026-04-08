@@ -17,19 +17,19 @@ import CircularProgress from "@mui/material/CircularProgress";
 import InputAdornment from "@mui/material/InputAdornment";
 import MenuItem from "@mui/material/MenuItem";
 import "react-toastify/dist/ReactToastify.css";
-import ConfirmDialog from "./ConfirmDialog";
-import CustomerSelect from "./Customer/CustomerSelect";
-import PromoterSelect from "./PromoterSelect";
-import CollectorSelect from "./CollectorSelect";
+import ConfirmDialog from "../ConfirmDialog";
+import CustomerSelect from "../Customer/CustomerSelect";
+import PromoterSelect from "../PromoterSelect";
+import CollectorSelect from "../CollectorSelect";
 import { NumericFormat } from "react-number-format";
-import FrecuencySelect from "./FrecuencySelect";
-import LoanGroupSelect from "./LoanGroupSelect";
-import today from "../functions/today";
-import GuarenteesGet from "./GuarenteesGet";
+import FrecuencySelect from "../FrecuencySelect";
+import LoanGroupSelect from "../LoanGroupSelect";
+import today from "../../functions/today";
+import GuarenteesGet from "../GuarenteesGet";
 import dayjs from "dayjs";
-import BranchSelect from "./BranchSelect";
-import LoanAmortization from "./LoanAmortization";
-import API from "../api";
+import BranchSelect from "../BranchSelect";
+import LoanAmortization from "../LoanAmortization";
+import API from "../../api";
 import Visibility from "@mui/icons-material/Visibility";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -38,7 +38,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Grid from "@mui/material/Grid";
-import CustomerFinancialEvaluationTab from "./Customer/CustomerFinancialEvaluationTab";
+import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
@@ -84,6 +84,7 @@ const LoanAdd = () => {
   const [loan, setLoan] = useState({
     customer_id: "",
     customer_identification: "",
+    customer_name: "",
     requestDate: today(),
     branch_id: "",
     vendor_id: "",
@@ -454,6 +455,8 @@ const LoanAdd = () => {
       frequency_name: selectedOption
         ? selectedOption.name
         : loan.frequency_name,
+      customer_identification: e.target.customer_identification,
+      customer_name: e.target.customer_name,
     };
 
     setLoan(nextLoan);
@@ -462,6 +465,7 @@ const LoanAdd = () => {
   const buildPayload = () => {
     return {
       customer_id: Number(loan.customer_id),
+      customer_identification: loan.customer_identification || "",
       requestDate: dayjs(loan.requestDate).format("YYYY-MM-DD"),
       branch_id: Number(loan.branch_id),
       vendor_id: loan.vendor_id ? Number(loan.vendor_id) : null,
@@ -601,7 +605,7 @@ const LoanAdd = () => {
         >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Solicitud de préstamos
+              Solicitud de préstamos.
             </Typography>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
               Complete los datos y verifique amortización, evaluación y
@@ -1224,8 +1228,8 @@ const LoanAdd = () => {
           >
             <CustomerFinancialEvaluationTab
               customerId={loan.customer_id}
-              customerIdentification={loan.customerIdentification}
-              customerName={loan.customerName}
+              customerIdentification={loan.customer_identification}
+              customerName={loan.customer_name}
             />
           </Paper>
         ) : (

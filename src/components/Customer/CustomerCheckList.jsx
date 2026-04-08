@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Box,
   Paper,
@@ -55,7 +61,8 @@ function getPreviewType(url = "", fileName = "", mimeType = "") {
   if (mime.includes("pdf")) return "pdf";
 
   const ext = getFileExtension(url, fileName);
-  if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext)) return "image";
+  if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext))
+    return "image";
   if (ext === "pdf") return "pdf";
 
   return "other";
@@ -88,9 +95,15 @@ export default function CustomerChecklist({
     setError("");
 
     try {
-      const { data } = await API.get(`/api/customer-files/${customerId}/checklist`);
+      const { data } = await API.get(
+        `/api/customer-files/${customerId}/checklist`,
+      );
 
-      const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+          ? data.data
+          : [];
 
       const mapped = list.map((item) => ({
         checklist_item_id: item.id,
@@ -98,9 +111,11 @@ export default function CustomerChecklist({
         code: item.code,
         section: item.section,
         title: item.title,
-        is_mandatory: Number(item.is_mandatory) === 1 || item.is_mandatory === true,
+        is_mandatory:
+          Number(item.is_mandatory) === 1 || item.is_mandatory === true,
         status: item.status || "PENDING",
         notes: item.notes || "",
+        created_at: item.created_at || "",
         validated_by: item.validated_by || "",
         validated_at: item.validated_at || "",
         uploaded_document_id: item.document_id || null,
@@ -112,7 +127,7 @@ export default function CustomerChecklist({
         is_completed:
           !!item.document_id ||
           ["COMPLETED", "VALIDATED", "OK"].includes(
-            String(item.status || "").toUpperCase()
+            String(item.status || "").toUpperCase(),
           ),
       }));
 
@@ -121,7 +136,7 @@ export default function CustomerChecklist({
       console.error(err);
       setError(
         err?.response?.data?.message ||
-          "No se pudo cargar el checklist documental del cliente."
+          "No se pudo cargar el checklist documental del cliente.",
       );
       setRows([]);
     } finally {
@@ -206,7 +221,7 @@ export default function CustomerChecklist({
       console.error(err);
       setError(
         err?.response?.data?.message ||
-          "Ocurrió un error al subir el archivo del documento."
+          "Ocurrió un error al subir el archivo del documento.",
       );
     } finally {
       setUploadingId(null);
@@ -225,11 +240,12 @@ export default function CustomerChecklist({
       setPreviewFile(null);
 
       const { data } = await API.get(
-        `/api/customer-files/documents/${row.uploaded_document_id}/download-url`
+        `/api/customer-files/documents/${row.uploaded_document_id}/download-url`,
       );
 
       const fileUrl = data?.url || "";
-      const fileName = data?.doc_name || row.uploaded_file_name || row.title || "archivo";
+      const fileName =
+        data?.doc_name || row.uploaded_file_name || row.title || "archivo";
       const mimeType = data?.mime_type || "";
 
       if (!fileUrl) {
@@ -246,7 +262,9 @@ export default function CustomerChecklist({
       });
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || "No se pudo abrir el documento.");
+      setError(
+        err?.response?.data?.message || "No se pudo abrir el documento.",
+      );
       setPreviewOpen(false);
     } finally {
       setPreviewLoading(false);
@@ -314,7 +332,10 @@ export default function CustomerChecklist({
             {title}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-            Cliente: <strong>{customerId} - {customerName}</strong>
+            Cliente:{" "}
+            <strong>
+              {customerId} - {customerName}
+            </strong>
           </Typography>
         </Box>
 
@@ -379,7 +400,11 @@ export default function CustomerChecklist({
               />
               <Chip
                 label={`${summary.percent}%`}
-                sx={{ bgcolor: "#FEE2E2", color: BAC.primaryDark, fontWeight: 800 }}
+                sx={{
+                  bgcolor: "#FEE2E2",
+                  color: BAC.primaryDark,
+                  fontWeight: 800,
+                }}
               />
             </Stack>
           </Stack>
@@ -434,7 +459,9 @@ export default function CustomerChecklist({
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                   <Stack spacing={1} alignItems="center">
-                    <DescriptionIcon sx={{ fontSize: 36, color: "text.disabled" }} />
+                    <DescriptionIcon
+                      sx={{ fontSize: 36, color: "text.disabled" }}
+                    />
                     <Typography variant="body2" color="text.secondary">
                       No hay documentos para mostrar.
                     </Typography>
@@ -489,7 +516,9 @@ export default function CustomerChecklist({
 
                   <TableCell sx={{ maxWidth: 260 }}>
                     {hasUploadedDocument ? (
-                      <Tooltip title={row.uploaded_file_name || "Documento cargado"}>
+                      <Tooltip
+                        title={row.uploaded_file_name || "Documento cargado"}
+                      >
                         <Typography
                           variant="body2"
                           sx={{
@@ -511,7 +540,7 @@ export default function CustomerChecklist({
 
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">
-                      {row.uploaded_at || "-"}
+                      {row.created_at || "-"}
                     </Typography>
                   </TableCell>
 
@@ -537,11 +566,19 @@ export default function CustomerChecklist({
                       )}
 
                       {!readOnly && (
-                        <Tooltip title={hasUploadedDocument ? "Reemplazar archivo" : "Subir archivo"}>
+                        <Tooltip
+                          title={
+                            hasUploadedDocument
+                              ? "Reemplazar archivo"
+                              : "Subir archivo"
+                          }
+                        >
                           <span>
                             <Button
                               size="small"
-                              variant={hasUploadedDocument ? "outlined" : "contained"}
+                              variant={
+                                hasUploadedDocument ? "outlined" : "contained"
+                              }
                               startIcon={
                                 isUploading ? (
                                   <CircularProgress size={16} color="inherit" />
@@ -567,8 +604,8 @@ export default function CustomerChecklist({
                               {isUploading
                                 ? "Subiendo..."
                                 : hasUploadedDocument
-                                ? "Reemplazar"
-                                : "Subir"}
+                                  ? "Reemplazar"
+                                  : "Subir"}
                             </Button>
                           </span>
                         </Tooltip>
@@ -686,7 +723,9 @@ export default function CustomerChecklist({
           )}
 
           {!previewLoading && previewFile?.type === "pdf" && (
-            <Box sx={{ width: "100%", height: "70vh", backgroundColor: "#fff" }}>
+            <Box
+              sx={{ width: "100%", height: "70vh", backgroundColor: "#fff" }}
+            >
               <iframe
                 src={previewFile.url}
                 title={previewFile.name}
@@ -708,7 +747,9 @@ export default function CustomerChecklist({
               }}
             >
               <Stack spacing={2} alignItems="center">
-                <DescriptionIcon sx={{ fontSize: 52, color: "text.secondary" }} />
+                <DescriptionIcon
+                  sx={{ fontSize: 52, color: "text.secondary" }}
+                />
                 <Typography variant="body1" sx={{ fontWeight: 700 }}>
                   Este tipo de archivo no tiene vista previa embebida.
                 </Typography>
