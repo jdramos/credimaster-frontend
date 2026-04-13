@@ -111,6 +111,12 @@ const menuItems = {
       group: "Créditos",
     },
     {
+      label: "Documentos de crédito",
+      iconName: "FaFileAlt",
+      to: "/creditos/archivos",
+      group: "Créditos",
+    },
+    {
       label: "Reclamos",
       iconName: "FaExclamationCircle",
       to: "/reclamos",

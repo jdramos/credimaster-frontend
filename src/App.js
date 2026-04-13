@@ -63,6 +63,8 @@ import LoanAdd from "./components/Loan/LoanAddGpt";
 import RibbonMenu from "./components/RibbonMenu";
 import ApprovalInbox from "./components/ApprovalInbox";
 import CustomerClaimsList from "./components/Claims/CustomerClaimsList";
+import BalancesDashboard from "./components/dashboard/BalancesDashboard";
+import CreditFileTemplatePage from "./components/credit-files/CreditFileTemplatePage";
 
 function PageContainer({ children }) {
   return (
@@ -254,6 +256,15 @@ function AppRoutes({ themeMode, setThemeMode }) {
           element={
             <PageContainer>
               <LoanList />
+            </PageContainer>
+          }
+        />
+
+        <Route
+          path="/creditos/archivos"
+          element={
+            <PageContainer>
+              <CreditFileTemplatePage />
             </PageContainer>
           }
         />
@@ -473,6 +484,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
             </PageContainer>
           }
         />
+
+        <Route path="/dashboard/saldos" element={<BalancesDashboard />} />
 
         <Route
           path="*"

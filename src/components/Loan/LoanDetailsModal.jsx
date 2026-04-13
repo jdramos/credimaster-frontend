@@ -915,7 +915,11 @@ const LoanDetailsModal = ({
                             <Grid item xs={12} md={4}>
                               <ComplianceChip
                                 ok={compliance.documents_complete}
-                                label="Documentación completa"
+                                label={
+                                  compliance?.credit_file
+                                    ? "Documentación completa"
+                                    : "Expediente documental generado"
+                                }
                                 icon={<DescriptionIcon />}
                               />
                             </Grid>
@@ -1400,34 +1404,47 @@ const LoanDetailsModal = ({
         <LoanModificationSection loan={loan} user={user} />
 
         {/* MODAL DOCUMENTOS */}
+        {/* MODAL CHECKLIST DOCUMENTAL */}
         <Dialog
           open={showDocuments}
-          onClose={() => setShowDocuments(false)}
-          maxWidth="md"
+          onClose={async () => {
+            setShowDocuments(false);
+            await loadCompliance();
+          }}
+          maxWidth="lg"
           fullWidth
         >
-          {showDocuments ? (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 3,
-                border: `1px solid ${BAC.border}`,
-                backgroundColor: BAC.white,
-              }}
-            >
+          <DialogTitle
+            sx={{
+              fontWeight: 800,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            Checklist documental del cliente
+          </DialogTitle>
+
+          <DialogContent sx={{ p: 2, backgroundColor: BAC.white }}>
+            {showDocuments && loan?.customer_id ? (
               <CustomerChecklist
                 customerId={loan.customer_id}
                 customerName={loan.customer_name}
+                readOnly={false}
+                title="Checklist documental del cliente"
+                showCompletedSummary={true}
+                autoHideCompleted={false}
               />
-            </Paper>
-          ) : (
-            <Alert severity="info">No hay documentos disponibles.</Alert>
-          )}
+            ) : (
+              <Alert severity="info">No hay documentos disponibles.</Alert>
+            )}
+          </DialogContent>
 
           <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
             <Button
-              onClick={() => setShowDocuments(false)}
+              onClick={async () => {
+                setShowDocuments(false);
+                await loadCompliance();
+              }}
               variant="contained"
               sx={{
                 borderRadius: 2,

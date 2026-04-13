@@ -30,8 +30,6 @@ import {
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DescriptionIcon from "@mui/icons-material/Description";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -61,11 +59,63 @@ function getPreviewType(url = "", fileName = "", mimeType = "") {
   if (mime.includes("pdf")) return "pdf";
 
   const ext = getFileExtension(url, fileName);
-  if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext))
+  if (["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext)) {
     return "image";
+  }
   if (ext === "pdf") return "pdf";
 
   return "other";
+}
+
+function formatDateTime(value) {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleString("es-NI");
+}
+
+function getStatusChip(row) {
+  const statusUpper = String(row.status || "").toUpperCase();
+
+  if (!row.has_document) {
+    return (
+      <Chip
+        label="Faltante"
+        size="small"
+        sx={{
+          fontWeight: 700,
+          bgcolor: "#FEE2E2",
+          color: "#B42318",
+        }}
+      />
+    );
+  }
+
+  if (["OK", "VALIDATED", "COMPLETED"].includes(statusUpper)) {
+    return (
+      <Chip
+        label="Validado"
+        size="small"
+        sx={{
+          fontWeight: 700,
+          bgcolor: "#E8F5E9",
+          color: BAC.success,
+        }}
+      />
+    );
+  }
+
+  return (
+    <Chip
+      label="Cargado"
+      size="small"
+      sx={{
+        fontWeight: 700,
+        bgcolor: "#FFF3E0",
+        color: BAC.warning,
+      }}
+    />
+  );
 }
 
 export default function CustomerChecklist({
@@ -77,6 +127,7 @@ export default function CustomerChecklist({
   autoHideCompleted = false,
 }) {
   const [rows, setRows] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [error, setError] = useState("");
@@ -99,39 +150,72 @@ export default function CustomerChecklist({
         `/api/customer-files/${customerId}/checklist`,
       );
 
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-          ? data.data
+      const list = Array.isArray(data?.rows)
+        ? data.rows
+        : Array.isArray(data)
+          ? data
           : [];
 
-      const mapped = list.map((item) => ({
-        checklist_item_id: item.id,
-        customer_file_id: item.customer_file_id,
-        code: item.code,
-        section: item.section,
-        title: item.title,
-        is_mandatory:
-          Number(item.is_mandatory) === 1 || item.is_mandatory === true,
-        status: item.status || "PENDING",
-        notes: item.notes || "",
-        created_at: item.created_at || "",
-        validated_by: item.validated_by || "",
-        validated_at: item.validated_at || "",
-        uploaded_document_id: item.document_id || null,
-        uploaded_file_name: item.document_name || "",
-        file_url: item.file_url || "",
-        mime_type: item.mime_type || "",
-        file_size: Number(item.file_size || 0),
-        uploaded_at: item.uploaded_at || "",
-        is_completed:
-          !!item.document_id ||
-          ["COMPLETED", "VALIDATED", "OK"].includes(
-            String(item.status || "").toUpperCase(),
-          ),
-      }));
+      const mapped = list.map((item) => {
+        const statusUpper = String(item.status || "").toUpperCase();
+        const hasDocument =
+          item.has_document === true ||
+          Number(item.uploaded_count || 0) > 0 ||
+          !!item.document_id;
+
+        const isValidated =
+          item.is_validated === true ||
+          ["OK", "VALIDATED", "COMPLETED"].includes(statusUpper);
+
+        return {
+          checklist_item_id: item.id,
+          customer_file_id: item.customer_file_id,
+          code: item.code,
+          section: item.section,
+          title: item.title,
+          is_mandatory:
+            Number(item.is_mandatory) === 1 || item.is_mandatory === true,
+          status: item.status || "PENDING",
+          notes: item.notes || "",
+          created_at: item.created_at || "",
+          validated_by: item.validated_by || "",
+          validated_at: item.validated_at || "",
+          uploaded_document_id: item.document_id || null,
+          uploaded_file_name: item.document_name || "",
+          file_url: item.file_url || "",
+          mime_type: item.mime_type || "",
+          file_size: Number(item.file_size || 0),
+          uploaded_at: item.uploaded_at || "",
+          uploaded_count: Number(item.uploaded_count || 0),
+          has_document: hasDocument,
+          is_validated: isValidated,
+          is_completed: hasDocument && isValidated,
+        };
+      });
 
       setRows(mapped);
+
+      if (data?.summary) {
+        setSummary({
+          total_items: Number(data.summary.total_items || 0),
+          total_mandatory: Number(data.summary.total_mandatory || 0),
+          uploaded_mandatory: Number(data.summary.uploaded_mandatory || 0),
+          validated_mandatory: Number(data.summary.validated_mandatory || 0),
+          missing_mandatory: Number(data.summary.missing_mandatory || 0),
+        });
+      } else {
+        const mandatoryRows = mapped.filter((r) => r.is_mandatory);
+        setSummary({
+          total_items: mapped.length,
+          total_mandatory: mandatoryRows.length,
+          uploaded_mandatory: mandatoryRows.filter((r) => r.has_document)
+            .length,
+          validated_mandatory: mandatoryRows.filter((r) => r.is_validated)
+            .length,
+          missing_mandatory: mandatoryRows.filter((r) => !r.has_document)
+            .length,
+        });
+      }
     } catch (err) {
       console.error(err);
       setError(
@@ -139,6 +223,7 @@ export default function CustomerChecklist({
           "No se pudo cargar el checklist documental del cliente.",
       );
       setRows([]);
+      setSummary(null);
     } finally {
       setLoading(false);
     }
@@ -153,7 +238,7 @@ export default function CustomerChecklist({
     return rows.filter((row) => !row.is_completed);
   }, [rows, autoHideCompleted]);
 
-  const summary = useMemo(() => {
+  const progress = useMemo(() => {
     const total = rows.length;
     const completed = rows.filter((r) => r.is_completed).length;
     const pending = total - completed;
@@ -277,36 +362,6 @@ export default function CustomerChecklist({
     setPreviewLoading(false);
   };
 
-  const completionChip = (completed) => {
-    if (completed) {
-      return (
-        <Chip
-          icon={<CheckCircleIcon />}
-          label="Completo"
-          size="small"
-          sx={{
-            fontWeight: 700,
-            color: "#fff",
-            bgcolor: BAC.success,
-          }}
-        />
-      );
-    }
-
-    return (
-      <Chip
-        icon={<HourglassBottomIcon />}
-        label="Pendiente"
-        size="small"
-        sx={{
-          fontWeight: 700,
-          color: "#fff",
-          bgcolor: BAC.warning,
-        }}
-      />
-    );
-  };
-
   return (
     <Paper
       elevation={0}
@@ -375,7 +430,7 @@ export default function CustomerChecklist({
               </Typography>
               <LinearProgress
                 variant="determinate"
-                value={summary.percent}
+                value={progress.percent}
                 sx={{
                   height: 10,
                   borderRadius: 999,
@@ -388,18 +443,18 @@ export default function CustomerChecklist({
               />
             </Box>
 
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Chip label={`Total: ${summary.total}`} />
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Chip label={`Total: ${progress.total}`} />
               <Chip
-                label={`Completos: ${summary.completed}`}
+                label={`Completos: ${progress.completed}`}
                 sx={{ bgcolor: "#E8F5E9", color: BAC.success, fontWeight: 700 }}
               />
               <Chip
-                label={`Pendientes: ${summary.pending}`}
+                label={`Pendientes: ${progress.pending}`}
                 sx={{ bgcolor: "#FFF3E0", color: BAC.warning, fontWeight: 700 }}
               />
               <Chip
-                label={`${summary.percent}%`}
+                label={`${progress.percent}%`}
                 sx={{
                   bgcolor: "#FEE2E2",
                   color: BAC.primaryDark,
@@ -408,6 +463,48 @@ export default function CustomerChecklist({
               />
             </Stack>
           </Stack>
+
+          {summary && (
+            <Stack
+              direction="row"
+              spacing={1}
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ mt: 2 }}
+            >
+              <Chip
+                label={`Obligatorios: ${summary.total_mandatory}`}
+                color="primary"
+                variant="filled"
+                size="small"
+              />
+              <Chip
+                label={`Cargados: ${summary.uploaded_mandatory}`}
+                size="small"
+                sx={{ bgcolor: "#FFF3E0", color: BAC.warning, fontWeight: 700 }}
+              />
+              <Chip
+                label={`Validados: ${summary.validated_mandatory}`}
+                size="small"
+                sx={{ bgcolor: "#E8F5E9", color: BAC.success, fontWeight: 700 }}
+              />
+              <Chip
+                label={`Faltantes: ${summary.missing_mandatory}`}
+                size="small"
+                sx={{
+                  bgcolor:
+                    Number(summary.missing_mandatory || 0) > 0
+                      ? "#FEE2E2"
+                      : "#E8F5E9",
+                  color:
+                    Number(summary.missing_mandatory || 0) > 0
+                      ? "#B42318"
+                      : BAC.success,
+                  fontWeight: 700,
+                }}
+              />
+            </Stack>
+          )}
         </Box>
       )}
 
@@ -447,6 +544,7 @@ export default function CustomerChecklist({
               <TableCell>#</TableCell>
               <TableCell>Sección</TableCell>
               <TableCell>Documento</TableCell>
+              <TableCell>Tipo</TableCell>
               <TableCell>Estado</TableCell>
               <TableCell>Archivo</TableCell>
               <TableCell>Fecha carga</TableCell>
@@ -457,7 +555,7 @@ export default function CustomerChecklist({
           <TableBody>
             {!loading && visibleRows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                   <Stack spacing={1} alignItems="center">
                     <DescriptionIcon
                       sx={{ fontSize: 36, color: "text.disabled" }}
@@ -498,12 +596,6 @@ export default function CustomerChecklist({
                         {row.title}
                       </Typography>
 
-                      {row.is_mandatory && (
-                        <Typography variant="caption" color="text.secondary">
-                          Requerido
-                        </Typography>
-                      )}
-
                       {!!row.code && (
                         <Typography variant="caption" color="text.secondary">
                           Código: {row.code}
@@ -512,7 +604,16 @@ export default function CustomerChecklist({
                     </Stack>
                   </TableCell>
 
-                  <TableCell>{completionChip(row.is_completed)}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={row.is_mandatory ? "Obligatorio" : "Opcional"}
+                      color={row.is_mandatory ? "primary" : "default"}
+                      variant={row.is_mandatory ? "filled" : "outlined"}
+                    />
+                  </TableCell>
+
+                  <TableCell>{getStatusChip(row)}</TableCell>
 
                   <TableCell sx={{ maxWidth: 260 }}>
                     {hasUploadedDocument ? (
@@ -540,7 +641,7 @@ export default function CustomerChecklist({
 
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">
-                      {row.created_at || "-"}
+                      {formatDateTime(row.uploaded_at)}
                     </Typography>
                   </TableCell>
 

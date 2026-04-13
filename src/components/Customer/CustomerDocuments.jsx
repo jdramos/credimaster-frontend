@@ -89,15 +89,45 @@ const getFileIcon = (mimeType = "", docName = "") => {
   return <InsertDriveFileIcon sx={{ color: BAC.primary }} />;
 };
 
+const getChecklistStatus = (item) => {
+  if (!item?.has_document) {
+    return {
+      label: "Faltante",
+      color: "error",
+      variant: "outlined",
+    };
+  }
+
+  if (item?.is_validated) {
+    return {
+      label: "Validado",
+      color: "success",
+      variant: "filled",
+    };
+  }
+
+  return {
+    label: "Cargado",
+    color: "warning",
+    variant: "filled",
+  };
+};
+
 export default function CustomerDocuments({ customerId }) {
   const inputRef = useRef(null);
 
   const [file, setFile] = useState(null);
   const [docType, setDocType] = useState("ID");
   const [docName, setDocName] = useState("");
+
   const [uploading, setUploading] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
+  const [loadingChecklist, setLoadingChecklist] = useState(false);
+
   const [documents, setDocuments] = useState([]);
+  const [checklist, setChecklist] = useState([]);
+  const [checklistSummary, setChecklistSummary] = useState(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -108,28 +138,62 @@ export default function CustomerDocuments({ customerId }) {
 
   const usedDocTypes = documents.map((doc) => doc.doc_type);
   const availableDocTypes = DOC_TYPES.filter(
-    (item) => item.value === "OTRO" || !usedDocTypes.includes(item.value)
+    (item) => item.value === "OTRO" || !usedDocTypes.includes(item.value),
   );
 
   const loadDocuments = async () => {
     try {
-      clearMessages();
       setLoadingDocs(true);
 
-      const res = await API.get(`/api/customer-files/${customerId}/documents-list`);
+      const res = await API.get(
+        `/api/customer-files/${customerId}/documents-list`,
+      );
       const data = res.data;
 
       setDocuments(Array.isArray(data) ? data : data?.rows || []);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error cargando documentos");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Error cargando documentos",
+      );
     } finally {
       setLoadingDocs(false);
     }
   };
 
+  const loadChecklist = async () => {
+    try {
+      setLoadingChecklist(true);
+
+      const res = await API.get(`/api/customer-files/${customerId}/checklist`);
+      const data = res.data;
+
+      setChecklist(Array.isArray(data?.rows) ? data.rows : []);
+      setChecklistSummary(data?.summary || null);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Error cargando checklist documental",
+      );
+    } finally {
+      setLoadingChecklist(false);
+    }
+  };
+
+  const loadAll = async () => {
+    clearMessages();
+    await Promise.all([loadDocuments(), loadChecklist()]);
+  };
+
   useEffect(() => {
     if (customerId) {
-      loadDocuments();
+      loadAll();
+    } else {
+      setDocuments([]);
+      setChecklist([]);
+      setChecklistSummary(null);
     }
   }, [customerId]);
 
@@ -143,7 +207,7 @@ export default function CustomerDocuments({ customerId }) {
     if (!exists) {
       setDocType(availableDocTypes[0].value);
     }
-  }, [documents]);
+  }, [documents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSelectFile = (event) => {
     clearMessages();
@@ -178,15 +242,22 @@ export default function CustomerDocuments({ customerId }) {
       formData.append("file", file);
       formData.append("doc_type", docType);
       formData.append("doc_name", docName || file.name);
-      formData.append("related_item_code", DOC_TYPE_TO_CHECKLIST[docType] || "OTHER_DOC");
+      formData.append(
+        "related_item_code",
+        DOC_TYPE_TO_CHECKLIST[docType] || "OTHER_DOC",
+      );
 
       setUploading(true);
 
-      const res = await API.post(`/api/customer-files/${customerId}/documents`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      const res = await API.post(
+        `/api/customer-files/${customerId}/documents`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
-      });
+      );
 
       const data = res.data;
 
@@ -198,13 +269,17 @@ export default function CustomerDocuments({ customerId }) {
         inputRef.current.value = "";
       }
 
-      await loadDocuments();
+      await loadAll();
 
       if (data?.signed_url_120s) {
         window.open(data.signed_url_120s, "_blank", "noopener,noreferrer");
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error subiendo documento");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Error subiendo documento",
+      );
     } finally {
       setUploading(false);
     }
@@ -214,7 +289,9 @@ export default function CustomerDocuments({ customerId }) {
     try {
       clearMessages();
 
-      const res = await API.get(`/api/customer-files/documents/${docId}/download-url`);
+      const res = await API.get(
+        `/api/customer-files/documents/${docId}/download-url`,
+      );
       const data = res.data;
 
       if (data?.url) {
@@ -223,7 +300,11 @@ export default function CustomerDocuments({ customerId }) {
         throw new Error("La URL firmada no fue generada");
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error abriendo documento");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Error abriendo documento",
+      );
     }
   };
 
@@ -237,11 +318,17 @@ export default function CustomerDocuments({ customerId }) {
       await API.delete(`/api/customer-files/documents/${docId}`);
 
       setSuccess("Documento eliminado correctamente");
-      await loadDocuments();
+      await loadAll();
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Error eliminando documento");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Error eliminando documento",
+      );
     }
   };
+
+  const isLoadingAny = loadingDocs || loadingChecklist;
 
   return (
     <Paper
@@ -255,7 +342,10 @@ export default function CustomerDocuments({ customerId }) {
     >
       <Stack spacing={2.5}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: BAC.text, mb: 0.5 }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, color: BAC.text, mb: 0.5 }}
+          >
             Documentos del cliente
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -271,20 +361,210 @@ export default function CustomerDocuments({ customerId }) {
           </Alert>
         )}
 
-        {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ borderRadius: 2 }}>{success}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
 
+        {success && (
+          <Alert severity="success" sx={{ borderRadius: 2 }}>
+            {success}
+          </Alert>
+        )}
 
-{/* Sección de lista de documentos cargados */}
-    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Box>
+            <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+              Checklist documental
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              Aquí puedes ver qué documentos faltan, cuáles ya fueron cargados y
+              cuáles ya están validados.
+            </Typography>
+          </Box>
+
+          <Tooltip title="Actualizar">
+            <IconButton
+              onClick={loadAll}
+              disabled={isLoadingAny || !customerId}
+              sx={{
+                border: `1px solid ${BAC.border}`,
+                borderRadius: 2,
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+
+        {loadingChecklist ? (
+          <LinearProgress sx={{ borderRadius: 999 }} />
+        ) : checklistSummary ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              border: `1px solid ${BAC.border}`,
+              backgroundColor: "#FAFCFF",
+            }}
+          >
+            <Stack spacing={2}>
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={1}
+                justifyContent="space-between"
+                alignItems={{ xs: "flex-start", md: "center" }}
+              >
+                <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                  Estado general del expediente
+                </Typography>
+
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Chip
+                    size="small"
+                    label={`Obligatorios: ${checklistSummary.total_mandatory || 0}`}
+                    color="primary"
+                    variant="filled"
+                  />
+                  <Chip
+                    size="small"
+                    label={`Cargados: ${checklistSummary.uploaded_mandatory || 0}`}
+                    color="warning"
+                    variant="filled"
+                  />
+                  <Chip
+                    size="small"
+                    label={`Validados: ${checklistSummary.validated_mandatory || 0}`}
+                    color="success"
+                    variant="filled"
+                  />
+                  <Chip
+                    size="small"
+                    label={`Faltantes: ${checklistSummary.missing_mandatory || 0}`}
+                    color={
+                      Number(checklistSummary.missing_mandatory || 0) > 0
+                        ? "error"
+                        : "success"
+                    }
+                    variant="outlined"
+                  />
+                </Stack>
+              </Stack>
+
+              {checklist.length === 0 ? (
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  No hay ítems configurados en el checklist.
+                </Typography>
+              ) : (
+                <Stack spacing={1.2}>
+                  {checklist.map((item) => {
+                    const statusChip = getChecklistStatus(item);
+
+                    return (
+                      <Stack
+                        key={item.id}
+                        direction={{ xs: "column", md: "row" }}
+                        justifyContent="space-between"
+                        alignItems={{ xs: "flex-start", md: "center" }}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          border: `1px solid ${BAC.border}`,
+                          backgroundColor: "#fff",
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                            {item.title}
+                          </Typography>
+
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary", display: "block" }}
+                          >
+                            {item.section} · {item.code}
+                          </Typography>
+
+                          {item.document_name ? (
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "text.secondary", mt: 0.5 }}
+                            >
+                              Archivo: {item.document_name}
+                            </Typography>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{ color: "#B42318", mt: 0.5 }}
+                            >
+                              No se ha cargado documento para este ítem.
+                            </Typography>
+                          )}
+                        </Box>
+
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          flexWrap="wrap"
+                          sx={{ mt: { xs: 1.5, md: 0 } }}
+                        >
+                          <Chip
+                            size="small"
+                            label={
+                              item.is_mandatory ? "Obligatorio" : "Opcional"
+                            }
+                            color={item.is_mandatory ? "primary" : "default"}
+                            variant={item.is_mandatory ? "filled" : "outlined"}
+                          />
+
+                          <Chip
+                            size="small"
+                            label={statusChip.label}
+                            color={statusChip.color}
+                            variant={statusChip.variant}
+                          />
+
+                          {Number(item.uploaded_count || 0) > 0 && (
+                            <Chip
+                              size="small"
+                              label={`Archivos: ${item.uploaded_count}`}
+                              variant="outlined"
+                            />
+                          )}
+                        </Stack>
+                      </Stack>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+        ) : customerId ? (
+          <Alert severity="info" sx={{ borderRadius: 2 }}>
+            No se pudo cargar el checklist documental.
+          </Alert>
+        ) : null}
+
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mt: 1 }}
+        >
           <Typography sx={{ fontWeight: 700, color: BAC.text }}>
             Documentos cargados
           </Typography>
 
           <Tooltip title="Actualizar">
             <IconButton
-              onClick={loadDocuments}
-              disabled={loadingDocs || !customerId}
+              onClick={loadAll}
+              disabled={isLoadingAny || !customerId}
               sx={{
                 border: `1px solid ${BAC.border}`,
                 borderRadius: 2,
@@ -361,7 +641,10 @@ export default function CustomerDocuments({ customerId }) {
                           <Typography sx={{ fontWeight: 700, color: BAC.text }}>
                             {doc.doc_name}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
                             {doc.storage_path}
                           </Typography>
                         </Box>
@@ -385,7 +668,11 @@ export default function CustomerDocuments({ customerId }) {
                     <TableCell>{formatDateTime(doc.uploaded_at)}</TableCell>
 
                     <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="center"
+                      >
                         <Tooltip title="Ver documento">
                           <IconButton
                             onClick={() => handleView(doc.id)}
@@ -419,8 +706,7 @@ export default function CustomerDocuments({ customerId }) {
             </Table>
           </TableContainer>
         )}
-        
-        {/* Sección de subir nuevo documento */}
+
         <Paper
           elevation={0}
           sx={{
@@ -430,8 +716,6 @@ export default function CustomerDocuments({ customerId }) {
             backgroundColor: BAC.secondary,
           }}
         >
-
-          
           <Stack spacing={2}>
             <Typography sx={{ fontWeight: 700, color: BAC.text }}>
               Subir nuevo documento
@@ -498,11 +782,17 @@ export default function CustomerDocuments({ customerId }) {
               </Button>
 
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" sx={{ color: BAC.text, fontWeight: 600 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: BAC.text, fontWeight: 600 }}
+                >
                   {file ? file.name : "Ningún archivo seleccionado"}
                 </Typography>
                 {file && (
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary" }}
+                  >
                     Tamaño: {formatBytes(file.size)}
                   </Typography>
                 )}
@@ -527,8 +817,6 @@ export default function CustomerDocuments({ customerId }) {
             {uploading && <LinearProgress sx={{ borderRadius: 999 }} />}
           </Stack>
         </Paper>
-
-        
       </Stack>
     </Paper>
   );

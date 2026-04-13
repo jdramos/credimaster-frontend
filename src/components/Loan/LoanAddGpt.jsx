@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import Button from "@mui/material/Button";
 import Save from "@mui/icons-material/Save";
 import Cancel from "@mui/icons-material/Cancel";
+import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 import TextField from "@mui/material/TextField";
 import Snackbar from "@mui/material/Snackbar";
@@ -39,6 +40,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Grid from "@mui/material/Grid";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
+import CustomerChecklist from "../Customer/CustomerCheckList";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
@@ -124,6 +126,8 @@ const LoanAdd = () => {
 
   const [openDialog, setOpenDialog] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
+  const [docSummary, setDocSummary] = useState(null);
+  const [showCustomerDocs, setShowCustomerDocs] = useState(false);
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbarMessage(message);
@@ -171,6 +175,28 @@ const LoanAdd = () => {
 
     fetchPolicies();
   }, []);
+
+  useEffect(() => {
+    const fetchCustomerChecklist = async () => {
+      if (!loan.customer_id) {
+        setDocSummary(null);
+        return;
+      }
+
+      try {
+        const { data } = await API.get(
+          `/api/customer-files/${loan.customer_id}/checklist-summary`,
+        );
+
+        setDocSummary(data);
+      } catch (error) {
+        console.error("Error obteniendo checklist:", error);
+        setDocSummary(null);
+      }
+    };
+
+    fetchCustomerChecklist();
+  }, [loan.customer_id]);
 
   useEffect(() => {
     const fetchGuaranteesByCustomer = async () => {
@@ -1125,6 +1151,80 @@ const LoanAdd = () => {
                 apiUrl={`${urlGuarantee}/${loan.customer_id}`}
                 TotalGuarenteeValue={guaranteeValue}
               />
+              <Box sx={{ mt: 2 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    border: `1px solid ${BAC.border}`,
+                    background: BAC.soft,
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={1}
+                  >
+                    <Typography sx={{ fontWeight: 900, color: BAC.text }}>
+                      Documentación del cliente
+                    </Typography>
+
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setShowCustomerDocs(true)}
+                      disabled={!loan.customer_id}
+                      sx={{ fontWeight: 700, borderRadius: 2 }}
+                    >
+                      Ver documentos
+                    </Button>
+                  </Stack>
+
+                  {docSummary ? (
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      <Chip
+                        label={`Requeridos: ${docSummary.total_required}`}
+                      />
+                      <Chip
+                        label={`Cargados: ${docSummary.uploaded}`}
+                        sx={{
+                          bgcolor: "#FFF3E0",
+                          color: BAC.warning,
+                          fontWeight: 700,
+                        }}
+                      />
+                      <Chip
+                        label={`Verificados: ${docSummary.verified}`}
+                        sx={{
+                          bgcolor: "#E8F5E9",
+                          color: BAC.success,
+                          fontWeight: 700,
+                        }}
+                      />
+                      <Chip
+                        label={`Faltantes: ${docSummary.missing}`}
+                        sx={{
+                          bgcolor:
+                            Number(docSummary.missing) > 0
+                              ? "#FEE2E2"
+                              : "#E8F5E9",
+                          color:
+                            Number(docSummary.missing) > 0
+                              ? "#B42318"
+                              : BAC.success,
+                          fontWeight: 700,
+                        }}
+                      />
+                    </Stack>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No hay información documental.
+                    </Typography>
+                  )}
+                </Paper>
+              </Box>
             </Paper>
           </Box>
 
@@ -1258,6 +1358,51 @@ const LoanAdd = () => {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
+
+      <Dialog
+        open={showCustomerDocs}
+        onClose={() => setShowCustomerDocs(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 800,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          Checklist documental del cliente
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 2 }}>
+          {loan.customer_id ? (
+            <CustomerChecklist
+              customerId={loan.customer_id}
+              customerName={loan.customer_name}
+              readOnly={false}
+            />
+          ) : (
+            <Alert severity="info">
+              Selecciona un cliente para ver los documentos.
+            </Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => setShowCustomerDocs(false)}
+            variant="contained"
+            sx={{
+              fontWeight: 800,
+              borderRadius: 2,
+              bgcolor: BAC.primary,
+            }}
+          >
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,10 +1,11 @@
+import BalancesDashboard from "../components/dashboard/BalancesDashboard";
 
 function Home() {
-    return (
-        <div>
-            Home
-        </div>
-    )
+  return (
+    <div>
+      <BalancesDashboard />
+    </div>
+  );
 }
 
 export default Home;
