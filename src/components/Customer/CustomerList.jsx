@@ -1,9 +1,25 @@
 import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
 import {
-  Box, Paper, Toolbar, Tooltip, Typography, TextField, InputAdornment,
-  IconButton, Snackbar, Alert, Stack, Button, CircularProgress
+  Box,
+  Paper,
+  Toolbar,
+  Tooltip,
+  Typography,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Snackbar,
+  Alert,
+  Stack,
+  Button,
+  CircularProgress,
 } from "@mui/material";
-import { Search as SearchIcon, Clear as ClearIcon, Add as AddIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import {
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  Add as AddIcon,
+  Refresh as RefreshIcon,
+} from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import Show from "@mui/icons-material/Visibility";
@@ -20,7 +36,7 @@ export default function CustomerList() {
   const [rowCount, setRowCount] = useState(0);
 
   // DataGrid server state
-  const [page, setPage] = useState(0);      // 0-based
+  const [page, setPage] = useState(0); // 0-based
   const [pageSize, setPageSize] = useState(10);
   const [sortModel, setSortModel] = useState([{ field: "id", sort: "desc" }]);
 
@@ -41,7 +57,12 @@ export default function CustomerList() {
       { field: "id", headerName: "ID", width: 70 },
       { field: "customer_code", headerName: "Código", width: 120 },
       { field: "identification", headerName: "Identificación", width: 160 },
-      { field: "customer_name", headerName: "Nombre del cliente", flex: 1, minWidth: 150 },
+      {
+        field: "customer_name",
+        headerName: "Nombre del cliente",
+        flex: 1,
+        minWidth: 150,
+      },
       {
         field: "actions",
         headerName: "Acciones",
@@ -52,7 +73,7 @@ export default function CustomerList() {
           <Box>
             {(role === 1 || permissions.includes("clientes.editar")) && (
               <Tooltip title="Editar">
-                <Link to={`/clientes/editar/${params.row.id}`} >
+                <Link to={`/clientes/editar/${params.row.id}`}>
                   <IconButton size="small">
                     <EditIcon fontSize="small" />
                   </IconButton>
@@ -72,7 +93,7 @@ export default function CustomerList() {
         ),
       },
     ],
-    [permissions, role]
+    [permissions, role],
   );
 
   const handleSearchChange = (e) => {
@@ -99,18 +120,15 @@ export default function CustomerList() {
       const sortDir = sortModel[0]?.sort || "desc";
 
       const params = {
-        page: page + 1,          // API base 1
+        page: page + 1, // API base 1
         pageSize,
         sortBy,
         sortDir,
-        search: globalFilter,     // ✅ usa el debounced
+        search: globalFilter, // ✅ usa el debounced
       };
 
       const res = await API.get(url, { params, signal });
 
-      // ✅ Soporta ambas respuestas:
-      // 1) tu back anterior: { rows, total }
-      // 2) mi back recomendado: { ok, data: { rows,total } }
       const payload = res?.data?.data ?? res?.data;
 
       const newRows = payload?.rows ?? [];
@@ -121,7 +139,10 @@ export default function CustomerList() {
     } catch (err) {
       if (signal?.aborted) return;
       console.error(err);
-      setSnack({ type: "error", msg: `Error al obtener clientes: ${err?.response?.data?.message ?? err.message}` });
+      setSnack({
+        type: "error",
+        msg: `Error al obtener clientes: ${err?.response?.data?.message ?? err.message}`,
+      });
       setSnackOpen(true);
     } finally {
       setLoading(false);
@@ -142,8 +163,20 @@ export default function CustomerList() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ mb: 2, p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-        <Toolbar disableGutters sx={{ justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 2,
+          p: 2,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Toolbar
+          disableGutters
+          sx={{ justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}
+        >
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="h5" fontWeight={700}>
               Listado de clientes
@@ -151,7 +184,12 @@ export default function CustomerList() {
             {loading && <CircularProgress size={20} />}
           </Stack>
 
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ width: { xs: "100%", sm: 520 }, flexShrink: 0 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ width: { xs: "100%", sm: 520 }, flexShrink: 0 }}
+          >
             <TextField
               size="small"
               placeholder="Buscar por identificación o nombre…"
@@ -166,7 +204,12 @@ export default function CustomerList() {
                 ),
                 endAdornment: search ? (
                   <InputAdornment position="end">
-                    <IconButton aria-label="Limpiar búsqueda" edge="end" onClick={clearSearch} size="small">
+                    <IconButton
+                      aria-label="Limpiar búsqueda"
+                      edge="end"
+                      onClick={clearSearch}
+                      size="small"
+                    >
                       <ClearIcon fontSize="small" />
                     </IconButton>
                   </InputAdornment>
@@ -179,14 +222,22 @@ export default function CustomerList() {
             </IconButton>
 
             {canCreate && (
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={2}>
-              <Button variant="contained" 
-              startIcon={<AddIcon />} 
-              component={RouterLink} 
-              to="/clientes/agregar" 
-              sx={{ borderRadius: 2, px: 2 , ml: 1}}>
-                Agregar
-              </Button>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={2}
+                mt={2}
+              >
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  component={RouterLink}
+                  to="/clientes/agregar"
+                  sx={{ borderRadius: 2, px: 2, ml: 1 }}
+                >
+                  Agregar
+                </Button>
               </Box>
             )}
           </Stack>
@@ -214,8 +265,17 @@ export default function CustomerList() {
         </div>
       </Paper>
 
-      <Snackbar open={snackOpen} autoHideDuration={3500} onClose={() => setSnackOpen(false)}>
-        <Alert onClose={() => setSnackOpen(false)} severity={snack.type} variant="filled" sx={{ width: "100%" }}>
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={3500}
+        onClose={() => setSnackOpen(false)}
+      >
+        <Alert
+          onClose={() => setSnackOpen(false)}
+          severity={snack.type}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
           {snack.msg}
         </Alert>
       </Snackbar>
