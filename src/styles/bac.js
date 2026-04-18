@@ -1,14 +1,12 @@
 const BAC = {
-  primary: "#0F62AC",
-  secondary: "#EAF4FF",
-  border: "#D6E4F0",
-  text: "#16324F",
-  successBg: "#EAF7EE",
-  successText: "#1E7A3E",
-  dangerBg: "#FDECEC",
-  dangerText: "#B42318",
-  warningBg: "#FFF7E6",
-  warningText: "#B26B00",
+  primary: "#0057B8",
+  primaryDark: "#003E8A",
+  soft: "#EAF2FF",
+  border: "#E6EAF2",
+  text: "#0B1F3B",
+  muted: "#5B6B7F",
+  bg: "#F6F8FC",
+  white: "#FFFFFF",
 };
 
 export default BAC;

@@ -41,21 +41,11 @@ import DialogActions from "@mui/material/DialogActions";
 import Grid from "@mui/material/Grid";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
 import CustomerChecklist from "../Customer/CustomerCheckList";
+import BAC from "../../styles/bac";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
 const token = process.env.REACT_APP_API_TOKEN;
-
-const BAC = {
-  primary: "#0057B8",
-  primaryDark: "#003E8A",
-  soft: "#EAF2FF",
-  border: "#E6EAF2",
-  text: "#0B1F3B",
-  muted: "#5B6B7F",
-  bg: "#F6F8FC",
-  white: "#FFFFFF",
-};
 
 const fieldSx = {
   "& .MuiInputLabel-root": { fontWeight: 700 },
@@ -366,6 +356,11 @@ const LoanAdd = () => {
   const validateForm = (data) => {
     const nextErrors = {};
 
+    if (docSummary && Number(docSummary.missing || 0) > 0) {
+      nextErrors.documents =
+        "El cliente no tiene completos los documentos obligatorios";
+    }
+
     if (!data.customer_id) {
       nextErrors.customer_id = "El cliente es requerido";
     }
@@ -473,7 +468,13 @@ const LoanAdd = () => {
   };
 
   const handleInputChange = (e, selectedOption = null) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+      customer_identification,
+      customer_name,
+      conami_id_actividad_economica,
+    } = e.target;
 
     const nextLoan = {
       ...loan,
@@ -481,8 +482,16 @@ const LoanAdd = () => {
       frequency_name: selectedOption
         ? selectedOption.name
         : loan.frequency_name,
-      customer_identification: e.target.customer_identification,
-      customer_name: e.target.customer_name,
+      customer_identification:
+        customer_identification !== undefined
+          ? customer_identification
+          : loan.customer_identification,
+      customer_name:
+        customer_name !== undefined ? customer_name : loan.customer_name,
+      conami_id_actividad_economica:
+        conami_id_actividad_economica !== undefined
+          ? conami_id_actividad_economica
+          : loan.conami_id_actividad_economica,
     };
 
     setLoan(nextLoan);
@@ -1133,7 +1142,15 @@ const LoanAdd = () => {
             </Box>
           </Box>
 
-          <Box sx={{ mt: 2 }}>
+          <Box
+            sx={{
+              mt: 2,
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+              gap: 2,
+              alignItems: "start",
+            }}
+          >
             <Paper
               elevation={0}
               sx={{
@@ -1141,6 +1158,7 @@ const LoanAdd = () => {
                 borderRadius: 3,
                 border: `1px solid ${BAC.border}`,
                 background: BAC.soft,
+                height: "100%",
               }}
             >
               <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>
@@ -1151,80 +1169,92 @@ const LoanAdd = () => {
                 apiUrl={`${urlGuarantee}/${loan.customer_id}`}
                 TotalGuarenteeValue={guaranteeValue}
               />
-              <Box sx={{ mt: 2 }}>
-                <Paper
-                  elevation={0}
+            </Paper>
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 3,
+                border: `1px solid ${BAC.border}`,
+                background: BAC.soft,
+                height: "100%",
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={1}
+                flexWrap="wrap"
+                gap={1}
+              >
+                <Typography sx={{ fontWeight: 900, color: BAC.text }}>
+                  Documentación del cliente
+                </Typography>
+
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setShowCustomerDocs(true)}
+                  disabled={!loan.customer_id}
                   sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    border: `1px solid ${BAC.border}`,
-                    background: BAC.soft,
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    borderColor: "rgba(0,87,184,0.35)",
+                    color: BAC.primary,
+                    "&:hover": { borderColor: BAC.primary, bgcolor: BAC.white },
                   }}
                 >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mb={1}
-                  >
-                    <Typography sx={{ fontWeight: 900, color: BAC.text }}>
-                      Documentación del cliente
-                    </Typography>
-
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => setShowCustomerDocs(true)}
-                      disabled={!loan.customer_id}
-                      sx={{ fontWeight: 700, borderRadius: 2 }}
-                    >
-                      Ver documentos
-                    </Button>
-                  </Stack>
-
-                  {docSummary ? (
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                      <Chip
-                        label={`Requeridos: ${docSummary.total_required}`}
-                      />
-                      <Chip
-                        label={`Cargados: ${docSummary.uploaded}`}
-                        sx={{
-                          bgcolor: "#FFF3E0",
-                          color: BAC.warning,
-                          fontWeight: 700,
-                        }}
-                      />
-                      <Chip
-                        label={`Verificados: ${docSummary.verified}`}
-                        sx={{
-                          bgcolor: "#E8F5E9",
-                          color: BAC.success,
-                          fontWeight: 700,
-                        }}
-                      />
-                      <Chip
-                        label={`Faltantes: ${docSummary.missing}`}
-                        sx={{
-                          bgcolor:
-                            Number(docSummary.missing) > 0
-                              ? "#FEE2E2"
-                              : "#E8F5E9",
-                          color:
-                            Number(docSummary.missing) > 0
-                              ? "#B42318"
-                              : BAC.success,
-                          fontWeight: 700,
-                        }}
-                      />
-                    </Stack>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      No hay información documental.
-                    </Typography>
-                  )}
-                </Paper>
-              </Box>
+                  Ver documentos
+                </Button>
+              </Stack>
+              {errors.documents && (
+                <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+                  {errors.documents}
+                </Alert>
+              )}
+              {docSummary ? (
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Chip
+                    label={`Requeridos: ${docSummary.total_required || 0}`}
+                  />
+                  <Chip
+                    label={`Cargados: ${docSummary.uploaded || 0}`}
+                    sx={{
+                      bgcolor: "#FFF3E0",
+                      color: "#ED6C02",
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Chip
+                    label={`Verificados: ${docSummary.verified || 0}`}
+                    sx={{
+                      bgcolor: "#E8F5E9",
+                      color: "#2E7D32",
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Chip
+                    label={`Faltantes: ${docSummary.missing || 0}`}
+                    sx={{
+                      bgcolor:
+                        Number(docSummary.missing || 0) > 0
+                          ? "#FEE2E2"
+                          : "#E8F5E9",
+                      color:
+                        Number(docSummary.missing || 0) > 0
+                          ? "#B42318"
+                          : "#2E7D32",
+                      fontWeight: 700,
+                    }}
+                  />
+                </Stack>
+              ) : (
+                <Alert severity="info" sx={{ borderRadius: 2 }}>
+                  No hay información documental disponible para este cliente.
+                </Alert>
+              )}
             </Paper>
           </Box>
 
