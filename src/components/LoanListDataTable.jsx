@@ -600,51 +600,51 @@ function LoanListDataTable({
                       </Tooltip>
                     )}
                     {/* 
-                    {canApprove && (
-                      <Tooltip title="Aprobar crédito">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="success"
-                            disabled={!canApproveRow}
-                            onClick={() => handleOpenApprovalDialog(row, "approve")}
-                          >
-                            <CheckCircleIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
+                      {canApprove && (
+                        <Tooltip title="Aprobar crédito">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="success"
+                              disabled={!canApproveRow}
+                              onClick={() => handleOpenApprovalDialog(row, "approve")}
+                            >
+                              <CheckCircleIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
 
-                    {canReject && (
-                      <Tooltip title="Rechazar crédito">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            disabled={!canApproveRow}
-                            onClick={() => handleOpenApprovalDialog(row, "reject")}
-                          >
-                            <CancelIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
+                      {canReject && (
+                        <Tooltip title="Rechazar crédito">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={!canApproveRow}
+                              onClick={() => handleOpenApprovalDialog(row, "reject")}
+                            >
+                              <CancelIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
 
-                    {canDisburse && (
-                      <Tooltip title="Desembolsar crédito">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="info"
-                            disabled={!canDisburseRow}
-                            onClick={() => handleOpenDisburseDialog(row)}
-                          >
-                            <PaidIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
-                */}
+                      {canDisburse && (
+                        <Tooltip title="Desembolsar crédito">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="info"
+                              disabled={!canDisburseRow}
+                              onClick={() => handleOpenDisburseDialog(row)}
+                            >
+                              <PaidIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )}
+                  */}
                     {canPay && (
                       <Tooltip title="Agregar pago">
                         <IconButton
@@ -828,10 +828,12 @@ function LoanListDataTable({
                     inputFormat="DD/MM/YYYY"
                     value={approvalForm.date || null}
                     onChange={(newValue) => {
-                      setTmpDate(newValue || dayjs());
-                      handleInputChange({
-                        target: { name: "date", value: newValue },
-                      });
+                      setApprovalForm((prev) => ({
+                        ...prev,
+                        date: newValue
+                          ? dayjs(newValue).format("YYYY-MM-DD")
+                          : "",
+                      }));
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -853,16 +855,18 @@ function LoanListDataTable({
                     inputFormat="DD/MM/YYYY"
                     value={approvalForm.date || null}
                     onChange={(newValue) => {
-                      setTmpDate(newValue || dayjs());
-                      handleInputChange({
-                        target: { name: "date", value: newValue },
-                      });
+                      setApprovalForm((prev) => ({
+                        ...prev,
+                        date: newValue
+                          ? dayjs(newValue).format("YYYY-MM-DD")
+                          : "",
+                      }));
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         size="small"
-                        sx={{ width: 150, m: 1 }}
+                        sx={{ width: 150, m: 2 }}
                       />
                     )}
                   />
