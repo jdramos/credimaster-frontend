@@ -65,6 +65,7 @@ import ApprovalInbox from "./components/ApprovalInbox";
 import CustomerClaimsList from "./components/Claims/CustomerClaimsList";
 import BalancesDashboard from "./components/dashboard/BalancesDashboard";
 import CreditFileTemplatePage from "./components/credit-files/CreditFileTemplatePage";
+import ConamiDefaultsManager from "./components/conami/ConamiDefaultsManager";
 
 function PageContainer({ children }) {
   return (
@@ -364,6 +365,15 @@ function AppRoutes({ themeMode, setThemeMode }) {
           element={
             <PageContainer>
               <PromoterEdit />
+            </PageContainer>
+          }
+        />
+
+        <Route
+          path="/conami/tablas"
+          element={
+            <PageContainer>
+              <ConamiDefaultsManager />
             </PageContainer>
           }
         />

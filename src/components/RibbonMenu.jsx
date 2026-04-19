@@ -188,6 +188,13 @@ const menuItems = {
       to: "/conami/estado-civil",
       group: "Catálogos CONAMI",
     },
+
+    {
+      label: "Tablas Conami",
+      iconName: "FaMoneyCheckAlt",
+      to: "/conami/tablas",
+      group: "Catálogos CONAMI",
+    },
   ],
 };
 

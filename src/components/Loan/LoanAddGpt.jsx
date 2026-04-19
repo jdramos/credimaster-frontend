@@ -42,6 +42,7 @@ import Grid from "@mui/material/Grid";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
+import LoanExtraFields from "./LoanExtraFields";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
@@ -101,6 +102,49 @@ const LoanAdd = () => {
     credit_evaluation_id: "",
     created_by:
       currentUser?.user_name || currentUser?.username || currentUser?.id || "",
+    id_clasificacion_credito: "",
+    id_tipo_credito: "",
+    id_destino_credito: "",
+    id_garantia: "",
+    id_linea: "",
+    id_modalidad_credito: "",
+    id_moneda: "",
+    id_municipio: "",
+    id_oficina: "",
+    id_origen_recursos: "",
+    id_periodo_cobro_interes: "",
+    id_periodo_cobro_principal: "",
+    id_sindicado: "",
+    id_situacion_credito: "",
+    id_tipo_agrupacion_credito: "",
+    id_sector_economico: "",
+    id_met_atencion: "",
+    id_tipo_zona: "",
+    id_estado_credito: "",
+    id_analista: "",
+  });
+
+  const [catalogs, setCatalogs] = useState({
+    clasificacionesCredito: [],
+    tiposCredito: [],
+    destinosCredito: [],
+    garantias: [],
+    lineas: [],
+    modalidadesCredito: [],
+    monedas: [],
+    municipios: [],
+    oficinas: [],
+    origenesRecursos: [],
+    periodosCobroInteres: [],
+    periodosCobroPrincipal: [],
+    sindicados: [],
+    situacionesCredito: [],
+    tiposAgrupacionCredito: [],
+    sectoresEconomicos: [],
+    metodosAtencion: [],
+    tiposZona: [],
+    estadosCredito: [],
+    analistas: [],
   });
 
   const [guaranteeValue, setGuaranteeValue] = useState(0);
@@ -398,6 +442,30 @@ const LoanAdd = () => {
         "Debe seleccionar una evaluación financiera";
     }
 
+    if (!data.id_tipo_credito) {
+      nextErrors.id_tipo_credito = "El tipo de crédito es requerido";
+    }
+
+    if (!data.id_destino_credito) {
+      nextErrors.id_destino_credito = "El destino del crédito es requerido";
+    }
+
+    if (!data.id_moneda) {
+      nextErrors.id_moneda = "La moneda es requerida";
+    }
+
+    if (!data.id_estado_credito) {
+      nextErrors.id_estado_credito = "El estado del crédito es requerido";
+    }
+
+    if (!data.id_oficina) {
+      nextErrors.id_oficina = "La oficina es requerida";
+    }
+
+    if (!data.id_municipio) {
+      nextErrors.id_municipio = "El municipio es requerido";
+    }
+
     if (
       getPolicy("max_amount") &&
       Number(data.amount) > Number(getPolicy("max_amount"))
@@ -467,6 +535,85 @@ const LoanAdd = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const getDefaultId = (rows = []) => {
+    const found = rows.find((row) => Number(row.is_default) === 1);
+    return found ? found.id : "";
+  };
+
+  const loadConamiCatalogs = async () => {
+    try {
+      const res = await API.get("/api/conami/catalogs");
+      const data = res.data || {};
+
+      setCatalogs(data);
+
+      setLoan((prev) => ({
+        ...prev,
+        id_clasificacion_credito:
+          prev.id_clasificacion_credito ||
+          getDefaultId(data.clasificacionesCredito),
+
+        id_tipo_credito:
+          prev.id_tipo_credito || getDefaultId(data.tiposCredito),
+
+        id_destino_credito:
+          prev.id_destino_credito || getDefaultId(data.destinosCredito),
+
+        id_garantia: prev.id_garantia || getDefaultId(data.garantias),
+
+        id_linea: prev.id_linea || getDefaultId(data.lineas),
+
+        id_modalidad_credito:
+          prev.id_modalidad_credito || getDefaultId(data.modalidadesCredito),
+
+        id_moneda: prev.id_moneda || getDefaultId(data.monedas),
+
+        id_municipio: prev.id_municipio || getDefaultId(data.municipios),
+
+        id_oficina: prev.id_oficina || getDefaultId(data.oficinas),
+
+        id_origen_recursos:
+          prev.id_origen_recursos || getDefaultId(data.origenesRecursos),
+
+        id_periodo_cobro_interes:
+          prev.id_periodo_cobro_interes ||
+          getDefaultId(data.periodosCobroInteres),
+
+        id_periodo_cobro_principal:
+          prev.id_periodo_cobro_principal ||
+          getDefaultId(data.periodosCobroPrincipal),
+
+        id_sindicado: prev.id_sindicado || getDefaultId(data.sindicados),
+
+        id_situacion_credito:
+          prev.id_situacion_credito || getDefaultId(data.situacionesCredito),
+
+        id_tipo_agrupacion_credito:
+          prev.id_tipo_agrupacion_credito ||
+          getDefaultId(data.tiposAgrupacionCredito),
+
+        id_sector_economico:
+          prev.id_sector_economico || getDefaultId(data.sectoresEconomicos),
+
+        id_met_atencion:
+          prev.id_met_atencion || getDefaultId(data.metodosAtencion),
+
+        id_tipo_zona: prev.id_tipo_zona || getDefaultId(data.tiposZona),
+
+        id_estado_credito:
+          prev.id_estado_credito || getDefaultId(data.estadosCredito),
+
+        id_analista: prev.id_analista || getDefaultId(data.analistas),
+      }));
+    } catch (error) {
+      console.error("Error cargando catálogos:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadConamiCatalogs();
+  }, []);
+
   const handleInputChange = (e, selectedOption = null) => {
     const {
       name,
@@ -522,9 +669,53 @@ const LoanAdd = () => {
         ? Number(loan.credit_evaluation_id)
         : null,
       created_by: loan.created_by || null,
+
+      id_clasificacion_credito: loan.id_clasificacion_credito
+        ? Number(loan.id_clasificacion_credito)
+        : null,
+      id_tipo_credito: loan.id_tipo_credito
+        ? Number(loan.id_tipo_credito)
+        : null,
+      id_destino_credito: loan.id_destino_credito
+        ? Number(loan.id_destino_credito)
+        : null,
+      id_garantia: loan.id_garantia ? Number(loan.id_garantia) : null,
+      id_linea: loan.id_linea ? Number(loan.id_linea) : null,
+      id_modalidad_credito: loan.id_modalidad_credito
+        ? Number(loan.id_modalidad_credito)
+        : null,
+      id_moneda: loan.id_moneda ? Number(loan.id_moneda) : null,
+      id_municipio: loan.id_municipio ? Number(loan.id_municipio) : null,
+      id_oficina: loan.id_oficina ? Number(loan.id_oficina) : null,
+      id_origen_recursos: loan.id_origen_recursos
+        ? Number(loan.id_origen_recursos)
+        : null,
+      id_periodo_cobro_interes: loan.id_periodo_cobro_interes
+        ? Number(loan.id_periodo_cobro_interes)
+        : null,
+      id_periodo_cobro_principal: loan.id_periodo_cobro_principal
+        ? Number(loan.id_periodo_cobro_principal)
+        : null,
+      id_sindicado: loan.id_sindicado ? Number(loan.id_sindicado) : null,
+      id_situacion_credito: loan.id_situacion_credito
+        ? Number(loan.id_situacion_credito)
+        : null,
+      id_tipo_agrupacion_credito: loan.id_tipo_agrupacion_credito
+        ? Number(loan.id_tipo_agrupacion_credito)
+        : null,
+      id_sector_economico: loan.id_sector_economico
+        ? Number(loan.id_sector_economico)
+        : null,
+      id_met_atencion: loan.id_met_atencion
+        ? Number(loan.id_met_atencion)
+        : null,
+      id_tipo_zona: loan.id_tipo_zona ? Number(loan.id_tipo_zona) : null,
+      id_estado_credito: loan.id_estado_credito
+        ? Number(loan.id_estado_credito)
+        : null,
+      id_analista: loan.id_analista ? Number(loan.id_analista) : null,
     };
   };
-
   const addLoan = async () => {
     setLoading(true);
 
@@ -1141,6 +1332,13 @@ const LoanAdd = () => {
               />
             </Box>
           </Box>
+
+          <LoanExtraFields
+            formData={loan}
+            handleChange={handleInputChange}
+            catalogs={catalogs}
+            errors={errors}
+          />
 
           <Box
             sx={{
