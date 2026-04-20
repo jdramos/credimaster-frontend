@@ -18,18 +18,13 @@ const LoanExtraFields = ({
   errors = {},
 }) => {
   const {
-    clasificacionesCredito = [],
     tiposCredito = [],
-    destinosCredito = [],
-    garantias = [],
     lineas = [],
     modalidadesCredito = [],
     monedas = [],
     municipios = [],
     oficinas = [],
     origenesRecursos = [],
-    periodosCobroInteres = [],
-    periodosCobroPrincipal = [],
     sindicados = [],
     situacionesCredito = [],
     tiposAgrupacionCredito = [],
@@ -106,33 +101,9 @@ const LoanExtraFields = ({
           <Grid container spacing={1.5}>
             <Grid item xs={12} sm={6} md={4}>
               {renderSelect({
-                name: "id_clasificacion_credito",
-                label: "Clasificación crédito",
-                options: clasificacionesCredito,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
                 name: "id_tipo_credito",
                 label: "Tipo crédito",
                 options: tiposCredito,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_destino_credito",
-                label: "Destino crédito",
-                options: destinosCredito,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_garantia",
-                label: "Garantía",
-                options: garantias,
               })}
             </Grid>
 
@@ -181,22 +152,6 @@ const LoanExtraFields = ({
                 name: "id_origen_recursos",
                 label: "Origen recursos",
                 options: origenesRecursos,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_periodo_cobro_interes",
-                label: "Período cobro interés",
-                options: periodosCobroInteres,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_periodo_cobro_principal",
-                label: "Período cobro principal",
-                options: periodosCobroPrincipal,
               })}
             </Grid>
 

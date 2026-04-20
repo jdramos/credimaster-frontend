@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import InputLabel from "@mui/material/InputLabel";
-import FormControl from "@mui/material/FormControl";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import FormHelperText from "@mui/material/FormHelperText";
+import React, { useEffect, useId, useState } from "react";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+} from "@mui/material";
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/provinces";
 const token = process.env.REACT_APP_API_TOKEN;
@@ -11,29 +13,39 @@ const headers = { Authorization: token };
 
 const ProvinceSelect = ({
   value,
-  selected,      // (opcional) por compatibilidad si lo usas en edición
+  selected,
   editing = false,
   onChange,
   name = "province_id",
   label = "Departamento",
   error,
+  helperText = "",
   disabled = false,
   size = "small",
+  fullWidth = true,
 }) => {
   const [provinces, setProvinces] = useState([]);
   const [fetchError, setFetchError] = useState("");
+
+  const inputId = useId();
+  const labelId = `${inputId}-${name}-label`;
+  const selectId = `${inputId}-${name}`;
 
   useEffect(() => {
     const fetchApi = async () => {
       try {
         setFetchError("");
+
         const response = await fetch(url, { headers });
-        if (!response.ok) throw new Error("Failed to retrieve data.");
+        if (!response.ok) {
+          throw new Error("Failed to retrieve data.");
+        }
+
         const jsonData = await response.json();
         setProvinces(Array.isArray(jsonData) ? jsonData : []);
       } catch (e) {
         console.error(e);
-        setFetchError("No se pudieron cargar las provincias.");
+        setFetchError("No se pudieron cargar los departamentos.");
         setProvinces([]);
       }
     };
@@ -41,20 +53,48 @@ const ProvinceSelect = ({
     fetchApi();
   }, []);
 
-  // Valor controlado: si estás editando y mandas selected úsalo; si no, usa value.
-  // Importante: permitir "" para "Seleccione..."
   const controlledValue = editing ? (selected ?? "") : (value ?? "");
+  const finalHelperText = error || fetchError || helperText || " ";
 
   return (
-    <FormControl sx={{ mt: 0, ml: 0, minWidth: 200 }} size={size} disabled={disabled} error={Boolean(error)}>
-      <InputLabel id="province-label">{label}</InputLabel>
+    <FormControl
+      fullWidth={fullWidth}
+      size={size}
+      disabled={disabled}
+      error={Boolean(error || fetchError)}
+      variant="outlined"
+    >
+      <InputLabel id={labelId} shrink>
+        {label}
+      </InputLabel>
 
       <Select
-        labelId="province-label"
-        label={label}
+        labelId={labelId}
+        id={selectId}
         name={name}
         value={controlledValue}
         onChange={onChange}
+        label={label}
+        displayEmpty
+        renderValue={(selectedValue) => {
+          if (
+            selectedValue === "" ||
+            selectedValue === null ||
+            selectedValue === undefined
+          ) {
+            return <span style={{ color: "#9e9e9e" }}>Seleccione...</span>;
+          }
+
+          const province = provinces.find(
+            (item) => Number(item.id) === Number(selectedValue),
+          );
+
+          return province ? province.name : "";
+        }}
+        sx={{
+          borderRadius: 2,
+          backgroundColor: "#fff",
+        }}
       >
         <MenuItem value="">
           <em>Seleccione...</em>
@@ -67,11 +107,7 @@ const ProvinceSelect = ({
         ))}
       </Select>
 
-      {(error || fetchError) && (
-        <FormHelperText>
-          {error || fetchError}
-        </FormHelperText>
-      )}
+      <FormHelperText>{finalHelperText}</FormHelperText>
     </FormControl>
   );
 };

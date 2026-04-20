@@ -102,9 +102,7 @@ const LoanAdd = () => {
     credit_evaluation_id: "",
     created_by:
       currentUser?.user_name || currentUser?.username || currentUser?.id || "",
-    id_clasificacion_credito: "",
     id_tipo_credito: "",
-    id_destino_credito: "",
     id_garantia: "",
     id_linea: "",
     id_modalidad_credito: "",
@@ -125,18 +123,13 @@ const LoanAdd = () => {
   });
 
   const [catalogs, setCatalogs] = useState({
-    clasificacionesCredito: [],
     tiposCredito: [],
-    destinosCredito: [],
-    garantias: [],
     lineas: [],
     modalidadesCredito: [],
     monedas: [],
     municipios: [],
     oficinas: [],
     origenesRecursos: [],
-    periodosCobroInteres: [],
-    periodosCobroPrincipal: [],
     sindicados: [],
     situacionesCredito: [],
     tiposAgrupacionCredito: [],
@@ -259,6 +252,10 @@ const LoanAdd = () => {
         );
         setGuaranteeValue(totalValue);
         setGuarantees(data);
+        setLoan((prev) => ({
+          ...prev,
+          id_garantia: totalValue > 0 ? 1 : 0,
+        }));
       } catch (error) {
         toast.error(error.message || "Error al obtener garantías");
       } finally {
@@ -446,10 +443,6 @@ const LoanAdd = () => {
       nextErrors.id_tipo_credito = "El tipo de crédito es requerido";
     }
 
-    if (!data.id_destino_credito) {
-      nextErrors.id_destino_credito = "El destino del crédito es requerido";
-    }
-
     if (!data.id_moneda) {
       nextErrors.id_moneda = "La moneda es requerida";
     }
@@ -549,15 +542,8 @@ const LoanAdd = () => {
 
       setLoan((prev) => ({
         ...prev,
-        id_clasificacion_credito:
-          prev.id_clasificacion_credito ||
-          getDefaultId(data.clasificacionesCredito),
-
         id_tipo_credito:
           prev.id_tipo_credito || getDefaultId(data.tiposCredito),
-
-        id_destino_credito:
-          prev.id_destino_credito || getDefaultId(data.destinosCredito),
 
         id_garantia: prev.id_garantia || getDefaultId(data.garantias),
 
@@ -574,14 +560,6 @@ const LoanAdd = () => {
 
         id_origen_recursos:
           prev.id_origen_recursos || getDefaultId(data.origenesRecursos),
-
-        id_periodo_cobro_interes:
-          prev.id_periodo_cobro_interes ||
-          getDefaultId(data.periodosCobroInteres),
-
-        id_periodo_cobro_principal:
-          prev.id_periodo_cobro_principal ||
-          getDefaultId(data.periodosCobroPrincipal),
 
         id_sindicado: prev.id_sindicado || getDefaultId(data.sindicados),
 
@@ -669,15 +647,8 @@ const LoanAdd = () => {
         ? Number(loan.credit_evaluation_id)
         : null,
       created_by: loan.created_by || null,
-
-      id_clasificacion_credito: loan.id_clasificacion_credito
-        ? Number(loan.id_clasificacion_credito)
-        : null,
       id_tipo_credito: loan.id_tipo_credito
         ? Number(loan.id_tipo_credito)
-        : null,
-      id_destino_credito: loan.id_destino_credito
-        ? Number(loan.id_destino_credito)
         : null,
       id_garantia: loan.id_garantia ? Number(loan.id_garantia) : null,
       id_linea: loan.id_linea ? Number(loan.id_linea) : null,
@@ -689,12 +660,6 @@ const LoanAdd = () => {
       id_oficina: loan.id_oficina ? Number(loan.id_oficina) : null,
       id_origen_recursos: loan.id_origen_recursos
         ? Number(loan.id_origen_recursos)
-        : null,
-      id_periodo_cobro_interes: loan.id_periodo_cobro_interes
-        ? Number(loan.id_periodo_cobro_interes)
-        : null,
-      id_periodo_cobro_principal: loan.id_periodo_cobro_principal
-        ? Number(loan.id_periodo_cobro_principal)
         : null,
       id_sindicado: loan.id_sindicado ? Number(loan.id_sindicado) : null,
       id_situacion_credito: loan.id_situacion_credito
