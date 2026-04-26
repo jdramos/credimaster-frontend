@@ -22,17 +22,12 @@ const LoanExtraFields = ({
     lineas = [],
     modalidadesCredito = [],
     monedas = [],
-    municipios = [],
-    oficinas = [],
     origenesRecursos = [],
     sindicados = [],
-    situacionesCredito = [],
     tiposAgrupacionCredito = [],
     sectoresEconomicos = [],
     metodosAtencion = [],
     tiposZona = [],
-    estadosCredito = [],
-    analistas = [],
   } = catalogs;
 
   const renderSelect = ({
@@ -133,22 +128,6 @@ const LoanExtraFields = ({
 
             <Grid item xs={12} sm={6} md={4}>
               {renderSelect({
-                name: "id_municipio",
-                label: "Municipio",
-                options: municipios,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_oficina",
-                label: "Oficina",
-                options: oficinas,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
                 name: "id_origen_recursos",
                 label: "Origen recursos",
                 options: origenesRecursos,
@@ -160,14 +139,6 @@ const LoanExtraFields = ({
                 name: "id_sindicado",
                 label: "Sindicado",
                 options: sindicados,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_situacion_credito",
-                label: "Situación crédito",
-                options: situacionesCredito,
               })}
             </Grid>
 
@@ -200,22 +171,6 @@ const LoanExtraFields = ({
                 name: "id_tipo_zona",
                 label: "Tipo zona",
                 options: tiposZona,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_estado_credito",
-                label: "Estado crédito",
-                options: estadosCredito,
-              })}
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={4}>
-              {renderSelect({
-                name: "id_analista",
-                label: "Analista",
-                options: analistas,
               })}
             </Grid>
           </Grid>

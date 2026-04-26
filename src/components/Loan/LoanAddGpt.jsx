@@ -24,7 +24,6 @@ import PromoterSelect from "../PromoterSelect";
 import CollectorSelect from "../CollectorSelect";
 import { NumericFormat } from "react-number-format";
 import FrecuencySelect from "../FrecuencySelect";
-import LoanGroupSelect from "../LoanGroupSelect";
 import today from "../../functions/today";
 import GuarenteesGet from "../GuarenteesGet";
 import dayjs from "dayjs";
@@ -87,7 +86,7 @@ const LoanAdd = () => {
     deduction: "0.00",
     insurance: "0.00",
     other_charges: "0.00",
-    term: 1,
+    term: 0,
     due_date: today(),
     loan_group_id: "",
     interest_type_id: 1,
@@ -112,13 +111,12 @@ const LoanAdd = () => {
     id_origen_recursos: "",
     id_periodo_cobro_interes: "",
     id_periodo_cobro_principal: "",
-    id_sindicado: "",
-    id_situacion_credito: "",
+    id_situacion_credito: 1,
     id_tipo_agrupacion_credito: "",
     id_sector_economico: "",
     id_met_atencion: "",
     id_tipo_zona: "",
-    id_estado_credito: "",
+    id_estado_credito: 1,
     id_analista: "",
   });
 
@@ -127,11 +125,8 @@ const LoanAdd = () => {
     lineas: [],
     modalidadesCredito: [],
     monedas: [],
-    municipios: [],
     oficinas: [],
     origenesRecursos: [],
-    sindicados: [],
-    situacionesCredito: [],
     tiposAgrupacionCredito: [],
     sectoresEconomicos: [],
     metodosAtencion: [],
@@ -554,17 +549,10 @@ const LoanAdd = () => {
 
         id_moneda: prev.id_moneda || getDefaultId(data.monedas),
 
-        id_municipio: prev.id_municipio || getDefaultId(data.municipios),
-
         id_oficina: prev.id_oficina || getDefaultId(data.oficinas),
 
         id_origen_recursos:
           prev.id_origen_recursos || getDefaultId(data.origenesRecursos),
-
-        id_sindicado: prev.id_sindicado || getDefaultId(data.sindicados),
-
-        id_situacion_credito:
-          prev.id_situacion_credito || getDefaultId(data.situacionesCredito),
 
         id_tipo_agrupacion_credito:
           prev.id_tipo_agrupacion_credito ||
@@ -599,6 +587,9 @@ const LoanAdd = () => {
       customer_identification,
       customer_name,
       conami_id_actividad_economica,
+      municipality_id,
+      frecuency_id,
+      promoter_identification,
     } = e.target;
 
     const nextLoan = {
@@ -617,6 +608,12 @@ const LoanAdd = () => {
         conami_id_actividad_economica !== undefined
           ? conami_id_actividad_economica
           : loan.conami_id_actividad_economica,
+      id_municipio:
+        municipality_id !== undefined ? municipality_id : loan.id_municipio,
+      id_oficina: name === "branch_id" ? value : loan.id_oficina,
+      id_analista: promoter_identification,
+      id_periodo_cobro_interes: frecuency_id,
+      id_periodo_cobro_principal: frecuency_id,
     };
 
     setLoan(nextLoan);
@@ -647,6 +644,7 @@ const LoanAdd = () => {
         ? Number(loan.credit_evaluation_id)
         : null,
       created_by: loan.created_by || null,
+      conami_id_actividad_economica: loan.conami_id_actividad_economica,
       id_tipo_credito: loan.id_tipo_credito
         ? Number(loan.id_tipo_credito)
         : null,
@@ -660,10 +658,6 @@ const LoanAdd = () => {
       id_oficina: loan.id_oficina ? Number(loan.id_oficina) : null,
       id_origen_recursos: loan.id_origen_recursos
         ? Number(loan.id_origen_recursos)
-        : null,
-      id_sindicado: loan.id_sindicado ? Number(loan.id_sindicado) : null,
-      id_situacion_credito: loan.id_situacion_credito
-        ? Number(loan.id_situacion_credito)
         : null,
       id_tipo_agrupacion_credito: loan.id_tipo_agrupacion_credito
         ? Number(loan.id_tipo_agrupacion_credito)
@@ -1287,15 +1281,6 @@ const LoanAdd = () => {
                 </Typography>
               )}
             </Box>
-
-            <Box sx={fieldSx}>
-              <LoanGroupSelect
-                label="Grupo de crédito"
-                value={loan.loan_group_id}
-                name="loan_group_id"
-                onChange={handleInputChange}
-              />
-            </Box>
           </Box>
 
           <LoanExtraFields
@@ -1488,10 +1473,14 @@ const LoanAdd = () => {
 
       <ConfirmDialog
         open={openDialog}
+        type="warning"
+        title="Crear crédito"
+        message="¿Deseas crear este crédito?"
+        confirmText="Sí, crear crédito"
+        cancelText="Cancelar"
+        loading={loading}
         onClose={() => setOpenDialog(false)}
-        confirm={handleDialogConfirmation}
-        cancel={() => setOpenDialog(false)}
-        cancelOperation={cancelDialog}
+        onConfirm={handleDialogConfirmation}
       />
       <Dialog
         open={evaluationModalOpen}

@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { FormControl, MenuItem, Autocomplete, TextField, Typography } from "@mui/material";
+import {
+  FormControl,
+  MenuItem,
+  Autocomplete,
+  TextField,
+  Typography,
+} from "@mui/material";
 
-const url = process.env.REACT_APP_API_BASE_URL + '/api/frecuencies';
+const url = process.env.REACT_APP_API_BASE_URL + "/api/frecuencies";
 const token = process.env.REACT_APP_API_TOKEN;
 const headers = { Authorization: token };
 
@@ -9,31 +15,33 @@ const FrecuencySelect = (props) => {
   const [frecuency, setFrecuency] = useState([]);
   const [loadError, setLoadError] = useState(null);
 
-  const defaultOption = frecuency.find(f => f.default === 'Y');
-  const selectedOption = frecuency.find(f => f.tag === props.value) || defaultOption || null;
+  const defaultOption = frecuency.find((f) => f.default === "Y");
+  const selectedOption =
+    frecuency.find((f) => f.tag === props.value) || defaultOption || null;
 
   useEffect(() => {
     const fetchApi = async () => {
       try {
         const response = await fetch(url, { headers });
-        if (!response.ok) throw new Error('Failed to retrieve data.');
+        if (!response.ok) throw new Error("Failed to retrieve data.");
 
         const jsonData = await response.json();
         setFrecuency(jsonData);
 
-        const defaultItem = jsonData.find(f => f.default === 'Y');
+        const defaultItem = jsonData.find((f) => f.default === "Y");
         if (!props.value && defaultItem) {
           // Simular selección por defecto si no hay valor ya definido
           const syntheticEvent = {
             target: {
               name: props.name,
               value: defaultItem.tag,
-            }
+              frecuency_id: defaultItem.id,
+            },
           };
           props.onChange(syntheticEvent, defaultItem);
         }
       } catch (error) {
-        setLoadError('Hubo un error al cargar los datos');
+        setLoadError("Hubo un error al cargar los datos");
       }
     };
 
@@ -46,10 +54,10 @@ const FrecuencySelect = (props) => {
         size="small"
         fullWidth
         options={frecuency}
-        getOptionLabel={(option) => option.name || ''}
+        getOptionLabel={(option) => option.name || ""}
         filterOptions={(options, state) =>
-          options.filter(option =>
-            option.name.toLowerCase().includes(state.inputValue.toLowerCase())
+          options.filter((option) =>
+            option.name.toLowerCase().includes(state.inputValue.toLowerCase()),
           )
         }
         value={selectedOption}
@@ -57,8 +65,9 @@ const FrecuencySelect = (props) => {
           const syntheticEvent = {
             target: {
               name: props.name,
-              value: newValue ? newValue.tag : ''
-            }
+              value: newValue ? newValue.tag : "",
+              frecuency_id: newValue ? newValue.id : null,
+            },
           };
           props.onChange(syntheticEvent, newValue);
         }}
@@ -68,7 +77,7 @@ const FrecuencySelect = (props) => {
             label={props.label}
             variant="outlined"
             error={!!props.error || !!loadError}
-            helperText={props.error || loadError || ''}
+            helperText={props.error || loadError || ""}
           />
         )}
         renderOption={(props, option) => (

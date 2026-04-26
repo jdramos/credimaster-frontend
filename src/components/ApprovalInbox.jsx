@@ -20,6 +20,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Page,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -27,6 +28,7 @@ import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import API from "../api"; // ajusta esta ruta
+import LoanDetailsModal from "./Loan/LoanDetailsModal";
 
 const moneyFormat = (value) =>
   Number(value || 0).toLocaleString("es-NI", {
@@ -134,18 +136,46 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const getToday = () => {
+    const d = new Date();
+    return d.toISOString().split("T")[0];
+  };
+
+  const get7DaysAgo = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split("T")[0];
+  };
+
   const [filters, setFilters] = useState({
     type: "ALL",
     subtype: "ALL",
+    status: "PENDING",
+    startDate: get7DaysAgo(),
+    endDate: getToday(),
     text: "",
   });
+
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [loadingLoan, setLoadingLoan] = useState(false);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
 
   const fetchInbox = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await API.get("/api/approval-inbox");
+      const res = await API.get("/api/approval-inbox", {
+        params: {
+          status: filters.status,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+          page,
+          limit: rowsPerPage,
+        },
+      });
 
       setRows(res.data?.data || []);
       setSummary(
@@ -182,6 +212,27 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
       const matchesSubtype =
         filters.subtype === "ALL" || row.item_subtype === filters.subtype;
 
+      const rowStatus = String(
+        row.approval_status || row.status || row.item_status || "PENDING",
+      ).toUpperCase();
+
+      const matchesStatus =
+        filters.status === "ALL" || rowStatus === filters.status;
+
+      const rowDate = row.requested_at ? new Date(row.requested_at) : null;
+
+      const startDate = filters.startDate
+        ? new Date(`${filters.startDate}T00:00:00`)
+        : null;
+
+      const endDate = filters.endDate
+        ? new Date(`${filters.endDate}T23:59:59`)
+        : null;
+
+      const matchesStartDate = !startDate || (rowDate && rowDate >= startDate);
+
+      const matchesEndDate = !endDate || (rowDate && rowDate <= endDate);
+
       const search = filters.text.trim().toLowerCase();
 
       const matchesText =
@@ -196,25 +247,50 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
           .toLowerCase()
           .includes(search);
 
-      return matchesType && matchesSubtype && matchesText;
+      return (
+        matchesType &&
+        matchesSubtype &&
+        matchesStatus &&
+        matchesStartDate &&
+        matchesEndDate &&
+        matchesText
+      );
     });
   }, [rows, filters]);
 
-  const handleView = (row) => {
-    if (row.item_type === "LOAN") {
-      if (onViewLoan) {
-        onViewLoan(row);
-      } else {
-        console.log("Ver crédito:", row);
-      }
+  const handleView = async (row) => {
+    if (row.item_type !== "LOAN") {
+      onViewModification?.(row);
       return;
     }
 
-    if (onViewModification) {
-      onViewModification(row);
-    } else {
-      console.log("Ver modificación:", row);
-    }
+    const loanForModal = {
+      ...row,
+
+      // campos que espera LoanDetailsModal
+      id: row.loan_id,
+      amount: row.requested_amount,
+      term: row.requested_term,
+      interest_rate: row.requested_interest_rate,
+      date: row.requested_at,
+
+      customer_id: row.customer_id,
+      customer_name: row.customer_name,
+      customer_identification: row.customer_identification,
+
+      branch_id: row.branch_id,
+      branch_name: row.branch_name,
+
+      promoter_id: row.promoter_id || null,
+      promoter_name: row.promoter_name || "No asignado",
+
+      due_date: row.due_date || null,
+      frecuency_name:
+        row.frecuency_name || row.frequency_name || "No especificada",
+    };
+
+    setSelectedLoan(loanForModal);
+    setOpenModal(true);
   };
 
   return (
@@ -286,7 +362,23 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
         }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2}>
+            <TextField
+              select
+              fullWidth
+              label="Estado"
+              value={filters.status}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, status: e.target.value }))
+              }
+            >
+              <MenuItem value="ALL">Todos</MenuItem>
+              <MenuItem value="PENDING">Pendientes</MenuItem>
+              <MenuItem value="APPROVED">Aprobados</MenuItem>
+            </TextField>
+          </Grid>
+
+          <Grid item xs={12} md={2}>
             <TextField
               select
               fullWidth
@@ -302,7 +394,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={2}>
             <TextField
               select
               fullWidth
@@ -320,7 +412,33 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={2}>
+            <TextField
+              fullWidth
+              type="date"
+              label="Desde"
+              value={filters.startDate}
+              InputLabelProps={{ shrink: true }}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+              }
+            />
+          </Grid>
+
+          <Grid item xs={12} md={2}>
+            <TextField
+              fullWidth
+              type="date"
+              label="Hasta"
+              value={filters.endDate}
+              InputLabelProps={{ shrink: true }}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+              }
+            />
+          </Grid>
+
+          <Grid item xs={12} md={2}>
             <TextField
               fullWidth
               label="Buscar"
@@ -330,6 +448,25 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                 setFilters((prev) => ({ ...prev, text: e.target.value }))
               }
             />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Stack direction="row" justifyContent="flex-end">
+              <Chip
+                clickable
+                label="Limpiar filtros"
+                onClick={() =>
+                  setFilters({
+                    type: "ALL",
+                    subtype: "ALL",
+                    status: "PENDING",
+                    startDate: get7DaysAgo(),
+                    endDate: getToday(),
+                    text: "",
+                  })
+                }
+              />
+            </Stack>
           </Grid>
         </Grid>
       </Paper>
@@ -447,6 +584,17 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
           </TableContainer>
         )}
       </Paper>
+
+      <LoanDetailsModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        loan={selectedLoan}
+        loading={loadingLoan}
+        clientId={selectedLoan?.customer_id}
+        clientIdentification={selectedLoan?.customer_identification}
+        guarantees={[]}
+        onLoanUpdated={() => fetchInbox()}
+      />
     </Box>
   );
 }

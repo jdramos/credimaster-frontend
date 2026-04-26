@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { FormControl, Autocomplete, TextField, Typography } from "@mui/material";
+import {
+  FormControl,
+  Autocomplete,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/promoters/branch/";
 const token = process.env.REACT_APP_API_TOKEN;
@@ -52,7 +57,7 @@ const PromoterSelect = (props) => {
       sx={{
         m: 0,
         width: "100%",
-        minWidth: 0,          // ✅ clave para grid
+        minWidth: 0, // ✅ clave para grid
       }}
     >
       <Autocomplete
@@ -62,15 +67,15 @@ const PromoterSelect = (props) => {
         value={selectedPromoter}
         getOptionLabel={(option) => option?.name || ""}
         isOptionEqualToValue={(opt, val) => opt?.id === val?.id} // ✅ evita warnings y saltos
-
         // ✅ z-index del dropdown arriba
         slotProps={{
           popper: { sx: { zIndex: (theme) => theme.zIndex.modal + 5 } },
         }}
-
         filterOptions={(options, state) =>
           options.filter((option) =>
-            (option?.name || "").toLowerCase().includes((state.inputValue || "").toLowerCase())
+            (option?.name || "")
+              .toLowerCase()
+              .includes((state.inputValue || "").toLowerCase()),
           )
         }
         onChange={(event, newValue) => {
@@ -79,6 +84,7 @@ const PromoterSelect = (props) => {
             target: {
               name: props.name,
               value: newValue ? newValue.id : "",
+              promoter_identification: newValue ? newValue.identification : "",
             },
           });
         }}
@@ -103,7 +109,9 @@ const PromoterSelect = (props) => {
         }}
       />
 
-      {props.error && <span className="form-text text-danger">{props.error}</span>}
+      {props.error && (
+        <span className="form-text text-danger">{props.error}</span>
+      )}
     </FormControl>
   );
 };
