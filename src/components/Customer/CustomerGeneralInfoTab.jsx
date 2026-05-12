@@ -1,29 +1,59 @@
-import React, { useImperativeHandle, forwardRef, useState } from "react";
+import React, { useImperativeHandle, forwardRef } from "react";
 import dayjs from "dayjs";
 import calculateAge from "../../functions/calculateAge";
 
-import DividerChip from "../DividerChip";
 import CountrySelect from "../CountrySelect";
 import ProvinceSelect from "../ProvinceSelect";
 import MunicipalitySelect from "../MunicipalitySelect";
+import GenreSelect from "../Genre/GenreSelect";
+import EstadoCivilSelect from "../conami/EstadoCivilSelect";
 
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
-import FormHelperText from "@mui/material/FormHelperText";
 
 import {
   Box,
   TextField,
   Select,
   MenuItem,
-  Divider,
   InputLabel,
   FormControl,
+  FormHelperText,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+  Divider,
 } from "@mui/material";
 
-import GenreSelect from "../Genre/GenreSelect";
-import EstadoCivilSelect from "../conami/EstadoCivilSelect";
+const Section = ({ title, subtitle, children }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      p: 1.4,
+      borderRadius: 2,
+      border: "1px solid",
+      borderColor: "divider",
+      bgcolor: "background.paper",
+    }}
+  >
+    <Stack spacing={1}>
+      <Box>
+        <Typography variant="subtitle2" fontWeight={900}>
+          {title}
+        </Typography>
+
+        {subtitle && (
+          <Typography variant="caption" color="text.secondary">
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+
+      {children}
+    </Stack>
+  </Paper>
+);
 
 const CustomerGeneralInfoTab = forwardRef(
   (
@@ -34,137 +64,96 @@ const CustomerGeneralInfoTab = forwardRef(
       setErrors,
       isEmployee,
       setIsEmployee,
-      notRequiredFields,
-      setNotRequiredFields,
       mode,
     },
-    ref
+    ref,
   ) => {
-    useImperativeHandle(ref, () => ({
-  validate: () => {
-    const c = { ...customer };
+    const disabled = mode === "show";
 
     const isEmpty = (v) =>
       v === null ||
       v === undefined ||
       (typeof v === "string" && v.trim() === "");
 
-    // Soltero / Divorciado / Viudo (ajusta ids según tu catálogo)
-    const isSingle =
-      Number(c.marital_status_id) === 1 ||
-      Number(c.marital_status_id) === 3 ||
-      Number(c.marital_status_id) === 4;
+    useImperativeHandle(ref, () => ({
+      validate: () => {
+        const c = { ...customer };
 
-    // ✅ Campos que NO existen en el formulario (vienen del GET / joins / calculados)
-    const ignore = new Set([
-      "business_type_name",
-      "business_type_weight",
-      "business_type_risk",
-      "business_risk_value",
-      "province_name",
-      "municipality_name",
-      "province_risk_value",
-      "total_loans",
+        const isSingle =
+          Number(c.marital_status_id) === 1 ||
+          Number(c.marital_status_id) === 3 ||
+          Number(c.marital_status_id) === 4;
 
-      // nombres “viejos” o diferentes a tu UI
-      "inventory_amount", // UI usa business_inventory
-      "job_salary",       // UI usa monthly_salary
-    ]);
+        const required = [
+          "customer_name",
+          "public_name",
+          "genre_id",
+          "identity_type",
+          "identification",
+          "identity_issue_date",
+          "identity_expiration_date",
+          "identity_issue_country",
+          "home_address",
+          "residence_country_id",
+          "province_id",
+          "municipality_id",
+          "marital_status_id",
+          "birth_country_id",
+          "birth_date",
+          "nationality_id",
+          "cellphone",
+        ];
 
-    // ✅ Campos opcionales SIEMPRE (del general tab)
-    const optional = new Set([
-      "customer_code",
-      "branch_id",
-      "email",
-      "telephone",
-      "funds_source",
-      "home_status",
-      "created_at",
-      "created_by",
-      "updated_at",
-      "updated_by",
-    ]);
+        const newErrors = {};
+        let ok = true;
 
-    // ✅ Cónyuge opcional si es soltero/divorciado/viudo
-    if (isSingle) {
-      [
-        "spouse_name",
-        "spouse_telephone",
-        "spouse_position",
-        "spouse_address",
-        "spouse_job_company",
-        "spouse_job_telephone",
-        "spouse_job_salary",
-      ].forEach((k) => optional.add(k));
-    }
+        required.forEach((key) => {
+          const value = c[key];
 
-    // ✅ Nota: aquí NO metas lógica de empleado/negocio, eso lo valida CustomerBusinessTab.
-    // Este tab solo debe validar lo que realmente está en "Datos Generales".
+          if (dayjs.isDayjs(value)) {
+            if (!value.isValid()) {
+              newErrors[key] = "Fecha inválida";
+              ok = false;
+            }
+            return;
+          }
 
-    // ✅ Lista de campos que ESTE TAB controla/valida
-    const required = [
-      "customer_name",
-      "public_name",
-      "genre_id",
+          if (isEmpty(value)) {
+            newErrors[key] = "Este campo es requerido";
+            ok = false;
+          }
+        });
 
-      "identity_type",
-      "identification",
-      "identity_issue_date",
-      "identity_expiration_date",
-      "identity_issue_country",
-
-      "home_address",
-      "residence_country_id",
-      "province_id",
-      "municipality_id",
-
-      "marital_status_id",
-      "birth_country_id",
-      "birth_date",
-      "nationality_id",
-      "cellphone",
-    ];
-
-    const newErrors = {};
-    let ok = true;
-
-    for (const key of required) {
-      if (ignore.has(key) || optional.has(key)) continue;
-
-      const value = c[key];
-
-      // dayjs
-      if (dayjs.isDayjs(value)) {
-        if (!value.isValid()) {
-          newErrors[key] = "Fecha inválida";
-          ok = false;
+        if (Number(c.identity_type) === 1) {
+          const id = String(c.identification || "").trim();
+          if (!id || id.length !== 14) {
+            newErrors.identification =
+              "Cédula de identidad debe tener 14 dígitos";
+            ok = false;
+          }
         }
-        continue;
-      }
 
-      // números: 0 válido (si para algún select 0 no es válido, cámbialo a isEmpty)
-      if (typeof value === "number") continue;
+        if (!isSingle) {
+          const spouseRequired = [
+            "spouse_name",
+            "spouse_telephone",
+            "spouse_position",
+          ];
 
-      if (isEmpty(value)) {
-        newErrors[key] = "Este campo es requerido";
-        ok = false;
-      }
-    }
+          spouseRequired.forEach((key) => {
+            if (isEmpty(c[key])) {
+              newErrors[key] = "Este campo es requerido";
+              ok = false;
+            }
+          });
+        }
 
-    // Validación extra: cédula (solo si identity_type == 1)
-    if (Number(c.identity_type) === 1) {
-      const id = String(c.identification ?? "").trim();
-      if (!id || id.length !== 14) {
-        newErrors.identification = "Cédula de identidad debe tener 14 dígitos";
-        ok = false;
-      }
-    }
+        return { ok, errors: newErrors };
+      },
+    }));
 
-    return { ok, errors: newErrors };
-  },
-}));
-
-    const capitalizeWords = (str) => (str || "").replace(/\b\w/g, (l) => l.toUpperCase());
+    const capitalizeWords = (str) =>
+      String(str || "").replace(/\b\w/g, (l) => l.toUpperCase());
 
     const extractDateFromIdentification = (value) => {
       try {
@@ -184,483 +173,527 @@ const CustomerGeneralInfoTab = forwardRef(
       }
     };
 
+    const clearFieldError = (name) => {
+      if (!errors[name]) return;
+
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    };
+
     const handleInputChange = (e) => {
       const { name, value } = e.target;
 
-      const updatedCustomer = { ...customer, [name]: value };
+      setCustomer((prev) => {
+        const next = { ...prev, [name]: value };
 
-      // Si cambia actividad económica
-      if (name === "economic_activity") {
-        setIsEmployee(value === 2 || value === "2");
-      }
-
-      // Recalcular anualizaciones (numéricas)
-      if (name === "business_monthly_income") {
-        const n = Number(value || 0);
-        updatedCustomer.business_monthly_income = n;
-        updatedCustomer.business_annual_income = n * 12;
-      }
-
-      if (name === "monthly_salary") {
-        const n = Number(value || 0);
-        updatedCustomer.monthly_salary = n;
-        updatedCustomer.annual_salary = n * 12;
-      }
-
-      // Capitalizar
-      if (name === "reference_name") updatedCustomer.reference_name = capitalizeWords(value);
-      if (name === "customer_name") updatedCustomer.customer_name = capitalizeWords(value);
-      if (name === "public_name") updatedCustomer.public_name = capitalizeWords(value);
-      if (name === "reference2_name") updatedCustomer.reference2_name = capitalizeWords(value);
-
-      // Expiración = emisión + 10 años
-      if (name === "identity_issue_date" && value) {
-        updatedCustomer.identity_expiration_date = dayjs(value).add(10, "year");
-      }
-
-      // Si cambia departamento, reiniciar municipio (mejor null, no "")
-      if (name === "province_id") {
-        updatedCustomer.municipality_id = null;
-      }
-
-      // Extraer fecha nacimiento de cédula
-      if (name === "identification") {
-        const birthDate = extractDateFromIdentification(value);
-        if (birthDate) {
-          updatedCustomer.birth_date = birthDate;
-          updatedCustomer.age = calculateAge(birthDate);
+        if (name === "economic_activity") {
+          setIsEmployee(Number(value) === 2);
         }
-      }
 
-      // Calcular edad si cambia birth_date
-      if (name === "birth_date" && value) {
-        const bd = dayjs(value);
-        updatedCustomer.age = calculateAge(bd);
-      }
+        if (name === "customer_name") {
+          next.customer_name = capitalizeWords(value);
+        }
 
-      setCustomer(updatedCustomer);
+        if (name === "public_name") {
+          next.public_name = capitalizeWords(value);
+        }
 
-      // validación por campo (simple)
-      const empty =
-        value === null ||
-        value === undefined ||
-        (typeof value === "string" && value.trim() === "");
+        if (name === "spouse_name") {
+          next.spouse_name = capitalizeWords(value);
+        }
 
-      setErrors((prev) => ({
-        ...prev,
-        [name]: empty ? "Este campo es requerido" : "",
-      }));
+        if (name === "province_id") {
+          next.municipality_id = null;
+        }
 
+        if (name === "identity_issue_date" && value) {
+          next.identity_expiration_date = dayjs(value).add(10, "year");
+        }
+
+        if (name === "identification") {
+          const birthDate = extractDateFromIdentification(value);
+          if (birthDate) {
+            next.birth_date = birthDate;
+            next.age = calculateAge(birthDate);
+          }
+        }
+
+        if (name === "birth_date" && value) {
+          const bd = dayjs(value);
+          next.age = calculateAge(bd);
+        }
+
+        return next;
+      });
+
+      clearFieldError(name);
     };
 
-    // (opcional) si no lo usas, puedes borrar este state
-    const [tmpDate, setTmpDate] = useState(dayjs());
+    const isSingle =
+      Number(customer?.marital_status_id) === 1 ||
+      Number(customer?.marital_status_id) === 3 ||
+      Number(customer?.marital_status_id) === 4;
 
     return (
-      <Box
-        sx={{
-          "& .MuiTextField-root": { m: 1 },
-          overflow: "scroll",
-          overscrollBehavior: "contain",
-        }}
-        noValidate
-        autoComplete="off"
-        maxHeight={700}
-        maxWidth={1800}
-      >
-        <div id="datos-personales">
-          <DividerChip label="Datos personales" />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Stack spacing={1.3}>
+          <Section
+            title="Datos personales"
+            subtitle="Información principal de identificación del cliente."
+          >
+            <Grid container spacing={1.2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  name="customer_name"
+                  label="Nombre y apellidos *"
+                  value={customer?.customer_name || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.customer_name)}
+                  helperText={errors.customer_name || ""}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-          <TextField
-            id="name"
-            error={Boolean(errors.customer_name)}
-            label="Nombre y apellidos *"
-            name="customer_name"
-            fullWidth
-            focused
-            size="small"
-            sx={{ width: 400 }}
-            value={customer?.customer_name || ""}
-            onChange={handleInputChange}
-            helperText={errors.customer_name || ""}
-            disabled={mode === "show"}
-          />
+              <Grid item xs={12} md={6}>
+                <TextField
+                  name="public_name"
+                  label="Nombre conocido públicamente *"
+                  value={customer?.public_name || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.public_name)}
+                  helperText={errors.public_name || ""}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-          <TextField
-            id="public_name"
-            focused
-            error={Boolean(errors.public_name)}
-            label="Nombre conocido públicamente *"
-            name="public_name"
-            fullWidth
-            size="small"
-            sx={{ width: 400 }}
-            value={customer?.public_name || ""}
-            onChange={handleInputChange}
-            helperText={errors.public_name || ""}
-            disabled={mode === "show"}
-          />
+              <Grid item xs={12} md={4}>
+                <GenreSelect
+                  value={customer?.genre_id || ""}
+                  onChange={(val) =>
+                    handleInputChange({
+                      target: { name: "genre_id", value: val },
+                    })
+                  }
+                  disabled={disabled}
+                  error={Boolean(errors.genre_id)}
+                  helperText={errors.genre_id || ""}
+                  size="small"
+                />
+              </Grid>
 
-          {/* GenreSelect: adaptamos onChange para que parezca evento */}
-          <GenreSelect
-            value={customer?.genre_id || ""}
-            onChange={(val) =>
-              handleInputChange({ target: { name: "genre_id", value: val } })
+              <Grid item xs={12} md={4} sx={{ minWidth: 0 }}>
+                <Box
+                  sx={{
+                    width: "100%",
+                    "& .MuiFormControl-root": { width: "100%" },
+                  }}
+                >
+                  <EstadoCivilSelect
+                    value={customer?.marital_status_id ?? ""}
+                    onChange={(newId) =>
+                      handleInputChange({
+                        target: { name: "marital_status_id", value: newId },
+                      })
+                    }
+                    editing={!disabled}
+                    disabled={disabled}
+                    required
+                    error={Boolean(errors.marital_status_id)}
+                    helperText={errors.marital_status_id || ""}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <TextField
+                  name="cellphone"
+                  label="Celular *"
+                  value={customer?.cellphone || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.cellphone)}
+                  helperText={errors.cellphone || ""}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <TextField
+                  name="telephone"
+                  label="Teléfono fijo"
+                  value={customer?.telephone || ""}
+                  onChange={handleInputChange}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <TextField
+                  name="email"
+                  label="Correo electrónico"
+                  value={customer?.email || ""}
+                  onChange={handleInputChange}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <TextField
+                  name="age"
+                  label="Edad"
+                  value={customer?.age ?? ""}
+                  disabled
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          <Section
+            title="Identificación"
+            subtitle="Documento legal, país de emisión y fechas de vigencia."
+          >
+            <Grid container spacing={1.2}>
+              <Grid item xs={12} md={3}>
+                <FormControl
+                  fullWidth
+                  size="small"
+                  error={Boolean(errors.identity_type)}
+                >
+                  <InputLabel>Tipo de identificación *</InputLabel>
+                  <Select
+                    label="Tipo de identificación *"
+                    name="identity_type"
+                    value={customer?.identity_type || ""}
+                    onChange={handleInputChange}
+                    disabled={disabled}
+                  >
+                    <MenuItem value={1}>Cédula de identidad</MenuItem>
+                    <MenuItem value={2}>Cédula de residencia</MenuItem>
+                    <MenuItem value={3}>Pasaporte</MenuItem>
+                  </Select>
+                  {errors.identity_type && (
+                    <FormHelperText>{errors.identity_type}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={3}>
+                <TextField
+                  name="identification"
+                  label="Número de identificación *"
+                  value={customer?.identification || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.identification)}
+                  helperText={errors.identification || ""}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={3}>
+                <DatePicker
+                  label="Fecha de emisión *"
+                  value={customer?.identity_issue_date || null}
+                  onChange={(newValue) =>
+                    handleInputChange({
+                      target: {
+                        name: "identity_issue_date",
+                        value: newValue,
+                      },
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      size="small"
+                      error={Boolean(errors.identity_issue_date)}
+                      helperText={errors.identity_issue_date || ""}
+                    />
+                  )}
+                  disabled={disabled}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={3}>
+                <DatePicker
+                  label="Fecha de vencimiento *"
+                  value={customer?.identity_expiration_date || null}
+                  onChange={(newValue) =>
+                    handleInputChange({
+                      target: {
+                        name: "identity_expiration_date",
+                        value: newValue,
+                      },
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      size="small"
+                      error={Boolean(errors.identity_expiration_date)}
+                      helperText={errors.identity_expiration_date || ""}
+                    />
+                  )}
+                  disabled={disabled}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <CountrySelect
+                  name="identity_issue_country"
+                  label="País de emisión *"
+                  value={customer?.identity_issue_country}
+                  selected={customer?.identity_issue_country}
+                  onChange={handleInputChange}
+                  editing={!disabled}
+                  disabled={disabled}
+                  error={Boolean(errors.identity_issue_country)}
+                  helperText={errors.identity_issue_country || ""}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <CountrySelect
+                  name="birth_country_id"
+                  label="País de nacimiento *"
+                  value={customer?.birth_country_id}
+                  selected={customer?.birth_country_id}
+                  onChange={handleInputChange}
+                  editing={!disabled}
+                  disabled={disabled}
+                  error={Boolean(errors.birth_country_id)}
+                  helperText={errors.birth_country_id || ""}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <CountrySelect
+                  name="nationality_id"
+                  label="Nacionalidad *"
+                  value={customer?.nationality_id}
+                  selected={customer?.nationality_id}
+                  onChange={handleInputChange}
+                  editing={!disabled}
+                  disabled={disabled}
+                  error={Boolean(errors.nationality_id)}
+                  helperText={errors.nationality_id || ""}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={3}>
+                <DatePicker
+                  label="Fecha de nacimiento *"
+                  value={customer?.birth_date || null}
+                  onChange={(newValue) =>
+                    handleInputChange({
+                      target: {
+                        name: "birth_date",
+                        value: newValue,
+                      },
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      size="small"
+                      error={Boolean(errors.birth_date)}
+                      helperText={errors.birth_date || ""}
+                    />
+                  )}
+                  disabled={disabled}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          <Section
+            title="Dirección domiciliar"
+            subtitle="Ubicación de residencia actual del cliente."
+          >
+            <Grid container spacing={1.2}>
+              <Grid item xs={12}>
+                <TextField
+                  name="home_address"
+                  label="Dirección del hogar *"
+                  value={customer?.home_address || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.home_address)}
+                  helperText={errors.home_address || ""}
+                  disabled={disabled}
+                  fullWidth
+                  multiline
+                  minRows={1}
+                  size="small"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <CountrySelect
+                  name="residence_country_id"
+                  label="País de residencia *"
+                  value={customer?.residence_country_id ?? ""}
+                  selected={customer?.residence_country_id ?? ""}
+                  onChange={handleInputChange}
+                  editing={!disabled}
+                  disabled={disabled}
+                  error={Boolean(errors.residence_country_id)}
+                  helperText={errors.residence_country_id || ""}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <ProvinceSelect
+                  name="province_id"
+                  label="Departamento *"
+                  selected={customer?.province_id}
+                  onChange={handleInputChange}
+                  editing={!disabled}
+                  disabled={disabled}
+                  error={Boolean(errors.province_id)}
+                  helperText={errors.province_id || ""}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <MunicipalitySelect
+                  name="municipality_id"
+                  label="Municipio *"
+                  value={customer?.municipality_id ?? ""}
+                  provinceId={customer?.province_id ?? ""}
+                  onChange={handleInputChange}
+                  editing={!disabled}
+                  disabled={disabled}
+                  error={Boolean(errors.municipality_id)}
+                  helperText={errors.municipality_id || ""}
+                />
+              </Grid>
+            </Grid>
+          </Section>
+
+          <Section
+            title="Datos del cónyuge"
+            subtitle={
+              isSingle
+                ? "No requerido para estado civil soltero, divorciado o viudo."
+                : "Información básica del cónyuge."
             }
-            disabled={mode === "show"}
-            error={Boolean(errors.genre_id)}
-            size="small"
-          />
+          >
+            <Grid container spacing={1.2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  name="spouse_name"
+                  label={isSingle ? "Nombre" : "Nombre *"}
+                  value={customer?.spouse_name || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.spouse_name)}
+                  helperText={errors.spouse_name || ""}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-          <div id="datos-identificacion">
-            <Divider>Datos de identificación</Divider>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  name="spouse_telephone"
+                  label={isSingle ? "Teléfono" : "Teléfono *"}
+                  value={customer?.spouse_telephone || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.spouse_telephone)}
+                  helperText={errors.spouse_telephone || ""}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-            <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
-              <InputLabel id="identity-type-label">Tipo de identificación</InputLabel>
-              <Select
-                labelId="identity-type-label"
-                label="Tipo de identificación"
-                value={customer?.identity_type || ""}
-                sx={{ width: 200 }}
-                onChange={handleInputChange}
-                name="identity_type"
-                size="small"
-                disabled={mode === "show"}
-              >
-                <MenuItem value={1}>Cédula de identidad</MenuItem>
-                <MenuItem value={2}>Cédula de residencia</MenuItem>
-                <MenuItem value={3}>Pasaporte</MenuItem>
-              </Select>
-              {errors.identity_type && (
-                <FormHelperText error>{errors.identity_type}</FormHelperText>
-              )}
-            </FormControl>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  name="spouse_position"
+                  label={isSingle ? "Ocupación" : "Ocupación *"}
+                  value={customer?.spouse_position || ""}
+                  onChange={handleInputChange}
+                  error={Boolean(errors.spouse_position)}
+                  helperText={errors.spouse_position || ""}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-            <TextField
-              id="identification"
-              focused
-              label="Número de identificación"
-              name="identification"
-              size="small"
-              sx={{ width: 200 }}
-              value={customer?.identification || ""}
-              onChange={handleInputChange}
-              error={Boolean(errors.identification)}
-              helperText={errors.identification || ""}
-              disabled={mode === "show"}
-            />
+              <Grid item xs={12}>
+                <TextField
+                  name="spouse_address"
+                  label="Domicilio"
+                  value={customer?.spouse_address || ""}
+                  onChange={handleInputChange}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  multiline
+                  minRows={1}
+                  size="small"
+                />
+              </Grid>
 
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Fecha de emisión"
-                inputFormat="DD/MM/YYYY"
-                value={customer?.identity_issue_date || null}
-                onChange={(newValue) => {
-                  setTmpDate(newValue || dayjs());
-                  handleInputChange({
-                    target: { name: "identity_issue_date", value: newValue },
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} size="small" sx={{ width: 150, m: 1 }} />
-                )}
-                disabled={mode === "show"}
-              />
-            </LocalizationProvider>
+              <Grid item xs={12} md={5}>
+                <TextField
+                  name="spouse_job_company"
+                  label="Empresa donde labora"
+                  value={customer?.spouse_job_company || ""}
+                  onChange={handleInputChange}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Fecha de vencimiento"
-                inputFormat="DD/MM/YYYY"
-                value={customer?.identity_expiration_date || null}
-                onChange={(newValue) => {
-                  setTmpDate(newValue || dayjs());
-                  handleInputChange({
-                    target: { name: "identity_expiration_date", value: newValue },
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} size="small" sx={{ width: 150, m: 1 }} />
-                )}
-                disabled={mode === "show"}
-              />
-            </LocalizationProvider>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  name="spouse_job_telephone"
+                  label="Teléfono trabajo"
+                  value={customer?.spouse_job_telephone || ""}
+                  onChange={handleInputChange}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
 
-            <CountrySelect
-              error={Boolean(errors.identity_issue_country)}
-              focused
-              editing={mode !== "show"}
-              selected={customer?.identity_issue_country}
-              value={customer?.identity_issue_country}
-              label="País de emisión"
-              onChange={handleInputChange}
-              name="identity_issue_country"
-              helperText={errors.identity_issue_country}
-              disabled={mode === "show"}
-            />
-          </div>
-
-          <TextField
-            id="home_address"
-            focused
-            label="Dirección del hogar"
-            name="home_address"
-            size="small"
-            sx={{ width: "97%" }}
-            multiline
-            maxRows={3}
-            value={customer?.home_address || ""}
-            onChange={handleInputChange}
-            error={Boolean(errors.home_address)}
-            helperText={errors.home_address || ""}
-            disabled={mode === "show"}
-          />
-
-          <CountrySelect
-            name="residence_country_id"
-            label="País de residencia"
-            value={customer?.residence_country_id ?? ""}
-            onChange={handleInputChange}
-            editing={mode !== "add"}        // add => false, edit/show => true
-            disabled={mode === "show"}
-            error={errors.residence_country_id}
-            helperText={errors.residence_country_id}
-          />
-
-
-          <ProvinceSelect
-            id="province_id"
-            focused
-            editing={mode !== "show"}
-            selected={customer?.province_id}
-            name="province_id"
-            label="Departamento"
-            onChange={handleInputChange}
-            error={errors.province_id}
-            disabled={mode === "show"}
-            
-          />
-
-          {/* MunicipalitySelect: adaptamos onChange a evento porque muchos selects devuelven id */}
-          <MunicipalitySelect
-            name="municipality_id"
-            label="Municipio"
-            value={customer?.municipality_id ?? ""}     // ✅ antes estabas usando selected
-            provinceId={customer?.province_id ?? ""}
-            onChange={handleInputChange}               // ✅ este componente manda evento
-            error={Boolean(errors.municipality_id)}
-            helperText={errors.municipality_id || ""}
-            disabled={mode === "show"}
-            editing={mode !==  "show"}
-          />
-
-
-          {/* EstadoCivilSelect: adaptamos onChange a evento */}
-       <EstadoCivilSelect
-          value={customer?.marital_status_id ?? ""}
-          onChange={(newId) =>
-            handleInputChange({ target: { name: "marital_status_id", value: newId } })
-          }
-          editing={mode !== "add"}
-          disabled={mode === "show"}
-          required
-          error={Boolean(errors.marital_status_id)}
-          helperText={errors.marital_status_id || ""}
-        />
-
-          {errors.marital_status_id && (
-            <FormHelperText error sx={{ ml: 2 }}>
-              {errors.marital_status_id}
-            </FormHelperText>
-          )}
-
-          <CountrySelect
-            id="birth_country_id"
-            focused
-            editing={mode !== "show"}
-            selected={customer?.birth_country_id}
-            value={customer?.birth_country_id}
-            label="País de nacimiento"
-            onChange={handleInputChange}
-            name="birth_country_id"
-            error={errors.birth_country_id}
-            disabled={mode === "show"}
-          />
-          {errors.birth_country_id && (
-            <FormHelperText error sx={{ ml: 2 }}>
-              {errors.birth_country_id}
-            </FormHelperText>
-          )}
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker
-              label="Fecha de nacimiento"
-              inputFormat="DD/MM/YYYY"
-              value={customer?.birth_date || null}
-              onChange={(newValue) => {
-                setTmpDate(newValue || dayjs());
-                handleInputChange({
-                  target: { name: "birth_date", value: newValue },
-                });
-              }}
-              renderInput={(params) => (
-                <TextField {...params} size="small" sx={{ width: 150, m: 1 }} />
-              )}
-              disabled={mode === "show"}
-            />
-          </LocalizationProvider>
-
-           <CountrySelect
-            id="nationality_id"
-            focused
-            editing={mode !== "show"}
-            selected={customer?.nationality_id}
-            value={customer?.nationality_id}
-            label="Nacionalidad"
-            onChange={handleInputChange}
-            name="nationality_id"
-            error={errors.nationality_id}
-            disabled={mode === "show"}
-          />
-          {errors.nationality_id && (
-            <FormHelperText error sx={{ ml: 2 }}>
-              {errors.nationality_id}
-            </FormHelperText>
-          )}
-
-          <TextField
-            id="age"
-            focused
-            label="Edad en años"
-            name="age"
-            size="small"
-            value={customer?.age ?? ""}
-            sx={{ width: 130 }}
-            onChange={handleInputChange}
-            disabled
-          />
-
-          <TextField
-            id="email"
-            focused
-            label="Correo electrónico"
-            name="email"
-            size="small"
-            value={customer?.email || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="telephone"
-            focused
-            label="Teléfono fijo"
-            name="telephone"
-            size="small"
-            value={customer?.telephone || ""}
-            onChange={handleInputChange}
-            sx={{ width: 130 }}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="cellphone"
-            focused
-            label="Celular"
-            name="cellphone"
-            size="small"
-            value={customer?.cellphone || ""}
-            onChange={handleInputChange}
-            sx={{ width: 130 }}
-            error={Boolean(errors.cellphone)}
-            helperText={errors.cellphone || ""}
-            disabled={mode === "show"}
-          />
-        </div>
-
-        <div id="datos-conyuge">
-          <DividerChip label="Datos del cónyuge" />
-
-          <TextField
-            id="spouse_name"
-            label="Nombre"
-            name="spouse_name"
-            size="small"
-            sx={{ width: 500 }}
-            value={customer?.spouse_name || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            label="Teléfono"
-            name="spouse_telephone"
-            size="small"
-            value={customer?.spouse_telephone || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="spouse_position"
-            label="Ocupación"
-            name="spouse_position"
-            size="small"
-            value={customer?.spouse_position || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="spouse_address"
-            label="Domicilio"
-            name="spouse_address"
-            size="small"
-            fullWidth
-            sx={{ width: 500 }}
-            multiline
-            maxRows={3}
-            value={customer?.spouse_address || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="spouse_job_company"
-            label="Empresa donde labora"
-            name="spouse_job_company"
-            size="small"
-            sx={{ width: 500 }}
-            value={customer?.spouse_job_company || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="spouse_job_telephone"
-            label="Teléfono trabajo"
-            name="spouse_job_telephone"
-            size="small"
-            sx={{ width: 200 }}
-            value={customer?.spouse_job_telephone || ""}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-
-          <TextField
-            id="spouse_job_salary"
-            label="Salario mensual"
-            name="spouse_job_salary"
-            size="small"
-            sx={{ width: 200 }}
-            value={customer?.spouse_job_salary ?? 0}
-            onChange={handleInputChange}
-            disabled={mode === "show"}
-          />
-        </div>
-      </Box>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  name="spouse_job_salary"
+                  label="Salario mensual"
+                  value={customer?.spouse_job_salary ?? 0}
+                  onChange={handleInputChange}
+                  disabled={disabled || isSingle}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+          </Section>
+        </Stack>
+      </LocalizationProvider>
     );
-  }
+  },
 );
 
 export default CustomerGeneralInfoTab;

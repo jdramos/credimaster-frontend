@@ -30,7 +30,7 @@ const CustomerBusinessTab = forwardRef(
       setIsEmployee,
       mode,
     },
-    ref
+    ref,
   ) => {
     const disabled = mode === "show";
 
@@ -45,7 +45,10 @@ const CustomerBusinessTab = forwardRef(
         value === null ||
         value === undefined ||
         (typeof value === "string" && value.trim() === "");
-      setErrors((prev) => ({ ...prev, [name]: empty ? "Este campo es requerido" : "" }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: empty ? "Este campo es requerido" : "",
+      }));
     };
 
     const clearTabErrors = (prev) => {
@@ -83,102 +86,102 @@ const CustomerBusinessTab = forwardRef(
         "business_license_issued",
         "business_license_expiry",
       ],
-      []
+      [],
     );
 
     // ============================================================
     // VALIDATE (solo este tab)
     // ============================================================
-   useImperativeHandle(ref, () => ({
-  validate: () => {
-    const c = { ...customer };
-    const employee = Number(c.economic_activity) === 2;
+    useImperativeHandle(ref, () => ({
+      validate: () => {
+        const c = { ...customer };
+        const employee = Number(c.economic_activity) === 2;
 
-    const isEmpty = (v) =>
-      v === null ||
-      v === undefined ||
-      (typeof v === "string" && v.trim() === "");
+        const isEmpty = (v) =>
+          v === null ||
+          v === undefined ||
+          (typeof v === "string" && v.trim() === "");
 
-    // ✅ Campos que vienen del GET (joins/calculados) o nombres que no usas en UI
-    const ignore = new Set([
-      // joins/calculados (NO existen en el form)
-      "business_type_name",
-      "business_type_weight",
-      "business_type_risk",
-      "business_risk_value",
-      "province_name",
-      "municipality_name",
-      "province_risk_value",
-      "total_loans",
+        // ✅ Campos que vienen del GET (joins/calculados) o nombres que no usas en UI
+        const ignore = new Set([
+          // joins/calculados (NO existen en el form)
+          "business_type_name",
+          "business_type_weight",
+          "business_type_risk",
+          "business_risk_value",
+          "province_name",
+          "municipality_name",
+          "province_risk_value",
+          "total_loans",
 
-      // nombres que te están apareciendo pero NO están en tu UI
-      "inventory_amount", // tu UI usa business_inventory
-      "job_salary",       // tu UI usa monthly_salary
-    ]);
+          // nombres que te están apareciendo pero NO están en tu UI
+          "inventory_amount", // tu UI usa business_inventory
+          "job_salary", // tu UI usa monthly_salary
+        ]);
 
-    // ✅ Requeridos del tab (solo los editables)
-    const required = employee
-      ? [
-          "economic_activity",
-          "conami_id_actividad_economica",
-          "occupation",
-          "company",
-          "job_start_day",
-          "monthly_salary",
-          // 👇 NO querés teléfono obligatorio:
-          // "job_telephone",
-        ]
-      : [
-          "economic_activity",
-          "conami_id_actividad_economica",
-          "business_name",
-          "business_type_id",
-          "business_address",
-          // 👇 NO querés teléfono obligatorio:
-          // "business_telephone",
-          "business_inventory",
-          "business_receivables",
-          "business_monthly_income",
-        ];
+        // ✅ Requeridos del tab (solo los editables)
+        const required = employee
+          ? [
+              "economic_activity",
+              "conami_id_actividad_economica",
+              "occupation",
+              "company",
+              "job_start_day",
+              "monthly_salary",
+              // 👇 NO querés teléfono obligatorio:
+              // "job_telephone",
+            ]
+          : [
+              "economic_activity",
+              "conami_id_actividad_economica",
+              "business_name",
+              "business_type_id",
+              "business_address",
+              // 👇 NO querés teléfono obligatorio:
+              // "business_telephone",
+              "business_inventory",
+              "business_receivables",
+              "business_monthly_income",
+            ];
 
-    // opcionales (calculados / no obligatorios)
-    const optional = new Set([
-      "business_license_entity",
-      "business_license_issued",
-      "business_license_expiry",
-      "business_annual_income", // calculado
-      "annual_salary",          // calculado
-    ]);
+        // opcionales (calculados / no obligatorios)
+        const optional = new Set([
+          "business_license_entity",
+          "business_license_issued",
+          "business_license_expiry",
+          "business_annual_income", // calculado
+          "annual_salary", // calculado
+        ]);
 
-    const newErrors = {};
-    let ok = true;
+        const newErrors = {};
+        let ok = true;
 
-    for (const key of required) {
-      if (ignore.has(key) || optional.has(key)) continue;
+        for (const key of required) {
+          if (ignore.has(key) || optional.has(key)) continue;
 
-      const value = c[key];
+          const value = c[key];
 
-      // dayjs válido
-      if (dayjs.isDayjs(value)) {
-        if (!value.isValid()) {
-          newErrors[key] = "Fecha inválida";
-          ok = false;
+          // dayjs válido
+          if (dayjs.isDayjs(value)) {
+            if (!value.isValid()) {
+              newErrors[key] = "Fecha inválida";
+              ok = false;
+            }
+            continue;
+          }
+
+          // números: 0 válido (si querés que 0 NO valga para alguno, lo controlas aquí)
+          if (typeof value === "number") continue;
+
+          if (isEmpty(value)) {
+            newErrors[key] = "Este campo es requerido";
+            ok = false;
+          }
         }
-        continue;
-      }
 
-      // números: 0 válido (si querés que 0 NO valga para alguno, lo controlas aquí)
-      if (typeof value === "number") continue;
-
-      if (isEmpty(value)) {
-        newErrors[key] = "Este campo es requerido";
-        ok = false;
-      }
-    }
-
-    return { ok, errors: newErrors };
-  },
-}));
+        return { ok, errors: newErrors };
+      },
+    }));
 
     // ============================================================
     // HANDLE CHANGE (uniforme)
@@ -205,7 +208,14 @@ const CustomerBusinessTab = forwardRef(
                 "business_receivables",
                 "business_monthly_income",
               ]
-            : ["occupation", "company", "job_start_day", "monthly_salary", "job_telephone", "annual_salary"];
+            : [
+                "occupation",
+                "company",
+                "job_start_day",
+                "monthly_salary",
+                "job_telephone",
+                "annual_salary",
+              ];
 
           setErrors((prevErr) => {
             const copy = { ...prevErr };
@@ -247,8 +257,14 @@ const CustomerBusinessTab = forwardRef(
 
             <Grid container spacing={2}>
               <Grid item xs={12} md={3}>
-                <FormControl fullWidth size="small" error={Boolean(errors.economic_activity)}>
-                  <InputLabel id="economic_activity_label">Actividad económica</InputLabel>
+                <FormControl
+                  fullWidth
+                  size="small"
+                  error={Boolean(errors.economic_activity)}
+                >
+                  <InputLabel id="economic_activity_label">
+                    Actividad económica
+                  </InputLabel>
                   <Select
                     labelId="economic_activity_label"
                     label="Actividad económica"
@@ -260,7 +276,9 @@ const CustomerBusinessTab = forwardRef(
                     <MenuItem value={1}>Negocio propio</MenuItem>
                     <MenuItem value={2}>Empleado</MenuItem>
                   </Select>
-                  {errors.economic_activity && <FormHelperText>{errors.economic_activity}</FormHelperText>}
+                  {errors.economic_activity && (
+                    <FormHelperText>{errors.economic_activity}</FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
 
@@ -272,7 +290,10 @@ const CustomerBusinessTab = forwardRef(
                   selected={customer.conami_id_actividad_economica ?? ""}
                   onChange={(val) =>
                     handleInputChange({
-                      target: { name: "conami_id_actividad_economica", value: val },
+                      target: {
+                        name: "conami_id_actividad_economica",
+                        value: val,
+                      },
                     })
                   }
                   label="Actividad Económica"
@@ -322,19 +343,23 @@ const CustomerBusinessTab = forwardRef(
 
                   <Grid item xs={12} md={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Fecha de ingreso *"
-                      value={customer.job_start_day ?? null}
-                      onChange={(newValue) =>
-                        handleInputChange({
-                          target: { name: "job_start_day", value: newValue },
-                        })
-                      }
-                      renderInput={(params) => (
-                                        <TextField {...params} size="small" sx={{ width: 150, m: 1 }} />
-                                      )}
-                      disabled={disabled}
-                    />
+                      <DatePicker
+                        label="Fecha de ingreso *"
+                        value={customer.job_start_day ?? null}
+                        onChange={(newValue) =>
+                          handleInputChange({
+                            target: { name: "job_start_day", value: newValue },
+                          })
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            sx={{ width: 150, m: 1 }}
+                          />
+                        )}
+                        disabled={disabled}
+                      />
                     </LocalizationProvider>
                   </Grid>
 
@@ -348,7 +373,9 @@ const CustomerBusinessTab = forwardRef(
                       value={customer.monthly_salary ?? 0}
                       onValueChange={(values) => {
                         const n = Number(values.floatValue ?? 0);
-                        handleInputChange({ target: { name: "monthly_salary", value: n } });
+                        handleInputChange({
+                          target: { name: "monthly_salary", value: n },
+                        });
                       }}
                       thousandSeparator
                       decimalScale={2}
@@ -470,7 +497,9 @@ const CustomerBusinessTab = forwardRef(
                       value={customer.business_inventory ?? 0}
                       onValueChange={(values) => {
                         const n = Number(values.floatValue ?? 0);
-                        handleInputChange({ target: { name: "business_inventory", value: n } });
+                        handleInputChange({
+                          target: { name: "business_inventory", value: n },
+                        });
                       }}
                       thousandSeparator
                       decimalScale={2}
@@ -493,7 +522,9 @@ const CustomerBusinessTab = forwardRef(
                       value={customer.business_receivables ?? 0}
                       onValueChange={(values) => {
                         const n = Number(values.floatValue ?? 0);
-                        handleInputChange({ target: { name: "business_receivables", value: n } });
+                        handleInputChange({
+                          target: { name: "business_receivables", value: n },
+                        });
                       }}
                       thousandSeparator
                       decimalScale={2}
@@ -516,7 +547,9 @@ const CustomerBusinessTab = forwardRef(
                       value={customer.business_monthly_income ?? 0}
                       onValueChange={(values) => {
                         const n = Number(values.floatValue ?? 0);
-                        handleInputChange({ target: { name: "business_monthly_income", value: n } });
+                        handleInputChange({
+                          target: { name: "business_monthly_income", value: n },
+                        });
                       }}
                       thousandSeparator
                       decimalScale={2}
@@ -565,37 +598,51 @@ const CustomerBusinessTab = forwardRef(
 
                   <Grid item xs={12} md={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Fecha de emisión"
-                      value={customer.business_license_issued ?? null}
-                      onChange={(newValue) =>
-                        handleInputChange({
-                          target: { name: "business_license_issued", value: newValue },
-                        })
-                      }
-                      renderInput={(params) => (
-                                        <TextField {...params} size="small" sx={{ width: 150, m: 1 }} />
-                                      )}
-                      disabled={disabled}
-                    />
+                      <DatePicker
+                        label="Fecha de emisión"
+                        value={customer.business_license_issued ?? null}
+                        onChange={(newValue) =>
+                          handleInputChange({
+                            target: {
+                              name: "business_license_issued",
+                              value: newValue,
+                            },
+                          })
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            sx={{ width: 150, m: 1 }}
+                          />
+                        )}
+                        disabled={disabled}
+                      />
                     </LocalizationProvider>
                   </Grid>
 
                   <Grid item xs={12} md={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Fecha de vencimiento"
-                      value={customer.business_license_expiry ?? null}
-                      onChange={(newValue) =>
-                        handleInputChange({
-                          target: { name: "business_license_expiry", value: newValue },
-                        })
-                      }
-                      renderInput={(params) => (
-                                        <TextField {...params} size="small" sx={{ width: 150, m: 1 }} />
-                                      )}
-                      disabled={disabled}
-                    />
+                      <DatePicker
+                        label="Fecha de vencimiento"
+                        value={customer.business_license_expiry ?? null}
+                        onChange={(newValue) =>
+                          handleInputChange({
+                            target: {
+                              name: "business_license_expiry",
+                              value: newValue,
+                            },
+                          })
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            sx={{ width: 150, m: 1 }}
+                          />
+                        )}
+                        disabled={disabled}
+                      />
                     </LocalizationProvider>
                   </Grid>
                 </Grid>
@@ -605,7 +652,7 @@ const CustomerBusinessTab = forwardRef(
         </Box>
       </LocalizationProvider>
     );
-  }
+  },
 );
 
 export default CustomerBusinessTab;

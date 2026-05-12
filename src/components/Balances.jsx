@@ -85,15 +85,19 @@ const CustomerBalanceViewer = () => {
   const [selectedCredit, setSelectedCredit] = useState(null);
 
   const openCreditModal = useCallback((row) => {
-    // row = data del nodo (customer.data)
     if (!row?.loan) return;
 
     setSelectedCredit({
-      loan_id: row.loan,
-      id: row.loan, // por compatibilidad con LoanDetailsModal
-      customer_name: row.name,
+      ...row,
+      id: row.id || row.loan,
+      loan_id: row.loan_id || row.loan,
+      customer_id: row.customer_id,
+      customer_name: row.customer_name || row.name,
+      customer_identification:
+        row.customer_identification || row.identification,
       identification: row.identification,
     });
+
     setCreditModalOpen(true);
   }, []);
 
@@ -242,7 +246,37 @@ const CustomerBalanceViewer = () => {
                 data: {
                   name: customer.customer_name,
                   identification: customer.identification,
+                  customer_id: customer.customer_id,
+
                   loan: customer.loan_id,
+                  id: customer.loan_id,
+                  loan_id: customer.loan_id,
+
+                  customer_name: customer.customer_name,
+                  customer_identification: customer.identification,
+
+                  amount:
+                    customer.approved_amount ||
+                    customer.amount ||
+                    customer.capital_balance ||
+                    0,
+                  term: customer.approved_term || customer.term || 0,
+                  interest_rate:
+                    customer.approved_rate || customer.interest_rate || 0,
+                  date:
+                    customer.approval_date ||
+                    customer.request_date ||
+                    customer.date ||
+                    null,
+                  due_date: customer.due_date || null,
+
+                  branch_id: customer.branch_id || null,
+                  branch_name: customer.branch_name || null,
+                  promoter_id: customer.promoter_id || null,
+                  promoter_name: customer.promoter_name || null,
+                  frecuency_name:
+                    customer.frequency || customer.frecuency_name || "",
+
                   capital: money(customer.capital_balance),
                   interest: money(customer.interest_balance),
                   defaulted: money(customer.defaulted_capital),
@@ -313,7 +347,13 @@ const CustomerBalanceViewer = () => {
 
         setNodes(finalNodes);
         setGlobalTotals(grand);
-        setExpandedKeys(buildExpandedAll(finalNodes));
+        setExpandedKeys((prev) => {
+          const next = buildExpandedAll(finalNodes);
+
+          if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
+
+          return next;
+        });
       } catch (error) {
         console.error("Error al obtener saldos:", error);
       } finally {
@@ -324,10 +364,8 @@ const CustomerBalanceViewer = () => {
   );
 
   useEffect(() => {
-    // opcional: precargar al abrir
     fetchData(date);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [date, balanceType, selectedBranch, selectedVendor]);
 
   const visibleDates = useMemo(() => {
     const start = Math.max(0, currentIndex - 3);
@@ -714,23 +752,26 @@ const CustomerBalanceViewer = () => {
         </TreeTable>
       </Paper>
 
-      <AccountStatementModal
-        open={stmtOpen}
-        onClose={closeStatement}
-        loanId={stmtLoan?.loan_id}
-        customerName={stmtLoan?.customer_name}
-        identification={stmtLoan?.identification}
-        cutDate={date} // 👈 usa la fecha que ya estás consultando
-      />
-
-      <LoanDetailsModal
-        open={creditModalOpen}
-        onClose={closeCreditModal}
-        loan={selectedCredit}
-        clientId={selectedCredit?.identification}
-        identification={selectedCredit?.identification}
-        onLoanUpdated={false}
-      />
+      {stmtOpen && stmtLoan && (
+        <AccountStatementModal
+          open={stmtOpen}
+          onClose={closeStatement}
+          loanId={stmtLoan.loan_id}
+          customerName={stmtLoan.customer_name}
+          identification={stmtLoan.identification}
+          cutDate={date}
+        />
+      )}
+      {creditModalOpen && selectedCredit && (
+        <LoanDetailsModal
+          open={creditModalOpen}
+          onClose={closeCreditModal}
+          loan={selectedCredit}
+          clientId={selectedCredit.customer_id}
+          clientIdentification={selectedCredit.identification}
+          onLoanUpdated={() => fetchData(date)}
+        />
+      )}
     </Box>
   );
 };

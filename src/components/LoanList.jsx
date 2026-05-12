@@ -26,14 +26,13 @@ const token = process.env.REACT_APP_API_TOKEN;
 const headers = { Authorization: token };
 
 const getPaymentPercent = (row) => {
+  const approvalStatus = String(row.approval_status || "").toUpperCase();
+  if (!["APPROVED", "APROBADO"].includes(approvalStatus)) return 0;
   const original = Number(row.amount || 0);
   const balance = Number(row.current_balance || 0);
-
   if (original <= 0) return 0;
-
   const paid = original - balance;
   const percent = (paid / original) * 100;
-
   return Math.max(0, Math.min(100, percent));
 };
 
@@ -200,10 +199,17 @@ const LoanList = () => {
 
   const handleCloseAlert = () => setAlert({ ...alert, open: false });
 
-  const handleUpdateLoanInList = (updatedLoan) => {
+  const handleUpdateLoanInList = async (updatedLoan = null) => {
+    if (!updatedLoan?.id) {
+      await fetchApi();
+      return;
+    }
+
     setData((prev) =>
       prev.map((row) =>
-        row.id === updatedLoan.id ? { ...row, ...updatedLoan } : row,
+        Number(row.id) === Number(updatedLoan.id)
+          ? { ...row, ...updatedLoan }
+          : row,
       ),
     );
   };

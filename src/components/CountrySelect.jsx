@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FormControl, InputLabel, Select, MenuItem, FormHelperText } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+} from "@mui/material";
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/countries";
 const token = process.env.REACT_APP_API_TOKEN;
@@ -13,60 +19,93 @@ const toNumberOrEmpty = (v) => {
 
 export default function CountrySelect({
   value,
+  selected,
   onChange,
   label = "País",
   name = "country_id",
-  editing = true,          // true: respeta value del padre
+  editing = true,
   disabled = false,
   size = "small",
-  error,
-  helperText,
+  error = false,
+  helperText = "",
+  fullWidth = true,
 }) {
   const [countries, setCountries] = useState([]);
   const [fetchError, setFetchError] = useState("");
+
+  const currentValue = value ?? selected ?? "";
 
   useEffect(() => {
     const fetchApi = async () => {
       try {
         setFetchError("");
+
         const response = await fetch(url, { headers });
-        if (!response.ok) throw new Error("Failed to retrieve data.");
+
+        if (!response.ok) {
+          throw new Error("Failed to retrieve data.");
+        }
+
         const jsonData = await response.json().catch(() => []);
         setCountries(Array.isArray(jsonData) ? jsonData : []);
       } catch (e) {
         console.error(e);
-        setFetchError("Failed to retrieve data. Please try again later.");
+        setFetchError("No se pudieron cargar los países.");
         setCountries([]);
       }
     };
+
     fetchApi();
   }, []);
 
   const hasOptions = countries.length > 0;
-  const numericValue = useMemo(() => toNumberOrEmpty(value), [value]);
 
-  // ✅ Si NO estás editando (creación) y no hay value en el padre, elegimos default
-  //    PERO también lo escribimos al padre llamando onChange.
+  const numericValue = useMemo(
+    () => toNumberOrEmpty(currentValue),
+    [currentValue],
+  );
+
   useEffect(() => {
     if (!hasOptions) return;
     if (editing) return;
+    if (numericValue !== "") return;
 
-    if (numericValue !== "") return; // ya hay algo seteado en el padre
+    const defaultOpt =
+      countries.find((c) => String(c.isDefault) === "1") ?? countries[0];
 
-    const defaultOpt = countries.find((c) => String(c.isDefault) === "1") ?? countries[0];
     if (defaultOpt?.id != null) {
-      onChange?.({ target: { name, value: Number(defaultOpt.id) } });
+      onChange?.({
+        target: {
+          name,
+          value: Number(defaultOpt.id),
+        },
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasOptions, editing]);
+  }, [hasOptions, editing, numericValue, countries, name, onChange]);
 
   const handleSelectChange = (e) => {
     const normalized = toNumberOrEmpty(e.target.value);
-    onChange?.({ target: { name, value: normalized } }); // ✅ evento estándar
+
+    onChange?.({
+      target: {
+        name,
+        value: normalized,
+      },
+    });
   };
 
   return (
-    <FormControl sx={{ mt: 1, ml: 1, minWidth: 200 }} size={size} disabled={disabled} error={Boolean(error)}>
+    <FormControl
+      fullWidth={fullWidth}
+      size={size}
+      disabled={disabled}
+      error={Boolean(error || fetchError)}
+      sx={{
+        width: fullWidth ? "100%" : "auto",
+        minWidth: 0,
+        m: 0,
+      }}
+    >
       <InputLabel id={`${name}-label`}>{label}</InputLabel>
 
       <Select

@@ -1,10 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { MenuItem, Select, FormControl, InputLabel, FormHelperText } from "@mui/material";
+import {
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+} from "@mui/material";
 import API from "../../api";
 
 export default function EstadoCivilSelect({
-  value,              // id seleccionado (controlado por el padre)
-  onChange,           // devuelve id (number o "")
+  value, // id seleccionado (controlado por el padre)
+  onChange, // devuelve id (number o "")
   label = "Estado civil",
   editing = false,
   name,
@@ -28,7 +34,7 @@ export default function EstadoCivilSelect({
             id: Number(r.id),
             name: r.name,
             isDefault: Number(r.isDefault || 0),
-          }))
+          })),
         );
       } catch (e) {
         console.error("Error cargando estado civil:", e);
@@ -66,7 +72,9 @@ export default function EstadoCivilSelect({
   // value que se muestra (controlado)
   const selectValue = editing
     ? normalizedValue
-    : (normalizedValue !== "" ? normalizedValue : defaultId);
+    : normalizedValue !== ""
+      ? normalizedValue
+      : defaultId;
 
   const handleChange = (e) => {
     const v = e.target.value === "" ? "" : Number(e.target.value);
@@ -75,11 +83,16 @@ export default function EstadoCivilSelect({
 
   return (
     <FormControl
-      sx={{ mt: 1, ml: 1, minWidth: 250 }}
+      fullWidth
       size={size}
       disabled={disabled || loading}
       required={required}
       error={Boolean(error)}
+      sx={{
+        width: "100%",
+        minWidth: 0,
+        m: 0,
+      }}
     >
       <InputLabel id="estado-civil-label">{label}</InputLabel>
 

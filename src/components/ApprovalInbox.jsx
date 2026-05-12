@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useContext } from "react";
+import { UserContext } from "../contexts/UserContext";
 import {
   Alert,
   Box,
@@ -78,6 +79,46 @@ const getPendingDaysChip = (days) => {
   return <Chip size="small" label={`${value} días`} color="default" />;
 };
 
+function getApprovalProgressChip(row, currentUserId) {
+  const approvalStatus = String(
+    row.approval_status || row.status || row.item_status || "PENDING",
+  ).toUpperCase();
+  const approvals = Array.isArray(row.approvals) ? row.approvals : [];
+
+  // Si está rechazado, prioridad máxima
+  if (["REJECTED", "RECHAZADO"].includes(approvalStatus)) {
+    return <Chip size="small" color="error" label="Rechazado" />;
+  }
+
+  // Si todos aprobaron
+  if (["APPROVED", "APROBADO"].includes(approvalStatus)) {
+    return <Chip size="small" color="success" label="Aprobado totalmente" />;
+  }
+
+  // Busca la aprobación del usuario actual
+  const myApproval = approvals.find(
+    (a) => String(a.approver_id) === String(currentUserId),
+  );
+  const pendientes = approvals.filter((a) => a.status === "PENDING");
+
+  if (myApproval && myApproval.status === "APPROVED") {
+    return <Chip size="small" color="info" label="Ya aprobaste" />;
+  }
+  if (myApproval && myApproval.status === "PENDING") {
+    return <Chip size="small" color="warning" label="Falta tu aprobación" />;
+  }
+  if (pendientes.length > 0) {
+    return (
+      <Chip
+        size="small"
+        color="warning"
+        label={`Faltan ${pendientes.length} aprobaciones`}
+      />
+    );
+  }
+  return <Chip size="small" color="warning" label="Pendiente" />;
+}
+
 const SummaryCard = ({ title, value, icon, color = "#0057B8" }) => {
   return (
     <Card
@@ -123,6 +164,8 @@ const SummaryCard = ({ title, value, icon, color = "#0057B8" }) => {
 };
 
 export default function ApprovalInbox({ onViewLoan, onViewModification }) {
+  const { user } = useContext(UserContext);
+  const currentUserId = user?.id ?? user;
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState({
     total: 0,
@@ -530,6 +573,12 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                     sx={{ color: "#fff", fontWeight: 700 }}
                     align="center"
                   >
+                    Estado aprobación
+                  </TableCell>
+                  <TableCell
+                    sx={{ color: "#fff", fontWeight: 700 }}
+                    align="center"
+                  >
                     Antigüedad
                   </TableCell>
                   <TableCell
@@ -544,7 +593,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
               <TableBody>
                 {filteredRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} align="center">
+                    <TableCell colSpan={10} align="center">
                       <Box sx={{ py: 4 }}>
                         <Typography variant="body2" color="text.secondary">
                           No hay elementos pendientes en la bandeja
@@ -565,6 +614,9 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                       </TableCell>
                       <TableCell align="center">
                         {dateFormat(row.requested_at)}
+                      </TableCell>
+                      <TableCell align="center">
+                        {getApprovalProgressChip(row, currentUserId)}
                       </TableCell>
                       <TableCell align="center">
                         {getPendingDaysChip(row.pending_days)}

@@ -58,14 +58,14 @@ import SinRiesgoReport from "./components/Sinriesgo";
 import EconomicActivitiesPage from "./pages/EconomicActivitiesPage";
 import GenrePage from "./pages/GenrePage";
 import MaritalStatusPage from "./pages/MaritalStatusPage";
-import CustomerAddGpt from "./components/Customer/CustomerAddGpt";
+import CustomerAddGpt from "./components/Customer/CustomerForm";
 import LoanAdd from "./components/Loan/LoanAddGpt";
-import RibbonMenu from "./components/RibbonMenu";
 import ApprovalInbox from "./components/ApprovalInbox";
 import CustomerClaimsList from "./components/Claims/CustomerClaimsList";
 import BalancesDashboard from "./components/dashboard/BalancesDashboard";
 import CreditFileTemplatePage from "./components/credit-files/CreditFileTemplatePage";
 import ConamiDefaultsManager from "./components/conami/ConamiDefaultsManager";
+import AppLayoutMenu from "./components/AppLayoutMenu";
 
 function PageContainer({ children }) {
   return (
@@ -118,396 +118,396 @@ function AppRoutes({ themeMode, setThemeMode }) {
             : "linear-gradient(180deg, #0F141A 0%, #111821 100%)",
       }}
     >
-      <RibbonMenu
+      <AppLayoutMenu
         themeMode={themeMode}
         setThemeMode={setThemeMode}
         onLogout={handleLogout}
         appName="CrediMaster"
-      />
+      >
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <PageContainer>
+                <Home />
+              </PageContainer>
+            }
+          />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <PageContainer>
-              <Home />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/aprobadores/agregar"
+            element={
+              <PageContainer>
+                <AddApproverForm />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/aprobadores/agregar"
-          element={
-            <PageContainer>
-              <AddApproverForm />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/aprobadores"
+            element={
+              <PageContainer>
+                <ApproverList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/aprobadores"
-          element={
-            <PageContainer>
-              <ApproverList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/saldos"
+            element={
+              <PageContainer>
+                <BalanceSummary />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/saldos"
-          element={
-            <PageContainer>
-              <BalanceSummary />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/colectores"
+            element={
+              <PageContainer>
+                <CollectorList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/colectores"
-          element={
-            <PageContainer>
-              <CollectorList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/colectores/agregar"
+            element={
+              <PageContainer>
+                <CollectorAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/colectores/agregar"
-          element={
-            <PageContainer>
-              <CollectorAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/colectores/editar/:colectorId"
+            element={
+              <PageContainer>
+                <CollectorEdit />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/colectores/editar/:colectorId"
-          element={
-            <PageContainer>
-              <CollectorEdit />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/conami/actividad-economica"
+            element={
+              <PageContainer>
+                <EconomicActivitiesPage />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/conami/actividad-economica"
-          element={
-            <PageContainer>
-              <EconomicActivitiesPage />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/conami/estado-civil"
+            element={
+              <PageContainer>
+                <MaritalStatusPage />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/conami/estado-civil"
-          element={
-            <PageContainer>
-              <MaritalStatusPage />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/clientes"
+            element={
+              <PageContainer>
+                <CustomerList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/clientes"
-          element={
-            <PageContainer>
-              <CustomerList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/clientes/agregar"
+            element={
+              <PageContainer>
+                <CustomerAddGpt />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/clientes/agregar"
-          element={
-            <PageContainer>
-              <CustomerAddGpt />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/clientes/editar/:customerId"
+            element={
+              <PageContainer>
+                <CustomerAddGpt />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/clientes/editar/:customerId"
-          element={
-            <PageContainer>
-              <CustomerAddGpt />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/clientes/ver/:customerId"
+            element={
+              <PageContainer>
+                <CustomerAddGpt />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/clientes/ver/:customerId"
-          element={
-            <PageContainer>
-              <CustomerAddGpt />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/crear-saldos"
+            element={
+              <PageContainer>
+                <GenerateBalances />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/crear-saldos"
-          element={
-            <PageContainer>
-              <GenerateBalances />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/creditos"
+            element={
+              <PageContainer>
+                <LoanList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/creditos"
-          element={
-            <PageContainer>
-              <LoanList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/creditos/archivos"
+            element={
+              <PageContainer>
+                <CreditFileTemplatePage />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/creditos/archivos"
-          element={
-            <PageContainer>
-              <CreditFileTemplatePage />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/creditos/agregar"
+            element={
+              <PageContainer>
+                <LoanAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/creditos/agregar"
-          element={
-            <PageContainer>
-              <LoanAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/creditos/politicas"
+            element={
+              <PageContainer>
+                <CreditPolicyManager />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/creditos/politicas"
-          element={
-            <PageContainer>
-              <CreditPolicyManager />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/departamentos"
+            element={
+              <PageContainer>
+                <ProvincesList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/departamentos"
-          element={
-            <PageContainer>
-              <ProvincesList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/departamentos/agregar"
+            element={
+              <PageContainer>
+                <ProvinceAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/departamentos/agregar"
-          element={
-            <PageContainer>
-              <ProvinceAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/departamentos/editar/:provinceId"
+            element={
+              <PageContainer>
+                <ProvinceEdit />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/departamentos/editar/:provinceId"
-          element={
-            <PageContainer>
-              <ProvinceEdit />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/generos"
+            element={
+              <PageContainer>
+                <GenrePage />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/generos"
-          element={
-            <PageContainer>
-              <GenrePage />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/pagos"
+            element={
+              <PageContainer>
+                <PaymentList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/pagos"
-          element={
-            <PageContainer>
-              <PaymentList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/permisos"
+            element={
+              <PageContainer>
+                <PermissionList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/permisos"
-          element={
-            <PageContainer>
-              <PermissionList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/promotores"
+            element={
+              <PageContainer>
+                <PromoterList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/promotores"
-          element={
-            <PageContainer>
-              <PromoterList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/promotores/agregar"
+            element={
+              <PageContainer>
+                <PromoterAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/promotores/agregar"
-          element={
-            <PageContainer>
-              <PromoterAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/promotores/editar/:promoterId"
+            element={
+              <PageContainer>
+                <PromoterEdit />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/promotores/editar/:promoterId"
-          element={
-            <PageContainer>
-              <PromoterEdit />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/conami/tablas"
+            element={
+              <PageContainer>
+                <ConamiDefaultsManager />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/conami/tablas"
-          element={
-            <PageContainer>
-              <ConamiDefaultsManager />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/provisiones"
+            element={
+              <PageContainer>
+                <ProvissionViewer />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/provisiones"
-          element={
-            <PageContainer>
-              <ProvissionViewer />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/riesgos"
+            element={
+              <PageContainer>
+                <Risks />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/riesgos"
-          element={
-            <PageContainer>
-              <Risks />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/riesgos/agregar"
+            element={
+              <PageContainer>
+                <RiskAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/riesgos/agregar"
-          element={
-            <PageContainer>
-              <RiskAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/riesgos/editar/:riskId"
+            element={
+              <PageContainer>
+                <RiskEdit />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/riesgos/editar/:riskId"
-          element={
-            <PageContainer>
-              <RiskEdit />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/roles"
+            element={
+              <PageContainer>
+                <RolePermissionManager />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/roles"
-          element={
-            <PageContainer>
-              <RolePermissionManager />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/sucursales"
+            element={
+              <PageContainer>
+                <Branches />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/sucursales"
-          element={
-            <PageContainer>
-              <Branches />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/sucursales/agregar"
+            element={
+              <PageContainer>
+                <BranchAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/sucursales/agregar"
-          element={
-            <PageContainer>
-              <BranchAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/sucursales/editar/:branchId"
+            element={
+              <PageContainer>
+                <BranchEdit />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/sucursales/editar/:branchId"
-          element={
-            <PageContainer>
-              <BranchEdit />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/sinriesgos"
+            element={
+              <PageContainer>
+                <SinRiesgoReport />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/sinriesgos"
-          element={
-            <PageContainer>
-              <SinRiesgoReport />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/usuarios"
+            element={
+              <PageContainer>
+                <UsersList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/usuarios"
-          element={
-            <PageContainer>
-              <UsersList />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/usuarios/agregar"
+            element={
+              <PageContainer>
+                <UserAdd />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/usuarios/agregar"
-          element={
-            <PageContainer>
-              <UserAdd />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/bandeja-de-aprobacion"
+            element={
+              <PageContainer>
+                <ApprovalInbox />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/bandeja-de-aprobacion"
-          element={
-            <PageContainer>
-              <ApprovalInbox />
-            </PageContainer>
-          }
-        />
+          <Route
+            path="/reclamos"
+            element={
+              <PageContainer>
+                <CustomerClaimsList />
+              </PageContainer>
+            }
+          />
 
-        <Route
-          path="/reclamos"
-          element={
-            <PageContainer>
-              <CustomerClaimsList />
-            </PageContainer>
-          }
-        />
+          <Route path="/dashboard/saldos" element={<BalancesDashboard />} />
 
-        <Route path="/dashboard/saldos" element={<BalancesDashboard />} />
-
-        <Route
-          path="*"
-          element={
-            <PageContainer>
-              <Typography variant="h6" fontWeight={800}>
-                Página no encontrada
-              </Typography>
-            </PageContainer>
-          }
-        />
-      </Routes>
+          <Route
+            path="*"
+            element={
+              <PageContainer>
+                <Typography variant="h6" fontWeight={800}>
+                  Página no encontrada
+                </Typography>
+              </PageContainer>
+            }
+          />
+        </Routes>
+      </AppLayoutMenu>
     </Box>
   );
 }

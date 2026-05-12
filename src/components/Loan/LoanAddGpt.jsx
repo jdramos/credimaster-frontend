@@ -247,10 +247,14 @@ const LoanAdd = () => {
         );
         setGuaranteeValue(totalValue);
         setGuarantees(data);
-        setLoan((prev) => ({
-          ...prev,
-          id_garantia: totalValue > 0 ? 1 : 0,
-        }));
+        setLoan((prev) => {
+          if (prev.credit_evaluation_id === "") return prev;
+
+          return {
+            ...prev,
+            credit_evaluation_id: "",
+          };
+        });
       } catch (error) {
         toast.error(error.message || "Error al obtener garantías");
       } finally {
@@ -278,10 +282,16 @@ const LoanAdd = () => {
 
         if (row) {
           setEvaluations([row]);
-          setLoan((prev) => ({
-            ...prev,
-            credit_evaluation_id: row.id,
-          }));
+          setLoan((prev) => {
+            if (String(prev.credit_evaluation_id) === String(row.id)) {
+              return prev;
+            }
+
+            return {
+              ...prev,
+              credit_evaluation_id: row.id,
+            };
+          });
         } else {
           setEvaluations([]);
           setLoan((prev) => ({ ...prev, credit_evaluation_id: "" }));
@@ -297,6 +307,8 @@ const LoanAdd = () => {
   }, [loan.customer_id]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchAmortizationTable = async () => {
       if (
         !loan.amount ||
@@ -345,35 +357,49 @@ const LoanAdd = () => {
           );
         }
 
-        setAmortizationTable(Array.isArray(data) ? data : []);
+        if (cancelled) return;
+
+        const rows = Array.isArray(data) ? data : [];
+        setAmortizationTable(rows);
 
         const firstInstallment =
-          data.find((row) => Number(row.paymentNumber) === 1) || null;
+          rows.find((row) => Number(row.paymentNumber) === 1) || null;
+
         setInstallment(firstInstallment);
 
-        const lastPayment = data[data.length - 1];
+        const lastPayment = rows[rows.length - 1];
         const lastPaymentDate = lastPayment?.paymentDate;
 
-        setLoan((prevLoan) => ({
-          ...prevLoan,
-          due_date:
-            prevLoan.frequency_id === "V"
-              ? prevLoan.due_date
-              : lastPaymentDate
-                ? dayjs(lastPaymentDate).format("YYYY-MM-DD")
-                : prevLoan.due_date,
-        }));
+        setLoan((prevLoan) => {
+          if (prevLoan.frequency_id === "V") return prevLoan;
+          if (!lastPaymentDate) return prevLoan;
+
+          const newDueDate = dayjs(lastPaymentDate).format("YYYY-MM-DD");
+
+          if (newDueDate === prevLoan.due_date) return prevLoan;
+
+          return {
+            ...prevLoan,
+            due_date: newDueDate,
+          };
+        });
       } catch (error) {
-        toast.error(
-          error.message ||
-            "Error de conexión al obtener la tabla de amortización",
-        );
+        if (!cancelled) {
+          toast.error(
+            error.message ||
+              "Error de conexión al obtener la tabla de amortización",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchAmortizationTable();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     loan.amount,
     loan.interest_rate,
@@ -382,7 +408,6 @@ const LoanAdd = () => {
     loan.frequency_id,
     loan.fee,
     loan.insurance,
-    loan.due_date,
     loan.other_charges,
     loan.interest_type_name,
   ]);
@@ -592,31 +617,38 @@ const LoanAdd = () => {
       promoter_identification,
     } = e.target;
 
-    const nextLoan = {
-      ...loan,
+    setLoan((prev) => ({
+      ...prev,
       [name]: value,
       frequency_name: selectedOption
         ? selectedOption.name
-        : loan.frequency_name,
+        : prev.frequency_name,
       customer_identification:
         customer_identification !== undefined
           ? customer_identification
-          : loan.customer_identification,
+          : prev.customer_identification,
       customer_name:
-        customer_name !== undefined ? customer_name : loan.customer_name,
+        customer_name !== undefined ? customer_name : prev.customer_name,
       conami_id_actividad_economica:
         conami_id_actividad_economica !== undefined
           ? conami_id_actividad_economica
-          : loan.conami_id_actividad_economica,
+          : prev.conami_id_actividad_economica,
       id_municipio:
-        municipality_id !== undefined ? municipality_id : loan.id_municipio,
-      id_oficina: name === "branch_id" ? value : loan.id_oficina,
-      id_analista: promoter_identification,
-      id_periodo_cobro_interes: frecuency_id,
-      id_periodo_cobro_principal: frecuency_id,
-    };
-
-    setLoan(nextLoan);
+        municipality_id !== undefined ? municipality_id : prev.id_municipio,
+      id_oficina: name === "branch_id" ? value : prev.id_oficina,
+      id_analista:
+        promoter_identification !== undefined
+          ? promoter_identification
+          : prev.id_analista,
+      id_periodo_cobro_interes:
+        frecuency_id !== undefined
+          ? frecuency_id
+          : prev.id_periodo_cobro_interes,
+      id_periodo_cobro_principal:
+        frecuency_id !== undefined
+          ? frecuency_id
+          : prev.id_periodo_cobro_principal,
+    }));
   };
 
   const buildPayload = () => {

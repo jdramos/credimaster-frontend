@@ -65,22 +65,33 @@ const SummaryTile = ({ label, value, helper }) => (
   </div>
 );
 
-const MetricRow = ({ label, a, b, c }) => (
+const MetricRow = ({ label, a, today, b, c }) => (
   <TableRow hover>
-    <TableCell sx={{ fontWeight: 800 }}>{label}</TableCell>
-    <TableCell align="right">
+    <TableCell sx={{ fontWeight: 800, py: 0.45, fontSize: 12 }}>
+      {label}
+    </TableCell>
+    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
       <Money value={a} />
     </TableCell>
-    <TableCell align="right">
+    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
+      <Money value={today} />
+    </TableCell>
+    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
       <Money value={b} />
     </TableCell>
-    <TableCell align="right">
+    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
       <Money value={c} />
     </TableCell>
   </TableRow>
 );
 
-const LoanInfo = ({ clientId }) => {
+const LoanInfo = ({
+  clientId,
+  loanId,
+  refreshKey,
+  paymentPreview = null,
+  paymentAmount = 0,
+}) => {
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -96,7 +107,9 @@ const LoanInfo = ({ clientId }) => {
       try {
         setLoading(true);
         const res = await API.get(`/api/loans/customer/${clientId}`);
-        const validLoans = Array.isArray(res.data) ? res.data.filter((l) => Number(l?.id) > 0) : [];
+        const validLoans = Array.isArray(res.data)
+          ? res.data.filter((l) => Number(l?.id) > 0)
+          : [];
         if (mounted) setLoan(validLoans[0] ?? {});
       } catch (err) {
         console.error("Error loading loans", err);
@@ -146,7 +159,11 @@ const LoanInfo = ({ clientId }) => {
       <Card variant="outlined" className="bac-loan-card">
         <CardContent sx={{ p: 2 }}>
           <Stack spacing={2}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Box>
                 <Skeleton variant="text" width={180} height={28} />
                 <Skeleton variant="text" width={260} height={18} />
@@ -160,9 +177,21 @@ const LoanInfo = ({ clientId }) => {
             <Divider />
 
             <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-              <Skeleton variant="rounded" height={78} sx={{ flex: 1, borderRadius: 3 }} />
-              <Skeleton variant="rounded" height={78} sx={{ flex: 1, borderRadius: 3 }} />
-              <Skeleton variant="rounded" height={78} sx={{ flex: 1, borderRadius: 3 }} />
+              <Skeleton
+                variant="rounded"
+                height={78}
+                sx={{ flex: 1, borderRadius: 3 }}
+              />
+              <Skeleton
+                variant="rounded"
+                height={78}
+                sx={{ flex: 1, borderRadius: 3 }}
+              />
+              <Skeleton
+                variant="rounded"
+                height={78}
+                sx={{ flex: 1, borderRadius: 3 }}
+              />
             </Stack>
 
             <Skeleton variant="rounded" height={240} sx={{ borderRadius: 3 }} />
@@ -193,11 +222,20 @@ const LoanInfo = ({ clientId }) => {
   const classification = loan.provision_code ?? "N/A";
   const status = loan.loan_status ?? loan.status ?? "N/A";
 
+  const MetricSimple = ({ label, value, bold = false }) => (
+    <Stack direction="row" justifyContent="space-between">
+      <Typography variant="body2" fontWeight={bold ? 900 : 600}>
+        {label}
+      </Typography>
+      <Money value={value} bold={bold} />
+    </Stack>
+  );
+
   return (
     <Card variant="outlined" className="bac-loan-card">
       <CardContent sx={{ p: 0 }}>
         {/* Header BAC */}
-        <div className="bac-loan-card__head">
+        <div className="bac-loan-card__head compact">
           <div>
             <Typography variant="subtitle1" className="bac-loan-title">
               Resumen del crédito
@@ -222,8 +260,8 @@ const LoanInfo = ({ clientId }) => {
           </Stack>
         </div>
 
-        <Box sx={{ p: 2 }}>
-          <Stack spacing={1.5}>
+        <Box sx={{ p: 1 }}>
+          <Stack spacing={0.75}>
             {/* Totales */}
             <div className="bac-tiles">
               <SummaryTile
@@ -244,12 +282,32 @@ const LoanInfo = ({ clientId }) => {
             </div>
 
             {/* Tabla */}
-            <TableContainer className="bac-table">
+            <TableContainer
+              className="bac-table"
+              sx={{
+                maxHeight: 260,
+                borderRadius: 1.5,
+                "& .MuiTableCell-root": {
+                  py: 0.45,
+                  px: 0.75,
+                  fontSize: 12,
+                  lineHeight: 1.15,
+                },
+                "& .MuiTableHead-root .MuiTableCell-root": {
+                  fontSize: 11,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  bgcolor: "grey.100",
+                  whiteSpace: "nowrap",
+                },
+              }}
+            >
               <Table size="small" className="bac-table">
                 <TableHead>
                   <TableRow>
                     <TableCell>Concepto</TableCell>
                     <TableCell align="right">Corriente</TableCell>
+                    <TableCell align="right">Pagado hoy</TableCell>
                     <TableCell align="right">Mora</TableCell>
                     <TableCell align="right">Vencido</TableCell>
                   </TableRow>
@@ -259,6 +317,7 @@ const LoanInfo = ({ clientId }) => {
                   <MetricRow
                     label="Capital"
                     a={loan.capital_balance}
+                    today={loan.today_principal_payment}
                     b={loan.defaulted_capital}
                     c={loan.overdue_capital}
                   />
@@ -266,6 +325,7 @@ const LoanInfo = ({ clientId }) => {
                   <MetricRow
                     label="Intereses"
                     a={loan.interest_balance}
+                    today={loan.today_interest_payment}
                     b={0}
                     c={loan.overdue_interest_balance}
                   />
@@ -273,6 +333,7 @@ const LoanInfo = ({ clientId }) => {
                   <MetricRow
                     label="Interés moratorio"
                     a={0}
+                    today={loan.today_defaulted_interest}
                     b={loan.defaulted_interest}
                     c={0}
                   />
@@ -280,6 +341,7 @@ const LoanInfo = ({ clientId }) => {
                   <MetricRow
                     label="Seguro"
                     a={loan.insurance_balance}
+                    today={loan.today_insurance_payment}
                     b={loan.defaulted_insurance}
                     c={loan.overdue_insurance_balance}
                   />
@@ -287,6 +349,7 @@ const LoanInfo = ({ clientId }) => {
                   <MetricRow
                     label="Comisión"
                     a={loan.fee_balance}
+                    today={loan.today_fee_payment}
                     b={loan.defaulted_fee}
                     c={loan.overdue_fee_balance}
                   />
@@ -294,20 +357,26 @@ const LoanInfo = ({ clientId }) => {
                   <MetricRow
                     label="Otros cargos"
                     a={loan.other_charges_balance}
+                    today={loan.today_other_charges_payment}
                     b={loan.defaulted_other_charges}
                     c={loan.overdue_other_charges_balance}
                   />
 
                   {/* Total */}
                   <TableRow className="bac-table-total">
-                    <TableCell>Total</TableCell>
-                    <TableCell align="right">
+                    <TableCell sx={{ fontWeight: 900, py: 0.5 }}>
+                      Total
+                    </TableCell>
+                    <TableCell align="right" sx={{ py: 0.5 }}>
                       <Money value={totals?.currentTotal ?? 0} bold />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="right" sx={{ py: 0.5 }}>
+                      <Money value={loan.today_total_payment ?? 0} bold />
+                    </TableCell>
+                    <TableCell align="right" sx={{ py: 0.5 }}>
                       <Money value={totals?.defaultedTotal ?? 0} bold />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="right" sx={{ py: 0.5 }}>
                       <Money value={totals?.overdueTotal ?? 0} bold />
                     </TableCell>
                   </TableRow>
@@ -316,9 +385,14 @@ const LoanInfo = ({ clientId }) => {
             </TableContainer>
 
             {/* Footer */}
-            <Stack direction="row" justifyContent="space-between" sx={{ mt: 0.25 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              sx={{ mt: 0.25 }}
+            >
               <span className="bac-footer">
-                Cliente: {loan.customer_name ?? loan.customer_identification ?? "N/D"}
+                Cliente:{" "}
+                {loan.customer_name ?? loan.customer_identification ?? "N/D"}
               </span>
               <span className="bac-footer">Crédito ID: {loan.id ?? "N/D"}</span>
             </Stack>

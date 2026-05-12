@@ -154,6 +154,16 @@ function LoanListDataTable({
   };
 
   const handleOpenPayment = (row) => {
+    const approvalStatus = String(row?.approval_status || "").toUpperCase();
+    const pendingApprovals = Number(row?.pending_approvals || 0);
+
+    if (
+      !["APPROVED", "APROBADO"].includes(approvalStatus) ||
+      pendingApprovals > 0
+    ) {
+      return;
+    }
+
     setSelectedPaymentLoan(row);
     setPaymentOpen(true);
   };
@@ -171,63 +181,6 @@ function LoanListDataTable({
   const handleCloseStatement = () => {
     setStatementOpen(false);
     setSelectedStatementLoan(null);
-  };
-
-  const handleOpenApprovalDialog = async (row, mode) => {
-    try {
-      const [loanResp, approvalsResp] = await Promise.all([
-        axios.get(`${API_URL}/api/loans/${row.id}`, { headers }),
-        axios.get(`${API_URL}/api/approvals/${row.id}`, { headers }),
-      ]);
-
-      const loanData = normalizeLoanResponse(loanResp);
-      const approvals = Array.isArray(approvalsResp.data)
-        ? approvalsResp.data
-        : [];
-
-      const pendingApproval =
-        approvals.find(
-          (item) =>
-            String(item.approver_id) === String(currentUserId) &&
-            String(item.status).toUpperCase() === "PENDING",
-        ) ||
-        approvals.find(
-          (item) => String(item.status).toUpperCase() === "PENDING",
-        ) ||
-        null;
-
-      if (!loanData) {
-        openSnack("No se pudo cargar el crédito.", "warning");
-        return;
-      }
-
-      if (!pendingApproval) {
-        openSnack(
-          "No se encontró una aprobación pendiente para este crédito.",
-          "warning",
-        );
-        return;
-      }
-
-      setSelectedLoan(loanData);
-      setSelectedApproval(pendingApproval);
-      setApprovalMode(mode);
-      setApprovalForm({
-        amount: loanData.approved_amount ?? loanData.amount ?? "",
-        term: loanData.approved_term ?? loanData.term ?? "",
-        interest_rate: loanData.approved_rate ?? loanData.interest_rate ?? "",
-        date: todayISO(),
-      });
-      setApprovalDialogOpen(true);
-    } catch (error) {
-      console.error("Error al abrir aprobación:", error);
-      openSnack(
-        error?.response?.data?.error ||
-          error?.response?.data?.message ||
-          "No se pudo cargar la aprobación.",
-        "error",
-      );
-    }
   };
 
   const handleCloseApprovalDialog = () => {
@@ -562,10 +515,17 @@ function LoanListDataTable({
         <TableBody>
           {data.map((row, rowIndex) => {
             const rowStatus = String(row.status || "").toUpperCase();
+            const rowApprovalStatus = String(
+              row.approval_status || "",
+            ).toUpperCase();
+            const pendingApprovals = Number(row.pending_approvals || 0);
             const canApproveRow = ["SUBMITTED", "UNDER_REVIEW"].includes(
               rowStatus,
             );
             const canDisburseRow = ["APPROVED", "A"].includes(rowStatus);
+            const canPayRow =
+              ["APPROVED", "APROBADO"].includes(rowApprovalStatus) &&
+              pendingApprovals === 0;
 
             const canModifyNormativeRow =
               !!onModifyLoan &&
@@ -646,14 +606,23 @@ function LoanListDataTable({
                       )}
                   */}
                     {canPay && (
-                      <Tooltip title="Agregar pago">
-                        <IconButton
-                          size="small"
-                          color="success"
-                          onClick={() => handleOpenPayment(row)}
-                        >
-                          <PaidIcon fontSize="small" />
-                        </IconButton>
+                      <Tooltip
+                        title={
+                          canPayRow
+                            ? "Agregar pago"
+                            : "Disponible solo cuando el crédito esté totalmente aprobado"
+                        }
+                      >
+                        <span>
+                          <IconButton
+                            size="small"
+                            color="success"
+                            disabled={!canPayRow}
+                            onClick={() => handleOpenPayment(row)}
+                          >
+                            <PaidIcon fontSize="small" />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                     )}
 
@@ -756,7 +725,10 @@ function LoanListDataTable({
         <AccountStatementModal
           open={statementOpen}
           onClose={handleCloseStatement}
-          loan={selectedStatementLoan}
+          loanId={selectedStatementLoan.id}
+          customerName={selectedStatementLoan.customer_name}
+          identification={selectedStatementLoan.customer_identification}
+          cutDate={todayISO()}
         />
       )}
 

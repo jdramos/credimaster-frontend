@@ -1,134 +1,137 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import dayjs from "dayjs";
-import "react-toastify/dist/ReactToastify.css";
-
-import BusinessTypeSelect from "../BusinessTypeSelect";
-import GuaranteesTable from "../GuranteeTable";
-import ProvinceSelect from "../ProvinceSelect";
-import CountrySelect from "../CountrySelect";
-import ConfirmDialog from "../ConfirmDialog";
-import DividerChip from "../DividerChip";
-
-import calculateAge from "../../functions/calculateAge";
-
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
+  Tabs,
+  Tab,
   Box,
-  TextField,
-  Button,
   Alert,
   Snackbar,
-  Select,
-  MenuItem,
+  Button,
+  Paper,
+  Stack,
+  Chip,
   Divider,
-  InputLabel,
-  FormControl,
-  FormHelperText,
+  Container,
+  Tooltip,
+  Typography,
+  CircularProgress,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { ToastContainer, toast } from "react-toastify";
+import dayjs from "dayjs";
 
-import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
+import PersonIcon from "@mui/icons-material/Person";
+import BusinessIcon from "@mui/icons-material/Business";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupsIcon from "@mui/icons-material/Groups";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import DescriptionIcon from "@mui/icons-material/Description";
+import SaveIcon from "@mui/icons-material/Save";
+import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from "@mui/icons-material/Edit";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
-import "dayjs/locale/en-gb";
+import GeneralInfoTab from "./CustomerGeneralInfoTab";
+import GuaranteesTab from "./CustomerGuaranteesTab";
+import EvaluationTab from "./CustomerEvaluationTab";
+import CustomerBusinessTab from "./CustomerBusinessTab";
+import CustomerReferencesTab from "./CustomerReferencesTab";
+import CustomerChecklist from "./CustomerCheckList";
+import CustomerFinancialEvaluationTab from "./CustomerFinancialEvaluationTab";
+import ConfirmDialog from "../ConfirmDialog";
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
 const token = process.env.REACT_APP_API_TOKEN;
 
-const isEmpty = (v) =>
-  v === null ||
-  v === undefined ||
-  (typeof v === "string" && v.trim() === "");
+const TabPanel = ({ children, value, index }) => {
+  if (value !== index) return null;
+  return <div role="tabpanel">{children}</div>;
+};
 
-function validateForm(data, isEmployeeFlag) {
-  // Campos opcionales por defecto (no obligatorios)
-  const optional = new Set([
-    "business_license_entity",
-    "business_license_issued",
-    "business_license_expiry",
-    "telephone",
-    "email",
-    "funds_source",
-    "home_status",
+const toIsoDateOrNull = (v) => {
+  if (!v) return null;
+  const d = dayjs(v);
+  return d.isValid() ? d.format("YYYY-MM-DD") : null;
+};
 
-    // Cónyuge (asumido NO obligatorio)
-    "spouse_name",
-    "spouse_telephone",
-    "spouse_position",
-    "spouse_address",
-    "spouse_job_company",
-    "spouse_job_telephone",
-    "spouse_job_salary",
+const applyServerErrorsToForm = (serverErrors, setErrors) => {
+  const out = {};
+
+  if (Array.isArray(serverErrors)) {
+    serverErrors.forEach((e) => {
+      const field = String(e.field || "").replace(/^customer\./, "");
+      const msg = e.message || "Error";
+
+      if (field) out[field] = msg;
+      toast.error(msg);
+    });
+  }
+
+  setErrors((prev) => ({ ...prev, ...out }));
+};
+
+const normalizeCustomerForApi = (customer, isEmployee) => ({
+  ...customer,
+  economic_activity: isEmployee ? 2 : 1,
+  birth_date: toIsoDateOrNull(customer.birth_date),
+  identity_issue_date: toIsoDateOrNull(customer.identity_issue_date),
+  identity_expiration_date: toIsoDateOrNull(customer.identity_expiration_date),
+  job_start_day: toIsoDateOrNull(customer.job_start_day),
+  business_license_issued: toIsoDateOrNull(customer.business_license_issued),
+  business_license_expiry: toIsoDateOrNull(customer.business_license_expiry),
+});
+
+const CustomerForm = () => {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const [guarantees, setGuarantees] = useState([
+    { article: "", series: "", brand: "", value: 0 },
   ]);
 
-  // Si ES EMPLEADO -> los campos del negocio NO aplican (no obligatorios)
-  if (isEmployeeFlag) {
-    [
-      "business_address",
-      "business_name",
-      "business_telephone",
-      "business_type_id",
-      "business_inventory",
-      "business_monthly_income",
-      "business_annual_income",
-      "business_receivables",
-      "credit_sales",
-      "cash_sales",
-      "cash_amount",
-      "other_incomes",
-    ].forEach((k) => optional.add(k));
-  } else {
-    // Si NO es empleado (negocio propio) -> campos de empleo NO aplican
-    ["company", "job_start_day", "job_telephone", "monthly_salary", "occupation"].forEach((k) =>
-      optional.add(k)
-    );
-  }
-
-  const nextErrors = {};
-
-  for (const [key, value] of Object.entries(data)) {
-    if (optional.has(key)) continue;
-
-    // números 0 son válidos (no marcarlos como requeridos)
-    if (typeof value === "number") continue;
-
-    if (isEmpty(value)) {
-      nextErrors[key] = "Este campo es requerido";
-    }
-  }
-
-  // Validación extra: si identity_type = 1 (cédula), identificación debe tener 14 dígitos
-  if (data.identity_type === 1) {
-    const id = (data.identification ?? "").toString().trim();
-    if (id && id.length !== 14) {
-      nextErrors.identification = "Cédula de identidad debe tener 14 dígitos";
-    }
-  }
-
-  return nextErrors;
-}
-
-const CustomerForm = ({ mode }) => {
-  const navigate = useNavigate();
-  const { customerId } = useParams();
-
   const [errors, setErrors] = useState({});
+  const [alert, setAlert] = useState({ alertType: "", alertMessage: "" });
+  const [alertState, setAlertState] = useState({ open: false });
   const [openDialog, setOpenDialog] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
 
-  // isEmployee: true si economic_activity === 2
-  const [isEmployee, setIsEmployee] = useState(false);
+  const generalInfoRef = useRef(null);
+  const guaranteesRef = useRef(null);
+  const evaluationRef = useRef(null);
+  const businessRef = useRef(null);
+  const referencesRef = useRef(null);
+
+  const navigate = useNavigate();
+  const { customerId } = useParams();
+  const location = useLocation();
+
+  const mode = useMemo(() => {
+    if (!customerId) return "add";
+    if (location.pathname.includes("/ver/")) return "show";
+    return "edit";
+  }, [customerId, location.pathname]);
+
+  const [internalMode, setInternalMode] = useState(mode);
+  const [loading, setLoading] = useState(mode !== "add");
+  const [isEmployee, setIsEmployee] = useState(null);
+  const [notRequiredFields, setNotRequiredFields] = useState([]);
+
+  useEffect(() => setInternalMode(mode), [mode]);
 
   const [customer, setCustomer] = useState({
     age: 1,
-    birth_country_id: 1,
+    annual_salary: 0,
+    birth_country_id: "",
     birth_date: dayjs(),
+    branch_id: "",
+
     business_address: "",
     business_name: "",
     business_telephone: "",
-    business_type_id: 0,
+    business_type_id: "",
     business_inventory: 0.0,
     business_monthly_income: 0.0,
     business_annual_income: 0.0,
@@ -136,6 +139,7 @@ const CustomerForm = ({ mode }) => {
     business_license_issued: null,
     business_license_expiry: null,
     business_receivables: 0.0,
+
     cash_amount: 0.0,
     cash_sales: 0.0,
     cellphone: "",
@@ -143,29 +147,38 @@ const CustomerForm = ({ mode }) => {
     credit_sales: 0.0,
     customer_code: "",
     customer_name: "",
-    economic_activity: 0,
+
+    economic_activity: "",
+    conami_id_actividad_economica: "",
+
     funds_source: "",
-    gender: "",
+    genre_id: "",
+
     home_address: "",
     home_status: "",
     identification: "",
+
     identity_expiration_date: dayjs(),
-    identity_issue_country: 1,
+    identity_issue_country: "",
     identity_issue_date: dayjs(),
-    identity_type: 0,
+    identity_type: "",
+
     income_usd: 0,
     job_start_day: null,
     job_telephone: "",
-    marital_status: "",
+
+    marital_status_id: "",
+
     monthly_salary: 0,
-    annual_salary: 0, // <-- agregado (antes lo usabas pero no existía)
-    nationality: 1,
+    nationality_id: "",
     occupation: "",
     other_incomes: 0.0,
-    province_id: 1,
-    municipality_id: 1,
+
+    province_id: "",
+    municipality_id: "",
     public_name: "",
-    residence_country_id: 1,
+    residence_country_id: "",
+
     reference_name: "",
     reference_identity: "",
     reference_address: "",
@@ -173,6 +186,7 @@ const CustomerForm = ({ mode }) => {
     reference_telephone: "",
     reference_relationship: "",
     reference_known_time: "",
+
     reference2_name: "",
     reference2_identity: "",
     reference2_address: "",
@@ -180,6 +194,7 @@ const CustomerForm = ({ mode }) => {
     reference2_telephone: "",
     reference2_relationship: "",
     reference2_known_time: "",
+
     spouse_address: "",
     spouse_name: "",
     spouse_telephone: "",
@@ -187,210 +202,205 @@ const CustomerForm = ({ mode }) => {
     spouse_job_company: "",
     spouse_job_telephone: "",
     spouse_job_salary: 0,
+
     telephone: "",
-    email: "", // <-- agregado (antes lo usabas pero no existía)
   });
 
-  const [guarantees, setGuarantees] = useState([
-    { article: "", series: "", brand: "", value: 0.0 },
-  ]);
+  const cleanedGuarantees = useMemo(
+    () =>
+      guarantees.map((g) => ({
+        ...g,
+        value:
+          typeof g.value === "string"
+            ? parseFloat(g.value.replace(/[^0-9.]/g, "")) || 0
+            : Number(g.value || 0),
+      })),
+    [guarantees],
+  );
 
-  const [alertState, setAlertState] = useState({
-    open: false,
-    vertical: "top",
-    horizontal: "center",
-  });
-  const [alert, setAlert] = useState({ alertType: "", alertMessage: "" });
-
-  // Cargar cliente en edit/show
   useEffect(() => {
-    if (mode === "edit" || mode === "show") {
-      fetch(`${url}/${customerId}`, {
-        headers: { Authorization: token },
+    if (mode !== "edit" && mode !== "show") return;
+
+    setLoading(true);
+
+    fetch(`${url}/${customerId}`, { headers: { Authorization: token } })
+      .then((r) => r.json())
+      .then((data) => {
+        const payload = data?.data ?? data ?? {};
+        const c = payload.customer ?? payload ?? {};
+        const g = payload.guarantees ?? [];
+
+        setCustomer((prev) => ({
+          ...prev,
+          ...c,
+          birth_date: c.birth_date ? dayjs(c.birth_date) : prev.birth_date,
+          identity_issue_date: c.identity_issue_date
+            ? dayjs(c.identity_issue_date)
+            : prev.identity_issue_date,
+          identity_expiration_date: c.identity_expiration_date
+            ? dayjs(c.identity_expiration_date)
+            : prev.identity_expiration_date,
+          job_start_day: c.job_start_day ? dayjs(c.job_start_day) : null,
+          business_license_issued: c.business_license_issued
+            ? dayjs(c.business_license_issued)
+            : null,
+          business_license_expiry: c.business_license_expiry
+            ? dayjs(c.business_license_expiry)
+            : null,
+        }));
+
+        setIsEmployee(Number(c.economic_activity) === 2);
+
+        const cleaned = (Array.isArray(g) ? g : []).map((guar) => ({
+          ...guar,
+          value:
+            typeof guar.value === "string"
+              ? parseFloat(guar.value.replace(/[^0-9.]/g, "")) || 0
+              : Number(guar.value || 0),
+        }));
+
+        setGuarantees(
+          cleaned.length
+            ? cleaned
+            : [{ article: "", series: "", brand: "", value: 0 }],
+        );
       })
-        .then((response) => response.json())
-        .then((data) => {
-          const c = data.customer || {};
-          // normalizar fechas a dayjs cuando vengan como string
-          const normalized = {
-            ...customer,
-            ...c,
-            birth_date: c.birth_date ? dayjs(c.birth_date) : customer.birth_date,
-            identity_issue_date: c.identity_issue_date ? dayjs(c.identity_issue_date) : customer.identity_issue_date,
-            identity_expiration_date: c.identity_expiration_date
-              ? dayjs(c.identity_expiration_date)
-              : customer.identity_expiration_date,
-            job_start_day: c.job_start_day ? dayjs(c.job_start_day) : null,
-            business_license_issued: c.business_license_issued ? dayjs(c.business_license_issued) : null,
-            business_license_expiry: c.business_license_expiry ? dayjs(c.business_license_expiry) : null,
-          };
-
-          // edad: recalcular si viene birth_date
-          if (normalized.birth_date) {
-            normalized.age = calculateAge(dayjs(normalized.birth_date));
-          }
-
-          setCustomer(normalized);
-          setGuarantees(data.guarantees || []);
-          setIsEmployee(Number(c.economic_activity) === 2);
-
-          // validar al cargar (para modo show/edit)
-          const nextErrors = validateForm(normalized, Number(c.economic_activity) === 2);
-          setErrors(nextErrors);
-        })
-        .catch((error) => {
-          console.error("Error fetching customer data:", error);
-          toast.error("Error cargando el cliente");
-        });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }
+      .catch((err) => {
+        console.error("Error cargando datos:", err);
+        toast.error("Error cargando cliente");
+      })
+      .finally(() => setLoading(false));
   }, [mode, customerId]);
 
-  const addCustomer = async () => {
-    setAlertState((s) => ({ ...s, open: true }));
+  const normalizeValidate = (result) => {
+    if (typeof result === "boolean") return { ok: result, errors: {} };
 
-    const requestOptions = {
-      method: mode === "edit" ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify({ customer, guarantees }),
-    };
-
-    try {
-      const response = await fetch(mode === "edit" ? `${url}/${customerId}` : url, requestOptions);
-      const responseData = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const serverErrors = responseData?.errors;
-
-        if (Array.isArray(serverErrors) && serverErrors.length > 0) {
-          // muestra TODOS los errores del server (sin saltarte pares/impares)
-          serverErrors.forEach((e) => toast.error(e.msg || String(e)));
-          setAlert({
-            alertType: "error",
-            alertMessage: "Respuesta del servidor: hay errores de validación.",
-          });
-        } else {
-          toast.error(responseData?.message || "Error al guardar");
-          setAlert({
-            alertType: "error",
-            alertMessage: responseData?.message || "Error al guardar",
-          });
-        }
-      } else {
-        setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" });
-        setTimeout(() => navigate("/clientes"), 1500);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Error al guardar (catch)");
-      setAlert({ alertType: "error", alertMessage: "Error al guardar el registro." });
-    } finally {
-      setOpenDialog(false);
+    if (result && typeof result === "object") {
+      return {
+        ok: result.ok ?? result.valid ?? true,
+        errors: result.errors ?? {},
+      };
     }
+
+    return { ok: true, errors: {} };
   };
 
-  function handleDialogConfirmation() {
-    if (cancelDialog) {
-      navigate("/clientes");
+  const cleanErrors = (errs) => {
+    const out = {};
+
+    for (const [k, v] of Object.entries(errs || {})) {
+      if (v === null || v === undefined) continue;
+      if (typeof v === "string" && v.trim() === "") continue;
+      out[k] = v;
+    }
+
+    return out;
+  };
+
+  const focusFirstError = (field) => {
+    const byName = document.querySelector(`[name="${field}"]`);
+
+    if (byName?.focus) {
+      byName.scrollIntoView({ behavior: "smooth", block: "center" });
+      byName.focus();
       return;
     }
-    addCustomer();
-  }
 
-  function handleCancel() {
-    setCancelDialog(true);
-    setOpenDialog(true);
-  }
+    const byId = document.getElementById(field);
 
-  const handleClose = (event, reason) => {
-    if (reason === "clickaway") return;
-    setAlertState((s) => ({ ...s, open: false }));
+    if (byId?.focus) {
+      byId.scrollIntoView({ behavior: "smooth", block: "center" });
+      byId.focus();
+    }
   };
 
-  const capWords = (s) => (s || "").replace(/\b\w/g, (l) => l.toUpperCase());
+  const TAB_BY_FIELD = {
+    customer_name: 0,
+    public_name: 0,
+    genre_id: 0,
+    identity_type: 0,
+    identification: 0,
+    identity_issue_date: 0,
+    identity_expiration_date: 0,
+    identity_issue_country: 0,
+    home_address: 0,
+    residence_country_id: 0,
+    province_id: 0,
+    municipality_id: 0,
+    marital_status_id: 0,
+    birth_country_id: 0,
+    birth_date: 0,
+    nationality_id: 0,
+    cellphone: 0,
+    spouse_name: 0,
+    spouse_telephone: 0,
+    spouse_position: 0,
 
-  function handleInputChange(e) {
-    const { name, value } = e.target;
+    economic_activity: 1,
+    conami_id_actividad_economica: 1,
+    occupation: 1,
+    company: 1,
+    job_start_day: 1,
+    monthly_salary: 1,
+    business_name: 1,
+    business_type_id: 1,
+    business_address: 1,
+    business_telephone: 1,
+    business_inventory: 1,
+    business_receivables: 1,
+    business_monthly_income: 1,
 
-    // si cambia actividad económica, actualizamos bandera para validar correctamente
-    const nextIsEmployee =
-      name === "economic_activity" ? (value === 2 || value === "2") : isEmployee;
+    guarantees: 2,
+    article: 2,
+    series: 2,
+    brand: 2,
+    value: 2,
 
-    if (name === "economic_activity") {
-      setIsEmployee(nextIsEmployee);
-    }
+    reference_name: 3,
+    reference_identity: 3,
+    reference_address: 3,
+    reference_workplace: 3,
+    reference_telephone: 3,
+    reference_relationship: 3,
+    reference_known_time: 3,
+    reference2_name: 3,
+    reference2_identity: 3,
+    reference2_address: 3,
+    reference2_workplace: 3,
+    reference2_telephone: 3,
+    reference2_relationship: 3,
+    reference2_known_time: 3,
 
-    // calculamos "nextCustomer" sin depender de setState async
-    const nextCustomer = (() => {
-      const next = { ...customer, [name]: value };
-
-      // anualizaciones (numéricas)
-      if (name === "business_monthly_income") {
-        const n = Number(value || 0);
-        next.business_monthly_income = n;
-        next.business_annual_income = n * 12;
-      }
-      if (name === "monthly_salary") {
-        const n = Number(value || 0);
-        next.monthly_salary = n;
-        next.annual_salary = n * 12;
-      }
-
-      // capitalizar nombres
-      if (name === "customer_name") next.customer_name = capWords(value);
-      if (name === "public_name") next.public_name = capWords(value);
-      if (name === "reference_name") next.reference_name = capWords(value);
-      if (name === "reference2_name") next.reference2_name = capWords(value);
-
-      // vencimiento = emisión + 10 años
-      if (name === "identity_issue_date" && value) {
-        next.identity_issue_date = value;
-        next.identity_expiration_date = dayjs(value).add(10, "year");
-      }
-
-      // parse fecha nacimiento desde cédula (si ya hay suficiente)
-      if (name === "identification") {
-        const str = String(value || "");
-        if (str.length >= 9) {
-          const yy = parseInt(str.substring(7, 9), 10);
-          const year = yy <= 30 ? 2000 + yy : 1900 + yy;
-          const month = parseInt(str.substring(5, 7), 10) - 1;
-          const day = parseInt(str.substring(3, 5), 10);
-
-          const bd = dayjs(new Date(year, month, day));
-          if (bd.isValid()) {
-            next.birth_date = bd;
-            next.age = calculateAge(bd);
-          }
-        }
-      }
-
-      if (name === "birth_date" && value) {
-        const bd = dayjs(value);
-        next.birth_date = bd;
-        next.age = calculateAge(bd);
-      }
-
-      return next;
-    })();
-
-    setCustomer(nextCustomer);
-
-    // recalcular errores con el nextCustomer
-    const nextErrors = validateForm(nextCustomer, nextIsEmployee);
-    setErrors(nextErrors);
-  }
+    evaluation_score: 4,
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const nextErrors = validateForm(customer, isEmployee);
-    setErrors(nextErrors);
 
-    if (Object.keys(nextErrors).length > 0) {
-      toast.error("No es posible guardar, primero corrija errores!");
+    const vGeneral = normalizeValidate(generalInfoRef.current?.validate?.());
+    const vBusiness = normalizeValidate(businessRef.current?.validate?.());
+    const vGuarantees = normalizeValidate(guaranteesRef.current?.validate?.());
+    const vReferences = normalizeValidate(referencesRef.current?.validate?.());
+    const vEvaluation = normalizeValidate(evaluationRef.current?.validate?.());
+
+    const mergedErrors = cleanErrors({
+      ...vGeneral.errors,
+      ...vBusiness.errors,
+      ...vGuarantees.errors,
+      ...vReferences.errors,
+      ...vEvaluation.errors,
+    });
+
+    setErrors(mergedErrors);
+
+    if (Object.keys(mergedErrors).length > 0) {
+      const firstField = Object.keys(mergedErrors)[0];
+      const tab = TAB_BY_FIELD[firstField] ?? 0;
+
+      setActiveTab(tab);
+      toast.error("Corrija los errores antes de continuar.");
+
+      setTimeout(() => focusFirstError(firstField), 150);
       return;
     }
 
@@ -398,893 +408,581 @@ const CustomerForm = ({ mode }) => {
     setCancelDialog(false);
   };
 
-  const title = useMemo(() => {
-    if (mode === "edit") return "Editar cliente";
-    if (mode === "show") return "Ver cliente";
-    return "Agregar nuevo cliente";
-  }, [mode]);
+  const addCustomer = async () => {
+    setAlertState({ open: true });
+
+    const payloadCustomer = normalizeCustomerForApi(
+      customer,
+      Boolean(isEmployee),
+    );
+
+    try {
+      const response = await fetch(
+        mode === "edit" ? `${url}/${customerId}` : url,
+        {
+          method: mode === "edit" ? "PUT" : "POST",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            Authorization: token,
+          },
+          body: JSON.stringify({
+            customer: payloadCustomer,
+            guarantees: cleanedGuarantees,
+          }),
+        },
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        applyServerErrorsToForm(result?.errors, setErrors);
+
+        setAlert({
+          alertType: "error",
+          alertMessage: result?.message || "Error al guardar",
+        });
+
+        return;
+      }
+
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+
+      setTimeout(() => navigate("/clientes"), 800);
+    } catch (error) {
+      setAlert({
+        alertType: "error",
+        alertMessage: "Error de red: " + error.message,
+      });
+
+      toast.error("Error de red");
+    } finally {
+      setOpenDialog(false);
+      setAlertState({ open: false });
+    }
+  };
+
+  const handleDialogConfirmation = () => {
+    if (cancelDialog) navigate("/clientes");
+    else addCustomer();
+  };
+
+  const clearFields = (obj, fields, emptyValue = "") => {
+    const next = { ...obj };
+
+    fields.forEach((f) => {
+      if (f in next) {
+        if (typeof next[f] === "number") next[f] = 0;
+        else if (dayjs.isDayjs(next[f])) next[f] = null;
+        else next[f] = emptyValue;
+      }
+    });
+
+    return next;
+  };
+
+  const clearErrors = (prevErrors, fields) => {
+    const next = { ...prevErrors };
+
+    fields.forEach((f) => {
+      if (f in next) delete next[f];
+    });
+
+    return next;
+  };
+
+  const BUSINESS_FIELDS = [
+    "business_address",
+    "business_name",
+    "business_telephone",
+    "business_type_id",
+    "business_inventory",
+    "business_monthly_income",
+    "business_annual_income",
+    "business_receivables",
+    "credit_sales",
+    "cash_amount",
+    "cash_sales",
+    "other_incomes",
+    "business_license_entity",
+    "business_license_issued",
+    "business_license_expiry",
+  ];
+
+  const EMPLOYEE_FIELDS = [
+    "occupation",
+    "company",
+    "job_start_day",
+    "monthly_salary",
+    "annual_salary",
+    "job_telephone",
+  ];
+
+  useEffect(() => {
+    const ea = Number(customer.economic_activity);
+
+    if (![1, 2].includes(ea)) return;
+
+    const employee = ea === 2;
+
+    setIsEmployee(employee);
+
+    setCustomer((prev) => {
+      const next = employee
+        ? clearFields(prev, BUSINESS_FIELDS)
+        : clearFields(prev, EMPLOYEE_FIELDS);
+
+      if (!employee) {
+        const m = Number(next.business_monthly_income || 0);
+        next.business_annual_income = m * 12;
+      } else {
+        const s = Number(next.monthly_salary || 0);
+        next.annual_salary = s * 12;
+      }
+
+      return next;
+    });
+
+    setErrors((prevErr) =>
+      employee
+        ? clearErrors(prevErr, BUSINESS_FIELDS)
+        : clearErrors(prevErr, EMPLOYEE_FIELDS),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer.economic_activity]);
+
+  const getTabStatus = (tabIndex) => {
+    const employee = Number(customer.economic_activity) === 2;
+
+    const tabFields = {
+      0: [
+        "customer_name",
+        "public_name",
+        "genre_id",
+        "identity_type",
+        "identification",
+        "identity_issue_date",
+        "identity_expiration_date",
+        "identity_issue_country",
+        "home_address",
+        "residence_country_id",
+        "province_id",
+        "municipality_id",
+        "marital_status_id",
+        "birth_country_id",
+        "birth_date",
+        "nationality_id",
+        "cellphone",
+      ],
+      1: employee
+        ? [
+            "economic_activity",
+            "conami_id_actividad_economica",
+            "occupation",
+            "company",
+            "job_start_day",
+            "monthly_salary",
+          ]
+        : [
+            "economic_activity",
+            "conami_id_actividad_economica",
+            "business_name",
+            "business_type_id",
+            "business_address",
+            "business_inventory",
+            "business_receivables",
+            "business_monthly_income",
+          ],
+      2: ["guarantees", "article", "series", "brand", "value"],
+      3: [
+        "reference_name",
+        "reference_address",
+        "reference_telephone",
+        "reference_known_time",
+        "reference_relationship",
+        "reference2_name",
+        "reference2_address",
+        "reference2_telephone",
+        "reference2_known_time",
+        "reference2_relationship",
+      ],
+      4: ["evaluation_score"],
+      5: [],
+      6: [],
+    };
+
+    const fields = tabFields[tabIndex] || [];
+    const hasErrors = fields.some((field) => Boolean(errors[field]));
+
+    if (hasErrors) return "error";
+
+    if (tabIndex === 2) {
+      const hasGuarantees = guarantees.some(
+        (g) => String(g.article || "").trim() || Number(g.value || 0) > 0,
+      );
+
+      return hasGuarantees ? "complete" : "pending";
+    }
+
+    if (tabIndex === 5 || tabIndex === 6) {
+      return customer?.id ? "complete" : "pending";
+    }
+
+    const hasValues = fields.some((field) => {
+      const value = customer[field];
+
+      return (
+        value !== null &&
+        value !== undefined &&
+        value !== "" &&
+        !(typeof value === "number" && Number.isNaN(value))
+      );
+    });
+
+    return hasValues ? "complete" : "pending";
+  };
+
+  const getTabIcon = (tabIndex, defaultIcon) => {
+    const status = getTabStatus(tabIndex);
+
+    if (status === "error") {
+      return <ErrorIcon color="error" fontSize="small" />;
+    }
+
+    if (status === "complete") {
+      return <CheckCircleIcon color="success" fontSize="small" />;
+    }
+
+    return defaultIcon || <RadioButtonUncheckedIcon fontSize="small" />;
+  };
+
+  if (loading) {
+    return (
+      <Box textAlign="center" mt={4}>
+        <CircularProgress />
+        <Typography variant="body1" mt={1}>
+          Cargando información del cliente...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div>
-      <Alert variant="filled" icon={false} severity="info" className="mt-5">
-        <h3>{title}</h3>
-      </Alert>
+    <Container maxWidth="xl" sx={{ py: 2 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 4,
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
+        }}
+      >
+        <Box
+          sx={{
+            px: { xs: 2, md: 3 },
+            py: 1.5,
+            background: (theme) =>
+              `linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                0.12,
+              )}, ${alpha(theme.palette.primary.light, 0.04)})`,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", md: "center" }}
+            spacing={2}
+          >
+            <Stack spacing={0.4}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                flexWrap="wrap"
+              >
+                <Typography variant="h5" fontWeight={900}>
+                  {internalMode === "edit"
+                    ? "Editar cliente"
+                    : internalMode === "show"
+                      ? "Ficha del cliente"
+                      : "Nuevo cliente"}
+                </Typography>
 
-      <form onSubmit={handleSubmit} className="w-100">
-        <div className="shadow-lg p-3 mb-5 bg-body rounded w-100">
+                <Chip
+                  size="small"
+                  label={
+                    internalMode === "edit"
+                      ? "Edición"
+                      : internalMode === "show"
+                        ? "Solo lectura"
+                        : "Registro nuevo"
+                  }
+                  color={
+                    internalMode === "edit"
+                      ? "warning"
+                      : internalMode === "show"
+                        ? "info"
+                        : "success"
+                  }
+                  sx={{ fontWeight: 700 }}
+                />
+              </Stack>
+
+              <Typography variant="body2" color="text.secondary">
+                {customer?.id
+                  ? `Código ${customer.id} · ${customer.customer_name || "Cliente sin nombre"}`
+                  : "Complete la información requerida para registrar el cliente."}
+              </Typography>
+
+              {customer?.identification && (
+                <Typography variant="caption" color="text.secondary">
+                  Identificación: {customer.identification}
+                </Typography>
+              )}
+            </Stack>
+
+            <Stack direction="row" spacing={1}>
+              {internalMode === "show" && (
+                <Button
+                  variant="contained"
+                  startIcon={<EditIcon />}
+                  onClick={() => setInternalMode("edit")}
+                  sx={{ borderRadius: 2, fontWeight: 800 }}
+                >
+                  Editar
+                </Button>
+              )}
+
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate("/clientes")}
+                sx={{ borderRadius: 2, fontWeight: 800 }}
+              >
+                Volver
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+
+        <form onSubmit={handleSubmit}>
           <Box
             sx={{
-              "& .MuiTextField-root": { m: 1 },
-              overflow: "scroll",
-              overscrollBehavior: "contain",
+              px: { xs: 1, md: 2 },
+              pt: 0.5,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.default",
             }}
-            noValidate
-            autoComplete="off"
-            maxHeight={700}
-            maxWidth={1800}
           >
-            <div id="datos-personales">
-              <DividerChip label="Datos personales" />
-
-              <TextField
-                id="name"
-                error={Boolean(errors.customer_name)}
-                label="Nombre y apellidos *"
-                name="customer_name"
-                fullWidth
-                focused
-                size="small"
-                sx={{ width: 400 }}
-                value={customer.customer_name}
-                onChange={handleInputChange}
-                helperText={errors.customer_name}
-                disabled={mode === "show"}
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+              sx={{
+                minHeight: 52,
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  fontWeight: 800,
+                  minHeight: 52,
+                  px: 2,
+                },
+              }}
+            >
+              <Tab
+                icon={getTabIcon(0, <PersonIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Datos generales"
               />
-
-              <TextField
-                id="public_name"
-                focused
-                error={Boolean(errors.public_name)}
-                label="Nombre conocido públicamente *"
-                name="public_name"
-                fullWidth
-                size="small"
-                sx={{ width: 400 }}
-                value={customer.public_name}
-                onChange={handleInputChange}
-                helperText={errors.public_name}
-                disabled={mode === "show"}
+              <Tab
+                icon={getTabIcon(1, <BusinessIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Actividad económica"
               />
-
-              <FormControl
-                focused
-                sx={{ m: 1, minWidth: 180 }}
-                size="small"
-                error={Boolean(errors.gender)}
-              >
-                <InputLabel id="gender-label">Género</InputLabel>
-                <Select
-                  id="gender"
-                  labelId="gender-label"
-                  value={customer.gender}
-                  label="Género"
-                  name="gender"
-                  onChange={handleInputChange}
-                  disabled={mode === "show"}
-                >
-                  <MenuItem value={1}>Masculino</MenuItem>
-                  <MenuItem value={2}>Femenino</MenuItem>
-                </Select>
-                {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
-              </FormControl>
-
-              <div id="datos-identificacion">
-                <Divider>Datos de identificación</Divider>
-
-                <FormControl sx={{ m: 1, minWidth: 220 }} size="small" error={Boolean(errors.identity_type)}>
-                  <InputLabel id="identity-type-label">Tipo de identificación</InputLabel>
-                  <Select
-                    labelId="identity-type-label"
-                    label="Tipo de identificación"
-                    value={customer.identity_type}
-                    sx={{ width: 220 }}
-                    onChange={handleInputChange}
-                    name="identity_type"
-                    size="small"
-                    disabled={mode === "show"}
-                  >
-                    <MenuItem value={1}>Cédula de identidad</MenuItem>
-                    <MenuItem value={2}>Cédula de residencia</MenuItem>
-                    <MenuItem value={3}>Pasaporte</MenuItem>
-                  </Select>
-                  {errors.identity_type && <FormHelperText>{errors.identity_type}</FormHelperText>}
-                </FormControl>
-
-                <TextField
-                  id="identification"
-                  focused
-                  label="Número de identificación"
-                  name="identification"
-                  size="small"
-                  sx={{ width: 220 }}
-                  value={customer.identification}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.identification)}
-                  helperText={errors.identification}
-                  disabled={mode === "show"}
-                />
-
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Fecha de emisión"
-                    format="DD/MM/YYYY"
-                    value={customer.identity_issue_date || null}
-                    onChange={(newValue) =>
-                      handleInputChange({
-                        target: { name: "identity_issue_date", value: newValue },
-                      })
-                    }
-                     renderInput={(params) => (
-     					 <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-   					 )}
-                    sx={{ width: 170, m: 1 }}
-                    disabled={mode === "show"}
-                  />
-                </LocalizationProvider>
-
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Fecha de vencimiento"
-                    format="DD/MM/YYYY"
-                    value={customer.identity_expiration_date || null}
-                    onChange={(newValue) =>
-                      handleInputChange({
-                        target: { name: "identity_expiration_date", value: newValue },
-                      })
-                    }
-                     renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
-                    sx={{ width: 170, m: 1 }}
-                    disabled={mode === "show"}
-                  />
-                </LocalizationProvider>
-
-                <CountrySelect
-                  error={Boolean(errors.identity_issue_country)}
-                  focused
-                  editing={false}
-                  selected={customer.identity_issue_country}
-                  label="País de emisión"
-                  onChange={handleInputChange}
-                  name="identity_issue_country"
-                  helperText={errors.identity_issue_country}
-                  disabled={mode === "show"}
-                />
-              </div>
-
-              <TextField
-                id="home_address"
-                focused
-                label="Dirección del hogar"
-                name="home_address"
-                size="small"
-                sx={{ width: "97%" }}
-                multiline
-                maxRows={3}
-                value={customer.home_address}
-                onChange={handleInputChange}
-                error={Boolean(errors.home_address)}
-                helperText={errors.home_address}
-                disabled={mode === "show"}
+              <Tab
+                icon={getTabIcon(2, <VerifiedUserIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Garantías"
               />
-
-              <CountrySelect
-                id="residence_country_id"
-                focused
-                editing={true}
-                selected={customer.residence_country_id}
-                label="País de residencia"
-                onChange={handleInputChange}
-                name="residence_country_id"
-                error={Boolean(errors.residence_country_id)}
-                disabled={mode === "show"}
+              <Tab
+                icon={getTabIcon(3, <GroupsIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Referencias"
               />
-
-              <ProvinceSelect
-                id="province_id"
-                focused
-                value={customer.province_id}
-                label="Departamento"
-                onChange={handleInputChange}
-                provinceName="province_id"
-                municipalityName="municipality_id"
-                errorField={errors.province_id}
-                disabled={mode === "show"}
+              <Tab
+                icon={getTabIcon(
+                  4,
+                  <AssignmentTurnedInIcon fontSize="small" />,
+                )}
+                iconPosition="start"
+                label="Evaluación"
               />
-
-              <FormControl
-                focused
-                sx={{ m: 1, minWidth: 180 }}
-                size="small"
-                error={Boolean(errors.marital_status)}
-              >
-                <InputLabel id="marital-status-label">Estado civil</InputLabel>
-                <Select
-                  labelId="marital-status-label"
-                  id="marital_status"
-                  value={customer.marital_status}
-                  label="Estado civil"
-                  name="marital_status"
-                  onChange={handleInputChange}
-                  disabled={mode === "show"}
-                >
-                  <MenuItem value={1}>Soltero(a)</MenuItem>
-                  <MenuItem value={2}>Casado(a)</MenuItem>
-                </Select>
-                {errors.marital_status && <FormHelperText>{errors.marital_status}</FormHelperText>}
-              </FormControl>
-
-              <CountrySelect
-                id="birth_country_id"
-                focused
-                editing={false}
-                selected={customer.birth_country_id}
-                label="País de nacimiento"
-                onChange={handleInputChange}
-                name="birth_country_id"
-                error={Boolean(errors.birth_country_id)}
-                disabled={mode === "show"}
+              <Tab
+                icon={getTabIcon(
+                  5,
+                  <AccountBalanceWalletIcon fontSize="small" />,
+                )}
+                iconPosition="start"
+                label="Evaluación financiera"
               />
-
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DatePicker
-                  label="Fecha de nacimiento"
-                  name="birth_date"
-                  value={customer.birth_date || null}
-                  format="DD/MM/YYYY"
-                  onChange={(newValue) =>
-                    handleInputChange({
-                      target: { name: "birth_date", value: newValue },
-                    })
-                  }
-                   renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
-                  sx={{ width: 170, m: 1 }}
-                  disabled={mode === "show"}
-                />
-              </LocalizationProvider>
-
-              <TextField
-                id="age"
-                focused
-                label="Edad en años"
-                name="age"
-                size="small"
-                value={customer.age}
-                sx={{ width: 130 }}
-                onChange={handleInputChange}
-                disabled // edad calculada
+              <Tab
+                icon={getTabIcon(6, <DescriptionIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Documentos"
               />
-
-              <TextField
-                id="email"
-                focused
-                label="Correo electrónico"
-                name="email"
-                size="small"
-                value={customer.email}
-                onChange={handleInputChange}
-                sx={{ width: 260 }}
-                disabled={mode === "show"}
-              />
-
-              <TextField
-                id="telephone"
-                focused
-                label="Teléfono fijo"
-                name="telephone"
-                size="small"
-                value={customer.telephone}
-                onChange={handleInputChange}
-                sx={{ width: 160 }}
-                disabled={mode === "show"}
-              />
-
-              <TextField
-                id="cellphone"
-                focused
-                label="Celular"
-                name="cellphone"
-                size="small"
-                value={customer.cellphone}
-                onChange={handleInputChange}
-                sx={{ width: 160 }}
-                error={Boolean(errors.cellphone)}
-                helperText={errors.cellphone}
-                disabled={mode === "show"}
-              />
-            </div>
-
-            <div id="datos-laborales">
-              <FormControl sx={{ m: 1, minWidth: 220 }} size="small" error={Boolean(errors.economic_activity)}>
-                <InputLabel id="economic-activity-label">Actividad económica</InputLabel>
-                <Select
-                  id="economic_activity"
-                  labelId="economic-activity-label"
-                  label="Actividad económica"
-                  value={customer.economic_activity}
-                  sx={{ width: 220 }}
-                  onChange={handleInputChange}
-                  name="economic_activity"
-                  size="small"
-                  disabled={mode === "show"}
-                >
-                  <MenuItem value={1}>Negocio propio</MenuItem>
-                  <MenuItem value={2}>Empleado</MenuItem>
-                </Select>
-                {errors.economic_activity && <FormHelperText>{errors.economic_activity}</FormHelperText>}
-              </FormControl>
-
-              {isEmployee && (
-                <>
-                  <DividerChip label="Datos laborales" />
-
-                  <TextField
-                    id="occupation"
-                    focused
-                    label="Profesión/Oficio *"
-                    name="occupation"
-                    size="small"
-                    value={customer.occupation}
-                    onChange={handleInputChange}
-                    sx={{ m: 1, minWidth: 220 }}
-                    error={Boolean(errors.occupation)}
-                    helperText={errors.occupation}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="company"
-                    focused
-                    label="Empresa *"
-                    name="company"
-                    size="small"
-                    value={customer.company}
-                    sx={{ width: 500 }}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.company)}
-                    helperText={errors.company}
-                    disabled={mode === "show"}
-                  />
-
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Fecha de ingreso *"
-                      format="DD/MM/YYYY"
-                      value={customer.job_start_day || null}
-                      onChange={(newValue) =>
-                        handleInputChange({
-                          target: { name: "job_start_day", value: newValue },
-                        })
-                      }
-                       renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}																																																																																		
-                      sx={{ width: 200, m: 1 }}
-                      disabled={mode === "show"}
-                    />
-                  </LocalizationProvider>
-
-                  <TextField
-                    focused
-                    id="monthly_salary"
-                    label="Salario mensual *"
-                    name="monthly_salary"
-                    size="small"
-                    value={customer.monthly_salary}
-                    sx={{ width: 200 }}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.monthly_salary)}
-                    helperText={errors.monthly_salary}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    focused
-                    id="job_telephone"
-                    label="Teléfono del trabajo *"
-                    name="job_telephone"
-                    size="small"
-                    value={customer.job_telephone}
-                    sx={{ width: 200 }}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.job_telephone)}
-                    helperText={errors.job_telephone}
-                    disabled={mode === "show"}
-                  />
-                </>
-              )}
-
-              {!isEmployee && (
-                <div id="datos-negocio">
-                  <DividerChip label="Datos del negocio" />
-
-                  <TextField
-                    id="business_name"
-                    focused
-                    label="Nombre del negocio *"
-                    name="business_name"
-                    fullWidth
-                    size="small"
-                    sx={{ width: 600 }}
-                    value={customer.business_name}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.business_name)}
-                    helperText={errors.business_name}
-                    disabled={mode === "show"}
-                  />
-
-                  <BusinessTypeSelect
-                    id="business_type_id"
-                    editing={true}
-                    label="Tipo de negocio *"
-                    selected={customer.business_type_id}
-                    onChange={handleInputChange}
-                    name="business_type_id"
-                    error={errors.business_type_id}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="business_address"
-                    focused
-                    label="Dirección del negocio *"
-                    name="business_address"
-                    size="small"
-                    sx={{ width: 600 }}
-                    value={customer.business_address}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.business_address)}
-                    helperText={errors.business_address}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="business_telephone"
-                    focused
-                    label="Teléfono del negocio *"
-                    name="business_telephone"
-                    size="small"
-                    value={customer.business_telephone}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.business_telephone)}
-                    helperText={errors.business_telephone}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="business_inventory"
-                    focused
-                    label="Inventario *"
-                    name="business_inventory"
-                    size="small"
-                    value={customer.business_inventory}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.business_inventory)}
-                    helperText={errors.business_inventory}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="business_receivables"
-                    focused
-                    label="Cuentas por cobrar *"
-                    name="business_receivables"
-                    size="small"
-                    value={customer.business_receivables}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.business_receivables)}
-                    helperText={errors.business_receivables}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="business_monthly_income"
-                    focused
-                    label="Ingresos mensuales *"
-                    name="business_monthly_income"
-                    size="small"
-                    value={customer.business_monthly_income}
-                    onChange={handleInputChange}
-                    error={Boolean(errors.business_monthly_income)}
-                    helperText={errors.business_monthly_income}
-                    disabled={mode === "show"}
-                  />
-
-                  <TextField
-                    id="business_annual_income"
-                    focused
-                    label="Ingresos anuales"
-                    name="business_annual_income"
-                    size="small"
-                    value={customer.business_annual_income}
-                    onChange={handleInputChange}
-                    disabled // calculado
-                  />
-
-                  <div id="permisos-licencias">
-                    <Divider>Permisos y licencias</Divider>
-
-                    <TextField
-                      focused
-                      label="Nombre de la entidad emisora"
-                      name="business_license_entity"
-                      size="small"
-                      value={customer.business_license_entity}
-                      onChange={handleInputChange}
-                      sx={{ width: 700 }}
-                      disabled={mode === "show"}
-                    />
-
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        label="Fecha de emisión"
-                        format="DD/MM/YYYY"
-                        value={customer.business_license_issued || null}
-                        onChange={(newValue) =>
-                          handleInputChange({
-                            target: { name: "business_license_issued", value: newValue },
-                          })
-                        }
-                         renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
-                        sx={{ width: 200, m: 1 }}
-                        disabled={mode === "show"}
-                      />
-                    </LocalizationProvider>
-
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        label="Fecha de vencimiento"
-                        format="DD/MM/YYYY"
-                        value={customer.business_license_expiry || null}
-                        onChange={(newValue) =>
-                          handleInputChange({
-                            target: { name: "business_license_expiry", value: newValue },
-                          })
-                        }
-                         renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
-                        sx={{ width: 200, m: 1 }}
-                        disabled={mode === "show"}
-                      />
-                    </LocalizationProvider>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div id="datos-conyuge">
-              <DividerChip label="Datos del cónyuge" />
-              <TextField
-                id="spouse_name"
-                label="Nombre"
-                name="spouse_name"
-                size="small"
-                sx={{ width: 500 }}
-                value={customer.spouse_name}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-              <TextField
-                label="Teléfono"
-                name="spouse_telephone"
-                size="small"
-                value={customer.spouse_telephone}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-              <TextField
-                id="spouse_position"
-                label="Ocupación"
-                name="spouse_position"
-                size="small"
-                value={customer.spouse_position}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-              <TextField
-                id="spouse_address"
-                label="Domicilio"
-                name="spouse_address"
-                size="small"
-                fullWidth
-                sx={{ width: 500 }}
-                multiline
-                maxRows={3}
-                value={customer.spouse_address}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-              <TextField
-                id="spouse_job_company"
-                label="Empresa donde labora"
-                name="spouse_job_company"
-                size="small"
-                sx={{ width: 500 }}
-                value={customer.spouse_job_company}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-              <TextField
-                id="spouse_job_telephone"
-                label="Teléfono trabajo"
-                name="spouse_job_telephone"
-                size="small"
-                sx={{ width: 200 }}
-                value={customer.spouse_job_telephone}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-              <TextField
-                id="spouse_job_salary"
-                label="Salario mensual"
-                name="spouse_job_salary"
-                size="small"
-                sx={{ width: 200 }}
-                value={customer.spouse_job_salary}
-                onChange={handleInputChange}
-                disabled={mode === "show"}
-              />
-            </div>
-
-            <div id="referencias-personales">
-              <DividerChip label="Referencias" />
-
-              <div id="referencia1">
-                <Divider>Referencia 1</Divider>
-
-                <TextField
-                  focused
-                  id="reference_name"
-                  label="Nombre completo *"
-                  name="reference_name"
-                  fullWidth
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference_name}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_name)}
-                  helperText={errors.reference_name}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="N° Identificación"
-                  name="reference_identity"
-                  fullWidth
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference_identity}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_identity)}
-                  helperText={errors.reference_identity}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Dirección"
-                  name="reference_address"
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference_address}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_address)}
-                  helperText={errors.reference_address}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Centro laboral"
-                  name="reference_workplace"
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference_workplace}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_workplace)}
-                  helperText={errors.reference_workplace}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Teléfono"
-                  name="reference_telephone"
-                  size="small"
-                  value={customer.reference_telephone}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_telephone)}
-                  helperText={errors.reference_telephone}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  id="reference_known_time"
-                  label="Tiempo de conocerlo(a)"
-                  name="reference_known_time"
-                  size="small"
-                  value={customer.reference_known_time}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_known_time)}
-                  helperText={errors.reference_known_time}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Tipo de relación"
-                  name="reference_relationship"
-                  size="small"
-                  value={customer.reference_relationship}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference_relationship)}
-                  helperText={errors.reference_relationship}
-                  disabled={mode === "show"}
-                />
-              </div>
-
-              <div id="referencia2">
-                <Divider>Referencia 2</Divider>
-
-                <TextField
-                  focused
-                  id="reference2_name"
-                  label="Nombre completo"
-                  name="reference2_name"
-                  fullWidth
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference2_name}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_name)}
-                  helperText={errors.reference2_name}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="N° Identificación"
-                  name="reference2_identity"
-                  fullWidth
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference2_identity}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_identity)}
-                  helperText={errors.reference2_identity}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Dirección"
-                  name="reference2_address"
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference2_address}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_address)}
-                  helperText={errors.reference2_address}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Centro laboral"
-                  name="reference2_workplace"
-                  size="small"
-                  sx={{ width: 600 }}
-                  value={customer.reference2_workplace}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_workplace)}
-                  helperText={errors.reference2_workplace}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Teléfono"
-                  name="reference2_telephone"
-                  size="small"
-                  value={customer.reference2_telephone}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_telephone)}
-                  helperText={errors.reference2_telephone}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Tiempo de conocerlo(a)"
-                  name="reference2_known_time"
-                  size="small"
-                  value={customer.reference2_known_time}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_known_time)}
-                  helperText={errors.reference2_known_time}
-                  disabled={mode === "show"}
-                />
-
-                <TextField
-                  focused
-                  label="Tipo de relación"
-                  name="reference2_relationship"
-                  size="small"
-                  value={customer.reference2_relationship}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.reference2_relationship)}
-                  helperText={errors.reference2_relationship}
-                  disabled={mode === "show"}
-                />
-              </div>
-            </div>
-
-            <DividerChip label="Garantías" />
-            <GuaranteesTable
-              disabled={mode === "show"}
-              guarantees={guarantees}
-              setGuarantees={setGuarantees}
-            />
+            </Tabs>
           </Box>
-        </div>
 
-        <Button
-          disabled={mode === "show"}
-          className="btn px-5 me-5"
-          type="submit"
-          variant="contained"
-          startIcon={<SaveIcon />}
-        >
-          Guardar
-        </Button>
+          <Box sx={{ p: { xs: 1.5, md: 2 }, bgcolor: "background.paper" }}>
+            <TabPanel value={activeTab} index={0}>
+              <GeneralInfoTab
+                ref={generalInfoRef}
+                customer={customer}
+                setCustomer={setCustomer}
+                errors={errors}
+                setErrors={setErrors}
+                isEmployee={isEmployee}
+                setIsEmployee={setIsEmployee}
+                notRequiredFields={notRequiredFields}
+                setNotRequiredFields={setNotRequiredFields}
+                mode={internalMode}
+              />
+            </TabPanel>
 
-        <Button
-          className="btn px-5 me-5"
-          onClick={handleCancel}
-          variant="contained"
-          color="error"
-          startIcon={<CancelIcon />}
-        >
-          Cancelar
-        </Button>
-      </form>
+            <TabPanel value={activeTab} index={1}>
+              <CustomerBusinessTab
+                ref={businessRef}
+                customer={customer}
+                setCustomer={setCustomer}
+                errors={errors}
+                setErrors={setErrors}
+                isEmployee={isEmployee}
+                setIsEmployee={setIsEmployee}
+                notRequiredFields={notRequiredFields}
+                setNotRequiredFields={setNotRequiredFields}
+                mode={internalMode}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={2}>
+              <GuaranteesTab
+                ref={guaranteesRef}
+                guarantees={guarantees}
+                setGuarantees={setGuarantees}
+                mode={internalMode}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={3}>
+              <CustomerReferencesTab
+                ref={referencesRef}
+                customer={customer}
+                setCustomer={setCustomer}
+                errors={errors}
+                setErrors={setErrors}
+                mode={internalMode}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={4}>
+              <EvaluationTab
+                ref={evaluationRef}
+                customer={customer}
+                setCustomer={setCustomer}
+                mode={internalMode}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={5}>
+              <CustomerFinancialEvaluationTab
+                customerId={customer.id}
+                customerName={customer.customer_name}
+                customerIdentification={customer.identification}
+                readOnly={internalMode === "show"}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={6}>
+              <CustomerChecklist
+                customerId={customer.id}
+                customerName={customer.customer_name}
+                readOnly={internalMode === "show"}
+              />
+            </TabPanel>
+          </Box>
+
+          <Divider />
+
+          <Box
+            sx={{
+              px: { xs: 2, md: 3 },
+              py: 1.5,
+              bgcolor: "background.default",
+              position: "sticky",
+              bottom: 0,
+              zIndex: 5,
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Stack direction="row" justifyContent="flex-end" spacing={1.2}>
+              <Tooltip title="Cancelar y volver al listado">
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  startIcon={<CloseIcon />}
+                  onClick={() => {
+                    setCancelDialog(true);
+                    setOpenDialog(true);
+                  }}
+                  sx={{ borderRadius: 2, fontWeight: 800 }}
+                >
+                  Cancelar
+                </Button>
+              </Tooltip>
+
+              {internalMode !== "show" && (
+                <Button
+                  variant="contained"
+                  type="submit"
+                  startIcon={<SaveIcon />}
+                  sx={{
+                    borderRadius: 2,
+                    fontWeight: 900,
+                    px: 3,
+                    boxShadow: 2,
+                  }}
+                >
+                  Guardar cliente
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        </form>
+      </Paper>
 
       <ToastContainer />
 
-      <div id="alerts">
-        <Snackbar open={alertState.open} autoHideDuration={3000} onClose={handleClose}>
-          <Alert onClose={handleClose} severity={alert.alertType} variant="filled" sx={{ width: "100%" }}>
-            {alert.alertMessage}
-          </Alert>
-        </Snackbar>
+      <Snackbar open={alertState.open} autoHideDuration={3000}>
+        <Alert severity={alert.alertType || "info"}>{alert.alertMessage}</Alert>
+      </Snackbar>
 
-        <ConfirmDialog
-          open={openDialog}
-          onClose={() => setOpenDialog(false)}
-          confirm={handleDialogConfirmation}
-          cancel={() => setOpenDialog(false)}
-          cancelOperation={cancelDialog}
-        />
-      </div>
-    </div>
+      <ConfirmDialog
+        open={openDialog}
+        confirm={handleDialogConfirmation}
+        cancel={() => setOpenDialog(false)}
+        cancelOperation={cancelDialog}
+      />
+    </Container>
   );
 };
 
