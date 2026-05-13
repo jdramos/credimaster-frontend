@@ -37,7 +37,7 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 
 import GeneralInfoTab from "./CustomerGeneralInfoTab";
 import GuaranteesTab from "./CustomerGuaranteesTab";
-import EvaluationTab from "./CustomerEvaluationTab";
+
 import CustomerBusinessTab from "./CustomerBusinessTab";
 import CustomerReferencesTab from "./CustomerReferencesTab";
 import CustomerChecklist from "./CustomerCheckList";
@@ -47,10 +47,16 @@ import ConfirmDialog from "../ConfirmDialog";
 const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
 const token = process.env.REACT_APP_API_TOKEN;
 
-const TabPanel = ({ children, value, index }) => {
-  if (value !== index) return null;
-  return <div role="tabpanel">{children}</div>;
-};
+const TabPanel = ({ children, value, index }) => (
+  <Box
+    role="tabpanel"
+    sx={{
+      display: value === index ? "block" : "none",
+    }}
+  >
+    {children}
+  </Box>
+);
 
 const toIsoDateOrNull = (v) => {
   if (!v) return null;
@@ -100,7 +106,7 @@ const CustomerForm = () => {
 
   const generalInfoRef = useRef(null);
   const guaranteesRef = useRef(null);
-  const evaluationRef = useRef(null);
+
   const businessRef = useRef(null);
   const referencesRef = useRef(null);
 
@@ -204,6 +210,32 @@ const CustomerForm = () => {
     spouse_job_salary: 0,
 
     telephone: "",
+  });
+
+  const [financialEvaluation, setFinancialEvaluation] = useState({
+    evaluation_date: dayjs().format("YYYY-MM-DD"),
+    methodology: "INDIVIDUAL",
+
+    business_income: "",
+    salary_income: "",
+    other_income: "",
+
+    business_expenses: "",
+    family_expenses: "",
+    other_debts_installments: "",
+
+    proposed_installment: "",
+
+    years_in_business: "",
+    monthly_sales: "",
+    inventory_value: "",
+    business_location: "",
+
+    references_result: "FAVORABLE",
+    bureau_result: "NO_APLICA",
+
+    analyst_comment: "",
+    committee_comment: "",
   });
 
   const cleanedGuarantees = useMemo(
@@ -370,8 +402,6 @@ const CustomerForm = () => {
     reference2_telephone: 3,
     reference2_relationship: 3,
     reference2_known_time: 3,
-
-    evaluation_score: 4,
   };
 
   const handleSubmit = (e) => {
@@ -381,14 +411,12 @@ const CustomerForm = () => {
     const vBusiness = normalizeValidate(businessRef.current?.validate?.());
     const vGuarantees = normalizeValidate(guaranteesRef.current?.validate?.());
     const vReferences = normalizeValidate(referencesRef.current?.validate?.());
-    const vEvaluation = normalizeValidate(evaluationRef.current?.validate?.());
 
     const mergedErrors = cleanErrors({
       ...vGeneral.errors,
       ...vBusiness.errors,
       ...vGuarantees.errors,
       ...vReferences.errors,
-      ...vEvaluation.errors,
     });
 
     setErrors(mergedErrors);
@@ -428,6 +456,7 @@ const CustomerForm = () => {
           body: JSON.stringify({
             customer: payloadCustomer,
             guarantees: cleanedGuarantees,
+            financial_evaluation: financialEvaluation,
           }),
         },
       );
@@ -465,8 +494,14 @@ const CustomerForm = () => {
   };
 
   const handleDialogConfirmation = () => {
-    if (cancelDialog) navigate("/clientes");
-    else addCustomer();
+    setOpenDialog(false);
+
+    if (cancelDialog) {
+      navigate("/clientes");
+      return;
+    }
+
+    addCustomer();
   };
 
   const clearFields = (obj, fields, emptyValue = "") => {
@@ -608,9 +643,8 @@ const CustomerForm = () => {
         "reference2_known_time",
         "reference2_relationship",
       ],
-      4: ["evaluation_score"],
+      4: [],
       5: [],
-      6: [],
     };
 
     const fields = tabFields[tabIndex] || [];
@@ -626,7 +660,7 @@ const CustomerForm = () => {
       return hasGuarantees ? "complete" : "pending";
     }
 
-    if (tabIndex === 5 || tabIndex === 6) {
+    if (tabIndex === 4 || tabIndex === 5) {
       return customer?.id ? "complete" : "pending";
     }
 
@@ -818,24 +852,17 @@ const CustomerForm = () => {
                 iconPosition="start"
                 label="Referencias"
               />
+
               <Tab
                 icon={getTabIcon(
                   4,
-                  <AssignmentTurnedInIcon fontSize="small" />,
-                )}
-                iconPosition="start"
-                label="Evaluación"
-              />
-              <Tab
-                icon={getTabIcon(
-                  5,
                   <AccountBalanceWalletIcon fontSize="small" />,
                 )}
                 iconPosition="start"
                 label="Evaluación financiera"
               />
               <Tab
-                icon={getTabIcon(6, <DescriptionIcon fontSize="small" />)}
+                icon={getTabIcon(5, <DescriptionIcon fontSize="small" />)}
                 iconPosition="start"
                 label="Documentos"
               />
@@ -894,16 +921,9 @@ const CustomerForm = () => {
             </TabPanel>
 
             <TabPanel value={activeTab} index={4}>
-              <EvaluationTab
-                ref={evaluationRef}
-                customer={customer}
-                setCustomer={setCustomer}
-                mode={internalMode}
-              />
-            </TabPanel>
-
-            <TabPanel value={activeTab} index={5}>
               <CustomerFinancialEvaluationTab
+                form={financialEvaluation}
+                setForm={setFinancialEvaluation}
                 customerId={customer.id}
                 customerName={customer.customer_name}
                 customerIdentification={customer.identification}
@@ -911,7 +931,7 @@ const CustomerForm = () => {
               />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={6}>
+            <TabPanel value={activeTab} index={5}>
               <CustomerChecklist
                 customerId={customer.id}
                 customerName={customer.customer_name}
@@ -978,9 +998,20 @@ const CustomerForm = () => {
 
       <ConfirmDialog
         open={openDialog}
-        confirm={handleDialogConfirmation}
-        cancel={() => setOpenDialog(false)}
-        cancelOperation={cancelDialog}
+        type={cancelDialog ? "error" : "warning"}
+        title={cancelDialog ? "Cancelar operación" : "Confirmar guardado"}
+        message={
+          cancelDialog
+            ? "¿Está seguro que desea cancelar? Los cambios no guardados se perderán."
+            : "¿Está seguro que desea guardar la información del cliente?"
+        }
+        confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
+        cancelText="No"
+        onConfirm={handleDialogConfirmation}
+        onClose={() => {
+          setOpenDialog(false);
+          setCancelDialog(false);
+        }}
       />
     </Container>
   );

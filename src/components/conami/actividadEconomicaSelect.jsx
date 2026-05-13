@@ -1,93 +1,163 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Autocomplete, TextField, Box, CircularProgress, Typography, FormControl, GroupHeader } from '@mui/material';
-import { createFilterOptions } from '@mui/material/Autocomplete';
-import API from '../../api';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Autocomplete,
+  TextField,
+  CircularProgress,
+  FormControl,
+} from "@mui/material";
+import API from "../../api";
 
-const filter = createFilterOptions({
-    stringify: (option) => `${option.conami_code} ${option.description}` // busca por ambos
-});
+const PAGE_SIZE = 50;
 
 export default function EconomicActivitySelect({
-    value,              // id seleccionado
-    onChange,           // devuelve id
-    label = "Actividad Económica",
-    disabled = false,
-    required = false,
-    size = "small"
+  value,
+  onChange,
+  label = "Actividad Económica",
+  disabled = false,
+  required = false,
+  size = "small",
 }) {
-    const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
+  const [options, setOptions] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalRows, setTotalRows] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-    const fetchActivities = async () => {
-        try {
-            setLoading(true);
-            const res = await API.get('api/conami/actividad_economica', {
-                params: { page: 1, pageSize: 9999, sortBy: 'conami_code', sortDir: 'asc' }
-            });
-            const rows = res.data?.rows ?? [];
-            setOptions(rows.map(r => ({
-                id: r.id,
-                conami_code: String(r.conami_code),
-                description: r.description,
-                isBold: String(r.conami_code).endsWith('00')
-            })));
-        } catch (e) {
-            console.error('Error cargando actividades:', e);
-        } finally {
-            setLoading(false);
+  const normalizeRows = (rows = []) =>
+    rows.map((r) => ({
+      id: r.id,
+      conami_code: String(r.conami_code),
+      description: r.description,
+    }));
+
+  const fetchActivities = useCallback(
+    async ({ pageToLoad = 1, append = false, searchText = "" } = {}) => {
+      try {
+        append ? setLoadingMore(true) : setLoading(true);
+
+        const res = await API.get("/api/conami/actividad_economica", {
+          params: {
+            search: searchText,
+            page: pageToLoad,
+            pageSize: PAGE_SIZE,
+            sortBy: "conami_code",
+            sortDir: "asc",
+          },
+        });
+
+        const rows = res.data?.rows ?? [];
+        const total = res.data?.total ?? 0;
+        const normalized = normalizeRows(rows);
+
+        setOptions((prev) => {
+          const next = append ? [...prev, ...normalized] : normalized;
+          return Array.from(
+            new Map(next.map((item) => [item.id, item])).values(),
+          );
+        });
+
+        setTotalRows(Number(total) || 0);
+        setPage(pageToLoad);
+      } catch (e) {
+        console.error("Error cargando actividades:", e);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    fetchActivities({
+      pageToLoad: 1,
+      append: false,
+      searchText: search,
+    });
+  }, [fetchActivities, search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1);
+      setSearch(inputValue.trim());
+    }, 400);
+
+    return () => clearTimeout(t);
+  }, [inputValue]);
+
+  const selected = useMemo(
+    () => options.find((o) => String(o.id) === String(value)) || null,
+    [options, value],
+  );
+
+  const hasMore = options.length < totalRows;
+
+  const handleListboxScroll = (event) => {
+    const listboxNode = event.currentTarget;
+
+    const nearBottom =
+      listboxNode.scrollTop + listboxNode.clientHeight >=
+      listboxNode.scrollHeight - 20;
+
+    if (!nearBottom || loading || loadingMore || !hasMore) return;
+
+    fetchActivities({
+      pageToLoad: page + 1,
+      append: true,
+      searchText: search,
+    });
+  };
+
+  return (
+    <FormControl fullWidth size={size}>
+      <Autocomplete
+        value={selected}
+        inputValue={inputValue}
+        onInputChange={(_, newInputValue, reason) => {
+          if (reason === "reset") return;
+          setInputValue(newInputValue);
+        }}
+        loading={loading}
+        disabled={disabled}
+        size={size}
+        options={options}
+        filterOptions={(x) => x}
+        isOptionEqualToValue={(opt, val) => String(opt.id) === String(val.id)}
+        getOptionLabel={(opt) =>
+          opt ? `${opt.conami_code} - ${opt.description}` : ""
         }
-    };
-
-    useEffect(() => { fetchActivities(); }, []);
-
-
-    const selected = useMemo(
-        () => options.find(o => String(o.id) === String(value)) || null,
-        [options, value]
-    );
-
-    return (
-        <FormControl sx={{ mt: 0, ml: 0, minWidth: 500 }} size="large" >
-            <Autocomplete
-
-                value={selected}
-                loading={loading}
-                disabled={disabled}
-                size={size}
-                filterOptions={filter}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                getOptionLabel={(opt) => opt ? `${opt.conami_code} - ${opt.description}` : ''}
-                onChange={(_, newVal) => onChange?.(newVal ? newVal.id : null)}
-                clearOnBlur={false}
-                options={options.filter(o => !o.isGroup)}   // 👈 solo las no-grupo son seleccionables
-                groupBy={(option) => {
-                    // agrupa por el código padre (terminado en 00)
-                    const prefix = option.conami_code.slice(0, -2) + '00';
-                    const group = options.find(o => o.conami_code === prefix);
-                    return group ? `${group.conami_code} - ${group.description}` : 'Otros';
-                }}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label={label}
-                        required={required}
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {loading ? <CircularProgress size={18} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            )
-                        }}
-                    />
-                )}
-                renderOption={(props, option) => (
-                    <li {...props} style={{ paddingLeft: 24 }}>
-                        {option.conami_code} - {option.description}
-                    </li>
-                )}
-            />
-        </FormControl>
-    );
+        onChange={(_, newVal) => {
+          onChange?.(newVal ? newVal.id : null);
+          setInputValue(
+            newVal ? `${newVal.conami_code} - ${newVal.description}` : "",
+          );
+        }}
+        clearOnBlur={false}
+        ListboxProps={{
+          onScroll: handleListboxScroll,
+          style: { maxHeight: 320 },
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            required={required}
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading || loadingMore ? (
+                    <CircularProgress size={18} />
+                  ) : null}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+      />
+    </FormControl>
+  );
 }

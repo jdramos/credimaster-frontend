@@ -1,67 +1,109 @@
-import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
+  Alert,
   Box,
+  Button,
+  Chip,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
   Paper,
-  Toolbar,
+  Snackbar,
+  Stack,
+  TextField,
   Tooltip,
   Typography,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Snackbar,
-  Alert,
-  Stack,
-  Button,
-  CircularProgress,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
-  Clear as ClearIcon,
   Add as AddIcon,
+  Clear as ClearIcon,
+  Edit as EditIcon,
   Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import { DataGrid } from "@mui/x-data-grid";
-import EditIcon from "@mui/icons-material/Edit";
-import Show from "@mui/icons-material/Visibility";
-import { Link as RouterLink, Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import { UserContext } from "../../contexts/UserContext";
 import API from "../../api";
 
 const url = "/api/customers";
 
+const BAC = {
+  primary: "#0057B8",
+  primaryDark: "#003E8A",
+  soft: "#EAF2FF",
+  border: "#D7E6FA",
+  text: "#1F2937",
+  muted: "#6B7280",
+};
+
 export default function CustomerList() {
-  const { permissions, role } = useContext(UserContext);
+  const { permissions = [], role } = useContext(UserContext);
 
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
 
-  // DataGrid server state
-  const [page, setPage] = useState(0); // 0-based
+  const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+
   const [sortModel, setSortModel] = useState([{ field: "id", sort: "desc" }]);
 
-  // search
   const [search, setSearch] = useState("");
   const [globalFilter, setGlobalFilter] = useState("");
-  const debounceRef = useRef(null);
 
-  // ui
   const [loading, setLoading] = useState(false);
   const [snackOpen, setSnackOpen] = useState(false);
-  const [snack, setSnack] = useState({ type: "info", msg: "" });
+  const [snack, setSnack] = useState({
+    type: "info",
+    msg: "",
+  });
 
-  const canCreate = role === 1 || permissions?.includes("clientes.crear");
+  const debounceRef = useRef(null);
+
+  const canCreate = role === 1 || permissions.includes("clientes.crear");
+  const canEdit = role === 1 || permissions.includes("clientes.editar");
+  const canView = role === 1 || permissions.includes("clientes.mostrar");
+
+  const showSnack = useCallback((type, msg) => {
+    setSnack({ type, msg });
+    setSnackOpen(true);
+  }, []);
 
   const columns = useMemo(
     () => [
-      { field: "id", headerName: "ID", width: 70 },
-      { field: "customer_code", headerName: "Código", width: 120 },
-      { field: "identification", headerName: "Identificación", width: 160 },
+      {
+        field: "id",
+        headerName: "ID",
+        width: 80,
+      },
+      {
+        field: "customer_code",
+        headerName: "Código",
+        width: 130,
+      },
+      {
+        field: "identification",
+        headerName: "Identificación",
+        width: 170,
+      },
       {
         field: "customer_name",
-        headerName: "Nombre del cliente",
+        headerName: "Cliente",
         flex: 1,
-        minWidth: 150,
+        minWidth: 220,
+        renderCell: (params) => (
+          <Typography fontWeight={700} color={BAC.text}>
+            {params.value || "-"}
+          </Typography>
+        ),
       },
       {
         field: "actions",
@@ -69,206 +111,312 @@ export default function CustomerList() {
         width: 130,
         sortable: false,
         filterable: false,
+        disableColumnMenu: true,
+        align: "center",
+        headerAlign: "center",
         renderCell: (params) => (
-          <Box>
-            {(role === 1 || permissions.includes("clientes.editar")) && (
-              <Tooltip title="Editar">
-                <Link to={`/clientes/editar/${params.row.id}`}>
-                  <IconButton size="small">
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                </Link>
+          <Stack direction="row" spacing={0.5} justifyContent="center">
+            {canEdit && (
+              <Tooltip title="Editar cliente">
+                <IconButton
+                  size="small"
+                  component={RouterLink}
+                  to={`/clientes/editar/${params.row.id}`}
+                  sx={{
+                    color: BAC.primary,
+                    bgcolor: BAC.soft,
+                    "&:hover": {
+                      bgcolor: BAC.border,
+                    },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
-            {(role === 1 || permissions.includes("clientes.mostrar")) && (
-              <Tooltip title="Mostrar">
-                <Link to={`/clientes/ver/${params.row.id}`}>
-                  <IconButton size="small">
-                    <Show fontSize="small" />
-                  </IconButton>
-                </Link>
+
+            {canView && (
+              <Tooltip title="Ver cliente">
+                <IconButton
+                  size="small"
+                  component={RouterLink}
+                  to={`/clientes/ver/${params.row.id}`}
+                  sx={{
+                    color: BAC.primaryDark,
+                    bgcolor: "#F3F4F6",
+                    "&:hover": {
+                      bgcolor: "#E5E7EB",
+                    },
+                  }}
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
-          </Box>
+          </Stack>
         ),
       },
     ],
-    [permissions, role],
+    [canEdit, canView],
   );
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearch(value);
+  const fetchData = useCallback(
+    async (signal) => {
+      setLoading(true);
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setPage(0); // reset a primera página
-      setGlobalFilter(value.trim());
-    }, 350);
-  };
+      try {
+        const sortBy = sortModel[0]?.field || "id";
+        const sortDir = sortModel[0]?.sort || "desc";
 
-  const clearSearch = () => {
-    setSearch("");
-    setGlobalFilter("");
-    setPage(0);
-  };
+        const params = {
+          page: page + 1,
+          pageSize,
+          sortBy,
+          sortDir,
+          search: globalFilter,
+        };
 
-  const fetchData = async (signal) => {
-    setLoading(true);
-    try {
-      const sortBy = sortModel[0]?.field || "id";
-      const sortDir = sortModel[0]?.sort || "desc";
+        const res = await API.get(url, { params, signal });
 
-      const params = {
-        page: page + 1, // API base 1
-        pageSize,
-        sortBy,
-        sortDir,
-        search: globalFilter, // ✅ usa el debounced
-      };
+        const payload = res?.data?.data ?? res?.data;
+        const newRows = payload?.rows ?? [];
+        const newTotal = payload?.total ?? 0;
 
-      const res = await API.get(url, { params, signal });
+        setRows(Array.isArray(newRows) ? newRows : []);
+        setRowCount(Number(newTotal) || 0);
+      } catch (err) {
+        if (err.name === "CanceledError" || signal?.aborted) return;
 
-      const payload = res?.data?.data ?? res?.data;
+        console.error(err);
 
-      const newRows = payload?.rows ?? [];
-      const newTotal = payload?.total ?? 0;
-
-      setRows(Array.isArray(newRows) ? newRows : []);
-      setRowCount(Number(newTotal) || 0);
-    } catch (err) {
-      if (signal?.aborted) return;
-      console.error(err);
-      setSnack({
-        type: "error",
-        msg: `Error al obtener clientes: ${err?.response?.data?.message ?? err.message}`,
-      });
-      setSnackOpen(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+        showSnack(
+          "error",
+          `Error al obtener clientes: ${
+            err?.response?.data?.message || err.message || "Error desconocido"
+          }`,
+        );
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [page, pageSize, sortModel, globalFilter, showSnack],
+  );
 
   useEffect(() => {
     const ac = new AbortController();
+
     fetchData(ac.signal);
+
     return () => ac.abort();
-  }, [page, pageSize, sortModel, globalFilter]);
+  }, [fetchData]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+
+    setSearch(value);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(() => {
+      setPaginationModel((prev) => ({
+        ...prev,
+        page: 0,
+      }));
+      setGlobalFilter(value.trim());
+    }, 400);
+  };
+
+  const clearSearch = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    setSearch("");
+    setGlobalFilter("");
+    setPaginationModel((prev) => ({
+      ...prev,
+      page: 0,
+    }));
+  };
 
   const refresh = () => {
     const ac = new AbortController();
     fetchData(ac.signal);
-    return () => ac.abort();
   };
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: { xs: 1.5, md: 2 } }}>
       <Paper
         elevation={0}
         sx={{
-          mb: 2,
-          p: 2,
           borderRadius: 3,
+          overflow: "hidden",
           border: "1px solid",
-          borderColor: "divider",
+          borderColor: BAC.border,
+          bgcolor: "#fff",
         }}
       >
-        <Toolbar
-          disableGutters
-          sx={{ justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}
+        <Box
+          sx={{
+            px: 2,
+            py: 1.6,
+            background: `linear-gradient(90deg, ${BAC.primaryDark}, ${BAC.primary})`,
+            color: "#fff",
+          }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Typography variant="h5" fontWeight={700}>
-              Listado de clientes
-            </Typography>
-            {loading && <CircularProgress size={20} />}
-          </Stack>
-
           <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{ width: { xs: "100%", sm: 520 }, flexShrink: 0 }}
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", md: "center" }}
+            spacing={1.5}
           >
-            <TextField
-              size="small"
-              placeholder="Buscar por identificación o nombre…"
-              fullWidth
-              value={search}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-                endAdornment: search ? (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="Limpiar búsqueda"
-                      edge="end"
-                      onClick={clearSearch}
-                      size="small"
-                    >
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-              }}
-            />
+            <Box>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="h6" fontWeight={900}>
+                  Clientes
+                </Typography>
 
-            <IconButton aria-label="Refrescar" onClick={refresh}>
-              <RefreshIcon />
-            </IconButton>
+                <Chip
+                  size="small"
+                  label={`${rowCount} registros`}
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.18)",
+                    color: "#fff",
+                    fontWeight: 700,
+                  }}
+                />
 
-            {canCreate && (
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mb={2}
-                mt={2}
-              >
+                {loading && (
+                  <CircularProgress
+                    size={18}
+                    thickness={5}
+                    sx={{ color: "#fff" }}
+                  />
+                )}
+              </Stack>
+
+              <Typography variant="body2" sx={{ opacity: 0.85 }}>
+                Consulta, búsqueda y administración de clientes
+              </Typography>
+            </Box>
+
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
+              alignItems={{ xs: "stretch", sm: "center" }}
+            >
+              <TextField
+                size="small"
+                placeholder="Buscar cliente..."
+                value={search}
+                onChange={handleSearchChange}
+                sx={{
+                  minWidth: { xs: "100%", sm: 320 },
+                  bgcolor: "#fff",
+                  borderRadius: 2,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: search ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="Limpiar búsqueda"
+                        onClick={clearSearch}
+                        size="small"
+                        edge="end"
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                }}
+              />
+
+              <Tooltip title="Actualizar listado">
+                <IconButton
+                  onClick={refresh}
+                  sx={{
+                    color: "#fff",
+                    border: "1px solid rgba(255,255,255,0.35)",
+                    borderRadius: 2,
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+
+              {canCreate && (
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
                   component={RouterLink}
                   to="/clientes/agregar"
-                  sx={{ borderRadius: 2, px: 2, ml: 1 }}
+                  sx={{
+                    bgcolor: "#fff",
+                    color: BAC.primary,
+                    fontWeight: 800,
+                    borderRadius: 2,
+                    px: 2,
+                    "&:hover": {
+                      bgcolor: BAC.soft,
+                    },
+                  }}
                 >
                   Agregar
                 </Button>
-              </Box>
-            )}
+              )}
+            </Stack>
           </Stack>
-        </Toolbar>
+        </Box>
 
-        <div style={{ height: 540, width: "100%" }}>
+        <Box sx={{ height: 700, width: "100%" }}>
           <DataGrid
             rows={rows}
             columns={columns}
-            getRowId={(r) => r.id}
+            getRowId={(row) => row.id}
             rowCount={rowCount}
             loading={loading}
+            pagination
             paginationMode="server"
             sortingMode="server"
-            paginationModel={{ page, pageSize }}
-            onPaginationModelChange={(model) => {
-              setPage(model.page);
-              setPageSize(model.pageSize);
+            page={page}
+            pageSize={pageSize}
+            onPageChange={(newPage) => setPage(newPage)}
+            onPageSizeChange={(newPageSize) => {
+              setPageSize(newPageSize);
+              setPage(0);
             }}
-            pageSizeOptions={[5, 10, 20, 50]}
+            pageSizeOptions={[5, 10, 20, 50, 100]}
+            rowsPerPageOptions={[5, 10, 20, 50, 100]}
             sortModel={sortModel}
-            onSortModelChange={setSortModel}
+            onSortModelChange={(model) => {
+              setPage(0);
+              setSortModel(model);
+            }}
             disableRowSelectionOnClick
+            density="compact"
           />
-        </div>
+        </Box>
       </Paper>
 
       <Snackbar
         open={snackOpen}
         autoHideDuration={3500}
         onClose={() => setSnackOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert
           onClose={() => setSnackOpen(false)}

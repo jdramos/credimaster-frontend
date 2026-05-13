@@ -7,6 +7,7 @@ import ProvinceSelect from "../ProvinceSelect";
 import MunicipalitySelect from "../MunicipalitySelect";
 import GenreSelect from "../Genre/GenreSelect";
 import EstadoCivilSelect from "../conami/EstadoCivilSelect";
+import TipoDocumentoSelect from "../TipoDocumentoSelect";
 
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -368,27 +369,16 @@ const CustomerGeneralInfoTab = forwardRef(
           >
             <Grid container spacing={1.2}>
               <Grid item xs={12} md={3}>
-                <FormControl
-                  fullWidth
-                  size="small"
+                <TipoDocumentoSelect
+                  name="identity_type"
+                  label="Tipo de identificación *"
+                  value={customer?.identity_type ?? ""}
+                  onChange={handleInputChange}
+                  disabled={disabled}
                   error={Boolean(errors.identity_type)}
-                >
-                  <InputLabel>Tipo de identificación *</InputLabel>
-                  <Select
-                    label="Tipo de identificación *"
-                    name="identity_type"
-                    value={customer?.identity_type || ""}
-                    onChange={handleInputChange}
-                    disabled={disabled}
-                  >
-                    <MenuItem value={1}>Cédula de identidad</MenuItem>
-                    <MenuItem value={2}>Cédula de residencia</MenuItem>
-                    <MenuItem value={3}>Pasaporte</MenuItem>
-                  </Select>
-                  {errors.identity_type && (
-                    <FormHelperText>{errors.identity_type}</FormHelperText>
-                  )}
-                </FormControl>
+                  helperText={errors.identity_type || ""}
+                  size="small"
+                />
               </Grid>
 
               <Grid item xs={12} md={3}>
@@ -400,6 +390,7 @@ const CustomerGeneralInfoTab = forwardRef(
                   error={Boolean(errors.identification)}
                   helperText={errors.identification || ""}
                   disabled={disabled}
+                  autoComplete="off"
                   fullWidth
                   size="small"
                 />

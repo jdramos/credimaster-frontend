@@ -67,11 +67,15 @@ export default function CountrySelect({
 
   useEffect(() => {
     if (!hasOptions) return;
-    if (editing) return;
     if (numericValue !== "") return;
 
     const defaultOpt =
-      countries.find((c) => String(c.isDefault) === "1") ?? countries[0];
+      countries.find(
+        (c) =>
+          Number(c.favorite) === 1 ||
+          Number(c.is_favorite) === 1 ||
+          Number(c.isDefault) === 1,
+      ) ?? countries[0];
 
     if (defaultOpt?.id != null) {
       onChange?.({

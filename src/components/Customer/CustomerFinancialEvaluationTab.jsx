@@ -124,6 +124,8 @@ function getRecommendationColor(value) {
 }
 
 export default function CustomerFinancialEvaluationTab({
+  form,
+  setForm,
   customerId,
   customerIdentification,
   customerName,
@@ -132,39 +134,6 @@ export default function CustomerFinancialEvaluationTab({
   onViewChecklist,
   readOnly = false,
 }) {
-  const [form, setForm] = useState({
-    id: null,
-    customer_id: customerId,
-    loan_id: loanId,
-    version_no: 1,
-    is_current: 1,
-
-    evaluation_date: dayjs().format("YYYY-MM-DD"),
-    methodology: "INDIVIDUAL",
-
-    business_income: "",
-    salary_income: "",
-    other_income: "",
-
-    business_expenses: "",
-    family_expenses: "",
-    other_debts_installments: "",
-
-    proposed_installment: "",
-
-    years_in_business: "",
-    monthly_sales: "",
-    inventory_value: "",
-    business_location: "",
-
-    references_result: "FAVORABLE",
-    bureau_result: "NO_APLICA",
-
-    analyst_comment: "",
-    committee_comment: "",
-    change_reason: "",
-  });
-
   const [docSummary, setDocSummary] = useState({
     total_required: 0,
     uploaded: 0,
