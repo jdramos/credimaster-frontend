@@ -51,8 +51,10 @@ export default function CustomerList() {
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
 
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
 
   const [sortModel, setSortModel] = useState([{ field: "id", sort: "desc" }]);
 
@@ -169,8 +171,8 @@ export default function CustomerList() {
         const sortDir = sortModel[0]?.sort || "desc";
 
         const params = {
-          page: page + 1,
-          pageSize,
+          page: paginationModel.page + 1,
+          pageSize: paginationModel.pageSize,
           sortBy,
           sortDir,
           search: globalFilter,
@@ -201,7 +203,7 @@ export default function CustomerList() {
         }
       }
     },
-    [page, pageSize, sortModel, globalFilter, showSnack],
+    [paginationModel, sortModel, globalFilter, showSnack],
   );
 
   useEffect(() => {
@@ -382,32 +384,57 @@ export default function CustomerList() {
           </Stack>
         </Box>
 
-        <Box sx={{ height: 700, width: "100%" }}>
+        <Box sx={{ height: 560, width: "100%" }}>
           <DataGrid
             rows={rows}
             columns={columns}
             getRowId={(row) => row.id}
             rowCount={rowCount}
             loading={loading}
-            pagination
             paginationMode="server"
             sortingMode="server"
-            page={page}
-            pageSize={pageSize}
-            onPageChange={(newPage) => setPage(newPage)}
-            onPageSizeChange={(newPageSize) => {
-              setPageSize(newPageSize);
-              setPage(0);
-            }}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[5, 10, 20, 50, 100]}
-            rowsPerPageOptions={[5, 10, 20, 50, 100]}
             sortModel={sortModel}
             onSortModelChange={(model) => {
-              setPage(0);
+              setPaginationModel((prev) => ({
+                ...prev,
+                page: 0,
+              }));
               setSortModel(model);
             }}
             disableRowSelectionOnClick
             density="compact"
+            localeText={{
+              noRowsLabel: "No hay clientes para mostrar",
+              footerRowSelected: (count) =>
+                count !== 1
+                  ? `${count.toLocaleString()} filas seleccionadas`
+                  : `${count.toLocaleString()} fila seleccionada`,
+            }}
+            sx={{
+              border: 0,
+              "& .MuiDataGrid-columnHeaders": {
+                bgcolor: "#F8FAFC",
+                color: BAC.text,
+                fontWeight: 900,
+                borderBottom: `1px solid ${BAC.border}`,
+              },
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontWeight: 900,
+              },
+              "& .MuiDataGrid-row:hover": {
+                bgcolor: "#F8FBFF",
+              },
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid #EEF2F7",
+              },
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: `1px solid ${BAC.border}`,
+                bgcolor: "#FAFCFF",
+              },
+            }}
           />
         </Box>
       </Paper>
