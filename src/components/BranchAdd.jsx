@@ -449,9 +449,16 @@ const BranchAdd = () => {
       <ConfirmDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
-        confirm={handleDialogConfirmation}
-        cancel={() => setOpenDialog(false)}
-        cancelOperation={cancelDialog}
+        onConfirm={handleDialogConfirmation}
+        type={cancelDialog ? "warning" : "info"}
+        title={cancelDialog ? "Cancelar registro" : "Confirmar guardado"}
+        message={
+          cancelDialog
+            ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
+            : "¿Está seguro que desea guardar esta sucursal?"
+        }
+        confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
+        cancelText="No"
       />
     </Box>
   );
