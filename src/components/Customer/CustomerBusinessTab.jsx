@@ -409,7 +409,7 @@ const CustomerBusinessTab = forwardRef(
                     <TextField
                       fullWidth
                       size="small"
-                      label="Teléfono del trabajo (opcional)"
+                      label="Teléfono del trabajo"
                       name="job_telephone"
                       value={customer.job_telephone ?? ""}
                       onChange={handleInputChange}

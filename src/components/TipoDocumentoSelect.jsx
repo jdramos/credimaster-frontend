@@ -89,7 +89,23 @@ export default function TipoDocumentoSelect({
     };
 
     fetchData();
-  }, [name, numericValue, onChange]);
+  }, []);
+
+  useEffect(() => {
+    if (numericValue === "" && options.length > 0) {
+      const defaultOption =
+        options.find((r) => Number(r.is_default) === 1) ?? options[0];
+
+      if (defaultOption?.id != null) {
+        onChange?.({
+          target: {
+            name,
+            value: Number(defaultOption.id),
+          },
+        });
+      }
+    }
+  }, [numericValue, options, onChange, name]);
 
   const handleChange = (e) => {
     const normalized = toNumberOrEmpty(e.target.value);
