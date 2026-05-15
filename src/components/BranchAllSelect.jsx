@@ -1,133 +1,161 @@
-import React, { useContext, useEffect, useState } from "react";
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
-import Autocomplete from '@mui/material/Autocomplete';
-import TextField from '@mui/material/TextField';
-import Checkbox from '@mui/material/Checkbox';
-import CircularProgress from '@mui/material/CircularProgress';
-import { FormHelperText } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Autocomplete,
+  Checkbox,
+  CircularProgress,
+  FormControl,
+  FormHelperText,
+  TextField,
+} from "@mui/material";
 
-const url = process.env.REACT_APP_API_BASE_URL + '/api/branches';
+const url = process.env.REACT_APP_API_BASE_URL + "/api/branches";
 const token = process.env.REACT_APP_API_TOKEN;
 const headers = { Authorization: token };
 
-const BranchAllSelect = (props) => {
-    const [data, setData] = useState([]);
-    const [error, setError] = useState(null);
-    const [selectedBranches, setSelectedBranches] = useState([]);
-    const [loading, setLoading] = useState(true);
+const BranchAllSelect = ({
+  value = [],
+  onChange,
+  label = "Sucursales",
+  name = "branch_ids",
+  error = false,
+  errorField = "",
+}) => {
+  const [data, setData] = useState([]);
+  const [fetchError, setFetchError] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    let alive = true;
 
-    useEffect(() => {
-        const fetchApi = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(url, { headers });
+    const fetchApi = async () => {
+      try {
+        setLoading(true);
+        setFetchError("");
 
-                if (!response.ok) {
-                    throw new Error('Failed to retrieve data.');
-                }
+        const response = await fetch(url, { headers });
 
-                const jsonData = await response.json();
-                setData(jsonData);
-            } catch (error) {
-                console.error(error);
-                setError('Failed to retrieve data. Please try again later.');
-            } finally {
-                setLoading(false);
-            }
-        };
+        if (!response.ok) {
+          throw new Error("No se pudieron cargar las sucursales.");
+        }
 
-        fetchApi();
-    }, []);
+        const jsonData = await response.json();
 
-    const handleSelectAll = () => {
-        const allSelected = selectedBranches.length === data.length;
-        const newSelection = allSelected ? [] : [...data];
-        setSelectedBranches(newSelection);
+        // Soporta respuesta directa [] o respuesta { data: [] }
+        const rows = Array.isArray(jsonData)
+          ? jsonData
+          : Array.isArray(jsonData.data)
+            ? jsonData.data
+            : [];
 
-        const syntheticEvent = {
-            target: {
-                name: 'branch_ids',
-                value: newSelection.map(branch => branch.id)
-            }
-        };
-        props.onChange(syntheticEvent);
+        if (alive) {
+          setData(rows);
+        }
+      } catch (err) {
+        console.error(err);
+        if (alive) {
+          setFetchError("No se pudieron cargar las sucursales.");
+          setData([]);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
+      }
     };
 
-    const handleChange = (event, newValue) => {
-        if (!Array.isArray(newValue)) newValue = [];
+    fetchApi();
 
-        setSelectedBranches(newValue);
-
-        const syntheticEvent = {
-            target: {
-                name: 'branch_ids',
-                value: newValue.map(branch => branch.id)
-            }
-        };
-        props.onChange(syntheticEvent);
+    return () => {
+      alive = false;
     };
+  }, []);
 
-    return (
-        <FormControl sx={{ mt: 0, mr: 1, minWidth: 240 }} size="small" error={props.error}>
-            <Autocomplete
-                multiple
-                loading={loading}
-                disableCloseOnSelect
-                getOptionLabel={(option) => option.name}
-                value={data.filter(branch => props.value?.includes(branch.id))}
-                options={data}
-                onChange={handleChange}
-                renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        label={props.label || "Sucursales"}
-                        variant="outlined"
-                        error={!!error}
-                        helperText={error || ''}
-                        placeholder="Selecciona sucursales..."
-                        InputProps={{
-                            ...params.InputProps,
-                            endAdornment: (
-                                <>
-                                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                    {params.InputProps.endAdornment}
-                                </>
-                            ),
-                        }}
-                    />
-                )}
-                renderOption={(props, option, { selected }) => (
-                    <li {...props} key={option.id}>
-                        <Checkbox
-                            style={{ marginRight: 8 }}
-                            checked={selected}
-                        />
-                        {option.name}
-                    </li>
-                )}
-            />
+  const selectedIds = useMemo(() => {
+    return Array.isArray(value) ? value.map(Number) : [];
+  }, [value]);
 
-            {/* Botón "Seleccionar todas" */}
-            <FormHelperText>
-                <span
-                    onClick={handleSelectAll}
-                    style={{
-                        color: '#1976d2',
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                        fontSize: '0.8rem',
-                    }}
-                >
-                    {selectedBranches.length === data.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
-                </span>
-            </FormHelperText>
+  const selectedBranches = useMemo(() => {
+    return data.filter((branch) => selectedIds.includes(Number(branch.id)));
+  }, [data, selectedIds]);
 
-            {/* Error de validación desde props */}
-            {props.errorField && <FormHelperText>{props.errorField}</FormHelperText>}
-        </FormControl>
-    );
+  const emitChange = (newSelection) => {
+    onChange?.({
+      target: {
+        name,
+        value: newSelection.map((branch) => Number(branch.id)),
+      },
+    });
+  };
+
+  const handleSelectAll = () => {
+    const allSelected =
+      selectedBranches.length === data.length && data.length > 0;
+    emitChange(allSelected ? [] : data);
+  };
+
+  const handleChange = (_, newValue) => {
+    emitChange(Array.isArray(newValue) ? newValue : []);
+  };
+
+  return (
+    <FormControl fullWidth size="small" error={Boolean(error)}>
+      <Autocomplete
+        multiple
+        loading={loading}
+        disableCloseOnSelect
+        options={data}
+        value={selectedBranches}
+        onChange={handleChange}
+        getOptionLabel={(option) => option?.name || ""}
+        isOptionEqualToValue={(option, selected) =>
+          Number(option.id) === Number(selected.id)
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            size="small"
+            error={Boolean(error || fetchError)}
+            helperText={fetchError || errorField || " "}
+            placeholder="Selecciona sucursales..."
+            InputProps={{
+              ...params.InputProps,
+              endAdornment: (
+                <>
+                  {loading && <CircularProgress color="inherit" size={20} />}
+                  {params.InputProps.endAdornment}
+                </>
+              ),
+            }}
+          />
+        )}
+        renderOption={(optionProps, option, { selected }) => (
+          <li {...optionProps} key={option.id}>
+            <Checkbox sx={{ mr: 1 }} checked={selected} />
+            {option.name}
+          </li>
+        )}
+      />
+
+      {data.length > 0 && (
+        <FormHelperText>
+          <span
+            onClick={handleSelectAll}
+            style={{
+              color: "#1976d2",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontSize: "0.8rem",
+            }}
+          >
+            {selectedBranches.length === data.length
+              ? "Deseleccionar todas"
+              : "Seleccionar todas"}
+          </span>
+        </FormHelperText>
+      )}
+    </FormControl>
+  );
 };
 
 export default BranchAllSelect;
