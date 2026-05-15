@@ -1505,14 +1505,17 @@ const LoanAdd = () => {
 
       <ConfirmDialog
         open={openDialog}
-        type="warning"
-        title="Crear crédito"
-        message="¿Deseas crear este crédito?"
-        confirmText="Sí, crear crédito"
-        cancelText="Cancelar"
-        loading={loading}
         onClose={() => setOpenDialog(false)}
         onConfirm={handleDialogConfirmation}
+        type={cancelDialog ? "warning" : "info"}
+        title={cancelDialog ? "Cancelar registro" : "Confirmar guardado"}
+        message={
+          cancelDialog
+            ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
+            : "¿Está seguro que desea guardar esta sucursal?"
+        }
+        confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
+        cancelText="No"
       />
       <Dialog
         open={evaluationModalOpen}

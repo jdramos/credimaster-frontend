@@ -47,10 +47,7 @@ import ConfirmDialog from "./ConfirmDialog";
 const API_URL = process.env.REACT_APP_API_BASE_URL;
 const TOKEN = process.env.REACT_APP_API_TOKEN;
 
-
-
 const BAC = {
-	
   primary: "#0057B8",
   primaryDark: "#003E8A",
   soft: "#EAF2FF",
@@ -106,7 +103,8 @@ const getModuleColor = (module) => {
   return colors[module] || "default";
 };
 
-const normalizeString = (value) => (value || "").toString().trim().toLowerCase();
+const normalizeString = (value) =>
+  (value || "").toString().trim().toLowerCase();
 
 const PermissionList = () => {
   const [permissions, setPermissions] = useState([]);
@@ -165,12 +163,16 @@ const PermissionList = () => {
   }, []);
 
   const moduleOptions = useMemo(() => {
-    const modules = [...new Set(permissions.map((p) => getModuleFromTag(p.permission_tag)))];
+    const modules = [
+      ...new Set(permissions.map((p) => getModuleFromTag(p.permission_tag))),
+    ];
     return modules.sort((a, b) => a.localeCompare(b, "es"));
   }, [permissions]);
 
   const actionOptions = useMemo(() => {
-    const actions = [...new Set(permissions.map((p) => getActionFromTag(p.permission_tag)))];
+    const actions = [
+      ...new Set(permissions.map((p) => getActionFromTag(p.permission_tag))),
+    ];
     return actions.sort((a, b) => a.localeCompare(b, "es"));
   }, [permissions]);
 
@@ -184,8 +186,10 @@ const PermissionList = () => {
       const action = normalizeString(getActionFromTag(p.permission_tag));
 
       const matchText = !text || name.includes(text) || tag.includes(text);
-      const matchModule = !moduleFilter || module === normalizeString(moduleFilter);
-      const matchAction = !actionFilter || action === normalizeString(actionFilter);
+      const matchModule =
+        !moduleFilter || module === normalizeString(moduleFilter);
+      const matchAction =
+        !actionFilter || action === normalizeString(actionFilter);
 
       return matchText && matchModule && matchAction;
     });
@@ -242,12 +246,16 @@ const PermissionList = () => {
   }, [sortedPermissions, page, rowsPerPage]);
 
   const totalModules = useMemo(() => {
-    const modules = new Set(permissions.map((p) => getModuleFromTag(p.permission_tag)));
+    const modules = new Set(
+      permissions.map((p) => getModuleFromTag(p.permission_tag)),
+    );
     return modules.size;
   }, [permissions]);
 
   const totalActions = useMemo(() => {
-    const actions = new Set(permissions.map((p) => getActionFromTag(p.permission_tag)));
+    const actions = new Set(
+      permissions.map((p) => getActionFromTag(p.permission_tag)),
+    );
     return actions.size;
   }, [permissions]);
 
@@ -277,9 +285,12 @@ const PermissionList = () => {
     if (!permissionToDelete?.id) return;
 
     try {
-      await axios.delete(`${API_URL}/api/permissions/${permissionToDelete.id}`, {
-        headers: { Authorization: TOKEN },
-      });
+      await axios.delete(
+        `${API_URL}/api/permissions/${permissionToDelete.id}`,
+        {
+          headers: { Authorization: TOKEN },
+        },
+      );
 
       await fetchPermissions();
       showSnackbar("Permiso eliminado correctamente", "success");
@@ -688,7 +699,9 @@ const PermissionList = () => {
                         onClick={() => handleSort("id")}
                         sx={{
                           color: "#fff !important",
-                          "& .MuiTableSortLabel-icon": { color: "#fff !important" },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "#fff !important",
+                          },
                         }}
                       >
                         ID
@@ -698,11 +711,15 @@ const PermissionList = () => {
                     <TableCell>
                       <TableSortLabel
                         active={orderBy === "permission_name"}
-                        direction={orderBy === "permission_name" ? order : "asc"}
+                        direction={
+                          orderBy === "permission_name" ? order : "asc"
+                        }
                         onClick={() => handleSort("permission_name")}
                         sx={{
                           color: "#fff !important",
-                          "& .MuiTableSortLabel-icon": { color: "#fff !important" },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "#fff !important",
+                          },
                         }}
                       >
                         Nombre del permiso
@@ -716,7 +733,9 @@ const PermissionList = () => {
                         onClick={() => handleSort("permission_tag")}
                         sx={{
                           color: "#fff !important",
-                          "& .MuiTableSortLabel-icon": { color: "#fff !important" },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "#fff !important",
+                          },
                         }}
                       >
                         Etiqueta
@@ -730,7 +749,9 @@ const PermissionList = () => {
                         onClick={() => handleSort("module")}
                         sx={{
                           color: "#fff !important",
-                          "& .MuiTableSortLabel-icon": { color: "#fff !important" },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "#fff !important",
+                          },
                         }}
                       >
                         Módulo
@@ -744,7 +765,9 @@ const PermissionList = () => {
                         onClick={() => handleSort("action")}
                         sx={{
                           color: "#fff !important",
-                          "& .MuiTableSortLabel-icon": { color: "#fff !important" },
+                          "& .MuiTableSortLabel-icon": {
+                            color: "#fff !important",
+                          },
                         }}
                       >
                         Acción
@@ -799,7 +822,11 @@ const PermissionList = () => {
                         </TableCell>
 
                         <TableCell>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            alignItems="center"
+                          >
                             <Typography
                               variant="body2"
                               sx={{
@@ -819,7 +846,9 @@ const PermissionList = () => {
                             <Tooltip title="Copiar etiqueta">
                               <IconButton
                                 size="small"
-                                onClick={() => copyPermissionTag(perm.permission_tag)}
+                                onClick={() =>
+                                  copyPermissionTag(perm.permission_tag)
+                                }
                                 sx={{
                                   color: BAC.grey500,
                                   "&:hover": {
@@ -840,7 +869,10 @@ const PermissionList = () => {
                             color={getModuleColor(module)}
                             size="small"
                             variant="outlined"
-                            sx={{ fontWeight: 600, textTransform: "capitalize" }}
+                            sx={{
+                              fontWeight: 600,
+                              textTransform: "capitalize",
+                            }}
                           />
                         </TableCell>
 
@@ -859,7 +891,11 @@ const PermissionList = () => {
                         </TableCell>
 
                         <TableCell align="center">
-                          <Stack direction="row" spacing={0.5} justifyContent="center">
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            justifyContent="center"
+                          >
                             <Tooltip title="Editar permiso">
                               <IconButton
                                 onClick={() => {
@@ -926,17 +962,27 @@ const PermissionList = () => {
         onSuccess={(message) => {
           setOpenDialog(false);
           fetchPermissions();
-          showSnackbar(message || "Operación realizada correctamente", "success");
+          showSnackbar(
+            message || "Operación realizada correctamente",
+            "success",
+          );
         }}
         permissionToEdit={editPermission}
       />
 
       <ConfirmDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        confirm={handleDelete}
-        cancel={() => setConfirmOpen(false)}
-        cancelOperation={true}
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        onConfirm={handleDialogConfirmation}
+        type={cancelDialog ? "warning" : "info"}
+        title={cancelDialog ? "Cancelar registro" : "Confirmar guardado"}
+        message={
+          cancelDialog
+            ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
+            : "¿Está seguro que desea guardar esta sucursal?"
+        }
+        confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
+        cancelText="No"
       />
 
       <Snackbar

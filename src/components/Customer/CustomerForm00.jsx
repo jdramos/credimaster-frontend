@@ -38,9 +38,7 @@ const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
 const token = process.env.REACT_APP_API_TOKEN;
 
 const isEmpty = (v) =>
-  v === null ||
-  v === undefined ||
-  (typeof v === "string" && v.trim() === "");
+  v === null || v === undefined || (typeof v === "string" && v.trim() === "");
 
 function validateForm(data, isEmployeeFlag) {
   // Campos opcionales por defecto (no obligatorios)
@@ -81,9 +79,13 @@ function validateForm(data, isEmployeeFlag) {
     ].forEach((k) => optional.add(k));
   } else {
     // Si NO es empleado (negocio propio) -> campos de empleo NO aplican
-    ["company", "job_start_day", "job_telephone", "monthly_salary", "occupation"].forEach((k) =>
-      optional.add(k)
-    );
+    [
+      "company",
+      "job_start_day",
+      "job_telephone",
+      "monthly_salary",
+      "occupation",
+    ].forEach((k) => optional.add(k));
   }
 
   const nextErrors = {};
@@ -215,14 +217,22 @@ const CustomerForm = ({ mode }) => {
           const normalized = {
             ...customer,
             ...c,
-            birth_date: c.birth_date ? dayjs(c.birth_date) : customer.birth_date,
-            identity_issue_date: c.identity_issue_date ? dayjs(c.identity_issue_date) : customer.identity_issue_date,
+            birth_date: c.birth_date
+              ? dayjs(c.birth_date)
+              : customer.birth_date,
+            identity_issue_date: c.identity_issue_date
+              ? dayjs(c.identity_issue_date)
+              : customer.identity_issue_date,
             identity_expiration_date: c.identity_expiration_date
               ? dayjs(c.identity_expiration_date)
               : customer.identity_expiration_date,
             job_start_day: c.job_start_day ? dayjs(c.job_start_day) : null,
-            business_license_issued: c.business_license_issued ? dayjs(c.business_license_issued) : null,
-            business_license_expiry: c.business_license_expiry ? dayjs(c.business_license_expiry) : null,
+            business_license_issued: c.business_license_issued
+              ? dayjs(c.business_license_issued)
+              : null,
+            business_license_expiry: c.business_license_expiry
+              ? dayjs(c.business_license_expiry)
+              : null,
           };
 
           // edad: recalcular si viene birth_date
@@ -235,7 +245,10 @@ const CustomerForm = ({ mode }) => {
           setIsEmployee(Number(c.economic_activity) === 2);
 
           // validar al cargar (para modo show/edit)
-          const nextErrors = validateForm(normalized, Number(c.economic_activity) === 2);
+          const nextErrors = validateForm(
+            normalized,
+            Number(c.economic_activity) === 2,
+          );
           setErrors(nextErrors);
         })
         .catch((error) => {
@@ -259,7 +272,10 @@ const CustomerForm = ({ mode }) => {
     };
 
     try {
-      const response = await fetch(mode === "edit" ? `${url}/${customerId}` : url, requestOptions);
+      const response = await fetch(
+        mode === "edit" ? `${url}/${customerId}` : url,
+        requestOptions,
+      );
       const responseData = await response.json().catch(() => ({}));
 
       if (!response.ok) {
@@ -280,13 +296,19 @@ const CustomerForm = ({ mode }) => {
           });
         }
       } else {
-        setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" });
+        setAlert({
+          alertType: "success",
+          alertMessage: "Registro guardado exitosamente",
+        });
         setTimeout(() => navigate("/clientes"), 1500);
       }
     } catch (error) {
       console.log(error);
       toast.error("Error al guardar (catch)");
-      setAlert({ alertType: "error", alertMessage: "Error al guardar el registro." });
+      setAlert({
+        alertType: "error",
+        alertMessage: "Error al guardar el registro.",
+      });
     } finally {
       setOpenDialog(false);
     }
@@ -317,7 +339,7 @@ const CustomerForm = ({ mode }) => {
 
     // si cambia actividad económica, actualizamos bandera para validar correctamente
     const nextIsEmployee =
-      name === "economic_activity" ? (value === 2 || value === "2") : isEmployee;
+      name === "economic_activity" ? value === 2 || value === "2" : isEmployee;
 
     if (name === "economic_activity") {
       setIsEmployee(nextIsEmployee);
@@ -475,14 +497,22 @@ const CustomerForm = ({ mode }) => {
                   <MenuItem value={1}>Masculino</MenuItem>
                   <MenuItem value={2}>Femenino</MenuItem>
                 </Select>
-                {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
+                {errors.gender && (
+                  <FormHelperText>{errors.gender}</FormHelperText>
+                )}
               </FormControl>
 
               <div id="datos-identificacion">
                 <Divider>Datos de identificación</Divider>
 
-                <FormControl sx={{ m: 1, minWidth: 220 }} size="small" error={Boolean(errors.identity_type)}>
-                  <InputLabel id="identity-type-label">Tipo de identificación</InputLabel>
+                <FormControl
+                  sx={{ m: 1, minWidth: 220 }}
+                  size="small"
+                  error={Boolean(errors.identity_type)}
+                >
+                  <InputLabel id="identity-type-label">
+                    Tipo de identificación
+                  </InputLabel>
                   <Select
                     labelId="identity-type-label"
                     label="Tipo de identificación"
@@ -497,7 +527,9 @@ const CustomerForm = ({ mode }) => {
                     <MenuItem value={2}>Cédula de residencia</MenuItem>
                     <MenuItem value={3}>Pasaporte</MenuItem>
                   </Select>
-                  {errors.identity_type && <FormHelperText>{errors.identity_type}</FormHelperText>}
+                  {errors.identity_type && (
+                    <FormHelperText>{errors.identity_type}</FormHelperText>
+                  )}
                 </FormControl>
 
                 <TextField
@@ -521,12 +553,19 @@ const CustomerForm = ({ mode }) => {
                     value={customer.identity_issue_date || null}
                     onChange={(newValue) =>
                       handleInputChange({
-                        target: { name: "identity_issue_date", value: newValue },
+                        target: {
+                          name: "identity_issue_date",
+                          value: newValue,
+                        },
                       })
                     }
-                     renderInput={(params) => (
-     					 <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-   					 )}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        sx={{ width: 170, m: 1 }}
+                      />
+                    )}
                     sx={{ width: 170, m: 1 }}
                     disabled={mode === "show"}
                   />
@@ -539,12 +578,19 @@ const CustomerForm = ({ mode }) => {
                     value={customer.identity_expiration_date || null}
                     onChange={(newValue) =>
                       handleInputChange({
-                        target: { name: "identity_expiration_date", value: newValue },
+                        target: {
+                          name: "identity_expiration_date",
+                          value: newValue,
+                        },
                       })
                     }
-                     renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        sx={{ width: 170, m: 1 }}
+                      />
+                    )}
                     sx={{ width: 170, m: 1 }}
                     disabled={mode === "show"}
                   />
@@ -622,7 +668,9 @@ const CustomerForm = ({ mode }) => {
                   <MenuItem value={1}>Soltero(a)</MenuItem>
                   <MenuItem value={2}>Casado(a)</MenuItem>
                 </Select>
-                {errors.marital_status && <FormHelperText>{errors.marital_status}</FormHelperText>}
+                {errors.marital_status && (
+                  <FormHelperText>{errors.marital_status}</FormHelperText>
+                )}
               </FormControl>
 
               <CountrySelect
@@ -648,9 +696,13 @@ const CustomerForm = ({ mode }) => {
                       target: { name: "birth_date", value: newValue },
                     })
                   }
-                   renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      sx={{ width: 170, m: 1 }}
+                    />
+                  )}
                   sx={{ width: 170, m: 1 }}
                   disabled={mode === "show"}
                 />
@@ -708,8 +760,14 @@ const CustomerForm = ({ mode }) => {
             </div>
 
             <div id="datos-laborales">
-              <FormControl sx={{ m: 1, minWidth: 220 }} size="small" error={Boolean(errors.economic_activity)}>
-                <InputLabel id="economic-activity-label">Actividad económica</InputLabel>
+              <FormControl
+                sx={{ m: 1, minWidth: 220 }}
+                size="small"
+                error={Boolean(errors.economic_activity)}
+              >
+                <InputLabel id="economic-activity-label">
+                  Actividad económica
+                </InputLabel>
                 <Select
                   id="economic_activity"
                   labelId="economic-activity-label"
@@ -724,7 +782,9 @@ const CustomerForm = ({ mode }) => {
                   <MenuItem value={1}>Negocio propio</MenuItem>
                   <MenuItem value={2}>Empleado</MenuItem>
                 </Select>
-                {errors.economic_activity && <FormHelperText>{errors.economic_activity}</FormHelperText>}
+                {errors.economic_activity && (
+                  <FormHelperText>{errors.economic_activity}</FormHelperText>
+                )}
               </FormControl>
 
               {isEmployee && (
@@ -769,9 +829,13 @@ const CustomerForm = ({ mode }) => {
                           target: { name: "job_start_day", value: newValue },
                         })
                       }
-                       renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}																																																																																		
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          sx={{ width: 170, m: 1 }}
+                        />
+                      )}
                       sx={{ width: 200, m: 1 }}
                       disabled={mode === "show"}
                     />
@@ -935,12 +999,19 @@ const CustomerForm = ({ mode }) => {
                         value={customer.business_license_issued || null}
                         onChange={(newValue) =>
                           handleInputChange({
-                            target: { name: "business_license_issued", value: newValue },
+                            target: {
+                              name: "business_license_issued",
+                              value: newValue,
+                            },
                           })
                         }
-                         renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            sx={{ width: 170, m: 1 }}
+                          />
+                        )}
                         sx={{ width: 200, m: 1 }}
                         disabled={mode === "show"}
                       />
@@ -953,12 +1024,19 @@ const CustomerForm = ({ mode }) => {
                         value={customer.business_license_expiry || null}
                         onChange={(newValue) =>
                           handleInputChange({
-                            target: { name: "business_license_expiry", value: newValue },
+                            target: {
+                              name: "business_license_expiry",
+                              value: newValue,
+                            },
                           })
                         }
-                         renderInput={(params) => (
-      <TextField {...params} size="small" sx={{ width: 170, m: 1 }} />
-    )}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            sx={{ width: 170, m: 1 }}
+                          />
+                        )}
                         sx={{ width: 200, m: 1 }}
                         disabled={mode === "show"}
                       />
@@ -1270,8 +1348,17 @@ const CustomerForm = ({ mode }) => {
       <ToastContainer />
 
       <div id="alerts">
-        <Snackbar open={alertState.open} autoHideDuration={3000} onClose={handleClose}>
-          <Alert onClose={handleClose} severity={alert.alertType} variant="filled" sx={{ width: "100%" }}>
+        <Snackbar
+          open={alertState.open}
+          autoHideDuration={3000}
+          onClose={handleClose}
+        >
+          <Alert
+            onClose={handleClose}
+            severity={alert.alertType}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
             {alert.alertMessage}
           </Alert>
         </Snackbar>
@@ -1279,9 +1366,16 @@ const CustomerForm = ({ mode }) => {
         <ConfirmDialog
           open={openDialog}
           onClose={() => setOpenDialog(false)}
-          confirm={handleDialogConfirmation}
-          cancel={() => setOpenDialog(false)}
-          cancelOperation={cancelDialog}
+          onConfirm={handleDialogConfirmation}
+          type={cancelDialog ? "warning" : "info"}
+          title={cancelDialog ? "Cancelar registro" : "Confirmar guardado"}
+          message={
+            cancelDialog
+              ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
+              : "¿Está seguro que desea guardar esta sucursal?"
+          }
+          confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
+          cancelText="No"
         />
       </div>
     </div>

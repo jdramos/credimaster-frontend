@@ -1,80 +1,83 @@
-import React, { useState, useEffect } from 'react';
-import { TextField, Button, Grid, InputAdornment, IconButton, Dialog, DialogTitle, DialogContent } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Save from '@mui/icons-material/Save';
-import Cancel from '@mui/icons-material/Cancel';
-import Alert from '@mui/material/Alert';
-import { ToastContainer, toast } from 'react-toastify';
-import RoleSelect from './RoleSelect';
-import Snackbar from '@mui/material/Snackbar';
-import ConfirmDialog from './ConfirmDialog';
-import BranchAllSelect from './BranchAllSelect';
-
-
+import React, { useState, useEffect } from "react";
+import {
+  TextField,
+  Button,
+  Grid,
+  InputAdornment,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import Save from "@mui/icons-material/Save";
+import Cancel from "@mui/icons-material/Cancel";
+import Alert from "@mui/material/Alert";
+import { ToastContainer, toast } from "react-toastify";
+import RoleSelect from "./RoleSelect";
+import Snackbar from "@mui/material/Snackbar";
+import ConfirmDialog from "./ConfirmDialog";
+import BranchAllSelect from "./BranchAllSelect";
 
 const URL_API = process.env.REACT_APP_API_BASE_URL;
 const token = process.env.REACT_APP_API_TOKEN;
 const headers = { Authorization: token };
 
 const UserAdd = ({ onClose, userToEdit }) => {
-
   const navigate = useNavigate();
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-
   const [user, setUser] = useState({
-    branch_ids: '',
-    user_name: '',
-    password: '',
-    full_name: '',
-    email: '',
-    role_id: '',
+    branch_ids: "",
+    user_name: "",
+    password: "",
+    full_name: "",
+    email: "",
+    role_id: "",
   });
 
   const [errors, setErrors] = useState({
-    user_name: '',
-    password: ''
+    user_name: "",
+    password: "",
   });
-
 
   const [alert, setAlert] = useState({ alertType: "", alertMessage: "" });
   const [state, setState] = useState({
     open: false,
-    vertical: 'top',
-    horizontal: 'center',
+    vertical: "top",
+    horizontal: "center",
   });
   const [openDialog, setOpenDialog] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetPasswordModal, setResetPasswordModal] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordResetError, setPasswordResetError] = useState('');
-
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordResetError, setPasswordResetError] = useState("");
 
   useEffect(() => {
     if (userToEdit) {
       setUser({
         branch_ids: userToEdit.branch_ids || [],
-        user_name: userToEdit.user_name || '',
-        password: '', // no mostramos la actual
-        full_name: userToEdit.full_name || '',
-        email: userToEdit.email || '',
-        role_id: userToEdit.rol_id || '',
+        user_name: userToEdit.user_name || "",
+        password: "", // no mostramos la actual
+        full_name: userToEdit.full_name || "",
+        email: userToEdit.email || "",
+        role_id: userToEdit.rol_id || "",
       });
     } else {
       setUser({
         branch_ids: [],
-        user_name: '',
-        password: '',
-        full_name: '',
-        email: '',
-        role_id: '',
+        user_name: "",
+        password: "",
+        full_name: "",
+        email: "",
+        role_id: "",
       });
     }
 
@@ -85,8 +88,8 @@ const UserAdd = ({ onClose, userToEdit }) => {
   }, [userToEdit]);
 
   function handleCancel() {
-    const hasData = Object.values(user).some(value => {
-      if (typeof value === 'string') return value.trim() !== '';
+    const hasData = Object.values(user).some((value) => {
+      if (typeof value === "string") return value.trim() !== "";
       if (Array.isArray(value)) return value.length > 0;
       return !!value;
     });
@@ -97,11 +100,11 @@ const UserAdd = ({ onClose, userToEdit }) => {
       setOpenDialog(true);
     } else {
       // cerrar directamente
-      if (onClose) onClose(); // si está en modal
+      if (onClose)
+        onClose(); // si está en modal
       else navigate("/usuarios"); // si no es modal
     }
   }
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -110,25 +113,31 @@ const UserAdd = ({ onClose, userToEdit }) => {
       [name]: value,
     });
 
-    if (name === 'password') {
+    if (name === "password") {
       validatePassword(value);
     }
   };
 
   const validatePassword = (password) => {
-    const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const strongPasswordPattern =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!strongPasswordPattern.test(password)) {
-      setErrors({ ...errors, password: 'La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una minúscula, un número y un carácter especial.' });
+      setErrors({
+        ...errors,
+        password:
+          "La contraseña debe tener al menos 8 caracteres, una letra mayúscula, una minúscula, un número y un carácter especial.",
+      });
       setIsPasswordValid(false);
       return false;
     }
-    setErrors({ ...errors, password: '' });
+    setErrors({ ...errors, password: "" });
     setIsPasswordValid(true);
     return true;
   };
 
   const isStrongPassword = (password) => {
-    const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const strongPasswordPattern =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return strongPasswordPattern.test(password);
   };
 
@@ -137,27 +146,27 @@ const UserAdd = ({ onClose, userToEdit }) => {
     let valid = true;
 
     if (!data.user_name) {
-      errors.user_name = 'El nombre de usuario es requerido';
+      errors.user_name = "El nombre de usuario es requerido";
       valid = false;
     }
 
     if (!data.full_name) {
-      errors.full_name = 'El nombre completo es requerido';
+      errors.full_name = "El nombre completo es requerido";
       valid = false;
     }
 
     if (!data.password && !userToEdit) {
-      errors.password = 'La contraseña es requerida';
+      errors.password = "La contraseña es requerida";
       valid = false;
     }
 
     if (data.role_id === 0) {
-      errors.role_id = 'Seleccione el rol asignado';
+      errors.role_id = "Seleccione el rol asignado";
       valid = false;
     }
 
     if (data.branch_ids.length === 0) {
-      errors.branch_ids = 'Seleccione al menos una sucursal';
+      errors.branch_ids = "Seleccione al menos una sucursal";
       valid = false;
     }
 
@@ -176,27 +185,25 @@ const UserAdd = ({ onClose, userToEdit }) => {
     }
   }
 
-
-
   const handleClose = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
 
-    setState({ ...state, open: false })
+    setState({ ...state, open: false });
   };
 
   const addUser = async () => {
     setState({ ...state, open: true });
     const url = userToEdit ? `/api/users/${userToEdit.id}` : `/api/users`;
-    const method = userToEdit ? 'PUT' : 'POST';
+    const method = userToEdit ? "PUT" : "POST";
 
     try {
       const response = await fetch(URL_API + url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token
+          "Content-Type": "application/json",
+          Authorization: token,
         },
         body: JSON.stringify(user),
       });
@@ -205,66 +212,68 @@ const UserAdd = ({ onClose, userToEdit }) => {
 
       if (!response.ok) {
         if (responseData.errors && responseData.errors.length > 0) {
-          const errorMessages = responseData.errors.map(error => error.msg).join(', ');
-          setAlert({ alertType: "error", alertMessage: "Mensaje del servidor: " + errorMessages });
+          const errorMessages = responseData.errors
+            .map((error) => error.msg)
+            .join(", ");
+          setAlert({
+            alertType: "error",
+            alertMessage: "Mensaje del servidor: " + errorMessages,
+          });
           setOpenDialog(false);
         } else {
-          setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente.." });
+          setAlert({
+            alertType: "success",
+            alertMessage: "Registro guardado exitosamente..",
+          });
         }
       } else {
-        setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" });
+        setAlert({
+          alertType: "success",
+          alertMessage: "Registro guardado exitosamente",
+        });
         setOpenDialog(false);
 
         setTimeout(() => {
-          if (onClose) onClose(); // 👉 cerrar el modal después de guardar
+          if (onClose)
+            onClose(); // 👉 cerrar el modal después de guardar
           else navigate("/usuarios");
         }, 2000);
       }
     } catch (error) {
-      toast.error('Error al crear el usuario:', error);
+      toast.error("Error al crear el usuario:", error);
       setOpenDialog(false);
     }
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
 
     if (validateForm(user)) {
       setOpenDialog(true);
       setCancelDialog(false);
-
     } else {
       toast.error("No es posible guardar, primero corrija errores!");
     }
-
   };
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
-
   const isNewPasswordValid = isStrongPassword(newPassword);
 
   const passwordsMatch = newPassword === confirmPassword;
-
 
   return (
     <div>
       <Alert
         variant="filled"
-        severity={userToEdit ? 'info' : 'success'}
+        severity={userToEdit ? "info" : "success"}
         icon={false}
         className="mt-5"
       >
-        <h2>{userToEdit ? 'Editar usuario' : 'Agregar nuevo usuario'}</h2>
+        <h2>{userToEdit ? "Editar usuario" : "Agregar nuevo usuario"}</h2>
       </Alert>
-
-
-
 
       <form onSubmit={handleSubmit}>
         <div className="shadow-lg p-3 mb-5 bg-body rounded">
@@ -273,11 +282,11 @@ const UserAdd = ({ onClose, userToEdit }) => {
               <BranchAllSelect
                 multiple={true}
                 onChange={handleChange}
-                label='Sucursal'
+                label="Sucursal"
                 value={user.branch_ids}
                 error={!!errors.branch_ids}
-                errorField={errors.branch_ids} />
-
+                errorField={errors.branch_ids}
+              />
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -317,7 +326,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
                   fullWidth
                   label="Contraseña"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={user.password}
                   onChange={handleChange}
                   error={!!errors.password}
@@ -353,9 +362,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
                 onChange={handleChange}
                 error={!!errors.role_id}
                 errorField={errors.role_id}
-              >
-
-              </RoleSelect>
+              ></RoleSelect>
             </Grid>
             {userToEdit && (
               <Grid item xs={12}>
@@ -363,38 +370,31 @@ const UserAdd = ({ onClose, userToEdit }) => {
                   variant="outlined"
                   color="warning"
                   onClick={() => {
-                    setResetPasswordModal(true)
-
+                    setResetPasswordModal(true);
                   }}
                 >
                   Restablecer contraseña
                 </Button>
               </Grid>
             )}
-
-
           </Grid>
         </div>
 
-
-
         <div>
-          <Button
-            type="submit"
-            variant="contained"
-            startIcon={<Save />}
-          >
-            {userToEdit ? 'Actualizar' : 'Guardar'}
+          <Button type="submit" variant="contained" startIcon={<Save />}>
+            {userToEdit ? "Actualizar" : "Guardar"}
           </Button>
 
-
-          <Button className="btn btn-primary px-5 me-5" onClick={handleCancel} variant="contained" color="error" startIcon={<Cancel></Cancel>}>
+          <Button
+            className="btn btn-primary px-5 me-5"
+            onClick={handleCancel}
+            variant="contained"
+            color="error"
+            startIcon={<Cancel></Cancel>}
+          >
             Cancelar
           </Button>
-
         </div>
-
-
       </form>
 
       <ToastContainer />
@@ -403,7 +403,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
           onClose={handleClose}
           severity={alert.alertType}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {alert.alertMessage}
         </Alert>
@@ -411,22 +411,26 @@ const UserAdd = ({ onClose, userToEdit }) => {
       <ConfirmDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}
-        confirm={handleDialogConfirmation}
-        cancel={() => setOpenDialog(false)}
-        cancelOperation={cancelDialog}>
-
-      </ConfirmDialog >
-
-
+        onConfirm={handleDialogConfirmation}
+        type={cancelDialog ? "warning" : "info"}
+        title={cancelDialog ? "Cancelar registro" : "Confirmar guardado"}
+        message={
+          cancelDialog
+            ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
+            : "¿Está seguro que desea guardar esta sucursal?"
+        }
+        confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
+        cancelText="No"
+      />
 
       {/* Modal para restablecer contraseña */}
       <Dialog
         open={resetPasswordModal}
         onClose={() => {
           setResetPasswordModal(false);
-          setNewPassword('');
-          setConfirmPassword('');
-          setPasswordResetError('');
+          setNewPassword("");
+          setConfirmPassword("");
+          setPasswordResetError("");
         }}
       >
         <DialogTitle>Restablecer contraseña</DialogTitle>
@@ -435,7 +439,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
             <Grid item xs={12}>
               <TextField
                 label="Nueva contraseña"
-                type={showNewPassword ? 'text' : 'password'}
+                type={showNewPassword ? "text" : "password"}
                 fullWidth
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -449,36 +453,40 @@ const UserAdd = ({ onClose, userToEdit }) => {
                         {showNewPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
-
             </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Confirmar contraseña"
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 fullWidth
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 error={!passwordsMatch}
                 helperText={
-                  !passwordsMatch ? 'Las contraseñas no coinciden' : ''
+                  !passwordsMatch ? "Las contraseñas no coinciden" : ""
                 }
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         edge="end"
                       >
-                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                        {showConfirmPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
-
             </Grid>
             {passwordResetError && (
               <Grid item xs={12}>
@@ -496,48 +504,56 @@ const UserAdd = ({ onClose, userToEdit }) => {
                 variant="contained"
                 color="primary"
                 disabled={!isNewPasswordValid || !passwordsMatch}
-
-
                 onClick={async () => {
-
-                  if (!newPassword || typeof newPassword !== 'string') {
-                    setPasswordResetError("La contraseña es inválida o no está definida.");
+                  if (!newPassword || typeof newPassword !== "string") {
+                    setPasswordResetError(
+                      "La contraseña es inválida o no está definida.",
+                    );
                     return;
                   }
 
                   try {
-                    const response = await fetch(`${URL_API}/api/users/${userToEdit.id}/reset-password`, {
-                      method: 'PUT',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: token,
+                    const response = await fetch(
+                      `${URL_API}/api/users/${userToEdit.id}/reset-password`,
+                      {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: token,
+                        },
+                        body: JSON.stringify({ newPassword }),
                       },
-                      body: JSON.stringify({ newPassword }),
-                    });
+                    );
 
-                    const data = await response.json()
+                    const data = await response.json();
 
                     if (!response.ok) {
-
                       if (data && data.errors) {
                         const mensaje = Array.isArray(data.errors)
-                          ? data.errors.map(e => e.msg || e.message).join(', ')
+                          ? data.errors
+                              .map((e) => e.msg || e.message)
+                              .join(", ")
                           : data.errors.message || JSON.stringify(data.errors);
 
                         setPasswordResetError(mensaje);
                       } else {
-                        setPasswordResetError(data.message || 'Error desconocido al restablecer contraseña.');
+                        setPasswordResetError(
+                          data.message ||
+                            "Error desconocido al restablecer contraseña.",
+                        );
                       }
-                      return
+                      return;
                     }
 
-                    toast.success('Contraseña restablecida correctamente');
+                    toast.success("Contraseña restablecida correctamente");
                     setResetPasswordModal(false);
-                    setNewPassword('');
-                    setConfirmPassword('');
-                    setPasswordResetError('');
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setPasswordResetError("");
                   } catch (err) {
-                    setPasswordResetError('No se pudo restablecer la contraseña.' + err.message);
+                    setPasswordResetError(
+                      "No se pudo restablecer la contraseña." + err.message,
+                    );
                   }
                 }}
               >
@@ -547,11 +563,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
           </Grid>
         </DialogContent>
       </Dialog>
-
-
     </div>
-
-
   );
 };
 
