@@ -126,6 +126,8 @@ const PermissionList = () => {
   const [orderBy, setOrderBy] = useState("id");
   const [order, setOrder] = useState("asc");
 
+  const [cancelDialog, setCancelDialog] = useState(false);
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     type: "success",
@@ -968,21 +970,6 @@ const PermissionList = () => {
           );
         }}
         permissionToEdit={editPermission}
-      />
-
-      <ConfirmDialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        onConfirm={handleDialogConfirmation}
-        type={cancelDialog ? "warning" : "info"}
-        title={cancelDialog ? "Cancelar registro" : "Confirmar guardado"}
-        message={
-          cancelDialog
-            ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
-            : "¿Está seguro que desea guardar esta sucursal?"
-        }
-        confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
-        cancelText="No"
       />
 
       <Snackbar

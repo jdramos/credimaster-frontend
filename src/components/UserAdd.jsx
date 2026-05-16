@@ -408,6 +408,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
           {alert.alertMessage}
         </Alert>
       </Snackbar>
+
       <ConfirmDialog
         open={openDialog}
         onClose={() => setOpenDialog(false)}

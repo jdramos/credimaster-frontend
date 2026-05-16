@@ -6,6 +6,7 @@ import EmptyNotice from "./EmptyNotice";
 import Alert from "@mui/material/Alert";
 import { Box, Chip, IconButton, Tooltip } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import ConfirmDialog from "./ConfirmDialog";
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/risks";
 const token = process.env.REACT_APP_API_TOKEN;
@@ -24,39 +25,38 @@ export default function RiskList() {
       { field: "to_range", headerName: "Hasta", width: 110 },
       { field: "value", headerName: "Valor", width: 110 },
       {
-  field: "color",
-  headerName: "Color",
-  width: 120,
-  sortable: false,
-  renderCell: (params) => {
-    const color = params.value;
+        field: "color",
+        headerName: "Color",
+        width: 120,
+        sortable: false,
+        renderCell: (params) => {
+          const color = params.value;
 
-    if (!color) return null;
+          if (!color) return null;
 
-    return (
-		  <Box
-        sx={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",      // 👈 centra vertical
-          justifyContent: "center",  // 👈 centra horizontal
-        }}
-      >
-        
-      <Box
-        sx={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          backgroundColor: color,
-          border: "1px solid #ccc",
-        }}
-      />
-	  </Box>
-    );
-  },
-},
+          return (
+            <Box
+              sx={{
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center", // 👈 centra vertical
+                justifyContent: "center", // 👈 centra horizontal
+              }}
+            >
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  backgroundColor: color,
+                  border: "1px solid #ccc",
+                }}
+              />
+            </Box>
+          );
+        },
+      },
       {
         field: "edit",
         headerName: "Editar",
@@ -77,7 +77,7 @@ export default function RiskList() {
         ),
       },
     ],
-    []
+    [],
   );
 
   const fetchRisks = async () => {
@@ -104,7 +104,10 @@ export default function RiskList() {
 
   if (error) {
     return (
-      <div className="alert alert-danger mt-5 shadow-lg p-3 mb-5 d-flex align-items-center" role="alert">
+      <div
+        className="alert alert-danger mt-5 shadow-lg p-3 mb-5 d-flex align-items-center"
+        role="alert"
+      >
         <div>{error}</div>
       </div>
     );
@@ -117,7 +120,13 @@ export default function RiskList() {
   return (
     <Box sx={{ width: "100%", mt: 3 }}>
       <Alert variant="filled" icon={false} severity="info" sx={{ mb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <h2 style={{ margin: 0 }}>Listado de riesgos</h2>
           <AddCircle goTo="/riesgos/agregar" />
         </Box>
@@ -129,7 +138,9 @@ export default function RiskList() {
           columns={columns}
           loading={loading}
           pageSizeOptions={[10, 25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10, page: 0 } },
+          }}
           disableRowSelectionOnClick
           getRowId={(r) => r.id}
         />
