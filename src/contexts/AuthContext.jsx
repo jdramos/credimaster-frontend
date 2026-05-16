@@ -5,60 +5,82 @@ import { UserContext } from "./UserContext";
 import API from "../api";
 
 const AuthContext = createContext();
+
 const url = "/api/login";
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState(null);
+
   const { setPermissions, setRole, setUserBranches, setUser, setFullName } =
     useContext(UserContext);
 
   const login = async (username, password) => {
     try {
       const res = await API.post(url, {
-        body: JSON.stringify({ username, password }), // Verifica que esto está correcto
+        username,
+        password,
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const { token, permissions, role_id, branches, user_id, full_name } =
-          data;
-        setToken(token);
+      const {
+        token,
+        permissions,
+        role_id,
+        branches,
+        user_id,
+        full_name,
+        message,
+      } = res.data;
 
-        setPermissions(permissions);
-
-        setRole(role_id);
-
-        setIsAuthenticated(true);
-
-        setUserBranches(branches);
-
-        setUser(user_id);
-        setFullName(full_name);
-
-        return true;
-      } else {
-        const errorData = await res.json();
-        toast.error(`Login failed: ${errorData.message}`);
+      if (!token) {
+        toast.error(message || "Usuario o contraseña incorrectos");
+        return false;
       }
+
+      setToken(token);
+      setPermissions(permissions || []);
+      setRole(role_id);
+      setUserBranches(branches || []);
+      setUser(user_id);
+      setFullName(full_name);
+      setIsAuthenticated(true);
+
+      localStorage.setItem("token", token);
+
+      return true;
     } catch (err) {
       console.error(err);
-      //alert('Error logging in');
+
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.errors ||
+        "Error al iniciar sesión";
+
+      toast.error(message);
+      return false;
     }
   };
 
   const logout = () => {
     setToken(null);
     setIsAuthenticated(false);
+
+    setPermissions([]);
+    setRole(null);
+    setUserBranches([]);
+    setUser(null);
+    setFullName("");
+
+    localStorage.removeItem("token");
   };
 
   return (
-    <div>
-      <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <>
+      <AuthContext.Provider value={{ isAuthenticated, token, login, logout }}>
         {children}
       </AuthContext.Provider>
       <ToastContainer />
-    </div>
+    </>
   );
 };
 
