@@ -1,14 +1,21 @@
 import React, { useEffect, useState, useContext } from "react";
 import AddCircle from "./AddCircle";
 import {
-  Box,
-  TextField,
-  MenuItem,
   Alert,
-  Snackbar,
-  CircularProgress,
+  Box,
   Button,
+  Chip,
+  CircularProgress,
+  MenuItem,
+  Paper,
+  Snackbar,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
+import CreditScoreOutlinedIcon from "@mui/icons-material/CreditScoreOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
@@ -18,8 +25,18 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import BranchSelect from "./BranchSelect";
 import LinearProgress from "@mui/material/LinearProgress";
-import Typography from "@mui/material/Typography";
 import LoanModificationModal from "./Loan/LoanModificationModal";
+
+const BAC = {
+  primary: "#0057B8",
+  primaryDark: "#003E8A",
+  soft: "#EAF2FF",
+  bg: "#F6F8FC",
+  border: "#D8E2F0",
+  text: "#1F2937",
+  muted: "#6B7280",
+  white: "#FFFFFF",
+};
 
 const API_URL = process.env.REACT_APP_API_BASE_URL + "/api/loans";
 const token = process.env.REACT_APP_API_TOKEN;
@@ -28,17 +45,21 @@ const headers = { Authorization: token };
 const getPaymentPercent = (row) => {
   const approvalStatus = String(row.approval_status || "").toUpperCase();
   if (!["APPROVED", "APROBADO"].includes(approvalStatus)) return 0;
+
   const original = Number(row.amount || 0);
   const balance = Number(row.current_balance || 0);
+
   if (original <= 0) return 0;
+
   const paid = original - balance;
   const percent = (paid / original) * 100;
+
   return Math.max(0, Math.min(100, percent));
 };
 
 const columns = [
   { accessorKey: "id", header: "Crédito nro.", size: 10 },
-  { accessorKey: "customer_id", header: "Codigo Cliente", size: 10 },
+  { accessorKey: "customer_id", header: "Código Cliente", size: 10 },
   { accessorKey: "customer_identification", header: "Cédula", size: 50 },
   { accessorKey: "customer_name", header: "Nombre del cliente", size: 80 },
   { accessorKey: "date", header: "Fecha solicitud", size: 150 },
@@ -71,7 +92,7 @@ const columns = [
               mb: 0.5,
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700 }}>
               {percent.toFixed(0)}%
             </Typography>
           </Box>
@@ -82,15 +103,15 @@ const columns = [
             sx={{
               height: 8,
               borderRadius: 5,
-              backgroundColor: "#E3F2FD",
+              bgcolor: BAC.soft,
               "& .MuiLinearProgress-bar": {
-                backgroundColor:
+                bgcolor:
                   percent >= 100
                     ? "#2E7D32"
                     : percent >= 70
-                      ? "#1565C0"
+                      ? BAC.primaryDark
                       : percent >= 40
-                        ? "#42A5F5"
+                        ? BAC.primary
                         : "#90CAF9",
               },
             }}
@@ -115,11 +136,27 @@ const exportToExcel = (data) => {
 
   const worksheet = XLSX.utils.json_to_sheet(formattedData);
   const workbook = XLSX.utils.book_new();
+
   XLSX.utils.book_append_sheet(workbook, worksheet, "Créditos");
 
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const file = new Blob([excelBuffer], { type: "application/octet-stream" });
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+  });
+
+  const file = new Blob([excelBuffer], {
+    type: "application/octet-stream",
+  });
+
   saveAs(file, `creditos_${dayjs().format("YYYY-MM-DD")}.xlsx`);
+};
+
+const inputSx = {
+  minWidth: 220,
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 2,
+    bgcolor: BAC.white,
+  },
 };
 
 const LoanList = () => {
@@ -144,6 +181,7 @@ const LoanList = () => {
 
   const fetchApi = async () => {
     setLoading(true);
+
     try {
       const params = new URLSearchParams({
         page: page + 1,
@@ -154,15 +192,18 @@ const LoanList = () => {
       });
 
       if (branchId) params.append("branch_id", branchId);
-      if (startDate)
+      if (startDate) {
         params.append("startDate", dayjs(startDate).format("YYYY-MM-DD"));
-      if (endDate)
+      }
+      if (endDate) {
         params.append("endDate", dayjs(endDate).format("YYYY-MM-DD"));
+      }
       if (search) params.append("search", search);
 
       const response = await fetch(`${API_URL}?${params.toString()}`, {
         headers,
       });
+
       const json = await response.json();
 
       if (!response.ok) {
@@ -173,6 +214,7 @@ const LoanList = () => {
       setTotal(json.total);
     } catch (error) {
       console.error("Error al obtener créditos:", error);
+
       setAlert({
         open: true,
         type: "error",
@@ -226,6 +268,7 @@ const LoanList = () => {
 
   const handleModificationSuccess = async () => {
     await fetchApi();
+
     setAlert({
       open: true,
       type: "success",
@@ -234,104 +277,235 @@ const LoanList = () => {
   };
 
   return (
-    <Box>
-      <Alert variant="filled" icon={false} severity="info" className="mt-5">
-        <h2>
-          Listado de créditos.
-          {(role === 1 || permissions.includes("creditos.crear")) && (
-            <AddCircle goTo="/creditos/agregar" />
+    <>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          overflow: "hidden",
+          border: `1px solid ${BAC.border}`,
+          bgcolor: BAC.white,
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+        }}
+      >
+        <Box
+          sx={{
+            px: 3,
+            py: 2.2,
+            background: `linear-gradient(135deg, ${BAC.primaryDark}, ${BAC.primary})`,
+            color: BAC.white,
+          }}
+        >
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            spacing={2}
+          >
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 2,
+                  bgcolor: "rgba(255,255,255,0.16)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CreditScoreOutlinedIcon />
+              </Box>
+
+              <Box>
+                <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                  Listado de créditos
+                </Typography>
+                <Typography fontSize={13} sx={{ opacity: 0.85 }}>
+                  Consulta, seguimiento y administración de créditos
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip
+                label={`${total || data.length} registros`}
+                size="small"
+                sx={{
+                  bgcolor: "rgba(255,255,255,0.18)",
+                  color: BAC.white,
+                  fontWeight: 700,
+                  border: "1px solid rgba(255,255,255,0.25)",
+                }}
+              />
+
+              {(role === 1 || permissions.includes("creditos.crear")) && (
+                <AddCircle goTo="/creditos/agregar" />
+              )}
+            </Stack>
+          </Stack>
+        </Box>
+
+        <Box sx={{ p: 2.5 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 2,
+              borderRadius: 2.5,
+              border: `1px solid ${BAC.border}`,
+              bgcolor: BAC.bg,
+            }}
+          >
+            <Stack
+              direction="row"
+              flexWrap="wrap"
+              gap={1.5}
+              alignItems="center"
+            >
+              <TextField
+                size="small"
+                label="Buscar por nombre o cédula"
+                value={search}
+                onChange={(e) => {
+                  setPage(0);
+                  setSearch(e.target.value);
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <SearchOutlinedIcon
+                      sx={{ color: BAC.muted, mr: 1, fontSize: 20 }}
+                    />
+                  ),
+                }}
+                sx={{
+                  ...inputSx,
+                  minWidth: { xs: "100%", sm: 280 },
+                }}
+              />
+
+              <TextField
+                select
+                size="small"
+                label="Filtrar por estado"
+                value={statusFilter}
+                onChange={(e) => {
+                  setPage(0);
+                  setStatusFilter(e.target.value);
+                }}
+                sx={{ ...inputSx, minWidth: 200 }}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="APROBADO">Aprobado</MenuItem>
+                <MenuItem value="RECHAZADO">Rechazado</MenuItem>
+                <MenuItem value="PENDIENTE">Pendiente</MenuItem>
+              </TextField>
+
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Desde"
+                  value={startDate}
+                  onChange={(newValue) => {
+                    setPage(0);
+                    setStartDate(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      sx={{ ...inputSx, minWidth: 170 }}
+                    />
+                  )}
+                />
+
+                <DatePicker
+                  label="Hasta"
+                  value={endDate}
+                  onChange={(newValue) => {
+                    setPage(0);
+                    setEndDate(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      sx={{ ...inputSx, minWidth: 170 }}
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+
+              <BranchSelect
+                value={branchId}
+                selected={branchId}
+                size="small"
+                label="Sucursal"
+                onChange={(e) => {
+                  setPage(0);
+                  setBranchId(e.target.value);
+                }}
+                sx={{
+                  ...inputSx,
+                  minWidth: 220,
+                }}
+              />
+
+              <Button
+                variant="contained"
+                onClick={() => exportToExcel(data)}
+                startIcon={<FileDownloadOutlinedIcon />}
+                sx={{
+                  height: 40,
+                  bgcolor: BAC.primary,
+                  borderRadius: 2,
+                  fontWeight: 800,
+                  textTransform: "none",
+                  boxShadow: "none",
+                  "&:hover": {
+                    bgcolor: BAC.primaryDark,
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Exportar
+              </Button>
+            </Stack>
+          </Paper>
+
+          {loading ? (
+            <Box
+              sx={{
+                height: 360,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CircularProgress sx={{ color: BAC.primary }} />
+            </Box>
+          ) : (
+            <LoanListDataTable
+              data={data}
+              columns={columns}
+              route="loans"
+              onUpdate={handleUpdateLoanInList}
+              onModifyLoan={handleOpenModificationModal}
+              rowCount={total}
+              page={page}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={(v) => {
+                setPage(0);
+                setPageSize(v);
+              }}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              setSortBy={setSortBy}
+              setSortOrder={setSortOrder}
+            />
           )}
-        </h2>
-      </Alert>
-
-      <Box display="flex" flexWrap="wrap" gap={1} mt={1} mb={1}>
-        <TextField
-          size="large"
-          label="Buscar por nombre o cédula"
-          value={search}
-          onChange={(e) => {
-            setPage(0);
-            setSearch(e.target.value);
-          }}
-          sx={{ width: 300 }}
-        />
-
-        <TextField
-          select
-          size="large"
-          label="Filtrar por estado"
-          sx={{ width: 200 }}
-          value={statusFilter}
-          onChange={(e) => {
-            setPage(0);
-            setStatusFilter(e.target.value);
-          }}
-        >
-          <MenuItem value="">Todos</MenuItem>
-          <MenuItem value="APROBADO">Aprobado</MenuItem>
-          <MenuItem value="RECHAZADO">Rechazado</MenuItem>
-          <MenuItem value="PENDIENTE">Pendiente</MenuItem>
-        </TextField>
-
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="Desde"
-            value={startDate}
-            onChange={(newValue) => setStartDate(newValue)}
-            renderInput={(params) => <TextField {...params} />}
-          />
-
-          <DatePicker
-            label="Hasta"
-            value={endDate}
-            onChange={(newValue) => setEndDate(newValue)}
-            renderInput={(params) => <TextField {...params} />}
-          />
-        </LocalizationProvider>
-
-        <BranchSelect
-          value={branchId}
-          size="large"
-          label="Seleccione Sucursal"
-          onChange={(e) => {
-            setPage(0);
-            setBranchId(e.target.value);
-          }}
-        />
-
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => exportToExcel(data)}
-          sx={{ height: 40 }}
-        >
-          Exportar a Excel
-        </Button>
-      </Box>
-
-      {loading ? (
-        <CircularProgress />
-      ) : (
-        <LoanListDataTable
-          data={data}
-          columns={columns}
-          route="loans"
-          onUpdate={handleUpdateLoanInList}
-          onModifyLoan={handleOpenModificationModal}
-          rowCount={total}
-          page={page}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={(v) => {
-            setPage(0);
-            setPageSize(v);
-          }}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          setSortBy={setSortBy}
-          setSortOrder={setSortOrder}
-        />
-      )}
+        </Box>
+      </Paper>
 
       <LoanModificationModal
         open={openModificationModal}
@@ -354,7 +528,7 @@ const LoanList = () => {
           {alert.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   );
 };
 

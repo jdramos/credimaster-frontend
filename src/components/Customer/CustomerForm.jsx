@@ -24,7 +24,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import GroupsIcon from "@mui/icons-material/Groups";
-import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import DescriptionIcon from "@mui/icons-material/Description";
 import SaveIcon from "@mui/icons-material/Save";

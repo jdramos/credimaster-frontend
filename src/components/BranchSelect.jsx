@@ -1,92 +1,105 @@
-import React, { useContext, useEffect, useState } from "react";
-import InputLabel from "@mui/material/InputLabel";
-import { FormHelperText } from "@mui/material";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "../contexts/UserContext";
 import {
-  FormControl,
-  MenuItem,
   Autocomplete,
+  FormControl,
   TextField,
   Typography,
+  Box,
 } from "@mui/material";
-import { PropaneSharp } from "@mui/icons-material";
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/branches";
 const token = process.env.REACT_APP_API_TOKEN;
 const headers = { Authorization: token };
 
-const BranchSelect = (props) => {
-  const [data, setData] = useState([]); // State to store fetched data
-  const [error, setError] = useState(null); // State for error handling
-  const [selectAll, setSelectAll] = useState(false); // State to track "Select All"
-  const [selectedBranches, setSelectedBranches] = useState([]); // Control the selected value
-  const { userBranches } = useContext(UserContext);
+const BranchSelect = ({
+  value = "",
+  selected = "",
+  onChange,
+  name = "branch_id",
+  label = "Sucursal",
+  size = "small",
+  disabled = false,
+  error = false,
+  helperText = "",
+  fullWidth = true,
+}) => {
+  const [data, setData] = useState([]);
+  const [fetchError, setFetchError] = useState("");
+  const { userBranches = [], role } = useContext(UserContext);
+
+  const currentValue = value ?? selected ?? "";
 
   useEffect(() => {
     const fetchApi = async () => {
       try {
+        setFetchError("");
+
         const response = await fetch(url, { headers });
 
         if (!response.ok) {
-          throw new Error("Failed to retrieve data.");
+          throw new Error("No se pudieron cargar las sucursales.");
         }
+
         const jsonData = await response.json();
+
+        const allowedBranches = userBranches.map((id) => Number(id));
+
         const filteredData = jsonData.filter((branch) =>
-          userBranches.includes(branch.id),
+          allowedBranches.includes(Number(branch.id)),
         );
-        setData(filteredData); // Update the state with filtered data
-      } catch (error) {
-        console.error(error);
-        setError("Failed to retrieve data. Please try again later.");
+
+        setData(filteredData);
+      } catch (err) {
+        console.error(err);
+        setFetchError("No se pudieron cargar las sucursales.");
       }
     };
 
-    fetchApi(); // Call the fetchApi function when the component mounts
+    fetchApi();
   }, [userBranches]);
 
+  const selectedOption = useMemo(() => {
+    return (
+      data.find((branch) => Number(branch.id) === Number(currentValue)) || null
+    );
+  }, [data, currentValue]);
+
   return (
-    <FormControl sx={{ mt: 0, ml: 1, minWidth: 200 }}>
+    <FormControl fullWidth={fullWidth} sx={{ mt: 0 }}>
       <Autocomplete
-        size={props.size}
+        size={size}
         fullWidth
+        disabled={disabled}
         options={data}
-        getOptionLabel={(option) => `${option.name} `}
-        filterOptions={(options, state) =>
-          options.filter((option) =>
-            option.name.toLowerCase().includes(state.inputValue.toLowerCase()),
-          )
+        value={selectedOption}
+        isOptionEqualToValue={(option, value) =>
+          Number(option.id) === Number(value.id)
         }
+        getOptionLabel={(option) => option?.name || ""}
         onChange={(event, newValue) => {
-          const syntheticEvent = {
+          onChange?.({
             target: {
-              name: props.name,
+              name,
               value: newValue ? newValue.id : "",
               municipality_id: newValue ? newValue.municipality_id : "",
             },
-          };
-          props.onChange(syntheticEvent);
+          });
         }}
         renderInput={(params) => (
           <TextField
             {...params}
-            label={props.label}
-            variant="outlined"
-            error={!!error} // Highlight if there's an error
-            helperText={error || ""} // Display error message if it exists
+            label={label}
+            error={Boolean(error || fetchError)}
+            helperText={fetchError || helperText}
           />
         )}
         renderOption={(props, option) => (
-          <MenuItem {...props} key={option.id} value={option.id}>
-            <div>
-              <Typography variant="body1">{option.name}</Typography>
-            </div>
-          </MenuItem>
+          <Box component="li" {...props} key={option.id}>
+            <Typography variant="body2">{option.name}</Typography>
+          </Box>
         )}
-        error={error}
       />
-      {props.error === 0 ? null : (
-        <span className="form-text text-danger">{props.error}</span>
-      )}
     </FormControl>
   );
 };
