@@ -66,6 +66,8 @@ import BalancesDashboard from "./components/dashboard/BalancesDashboard";
 import CreditFileTemplatePage from "./components/credit-files/CreditFileTemplatePage";
 import ConamiDefaultsManager from "./components/conami/ConamiDefaultsManager";
 import AppLayoutMenu from "./components/AppLayoutMenu";
+import IccReportPage from "./pages/reports/conami/IccReportPage";
+import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
 
 function PageContainer({ children }) {
   return (
@@ -506,6 +508,10 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
+
+          <Route path="/conami/icc" element={<IccGenerator />} />
+
+          <Route path="/reports/conami/icc" element={<IccReportPage />} />
         </Routes>
       </AppLayoutMenu>
     </Box>

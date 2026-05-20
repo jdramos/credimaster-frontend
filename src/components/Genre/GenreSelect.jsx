@@ -8,6 +8,7 @@ import {
 import API from "../../api";
 
 export default function GenreSelect({
+  name = "id_genero",
   value,
   onChange,
   label = "Género",
@@ -73,7 +74,14 @@ export default function GenreSelect({
         fullWidth={fullWidth}
         isOptionEqualToValue={(opt, val) => Number(opt.id) === Number(val.id)}
         getOptionLabel={(opt) => (opt ? `${opt.id} - ${opt.name}` : "")}
-        onChange={(_, newVal) => onChange?.(newVal ? newVal.id : "")}
+        onChange={(_, newVal) =>
+          onChange?.({
+            target: {
+              name,
+              value: newVal ? Number(newVal.id) : "",
+            },
+          })
+        }
         clearOnBlur={false}
         renderInput={(params) => (
           <TextField

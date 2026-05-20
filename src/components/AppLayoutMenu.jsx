@@ -47,6 +47,7 @@ const sectionLabels = {
   users: "Usuarios y permisos",
   queries: "Consultas",
   conami_tables: "Tablas CONAMI",
+  reports: "Reportes",
 };
 
 const menuItems = {
@@ -106,6 +107,19 @@ const menuItems = {
       label: "Tablas CONAMI",
       iconName: "FaMoneyCheckAlt",
       to: "/conami/tablas",
+    },
+  ],
+
+  reports: [
+    {
+      label: "ICC - CONAMI",
+      iconName: "FaFileInvoiceDollar",
+      to: "/reports/conami/icc",
+    },
+    {
+      label: "ICC - CONAMI (generador)",
+      iconName: "FaFileInvoice",
+      to: "/conami/icc",
     },
   ],
 };
