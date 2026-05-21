@@ -34,6 +34,7 @@ const sectionLabels = {
   users: "Usuarios y permisos",
   queries: "Consultas",
   conami_tables: "Tablas CONAMI",
+  reports: "Reportes",
 };
 
 const menuItems = {
@@ -48,8 +49,16 @@ const menuItems = {
   management: [
     { label: "Créditos", iconName: "FaMoneyBillWaveAlt", to: "/creditos" },
     { label: "Pagos", iconName: "FaMoneyBillWaveAlt", to: "/pagos" },
-    { label: "Crear saldos", iconName: "FaMoneyBillWaveAlt", to: "/crear-saldos" },
-    { label: "Políticas de crédito", iconName: "FaMoneyBillWaveAlt", to: "/creditos/politicas" },
+    {
+      label: "Crear saldos",
+      iconName: "FaMoneyBillWaveAlt",
+      to: "/crear-saldos",
+    },
+    {
+      label: "Políticas de crédito",
+      iconName: "FaMoneyBillWaveAlt",
+      to: "/creditos/politicas",
+    },
   ],
   users: [
     { label: "Usuarios", iconName: "FaUser", to: "/usuarios" },
@@ -63,13 +72,32 @@ const menuItems = {
     { label: "Sin riesgo", iconName: "FaChartBar", to: "/sinriesgos" },
   ],
   conami_tables: [
-    { label: "Actividad economica", iconName: "FaChartBar", to: "/conami/actividad-economica" },
+    {
+      label: "Actividad economica",
+      iconName: "FaChartBar",
+      to: "/conami/actividad-economica",
+    },
     { label: "Géneros", iconName: "FaChartBar", to: "/generos" },
-    { label: "Estado civil", iconName: "FaChartBar", to: "/conami/estado-civil" },
+    {
+      label: "Estado civil",
+      iconName: "FaChartBar",
+      to: "/conami/estado-civil",
+    },
+  ],
+
+  reports: [
+    { label: "ICC", iconName: "FaChartBar", to: "/reports/conami/icc" },
   ],
 };
 
-function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode }) {
+function Sidebar({
+  variant,
+  open,
+  onClose,
+  drawerWidth,
+  themeMode,
+  setThemeMode,
+}) {
   const [menuStates, setMenuStates] = useState({
     favorites: true,
     main: false,
@@ -89,7 +117,9 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
   const { favorites, addFavorite, removeFavorite } = useContext(UserContext);
 
   const matchesSearch = (text) =>
-    String(text || "").toLowerCase().includes(String(searchTerm || "").toLowerCase());
+    String(text || "")
+      .toLowerCase()
+      .includes(String(searchTerm || "").toLowerCase());
 
   const hasVisibleItems = (section) =>
     (menuItems[section] || []).some((item) => matchesSearch(item.label));
@@ -97,7 +127,8 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
   const isGroupOpen = (section) =>
     !searchTerm.trim() ? !!menuStates[section] : hasVisibleItems(section);
 
-  const isFavorite = (item) => item?.to && favorites.some((fav) => fav.route === item.to);
+  const isFavorite = (item) =>
+    item?.to && favorites.some((fav) => fav.route === item.to);
 
   const toggleMenu = (menu) => {
     if (searchTerm.trim()) return;
@@ -129,16 +160,19 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
     (items || [])
       .filter((item) => matchesSearch(item.label))
       .map((item, index) => (
-        <ListItem key={`${section}-${index}`} disablePadding sx={{ position: "relative" }}>
-          <ListItemButton
-            component={NavLink}
-            to={item.to}
-            className="bac-item"
-          >
+        <ListItem
+          key={`${section}-${index}`}
+          disablePadding
+          sx={{ position: "relative" }}
+        >
+          <ListItemButton component={NavLink} to={item.to} className="bac-item">
             <ListItemIcon className="bac-item-icon">
-              {React.createElement(FaIcons[item.iconName] || FaIcons.FaQuestionCircle, {
-                style: { fontSize: 18 },
-              })}
+              {React.createElement(
+                FaIcons[item.iconName] || FaIcons.FaQuestionCircle,
+                {
+                  style: { fontSize: 18 },
+                },
+              )}
             </ListItemIcon>
 
             <ListItemText
@@ -183,7 +217,9 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
         <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
           {/* Header/Search */}
           <Box className="bac-drawer-header">
-            <Typography sx={{ fontWeight: 950, color: "var(--bac-text)", mb: 1 }}>
+            <Typography
+              sx={{ fontWeight: 950, color: "var(--bac-text)", mb: 1 }}
+            >
               Menú
             </Typography>
 
@@ -212,26 +248,48 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
                 <ListItemIcon className="bac-item-icon">
                   <FaIcons.FaHome style={{ fontSize: 18 }} />
                 </ListItemIcon>
-                <ListItemText primary="Inicio" primaryTypographyProps={{ fontSize: 13.5 }} className="bac-item-text" />
+                <ListItemText
+                  primary="Inicio"
+                  primaryTypographyProps={{ fontSize: 13.5 }}
+                  className="bac-item-text"
+                />
               </ListItemButton>
             </ListItem>
 
             {/* Favoritos */}
             {favorites.length > 0 && (
               <>
-                <ListItemButton onClick={() => toggleMenu("favorites")} className="bac-section-btn">
+                <ListItemButton
+                  onClick={() => toggleMenu("favorites")}
+                  className="bac-section-btn"
+                >
                   <ListItemIcon className="bac-item-icon">
-                    <FaIcons.FaStar className="bac-star" style={{ fontSize: 18 }} />
+                    <FaIcons.FaStar
+                      className="bac-star"
+                      style={{ fontSize: 18 }}
+                    />
                   </ListItemIcon>
-                  <ListItemText primary="Favoritos" primaryTypographyProps={{ className: "bac-section-title" }} />
-                  {!searchTerm && (menuStates.favorites ? <ExpandLess /> : <ExpandMore />)}
+                  <ListItemText
+                    primary="Favoritos"
+                    primaryTypographyProps={{ className: "bac-section-title" }}
+                  />
+                  {!searchTerm &&
+                    (menuStates.favorites ? <ExpandLess /> : <ExpandMore />)}
                 </ListItemButton>
 
-                <Collapse in={isGroupOpen("favorites")} timeout="auto" unmountOnExit>
+                <Collapse
+                  in={isGroupOpen("favorites")}
+                  timeout="auto"
+                  unmountOnExit
+                >
                   <List component="div" disablePadding>
                     {renderMenuItems(
                       "favorites",
-                      favorites.map((f) => ({ ...f, to: f.route, iconName: f.icon }))
+                      favorites.map((f) => ({
+                        ...f,
+                        to: f.route,
+                        iconName: f.icon,
+                      })),
                     )}
                   </List>
                 </Collapse>
@@ -244,18 +302,28 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
             {Object.entries(menuItems).map(([section, items]) =>
               hasVisibleItems(section) ? (
                 <React.Fragment key={section}>
-                  <ListItemButton onClick={() => toggleMenu(section)} className="bac-section-btn">
+                  <ListItemButton
+                    onClick={() => toggleMenu(section)}
+                    className="bac-section-btn"
+                  >
                     <ListItemIcon className="bac-item-icon">
                       <FaIcons.FaBars style={{ fontSize: 16 }} />
                     </ListItemIcon>
                     <ListItemText
                       primary={sectionLabels[section] || section}
-                      primaryTypographyProps={{ className: "bac-section-title" }}
+                      primaryTypographyProps={{
+                        className: "bac-section-title",
+                      }}
                     />
-                    {!searchTerm && (isGroupOpen(section) ? <ExpandLess /> : <ExpandMore />)}
+                    {!searchTerm &&
+                      (isGroupOpen(section) ? <ExpandLess /> : <ExpandMore />)}
                   </ListItemButton>
 
-                  <Collapse in={isGroupOpen(section)} timeout="auto" unmountOnExit>
+                  <Collapse
+                    in={isGroupOpen(section)}
+                    timeout="auto"
+                    unmountOnExit
+                  >
                     <List component="div" disablePadding>
                       {renderMenuItems(section, items)}
                     </List>
@@ -263,7 +331,7 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
 
                   <Divider className="bac-divider" sx={{ my: 1 }} />
                 </React.Fragment>
-              ) : null
+              ) : null,
             )}
           </List>
         </Box>
@@ -274,7 +342,9 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
             control={
               <Switch
                 checked={themeMode === "dark"}
-                onChange={() => setThemeMode(themeMode === "light" ? "dark" : "light")}
+                onChange={() =>
+                  setThemeMode(themeMode === "light" ? "dark" : "light")
+                }
               />
             }
             label="Modo oscuro"
@@ -299,7 +369,9 @@ function Sidebar({ variant, open, onClose, drawerWidth, themeMode, setThemeMode 
           TransitionComponent={Grow}
         >
           <MenuItem onClick={handleToggleFavorite}>
-            {selectedItem && isFavorite(selectedItem) ? "Quitar de favoritos" : "Agregar a favoritos"}
+            {selectedItem && isFavorite(selectedItem)
+              ? "Quitar de favoritos"
+              : "Agregar a favoritos"}
           </MenuItem>
         </Menu>
       </Drawer>

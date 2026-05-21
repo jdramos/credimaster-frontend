@@ -73,6 +73,8 @@ import TrialBalance from "./components/accounting/TrialBalance";
 import IncomeStatement from "./components/accounting/IncomeStatement";
 import BalanceSheet from "./components/accounting/BalanceSheet";
 import PostingRuns from "./components/accounting/PostingRuns";
+import IccReportPage from "./pages/reports/conami/IccReportPage";
+import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
 
 function PageContainer({ children }) {
   return (
@@ -533,6 +535,10 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
+
+          <Route path="/conami/icc" element={<IccGenerator />} />
+
+          <Route path="/reports/conami/icc" element={<IccReportPage />} />
         </Routes>
       </AppLayoutMenu>
     </Box>

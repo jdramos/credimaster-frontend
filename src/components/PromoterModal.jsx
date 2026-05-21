@@ -16,6 +16,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import BranchSelect from "./BranchSelect";
+import TipoDocumentoSelect from "./TipoDocumentoSelect";
+import GenreSelect from "./Genre/GenreSelect";
 
 const BAC = {
   primary: "#0057B8",
@@ -35,6 +37,8 @@ const initialForm = {
   id: null,
   name: "",
   identification: "",
+  id_tipo_documento: 1,
+  id_genero: "",
   telephone: "",
   branch_id: "",
 };
@@ -58,8 +62,22 @@ export default function PromoterModal({
         id: promoterSelected?.id ?? null,
         name: promoterSelected?.name ?? "",
         identification: promoterSelected?.identification ?? "",
+        id_tipo_documento:
+          promoterSelected?.id_tipo_documento !== null &&
+          promoterSelected?.id_tipo_documento !== undefined
+            ? Number(promoterSelected.id_tipo_documento)
+            : "",
+        id_genero:
+          promoterSelected?.id_genero !== null &&
+          promoterSelected?.id_genero !== undefined
+            ? Number(promoterSelected.id_genero)
+            : "",
         telephone: promoterSelected?.telephone ?? "",
-        branch_id: promoterSelected?.branch_id ?? "",
+        branch_id:
+          promoterSelected?.branch_id !== null &&
+          promoterSelected?.branch_id !== undefined
+            ? Number(promoterSelected.branch_id)
+            : "",
       });
 
       setErrors({});
@@ -72,6 +90,18 @@ export default function PromoterModal({
 
     if (!promoter.name?.trim()) {
       newErrors.name = "El nombre es requerido";
+    }
+
+    if (!promoter.identification?.trim()) {
+      newErrors.identification = "La identificación es requerida";
+    }
+
+    if (!promoter.id_tipo_documento) {
+      newErrors.id_tipo_documento = "Seleccione el tipo de documento";
+    }
+
+    if (promoter.id_genero === "" || promoter.id_genero === null) {
+      newErrors.id_genero = "Seleccione el género";
     }
 
     if (!promoter.branch_id || Number(promoter.branch_id) < 1) {
@@ -110,8 +140,10 @@ export default function PromoterModal({
         body: JSON.stringify({
           name: promoter.name,
           identification: promoter.identification,
+          id_tipo_documento: Number(promoter.id_tipo_documento),
+          id_genero: Number(promoter.id_genero),
           telephone: promoter.telephone,
-          branch_id: promoter.branch_id,
+          branch_id: promoter.branch_id ? Number(promoter.branch_id) : null,
         }),
       });
 
@@ -121,6 +153,7 @@ export default function PromoterModal({
         throw new Error(
           responseData?.errors?.[0]?.msg ||
             responseData?.errors?.[0] ||
+            responseData?.errors ||
             responseData?.message ||
             "No fue posible guardar el registro.",
         );
@@ -228,6 +261,8 @@ export default function PromoterModal({
             onChange={handleInputChange}
             size="small"
             fullWidth
+            error={Boolean(errors.identification)}
+            helperText={errors.identification}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -235,6 +270,38 @@ export default function PromoterModal({
               },
             }}
           />
+
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <TipoDocumentoSelect
+              label="Tipo de documento"
+              name="id_tipo_documento"
+              value={promoter.id_tipo_documento}
+              selected={promoter.id_tipo_documento}
+              onChange={handleInputChange}
+              size="small"
+              fullWidth
+              error={Boolean(errors.id_tipo_documento)}
+              helperText={errors.id_tipo_documento}
+            />
+
+            <GenreSelect
+              label="Género"
+              name="id_genero"
+              value={promoter.id_genero}
+              onChange={handleInputChange}
+              size="small"
+              fullWidth
+              required
+              error={Boolean(errors.id_genero)}
+              helperText={errors.id_genero}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  bgcolor: BAC.white,
+                },
+              }}
+            ></GenreSelect>
+          </Stack>
 
           <TextField
             label="Teléfono"
@@ -261,12 +328,6 @@ export default function PromoterModal({
             fullWidth
             error={Boolean(errors.branch_id)}
             helperText={errors.branch_id}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                bgcolor: BAC.white,
-              },
-            }}
           />
         </Stack>
       </DialogContent>
