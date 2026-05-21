@@ -47,11 +47,8 @@ const sectionLabels = {
   users: "Usuarios y permisos",
   queries: "Consultas",
   conami_tables: "Tablas CONAMI",
-<<<<<<< HEAD
   accounting: "CONTABILIDAD",
-=======
   reports: "Reportes",
->>>>>>> 9019da5664b8283cc14342287a01a589d5dd8267
 };
 
 const menuItems = {
@@ -113,7 +110,6 @@ const menuItems = {
       to: "/conami/tablas",
     },
   ],
-<<<<<<< HEAD
   accounting: [
     {
       label: "Catálogo de cuentas",
@@ -149,7 +145,8 @@ const menuItems = {
       label: "Contabilizar",
       iconName: "FaMagic",
       to: "/contabilidad/contabilizar",
-=======
+    },
+  ],
 
   reports: [
     {
@@ -161,7 +158,6 @@ const menuItems = {
       label: "ICC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/icc",
->>>>>>> 9019da5664b8283cc14342287a01a589d5dd8267
     },
   ],
 };
