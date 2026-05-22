@@ -181,6 +181,35 @@ const LoanAdd = () => {
     };
   }, [selectedEvaluation]);
 
+  const [financialEvaluationForm, setFinancialEvaluationForm] = useState({
+    evaluation_date: dayjs().format("YYYY-MM-DD"),
+    methodology: "INDIVIDUAL",
+
+    business_income: "",
+    salary_income: "",
+    other_income: "",
+
+    business_expenses: "",
+    family_expenses: "",
+    other_debts_installments: "",
+
+    proposed_installment: "",
+
+    years_in_business: "",
+    monthly_sales: "",
+    inventory_value: "",
+    business_location: "",
+
+    references_result: "FAVORABLE",
+    bureau_result: "NO_APLICA",
+
+    analyst_comment: "",
+    committee_comment: "",
+    change_reason: "",
+    version_no: 1,
+    is_current: 1,
+  });
+
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
@@ -651,6 +680,39 @@ const LoanAdd = () => {
     }));
   };
 
+  const saveDraft = async () => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        ...buildPayload(),
+        save_as_draft: true,
+      };
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showSnackbar(data?.message || "No se pudo guardar borrador", "error");
+        return;
+      }
+
+      showSnackbar("Borrador guardado correctamente", "success");
+    } catch (err) {
+      showSnackbar(err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const buildPayload = () => {
     return {
       customer_id: Number(loan.customer_id),
@@ -726,9 +788,12 @@ const LoanAdd = () => {
 
       if (!response.ok) {
         showSnackbar(
-          responseData?.error || "Error al guardar la solicitud.",
+          responseData?.message ||
+            responseData?.error ||
+            "Error al guardar la solicitud.",
           "error",
         );
+        setOpenDialog(false);
         return;
       }
 
@@ -1482,6 +1547,10 @@ const LoanAdd = () => {
           >
             Cancelar
           </Button>
+
+          <Button variant="outlined" onClick={() => saveDraft()}>
+            Guardar como borrador
+          </Button>
         </Box>
       </form>
 
@@ -1545,9 +1614,12 @@ const LoanAdd = () => {
             }}
           >
             <CustomerFinancialEvaluationTab
+              form={financialEvaluationForm}
+              setForm={setFinancialEvaluationForm}
               customerId={loan.customer_id}
               customerIdentification={loan.customer_identification}
               customerName={loan.customer_name}
+              loanId={loan.id}
             />
           </Paper>
         ) : (

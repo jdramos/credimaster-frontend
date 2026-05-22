@@ -32,6 +32,8 @@ import LoanDisburseDialog from "./LoanDisburseDialog";
 import LoanApprovalDialog from "./LoanApprovalDialog";
 import { loanApi } from "../../api/loanApi";
 import { approvalApi } from "../../api/approvalApi";
+import { useNavigate } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
 
 const money = (n) =>
   new Intl.NumberFormat("es-NI", {
@@ -41,6 +43,8 @@ const money = (n) =>
   }).format(Number(n || 0));
 
 export default function LoanList({ currentUserId = null }) {
+  const navigate = useNavigate();
+
   const [filters, setFilters] = useState({
     search: "",
     branch_id: "",
@@ -78,7 +82,11 @@ export default function LoanList({ currentUserId = null }) {
       setRows(data?.data || []);
       setTotal(Number(data?.total || 0));
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || "Error al cargar créditos.");
+      setError(
+        err?.response?.data?.error ||
+          err.message ||
+          "Error al cargar créditos.",
+      );
     } finally {
       setLoading(false);
     }
@@ -118,7 +126,11 @@ export default function LoanList({ currentUserId = null }) {
       setAmortizationRows(data || []);
       setOpenAmortization(true);
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || "Error al cargar amortización.");
+      setError(
+        err?.response?.data?.error ||
+          err.message ||
+          "Error al cargar amortización.",
+      );
     }
   };
 
@@ -128,7 +140,9 @@ export default function LoanList({ currentUserId = null }) {
       setSelectedLoan(loan);
       setOpenDisburse(true);
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || "Error al cargar crédito.");
+      setError(
+        err?.response?.data?.error || err.message || "Error al cargar crédito.",
+      );
     }
   };
 
@@ -141,59 +155,73 @@ export default function LoanList({ currentUserId = null }) {
       setSelectedLoan(null);
       loadData();
     } catch (err) {
-      setError(err?.response?.data?.error || err.message || "Error al desembolsar.");
+      setError(
+        err?.response?.data?.error || err.message || "Error al desembolsar.",
+      );
     } finally {
       setLoadingDisburse(false);
     }
   };
 
-const handleOpenApproval = async (loanId, mode) => {
-  try {
-    const [loan, approvals] = await Promise.all([
-      loanApi.getOne(loanId),
-      approvalApi.getByRequest(loanId),
-    ]);
+  const handleOpenApproval = async (loanId, mode) => {
+    try {
+      const [loan, approvals] = await Promise.all([
+        loanApi.getOne(loanId),
+        approvalApi.getByRequest(loanId),
+      ]);
 
-    const pendingApproval =
-      approvals.find(
-        (item) =>
-          String(item.approver_id) === String(currentUserId) &&
-          item.status === "PENDING"
-      ) ||
-      approvals.find((item) => item.status === "PENDING") ||
-      null;
+      const pendingApproval =
+        approvals.find(
+          (item) =>
+            String(item.approver_id) === String(currentUserId) &&
+            item.status === "PENDING",
+        ) ||
+        approvals.find((item) => item.status === "PENDING") ||
+        null;
 
-    setSelectedLoan(loan);
-    setSelectedApproval(pendingApproval);
-    setApprovalMode(mode);
-    setOpenApprovalDialog(true);
-  } catch (err) {
-    setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Error al cargar aprobación.");
-  }
-};
-
-const handleApprovalSubmit = async (payload) => {
-  try {
-    if (!selectedApproval?.id) {
-      throw new Error("No se encontró una aprobación pendiente para actualizar.");
+      setSelectedLoan(loan);
+      setSelectedApproval(pendingApproval);
+      setApprovalMode(mode);
+      setOpenApprovalDialog(true);
+    } catch (err) {
+      setError(
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err.message ||
+          "Error al cargar aprobación.",
+      );
     }
+  };
 
-    setLoadingApproval(true);
+  const handleApprovalSubmit = async (payload) => {
+    try {
+      if (!selectedApproval?.id) {
+        throw new Error(
+          "No se encontró una aprobación pendiente para actualizar.",
+        );
+      }
 
-    await approvalApi.updateStatus(selectedApproval.id, payload);
+      setLoadingApproval(true);
 
-    setOpenApprovalDialog(false);
-    setSelectedApproval(null);
-    setSelectedLoan(null);
-    setApprovalMode(null);
+      await approvalApi.updateStatus(selectedApproval.id, payload);
 
-    await loadData();
-  } catch (err) {
-    setError(err?.response?.data?.error || err?.response?.data?.message || err.message || "Error actualizando aprobación.");
-  } finally {
-    setLoadingApproval(false);
-  }
-};
+      setOpenApprovalDialog(false);
+      setSelectedApproval(null);
+      setSelectedLoan(null);
+      setApprovalMode(null);
+
+      await loadData();
+    } catch (err) {
+      setError(
+        err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          err.message ||
+          "Error actualizando aprobación.",
+      );
+    } finally {
+      setLoadingApproval(false);
+    }
+  };
 
   return (
     <>
@@ -216,10 +244,19 @@ const handleApprovalSubmit = async (payload) => {
 
         <Divider sx={{ mb: 2 }} />
 
-        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+        {error ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        ) : null}
 
         <Box mb={2}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} useFlexGap flexWrap="wrap">
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1.5}
+            useFlexGap
+            flexWrap="wrap"
+          >
             <TextField
               size="small"
               label="Buscar"
@@ -246,6 +283,7 @@ const handleApprovalSubmit = async (payload) => {
               sx={{ minWidth: 180 }}
             >
               <MenuItem value="">Todos</MenuItem>
+              <MenuItem value="DRAFT">Borrador</MenuItem>
               <MenuItem value="SUBMITTED">Enviado</MenuItem>
               <MenuItem value="UNDER_REVIEW">En revisión</MenuItem>
               <MenuItem value="APPROVED">Aprobado</MenuItem>
@@ -303,7 +341,12 @@ const handleApprovalSubmit = async (payload) => {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={8} align="center">
-                    <Stack direction="row" justifyContent="center" spacing={1} alignItems="center">
+                    <Stack
+                      direction="row"
+                      justifyContent="center"
+                      spacing={1}
+                      alignItems="center"
+                    >
                       <CircularProgress size={22} />
                       <Typography>Cargando...</Typography>
                     </Stack>
@@ -329,7 +372,9 @@ const handleApprovalSubmit = async (payload) => {
                     </TableCell>
                     <TableCell>{row.request_date}</TableCell>
                     <TableCell align="right">{money(row.amount)}</TableCell>
-                    <TableCell align="right">{money(row.current_balance)}</TableCell>
+                    <TableCell align="right">
+                      {money(row.current_balance)}
+                    </TableCell>
                     <TableCell>
                       <LoanStatusChip status={row.status} />
                     </TableCell>
@@ -340,50 +385,85 @@ const handleApprovalSubmit = async (payload) => {
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Ver amortización">
-                        <IconButton size="small" onClick={() => handleViewAmortization(row.id)}>
-                          <CalculateIcon />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Aprobar">
-                        <span>
+                      {row.status === "DRAFT" ? (
+                        <Tooltip title="Abrir borrador">
                           <IconButton
                             size="small"
-                            color="success"
-                            onClick={() => handleOpenApproval(row.id, "approve")}
-                            disabled={!["SUBMITTED", "UNDER_REVIEW"].includes(row.status)}
+                            color="primary"
+                            onClick={() =>
+                              navigate(`/creditos/nuevo?draftId=${row.id}`)
+                            }
                           >
-                            <CheckCircleIcon />
+                            <EditIcon />
                           </IconButton>
-                        </span>
-                      </Tooltip>
+                        </Tooltip>
+                      ) : (
+                        <>
+                          <Tooltip title="Ver amortización">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewAmortization(row.id)}
+                            >
+                              <CalculateIcon />
+                            </IconButton>
+                          </Tooltip>
 
-                      <Tooltip title="Rechazar">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleOpenApproval(row.id, "reject")}
-                            disabled={!["SUBMITTED", "UNDER_REVIEW"].includes(row.status)}
-                          >
-                            <CancelIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
+                          <Tooltip title="Aprobar">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() =>
+                                  handleOpenApproval(row.id, "approve")
+                                }
+                                disabled={
+                                  ![
+                                    "SUBMITTED",
+                                    "UNDER_REVIEW",
+                                    "PENDING",
+                                  ].includes(row.status)
+                                }
+                              >
+                                <CheckCircleIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
 
-                      <Tooltip title="Desembolsar">
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="info"
-                            onClick={() => handleOpenDisburse(row.id)}
-                            disabled={row.status !== "APPROVED"}
-                          >
-                            <PaidIcon />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
+                          <Tooltip title="Rechazar">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() =>
+                                  handleOpenApproval(row.id, "reject")
+                                }
+                                disabled={
+                                  ![
+                                    "SUBMITTED",
+                                    "UNDER_REVIEW",
+                                    "PENDING",
+                                  ].includes(row.status)
+                                }
+                              >
+                                <CancelIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+
+                          <Tooltip title="Desembolsar">
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="info"
+                                onClick={() => handleOpenDisburse(row.id)}
+                                disabled={row.status !== "APPROVED"}
+                              >
+                                <PaidIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

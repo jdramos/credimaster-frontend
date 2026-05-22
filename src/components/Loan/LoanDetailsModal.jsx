@@ -265,6 +265,35 @@ const LoanDetailsModal = ({
   const [guaranteesTotal, setGuaranteesTotal] = useState(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
 
+  const [financialEvaluationForm, setFinancialEvaluationForm] = useState({
+    evaluation_date: dayjs().format("YYYY-MM-DD"),
+    methodology: "INDIVIDUAL",
+
+    business_income: "",
+    salary_income: "",
+    other_income: "",
+
+    business_expenses: "",
+    family_expenses: "",
+    other_debts_installments: "",
+
+    proposed_installment: "",
+
+    years_in_business: "",
+    monthly_sales: "",
+    inventory_value: "",
+    business_location: "",
+
+    references_result: "FAVORABLE",
+    bureau_result: "NO_APLICA",
+
+    analyst_comment: "",
+    committee_comment: "",
+    change_reason: "",
+    version_no: 1,
+    is_current: 1,
+  });
+
   const totalGuaranteeValue = useMemo(
     () => guarantees.reduce((sum, item) => sum + (Number(item.value) || 0), 0),
     [guarantees],
@@ -866,6 +895,8 @@ const LoanDetailsModal = ({
                     }
                   >
                     <CustomerFinancialEvaluationTab
+                      form={financialEvaluationForm}
+                      setForm={setFinancialEvaluationForm}
                       customerId={currentClientId}
                       loanId={loan?.id || null}
                       readOnly={!canEditFinancialEvaluation}
