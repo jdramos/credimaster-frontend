@@ -234,7 +234,7 @@ export default function LoanList({ currentUserId = null }) {
           mb={2}
         >
           <Typography variant="h6" fontWeight={700}>
-            Listado de créditos
+            Listado de créditossss
           </Typography>
 
           <Button startIcon={<RefreshIcon />} onClick={loadData}>

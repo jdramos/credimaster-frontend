@@ -509,7 +509,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
 
           <Route path="/contabilidad/cuentas" element={<AccountsList />} />
           <Route path="/contabilidad/libro-diario" element={<JournalList />} />
-          <Route path="/contabilidad/libro-diario" element={<JournalList />} />
           <Route path="/contabilidad/mayor" element={<LedgerList />} />
           <Route
             path="/contabilidad/balance-comprobacion"
@@ -524,6 +523,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={<BalanceSheet />}
           />
           <Route path="/contabilidad/contabilizar" element={<PostingRuns />} />
+          <Route path="/conami/icc" element={<IccGenerator />} />
+          <Route path="/reports/conami/icc" element={<IccReportPage />} />
 
           <Route
             path="*"
@@ -535,10 +536,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
-          <Route path="/conami/icc" element={<IccGenerator />} />
-
-          <Route path="/reports/conami/icc" element={<IccReportPage />} />
         </Routes>
       </AppLayoutMenu>
     </Box>

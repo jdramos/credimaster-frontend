@@ -25,6 +25,10 @@ import {
   Typography,
   Stack,
 } from "@mui/material";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import EditIcon from "@mui/icons-material/Edit";
+import DescriptionIcon from "@mui/icons-material/Description";
+import { useNavigate } from "react-router-dom";
 import Show from "@mui/icons-material/Visibility";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -38,7 +42,6 @@ import PaymentForm from "./PaymentForm";
 import AccountStatementModal from "./AccountStatementModal";
 import axios from "axios";
 import dayjs from "dayjs";
-import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import LoanModificationStatusChip from "./Loan/LoanModificationStatusChip";
 
@@ -64,7 +67,7 @@ function LoanListDataTable({
   setSortOrder,
 }) {
   const { permissions, role, user } = useContext(UserContext);
-
+  const navigate = useNavigate();
   const currentUserId = user?.id ?? null;
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -415,6 +418,11 @@ function LoanListDataTable({
           color: "secondary",
           icon: <CancelIcon fontSize="small" />,
         },
+        DRAFT: {
+          label: "Borrador",
+          color: "warning",
+          icon: <DescriptionIcon fontSize="small" />,
+        },
       };
 
       const chip = map[raw] || {
@@ -527,6 +535,8 @@ function LoanListDataTable({
               ["APPROVED", "APROBADO"].includes(rowApprovalStatus) &&
               pendingApprovals === 0;
 
+            const isDraft = rowStatus === "DRAFT";
+
             const canModifyNormativeRow =
               !!onModifyLoan &&
               (rowStatus === "DISBURSED" ||
@@ -543,111 +553,97 @@ function LoanListDataTable({
 
                 <TableCell>
                   <Box display="flex" gap={1} flexWrap="wrap">
-                    {canShow && (
-                      <Tooltip title="Mostrar detalles del préstamo">
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            handleShowDetails(
-                              row.id,
-                              row.customer_id,
-                              row.customer_identification,
-                            )
-                          }
-                        >
-                          <Show fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {/* 
-                      {canApprove && (
-                        <Tooltip title="Aprobar crédito">
-                          <span>
-                            <IconButton
-                              size="small"
-                              color="success"
-                              disabled={!canApproveRow}
-                              onClick={() => handleOpenApprovalDialog(row, "approve")}
-                            >
-                              <CheckCircleIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-
-                      {canReject && (
-                        <Tooltip title="Rechazar crédito">
-                          <span>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              disabled={!canApproveRow}
-                              onClick={() => handleOpenApprovalDialog(row, "reject")}
-                            >
-                              <CancelIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-
-                      {canDisburse && (
-                        <Tooltip title="Desembolsar crédito">
-                          <span>
-                            <IconButton
-                              size="small"
-                              color="info"
-                              disabled={!canDisburseRow}
-                              onClick={() => handleOpenDisburseDialog(row)}
-                            >
-                              <PaidIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      )}
-                  */}
-                    {canPay && (
-                      <Tooltip
-                        title={
-                          canPayRow
-                            ? "Agregar pago"
-                            : "Disponible solo cuando el crédito esté totalmente aprobado"
-                        }
-                      >
-                        <span>
-                          <IconButton
-                            size="small"
-                            color="success"
-                            disabled={!canPayRow}
-                            onClick={() => handleOpenPayment(row)}
-                          >
-                            <PaidIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
-
-                    {canStatement && (
-                      <Tooltip title="Estado de cuenta">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleOpenStatement(row)}
-                        >
-                          <ReceiptLongIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-
-                    {canModifyNormative && (
-                      <Tooltip title="Prórroga / Refinanciamiento / Reestructuración">
+                    {/* =========================================
+        BORRADOR
+    ========================================= */}
+                    {isDraft ? (
+                      <Tooltip title="Abrir borrador">
                         <IconButton
                           size="small"
                           color="warning"
-                          onClick={() => onModifyLoan(row)}
+                          onClick={() =>
+                            navigate(`/creditos/agregar?loanId=${row.id}`)
+                          }
                         >
-                          <AutorenewIcon fontSize="small" />
+                          <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                    ) : (
+                      <>
+                        {/* =========================================
+            VER DETALLE
+        ========================================= */}
+                        {canShow && (
+                          <Tooltip title="Mostrar detalles del préstamo">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleShowDetails(
+                                  row.id,
+                                  row.customer_id,
+                                  row.customer_identification,
+                                )
+                              }
+                            >
+                              <Show fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {/* =========================================
+            PAGOS
+        ========================================= */}
+                        {canPay && (
+                          <Tooltip
+                            title={
+                              canPayRow
+                                ? "Agregar pago"
+                                : "Disponible solo cuando el crédito esté totalmente aprobado"
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                disabled={!canPayRow}
+                                onClick={() => handleOpenPayment(row)}
+                              >
+                                <PaidIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+
+                        {/* =========================================
+            ESTADO DE CUENTA
+        ========================================= */}
+                        {canStatement && (
+                          <Tooltip title="Estado de cuenta">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleOpenStatement(row)}
+                            >
+                              <ReceiptLongIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {/* =========================================
+                              MODIFICACIONES
+                          ========================================= */}
+                        {canModifyNormative && canModifyNormativeRow && (
+                          <Tooltip title="Prórroga / Refinanciamiento / Reestructuración">
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() => onModifyLoan(row)}
+                            >
+                              <AutorenewIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </>
                     )}
                   </Box>
                 </TableCell>

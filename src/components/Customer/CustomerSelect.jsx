@@ -3,8 +3,6 @@ import {
   FormControl,
   Autocomplete,
   TextField,
-  Typography,
-  Box,
   CircularProgress,
 } from "@mui/material";
 import debounce from "lodash.debounce";
@@ -13,8 +11,15 @@ const baseUrl = process.env.REACT_APP_API_BASE_URL;
 const url = `${baseUrl}/api/customers/getCustomerList`;
 
 const token = process.env.REACT_APP_API_TOKEN;
-// Si tu backend exige token SIEMPRE, deja esto así:
 const headers = { Authorization: token };
+
+const buildLabel = (option) => {
+  if (!option) return "";
+
+  return `${option.id ?? ""} ${option.customer_name ?? ""} (${
+    option.identification ?? ""
+  })`.trim();
+};
 
 const CustomerSelect = (props) => {
   const [customers, setCustomers] = useState([]);
@@ -24,7 +29,6 @@ const CustomerSelect = (props) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const normalize = (json) => {
-    // ✅ soporta varias formas comunes
     const arr = Array.isArray(json)
       ? json
       : Array.isArray(json?.data)
@@ -34,6 +38,7 @@ const CustomerSelect = (props) => {
           : Array.isArray(json?.result)
             ? json.result
             : [];
+
     return arr;
   };
 
@@ -70,7 +75,44 @@ const CustomerSelect = (props) => {
   );
 
   useEffect(() => {
+    const value = props.value ?? props.selected ?? "";
+
+    if (!value) {
+      setSelectedCustomer(null);
+      setInputValue("");
+      return;
+    }
+
+    const currentId = selectedCustomer?.id ? String(selectedCustomer.id) : "";
+
+    if (currentId === String(value)) return;
+
+    const option = {
+      id: value,
+      customer_name: props.selectedLabel || props.customer_name || "",
+      identification:
+        props.selectedIdentification || props.customer_identification || "",
+      conami_id_actividad_economica: props.conami_id_actividad_economica || "",
+    };
+
+    setSelectedCustomer(option);
+    setInputValue(buildLabel(option));
+  }, [
+    props.value,
+    props.selected,
+    props.selectedLabel,
+    props.customer_name,
+    props.selectedIdentification,
+    props.customer_identification,
+    props.conami_id_actividad_economica,
+  ]);
+
+  useEffect(() => {
     const q = inputValue.trim();
+
+    if (selectedCustomer && buildLabel(selectedCustomer) === inputValue) {
+      return;
+    }
 
     if (q.length >= 1) {
       debouncedFetch(q);
@@ -80,35 +122,31 @@ const CustomerSelect = (props) => {
     }
 
     return () => debouncedFetch.cancel();
-  }, [inputValue, debouncedFetch]);
+  }, [inputValue, debouncedFetch, selectedCustomer]);
 
   return (
     <FormControl sx={{ mt: 0, mr: 1, minWidth: 500 }}>
       <Autocomplete
         size={props.size}
         options={customers}
-        value={selectedCustomer} // ✅ CLAVE
+        value={selectedCustomer}
         filterOptions={(options) => options}
         loading={loading}
-        getOptionLabel={(option) =>
-          option
-            ? ` ${option.id ?? ""} ${option.customer_name ?? ""} (${option.identification ?? ""})`
-            : ""
+        isOptionEqualToValue={(option, value) =>
+          String(option?.id) === String(value?.id)
         }
+        getOptionLabel={buildLabel}
         inputValue={inputValue}
-        onInputChange={(event, newInputValue) => {
+        onInputChange={(event, newInputValue, reason) => {
+          if (reason === "reset") return;
           setInputValue(newInputValue);
         }}
         onChange={(event, newValue) => {
           setError(null);
+          setSelectedCustomer(newValue);
 
-          setSelectedCustomer(newValue); // ✅ ahora sí queda seleccionado
-
-          // opcional: deja el texto bonito en el input
           if (newValue) {
-            setInputValue(
-              `${newValue.id ?? ""} ${newValue.customer_name ?? ""} (${newValue.identification ?? ""})`,
-            );
+            setInputValue(buildLabel(newValue));
           } else {
             setInputValue("");
           }
@@ -117,17 +155,17 @@ const CustomerSelect = (props) => {
             target: {
               name: props.name,
               value: newValue ? newValue.id : "",
-              customer_identification: newValue ? newValue.identification : "", // ✅ pasa la identificación
-              customer_name: newValue ? newValue.customer_name : "", // ✅ pasa el nombre
+              customer_identification: newValue ? newValue.identification : "",
+              customer_name: newValue ? newValue.customer_name : "",
               conami_id_actividad_economica: newValue
                 ? newValue.conami_id_actividad_economica
-                : "", // ✅ pasa la actividad económica
+                : "",
             },
           });
         }}
         noOptionsText={
           selectedCustomer
-            ? "" // ✅ si ya seleccionó, no mostrar mensaje
+            ? ""
             : inputValue.trim().length
               ? "Sin resultados"
               : "Escribe para buscar"
