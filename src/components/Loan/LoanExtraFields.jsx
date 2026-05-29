@@ -10,6 +10,7 @@ import {
   Paper,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import EconomicActivitySelect from "../conami/actividadEconomicaSelect";
 
 const toStr = (value) =>
   value === null || value === undefined || value === "" ? "" : String(value);
@@ -24,6 +25,7 @@ const LoanExtraFields = ({
     tiposCredito = [],
     lineas = [],
     modalidadesCredito = [],
+    destinosCredito = [],
     monedas = [],
     origenesRecursos = [],
     sindicados = [],

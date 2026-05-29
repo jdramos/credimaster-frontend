@@ -605,6 +605,7 @@ const LoanAdd = () => {
         id_estado_credito:
           prev.id_estado_credito || getDefaultId(data.estadosCredito),
         id_analista: prev.id_analista || getDefaultId(data.analistas),
+        id_sindicado: prev.id_sindicado || getDefaultId(data.sindicados),
       }));
     } catch (error) {
       console.error("Error cargando catálogos:", error);
@@ -860,6 +861,7 @@ const LoanAdd = () => {
         ? Number(loan.id_estado_credito)
         : null,
       id_analista: loan.id_analista ? Number(loan.id_analista) : null,
+      id_sindicado: loan.id_sindicado ? Number(loan.id_sindicado) : null,
     };
   };
 

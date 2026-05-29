@@ -12,20 +12,7 @@ import TipoDocumentoSelect from "../TipoDocumentoSelect";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-import {
-  Box,
-  TextField,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  FormHelperText,
-  Grid,
-  Paper,
-  Stack,
-  Typography,
-  Divider,
-} from "@mui/material";
+import { Box, TextField, Grid, Paper, Stack, Typography } from "@mui/material";
 
 const Section = ({ title, subtitle, children }) => (
   <Paper

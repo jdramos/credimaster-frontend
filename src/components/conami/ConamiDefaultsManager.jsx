@@ -3,8 +3,6 @@ import {
   Box,
   Paper,
   Typography,
-  Tabs,
-  Tab,
   Table,
   TableBody,
   TableCell,
@@ -17,6 +15,10 @@ import {
   Alert,
   Button,
   Stack,
+  List,
+  ListItemButton,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -25,10 +27,8 @@ import API from "../../api";
 const CONAMI_TABLES = [
   { key: "conami_clasificacion_credito", label: "Clasificación crédito" },
   { key: "conami_estado_bien", label: "Estado bien" },
-  { key: "conami_estado_credito", label: "Estado crédito" },
   { key: "conami_estado_linea", label: "Estado línea" },
   { key: "conami_forma_pago", label: "Forma pago" },
-  { key: "conami_garantia", label: "Garantía" },
   { key: "conami_met_atencion", label: "Método atención" },
   { key: "conami_modalidad_credito", label: "Modalidad crédito" },
   { key: "conami_monedas", label: "Monedas" },
@@ -54,44 +54,54 @@ const CONAMI_TABLES = [
 ];
 
 const ConamiDefaultsManager = () => {
-  const [tab, setTab] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(null);
   const [rowsByTable, setRowsByTable] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loadingTable, setLoadingTable] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const currentTable = useMemo(() => CONAMI_TABLES[tab]?.key, [tab]);
+  const currentItem = useMemo(
+    () => (selectedIndex !== null ? CONAMI_TABLES[selectedIndex] : null),
+    [selectedIndex],
+  );
 
-  const loadTable = async (tableName) => {
-    const { data } = await API.get(`/api/conami/${tableName}`);
-    return Array.isArray(data) ? data : [];
-  };
+  const currentTable = currentItem?.key || "";
+  const rows = rowsByTable[currentTable] || [];
 
-  const loadAll = async () => {
-    setLoading(true);
+  const loadTable = async (tableName, force = false) => {
+    if (!tableName) return;
+
+    if (!force && rowsByTable[tableName]) return;
+
+    setLoadingTable(tableName);
     setError("");
     setSuccess("");
 
     try {
-      const result = {};
-
-      for (const item of CONAMI_TABLES) {
-        result[item.key] = await loadTable(item.key);
-      }
-
-      setRowsByTable(result);
+      const { data } = await API.get(`/api/conami/${tableName}`);
+      setRowsByTable((prev) => ({
+        ...prev,
+        [tableName]: Array.isArray(data) ? data : [],
+      }));
     } catch (err) {
       console.error(err);
-      setError("No se pudieron cargar los catálogos CONAMI.");
+      setError("No se pudo cargar el catálogo seleccionado.");
     } finally {
-      setLoading(false);
+      setLoadingTable("");
     }
   };
 
   useEffect(() => {
-    loadAll();
-  }, []);
+    if (currentTable) {
+      loadTable(currentTable);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTable]);
+
+  const handleSelectTable = (index) => {
+    setSelectedIndex(index);
+  };
 
   const handleToggleDefault = (tableName, rowId) => {
     setRowsByTable((prev) => {
@@ -108,33 +118,34 @@ const ConamiDefaultsManager = () => {
   };
 
   const handleSave = async () => {
+    if (!currentTable) return;
+
     setSaving(true);
     setError("");
     setSuccess("");
 
     try {
-      const payload = CONAMI_TABLES.map((item) => {
-        const rows = rowsByTable[item.key] || [];
-        const selected = rows.find((r) => Number(r.is_default) === 1);
+      const selected = rows.find((r) => Number(r.is_default) === 1);
 
-        return {
-          table: item.key,
-          default_id: selected ? selected.id : null,
-        };
+      await API.put("/api/conami/defaults", {
+        defaults: [
+          {
+            table: currentTable,
+            default_id: selected ? selected.id : null,
+          },
+        ],
       });
 
-      await API.put("/api/conami/defaults", { defaults: payload });
-
-      setSuccess("Valores por defecto actualizados correctamente.");
+      setSuccess("Valor por defecto actualizado correctamente.");
     } catch (err) {
       console.error(err);
-      setError("No se pudieron guardar los valores por defecto.");
+      setError("No se pudo guardar el valor por defecto.");
     } finally {
       setSaving(false);
     }
   };
 
-  const rows = rowsByTable[currentTable] || [];
+  const isLoadingCurrent = loadingTable === currentTable;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -158,8 +169,7 @@ const ConamiDefaultsManager = () => {
               Valores por defecto CONAMI
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Solo puedes definir qué registro será el valor por defecto en cada
-              catálogo normativo.
+              Selecciona un catálogo para cargar sus registros.
             </Typography>
           </Box>
 
@@ -167,8 +177,8 @@ const ConamiDefaultsManager = () => {
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
-              onClick={loadAll}
-              disabled={loading || saving}
+              onClick={() => loadTable(currentTable, true)}
+              disabled={!currentTable || isLoadingCurrent || saving}
             >
               Recargar
             </Button>
@@ -177,104 +187,158 @@ const ConamiDefaultsManager = () => {
               variant="contained"
               startIcon={<SaveIcon />}
               onClick={handleSave}
-              disabled={loading || saving}
+              disabled={!currentTable || isLoadingCurrent || saving}
             >
               Guardar
             </Button>
           </Stack>
         </Stack>
 
-        {error ? (
+        {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-        ) : null}
-
-        {success ? (
+        )}
+        {success && (
           <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
-        ) : null}
-
-        <Tabs
-          value={tab}
-          onChange={(_, newValue) => setTab(newValue)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 2 }}
-        >
-          {CONAMI_TABLES.map((item) => (
-            <Tab key={item.key} label={item.label} />
-          ))}
-        </Tabs>
-
-        {loading ? (
-          <Box sx={{ py: 6, display: "flex", justifyContent: "center" }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            sx={{ border: "1px solid #e0e0e0", borderRadius: 2 }}
-          >
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Activo</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="center">
-                    Por defecto
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={Number(row.active) === 1 ? "Sí" : "No"}
-                        color={Number(row.active) === 1 ? "success" : "default"}
-                        size="small"
-                        variant={
-                          Number(row.active) === 1 ? "filled" : "outlined"
-                        }
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Switch
-                        checked={Number(row.is_default) === 1}
-                        onChange={() =>
-                          handleToggleDefault(currentTable, row.id)
-                        }
-                        disabled={Number(row.active) !== 1}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {rows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No hay registros.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </TableContainer>
         )}
 
-        {saving ? (
-          <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
-            <CircularProgress size={18} />
-            <Typography variant="body2">Guardando cambios...</Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "280px 1fr" },
+            gap: 2,
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              border: "1px solid #e0e0e0",
+              borderRadius: 2,
+              overflow: "hidden",
+              height: {
+                xs: "auto",
+                md: "calc(100vh - 220px)",
+              },
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Typography sx={{ p: 1.5, fontWeight: 800 }}>Catálogos</Typography>
+            <Divider />
+
+            <List
+              dense
+              disablePadding
+              sx={{
+                overflowY: "auto",
+                flex: 1,
+              }}
+            >
+              {CONAMI_TABLES.map((item, index) => (
+                <ListItemButton
+                  key={item.key}
+                  selected={selectedIndex === index}
+                  onClick={() => handleSelectTable(index)}
+                >
+                  <ListItemText
+                    primary={item.label}
+                    secondary={rowsByTable[item.key] ? "Cargado" : "Sin cargar"}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Paper>
+
+          <Box>
+            {!currentTable ? (
+              <Alert severity="info">
+                Selecciona un catálogo del listado izquierdo para ver sus
+                registros.
+              </Alert>
+            ) : isLoadingCurrent ? (
+              <Box sx={{ py: 6, display: "flex", justifyContent: "center" }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{ border: "1px solid #e0e0e0", borderRadius: 2 }}
+              >
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Activo</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }} align="center">
+                        Por defecto
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {rows.map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{row.id}</TableCell>
+                        <TableCell>
+                          {row.name ||
+                            row.description ||
+                            row.descripcion ||
+                            row.label}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={
+                              Number(row.active ?? row.is_active) === 1
+                                ? "Sí"
+                                : "No"
+                            }
+                            color={
+                              Number(row.active ?? row.is_active) === 1
+                                ? "success"
+                                : "default"
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Switch
+                            checked={Number(row.is_default) === 1}
+                            onChange={() =>
+                              handleToggleDefault(currentTable, row.id)
+                            }
+                            disabled={Number(row.active ?? row.is_active) !== 1}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {rows.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          No hay registros.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            {saving && (
+              <Box
+                sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}
+              >
+                <CircularProgress size={18} />
+                <Typography variant="body2">Guardando cambios...</Typography>
+              </Box>
+            )}
           </Box>
-        ) : null}
+        </Box>
       </Paper>
     </Box>
   );

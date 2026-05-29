@@ -108,17 +108,6 @@ const LoanAdd = (props) => {
     setSnackbarOpen(true);
   };
 
-  // (Tu StyledTableCell, lo dejo igual)
-  const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
-      backgroundColor: theme.palette.info.main,
-      color: theme.palette.common.white,
-    },
-    [`&.${tableCellClasses.body}`]: {
-      fontSize: 14,
-    },
-  }));
-
   useEffect(() => {
     const fetchPolicies = async () => {
       try {

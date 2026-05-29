@@ -20,7 +20,6 @@ import {
   Alert,
   Tooltip,
   IconButton,
-  TextField,
   Divider,
   Chip,
   Stack,
@@ -36,6 +35,7 @@ import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -59,9 +59,10 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CommentIcon from "@mui/icons-material/Comment";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PaymentsIcon from "@mui/icons-material/Payments";
+
 import LoanAmortization from "../LoanAmortization";
 import PaymentForm from "../PaymentForm";
-import PaymentsIcon from "@mui/icons-material/Payments";
 import today from "../../functions/today";
 import LoanInfo from "../LoanInfo";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
@@ -69,8 +70,6 @@ import LoanModificationSection from "../Loan/LoanModificationSection";
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
-
-const urlGuarantee = process.env.REACT_APP_API_BASE_URL + "/api/guarantees";
 
 const HeaderBar = styled("div")(({ theme }) => ({
   background: theme.palette.primary.main,
@@ -89,12 +88,6 @@ const HeaderLeft = styled("div")(({ theme }) => ({
 
 const Muted = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.secondary,
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontWeight: 800,
-  letterSpacing: 0.2,
-  marginBottom: theme.spacing(1),
 }));
 
 const CompactCard = ({ children, sx = {} }) => (
@@ -227,17 +220,19 @@ const LoanDetailsModal = ({
   onLoanUpdated,
 }) => {
   const { user } = useContext(UserContext);
+  const loanData = loan?.data || loan;
+  const loanId = loanData?.id || loanData?.loan_id || loanData?.credit_id;
+
+  const userId = user?.id || user?.user_id || user;
 
   const [approvals, setApprovals] = useState([]);
-  const [loadingApprovals, setLoadingApprovals] = useState(true);
+  const [loadingApprovals, setLoadingApprovals] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-
-  const [localGuarantees, setLocalGuarantees] = useState([]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedApprovalId, setSelectedApprovalId] = useState(null);
@@ -254,9 +249,6 @@ const LoanDetailsModal = ({
   const [editableTerm, setEditableTerm] = useState(0);
   const [editableRate, setEditableRate] = useState(0);
 
-  const [amountError, setAmountError] = useState("");
-  const [termError, setTermError] = useState("");
-  const [rateError, setRateError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   const [compliance, setCompliance] = useState(null);
@@ -268,25 +260,19 @@ const LoanDetailsModal = ({
   const [financialEvaluationForm, setFinancialEvaluationForm] = useState({
     evaluation_date: dayjs().format("YYYY-MM-DD"),
     methodology: "INDIVIDUAL",
-
     business_income: "",
     salary_income: "",
     other_income: "",
-
     business_expenses: "",
     family_expenses: "",
     other_debts_installments: "",
-
     proposed_installment: "",
-
     years_in_business: "",
     monthly_sales: "",
     inventory_value: "",
     business_location: "",
-
     references_result: "FAVORABLE",
     bureau_result: "NO_APLICA",
-
     analyst_comment: "",
     committee_comment: "",
     change_reason: "",
@@ -294,22 +280,24 @@ const LoanDetailsModal = ({
     is_current: 1,
   });
 
-  const totalGuaranteeValue = useMemo(
-    () => guarantees.reduce((sum, item) => sum + (Number(item.value) || 0), 0),
-    [guarantees],
-  );
-
-  useEffect(() => {
-    setLocalGuarantees(guarantees || []);
-  }, [guarantees]);
-
   const loadApprovals = async () => {
-    if (!loan?.id) return;
+    const loanId = loanData?.id || loanData?.loan_id || loanData?.credit_id;
+
+    console.log("Cargando aprobaciones para loanId:", loanId);
+
+    if (!loanId) {
+      setApprovals([]);
+      setLoadingApprovals(false);
+      return;
+    }
 
     setLoadingApprovals(true);
+
     try {
-      const res = await API.get(`api/approvals/${loan.id}`);
-      setApprovals(res.data || []);
+      const res = await API.get(`/api/approvals/${loanId}`);
+      console.log("Aprobaciones recibidas:", res.data);
+
+      setApprovals(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error cargando aprobaciones:", err);
       setApprovals([]);
@@ -318,12 +306,27 @@ const LoanDetailsModal = ({
     }
   };
 
+  const getLoanId = () => {
+    const currentLoan = loan?.data || loan;
+    return currentLoan?.id || currentLoan?.loan_id || currentLoan?.credit_id;
+  };
+
   const loadCompliance = async () => {
-    if (!loan?.id) return;
+    const loanId = getLoanId();
+
+    console.log("Cargando compliance para loanId:", loanId);
+
+    if (!loanId) {
+      setCompliance(null);
+      setLoadingCompliance(false);
+      return;
+    }
 
     setLoadingCompliance(true);
+
     try {
-      const res = await API.get(`/api/loans/compliance/${loan.id}`);
+      const res = await API.get(`/api/loans/compliance/${loanId}`);
+      console.log("Compliance recibido:", res.data);
       setCompliance(res.data || null);
     } catch (err) {
       console.error("Error cargando cumplimiento:", err);
@@ -334,10 +337,10 @@ const LoanDetailsModal = ({
   };
 
   const fetchAmortizationTable = async () => {
-    if (!loan?.id) return;
+    if (!loanId) return;
 
     try {
-      const res = await API.get(`api/loans/amortization/${loan.id}`);
+      const res = await API.get(`/api/loans/amortization/${loanId}`);
       const raw = res.data || [];
 
       const data = raw.map((row) => ({
@@ -396,75 +399,56 @@ const LoanDetailsModal = ({
   };
 
   const hasUserApproved = approvals.some(
-    (a) => Number(a.approver_id) === Number(user) && a.status === "APPROVED",
+    (a) =>
+      Number(a.approver_id) === Number(userId) &&
+      String(a.status).toUpperCase() === "APPROVED",
   );
 
   const isReadOnly =
     approvals.length > 0 &&
-    (approvals.every((a) => a.status === "APPROVED") || hasUserApproved);
+    (approvals.every((a) => String(a.status).toUpperCase() === "APPROVED") ||
+      hasUserApproved);
 
   const canEditFinancialEvaluation = useMemo(() => {
     return approvals.some(
-      (a) => Number(a.approver_id) === Number(user) && a.status === "PENDING",
+      (a) =>
+        Number(a.approver_id) === Number(userId) &&
+        String(a.status).toUpperCase() === "PENDING",
     );
-  }, [approvals, user]);
+  }, [approvals, userId]);
 
   useEffect(() => {
-    if (open && loan) {
-      loadApprovals();
-      fetchAmortizationTable();
-      loadCompliance();
+    if (!open) return;
 
-      setEditableAmount(Number(loan.amount || loan.approved_amount) || 0);
-      setEditableTerm(Number(loan.term || loan.approved_term) || 0);
-      setEditableRate(Number(loan.interest_rate || loan.approved_rate) || 0);
+    const currentLoan = loan?.data || loan;
+    const loanId = getLoanId();
 
-      setAmountError("");
-      setTermError("");
-      setRateError("");
+    if (!loanId) {
+      setApprovals([]);
+      setCompliance(null);
+      setLoadingApprovals(false);
+      setLoadingCompliance(false);
+      return;
     }
+
+    loadApprovals();
+    fetchAmortizationTable();
+    loadCompliance();
+
+    setEditableAmount(
+      Number(currentLoan.approved_amount || currentLoan.amount) || 0,
+    );
+    setEditableTerm(Number(currentLoan.approved_term || currentLoan.term) || 0);
+    setEditableRate(
+      Number(currentLoan.approved_rate || currentLoan.interest_rate) || 0,
+    );
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, loan?.id]);
-
-  const isFormValid = () => {
-    let valid = true;
-
-    if (editableAmount <= 0) {
-      setAmountError("Debe ser mayor a 0");
-      valid = false;
-    } else if (
-      editableAmount > totalGuaranteeValue &&
-      totalGuaranteeValue > 0
-    ) {
-      setAmountError("No debe exceder el valor total de garantías");
-      valid = false;
-    } else {
-      setAmountError("");
-    }
-
-    if (editableTerm <= 0) {
-      setTermError("Debe ser mayor a 0");
-      valid = false;
-    } else {
-      setTermError("");
-    }
-
-    if (editableRate <= 0) {
-      setRateError("Debe ser mayor a 0");
-      valid = false;
-    } else if (editableRate > 100) {
-      setRateError("No debe ser mayor al 100%");
-      valid = false;
-    } else {
-      setRateError("");
-    }
-
-    return valid;
-  };
+  }, [open, loan?.data?.id, loan?.id]);
 
   const isFormConsistentlyValid =
     editableAmount > 0 &&
-    (totalGuaranteeValue <= 0 || editableAmount <= totalGuaranteeValue) &&
+    (guaranteesTotal <= 0 || editableAmount <= guaranteesTotal) &&
     editableTerm > 0 &&
     editableRate > 0 &&
     editableRate <= 100;
@@ -492,24 +476,30 @@ const LoanDetailsModal = ({
   }, [compliance]);
 
   const refreshApprovalState = async () => {
-    const resApprovals = await API.get(`/api/approvals/${loan.id}`);
+    const resApprovals = await API.get(`/api/approvals/${loanId}`);
     const approvalsNow = resApprovals.data || [];
+
     setApprovals(approvalsNow);
 
     const pendingCount = approvalsNow.filter(
-      (a) => a.status === "PENDING",
+      (a) => String(a.status).toUpperCase() === "PENDING",
     ).length;
-    const anyRejected = approvalsNow.some((a) => a.status === "REJECTED");
+
+    const anyRejected = approvalsNow.some(
+      (a) => String(a.status).toUpperCase() === "REJECTED",
+    );
+
     const allApproved =
       approvalsNow.length > 0 &&
-      approvalsNow.every((a) => a.status === "APPROVED");
+      approvalsNow.every((a) => String(a.status).toUpperCase() === "APPROVED");
 
     let approval_status = "PENDIENTE";
+
     if (anyRejected) approval_status = "RECHAZADO";
     else if (allApproved) approval_status = "APROBADO";
 
     onLoanUpdated?.({
-      id: loan.id,
+      id: loanId,
       approval_status,
       pending_approvals: pendingCount,
     });
@@ -518,6 +508,16 @@ const LoanDetailsModal = ({
   };
 
   const handleApprove = async (approvalId) => {
+    if (!isFormConsistentlyValid) {
+      setSnackbar({
+        open: true,
+        message:
+          "No se puede aprobar. Revisa monto, plazo, tasa o valor de garantías.",
+        severity: "error",
+      });
+      return;
+    }
+
     if (!isComplianceValid) {
       setSnackbar({
         open: true,
@@ -529,6 +529,7 @@ const LoanDetailsModal = ({
     }
 
     setActionLoading(true);
+
     try {
       await API.put(`/api/approvals/${approvalId}`, {
         status: "APPROVED",
@@ -549,6 +550,7 @@ const LoanDetailsModal = ({
       onClose();
     } catch (error) {
       console.error(error);
+
       setSnackbar({
         open: true,
         message: error.response?.data?.error || "Error al aprobar.",
@@ -561,16 +563,20 @@ const LoanDetailsModal = ({
 
   const handleReject = async (approvalId) => {
     setActionLoading(true);
+
     try {
-      await API.put(`/api/approvals/${approvalId}`, { status: "REJECTED" });
+      await API.put(`/api/approvals/${approvalId}`, {
+        status: "REJECTED",
+      });
 
       const approvalsNow = await refreshApprovalState();
+
       const pendingCount = approvalsNow.filter(
-        (a) => a.status === "PENDING",
+        (a) => String(a.status).toUpperCase() === "PENDING",
       ).length;
 
       onLoanUpdated?.({
-        id: loan.id,
+        id: loanId,
         approval_status: "RECHAZADO",
         pending_approvals: pendingCount,
       });
@@ -582,6 +588,7 @@ const LoanDetailsModal = ({
       });
     } catch (error) {
       console.error(error);
+
       setSnackbar({
         open: true,
         message: error.response?.data?.error || "Error al rechazar.",
@@ -592,10 +599,17 @@ const LoanDetailsModal = ({
     }
   };
 
-  const pendingCountUI = approvals.filter((a) => a.status === "PENDING").length;
-  const anyRejectedUI = approvals.some((a) => a.status === "REJECTED");
+  const pendingCountUI = approvals.filter(
+    (a) => String(a.status).toUpperCase() === "PENDING",
+  ).length;
+
+  const anyRejectedUI = approvals.some(
+    (a) => String(a.status).toUpperCase() === "REJECTED",
+  );
+
   const allApprovedUI =
-    approvals.length > 0 && approvals.every((a) => a.status === "APPROVED");
+    approvals.length > 0 &&
+    approvals.every((a) => String(a.status).toUpperCase() === "APPROVED");
 
   const globalStatusUI = anyRejectedUI
     ? "RECHAZADO"
@@ -608,6 +622,7 @@ const LoanDetailsModal = ({
   const financialEvaluation = compliance?.financial_evaluation || null;
 
   const currentClientId = clientId || loan?.customer_id;
+
   const currentIdentification =
     clientIdentification ||
     loan?.customer_identification ||
@@ -706,6 +721,7 @@ const LoanDetailsModal = ({
                       variant="outlined"
                       size="small"
                     />
+
                     <Chip
                       icon={<EventIcon fontSize="small" />}
                       label={`Solicitud: ${
@@ -716,6 +732,7 @@ const LoanDetailsModal = ({
                       variant="outlined"
                       size="small"
                     />
+
                     <Chip
                       icon={<GavelIcon fontSize="small" />}
                       label={
@@ -732,6 +749,7 @@ const LoanDetailsModal = ({
                       }
                       size="small"
                     />
+
                     <Chip
                       icon={
                         isComplianceValid ? (
@@ -748,6 +766,7 @@ const LoanDetailsModal = ({
                       variant="outlined"
                     />
                   </Stack>
+
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Muted variant="body2">
                       {loan.branch_name
@@ -849,41 +868,30 @@ const LoanDetailsModal = ({
 
                     <Divider sx={{ my: 1.25 }} />
 
-                    <Grid container spacing={1}>
-                      <Grid item xs={12}>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          alignItems="center"
-                          sx={{ mb: 1 }}
-                        >
-                          <Avatar
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              bgcolor: "primary.light",
-                            }}
-                          >
-                            <PersonIcon sx={{ fontSize: 16 }} />
-                          </Avatar>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="center"
+                      sx={{ mb: 1 }}
+                    >
+                      <Avatar
+                        sx={{ width: 24, height: 24, bgcolor: "primary.light" }}
+                      >
+                        <PersonIcon sx={{ fontSize: 16 }} />
+                      </Avatar>
 
-                          <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-                            Información del cliente
-                          </Typography>
-                        </Stack>
+                      <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                        Información del cliente
+                      </Typography>
+                    </Stack>
 
-                        <Box sx={{ width: "100%" }}>
-                          <LoanInfo clientId={currentClientId} />
-                        </Box>
-                      </Grid>
-                    </Grid>
+                    <LoanInfo clientId={currentClientId} />
                   </CompactCard>
                 </Grid>
 
                 <Grid item xs={12}>
                   <CompactAccordion
                     title="Evaluación financiera"
-                    defaultExpanded={false}
                     chip={
                       financialEvaluation ? (
                         <Chip
@@ -914,9 +922,7 @@ const LoanDetailsModal = ({
                           severity: "success",
                         });
                       }}
-                      onViewChecklist={() => {
-                        setShowDocuments(true);
-                      }}
+                      onViewChecklist={() => setShowDocuments(true)}
                     />
                   </CompactAccordion>
                 </Grid>
@@ -924,7 +930,6 @@ const LoanDetailsModal = ({
                 <Grid item xs={12}>
                   <CompactAccordion
                     title="Garantías"
-                    defaultExpanded={false}
                     chip={
                       <Chip
                         label={`Total: C$ ${formatMoney(guaranteesTotal)}`}
@@ -946,7 +951,6 @@ const LoanDetailsModal = ({
                 <Grid item xs={12}>
                   <CompactAccordion
                     title="Cumplimiento Normativo (CONAMI)"
-                    defaultExpanded={false}
                     chip={
                       isComplianceValid ? (
                         <Chip
@@ -1111,6 +1115,7 @@ const LoanDetailsModal = ({
                               <Typography sx={{ fontWeight: 800, mb: 0.5 }}>
                                 No se puede aprobar este crédito todavía.
                               </Typography>
+
                               <Box component="ul" sx={{ m: 0, pl: 2 }}>
                                 {complianceMissingItems.map((item, index) => (
                                   <li key={index}>
@@ -1187,17 +1192,17 @@ const LoanDetailsModal = ({
                           <TableBody>
                             {approvals.map((a, idx) => {
                               const canAct =
-                                a.status === "PENDING" &&
-                                Number(user) === Number(a.approver_id);
+                                String(a.status).toUpperCase() === "PENDING" &&
+                                Number(userId) === Number(a.approver_id);
 
                               const approveTooltip = !isFormConsistentlyValid
-                                ? "Corrige monto, plazo o tasa"
+                                ? "Corrige monto, plazo, tasa o valor de garantías"
                                 : !isComplianceValid
                                   ? "Faltan requisitos de cumplimiento CONAMI"
                                   : "Aprobar solicitud";
 
                               return (
-                                <TableRow key={idx} hover>
+                                <TableRow key={a.id || idx} hover>
                                   <TableCell>
                                     <Typography
                                       sx={{ fontWeight: 700, fontSize: 13 }}
@@ -1279,10 +1284,7 @@ const LoanDetailsModal = ({
                 </Grid>
 
                 <Grid item xs={12}>
-                  <CompactAccordion
-                    title="Tabla de amortización"
-                    defaultExpanded={false}
-                  >
+                  <CompactAccordion title="Tabla de amortización">
                     <LoanAmortization
                       amortizationTable={amortizationTable}
                       totalPaymentAmount={totalPaymentAmount}
@@ -1342,6 +1344,12 @@ const LoanDetailsModal = ({
               </Alert>
             )}
 
+            {!isFormConsistentlyValid && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                Revisa monto, plazo, tasa o valor de garantías antes de aprobar.
+              </Alert>
+            )}
+
             <Typography sx={{ mb: 1.5 }}>
               Se registrará tu aprobación con los valores actuales:
             </Typography>
@@ -1363,6 +1371,9 @@ const LoanDetailsModal = ({
               </Typography>
               <Typography variant="body2">
                 <b>Tasa:</b> {Number(editableRate || 0).toFixed(2)}%
+              </Typography>
+              <Typography variant="body2">
+                <b>Garantías:</b> C$ {formatMoney(guaranteesTotal)}
               </Typography>
             </Box>
 
@@ -1397,6 +1408,7 @@ const LoanDetailsModal = ({
                 <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
                   Pendientes de cumplimiento:
                 </Typography>
+
                 <Box component="ul" sx={{ m: 0, pl: 2 }}>
                   {complianceMissingItems.map((item, index) => (
                     <li key={index}>
@@ -1411,10 +1423,15 @@ const LoanDetailsModal = ({
               <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>
                   <CommentIcon
-                    sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }}
+                    sx={{
+                      fontSize: 16,
+                      mr: 0.5,
+                      verticalAlign: "middle",
+                    }}
                   />
                   Comentario del analista
                 </Typography>
+
                 <Typography variant="body2">
                   {financialEvaluation.analyst_comment}
                 </Typography>
@@ -1426,12 +1443,13 @@ const LoanDetailsModal = ({
             <Button onClick={() => setConfirmOpen(false)} color="inherit">
               Cancelar
             </Button>
+
             <Button
               onClick={async () => {
-                if (!isFormValid()) return;
-                if (!isComplianceValid) return;
+                if (!isFormConsistentlyValid || !isComplianceValid) return;
 
                 setConfirmOpen(false);
+
                 if (selectedApprovalId) {
                   await handleApprove(selectedApprovalId);
                 }
