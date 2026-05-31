@@ -150,6 +150,7 @@ const LoanAdd = () => {
   const [cancelDialog, setCancelDialog] = useState(false);
   const [docSummary, setDocSummary] = useState(null);
   const [showCustomerDocs, setShowCustomerDocs] = useState(false);
+  const [evaluationViewForm, setEvaluationViewForm] = useState({});
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbarMessage(message);
@@ -171,6 +172,27 @@ const LoanAdd = () => {
     if (!selectedEvaluation) return null;
 
     return {
+      ...selectedEvaluation,
+
+      id: loan.customer_id,
+      customer_id: loan.customer_id,
+      customerIdentification: loan.customer_identification,
+      customerName: loan.customer_name,
+
+      business_income: Number(selectedEvaluation.business_income || 0),
+      salary_income: Number(selectedEvaluation.salary_income || 0),
+      other_income: Number(selectedEvaluation.other_income || 0),
+      total_income: Number(selectedEvaluation.total_income || 0),
+
+      business_expenses: Number(selectedEvaluation.business_expenses || 0),
+      family_expenses: Number(selectedEvaluation.family_expenses || 0),
+      financial_expenses: Number(selectedEvaluation.financial_expenses || 0),
+      total_expenses: Number(selectedEvaluation.total_expenses || 0),
+
+      net_income: Number(selectedEvaluation.net_income || 0),
+      payment_capacity: Number(selectedEvaluation.payment_capacity || 0),
+      recommended_amount: Number(selectedEvaluation.recommended_amount || 0),
+
       business_type_name: selectedEvaluation.business_type_name || "—",
       total_loans: selectedEvaluation.total_loans || 0,
       productOrService: selectedEvaluation.productOrService || "—",
@@ -179,8 +201,12 @@ const LoanAdd = () => {
       province_name: selectedEvaluation.province_name || "—",
       scores: selectedEvaluation.scores || {},
     };
-  }, [selectedEvaluation]);
-
+  }, [
+    selectedEvaluation,
+    loan.customer_id,
+    loan.customer_identification,
+    loan.customer_name,
+  ]);
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
@@ -207,7 +233,7 @@ const LoanAdd = () => {
 
       try {
         const { data } = await API.get(
-          `/api/customer-files/${loan.customer_id}/checklist-summary`,
+          `/api/customer-credit-evaluations/${loan.customer_id}/current`,
         );
 
         setDocSummary(data);
@@ -411,6 +437,50 @@ const LoanAdd = () => {
     loan.other_charges,
     loan.interest_type_name,
   ]);
+
+  useEffect(() => {
+    if (!selectedEvaluation) {
+      setEvaluationViewForm({});
+      return;
+    }
+
+    setEvaluationViewForm({
+      ...selectedEvaluation,
+      evaluation_date: selectedEvaluation.evaluation_date
+        ? dayjs(selectedEvaluation.evaluation_date).format("YYYY-MM-DD")
+        : dayjs().format("YYYY-MM-DD"),
+
+      methodology: selectedEvaluation.methodology || "INDIVIDUAL",
+
+      business_income: selectedEvaluation.business_income ?? "",
+      salary_income: selectedEvaluation.salary_income ?? "",
+      other_income: selectedEvaluation.other_income ?? "",
+
+      business_expenses: selectedEvaluation.business_expenses ?? "",
+      family_expenses: selectedEvaluation.family_expenses ?? "",
+      other_debts_installments:
+        selectedEvaluation.other_debts_installments ?? "",
+
+      proposed_installment: selectedEvaluation.proposed_installment ?? "",
+
+      years_in_business: selectedEvaluation.years_in_business ?? "",
+
+      monthly_sales: selectedEvaluation.monthly_sales ?? "",
+      inventory_value: selectedEvaluation.inventory_value ?? "",
+      business_location: selectedEvaluation.business_location ?? "",
+
+      references_result: selectedEvaluation.references_result || "FAVORABLE",
+
+      bureau_result: selectedEvaluation.bureau_result || "NO_APLICA",
+
+      analyst_comment: selectedEvaluation.analyst_comment || "",
+
+      committee_comment: selectedEvaluation.committee_comment || "",
+
+      version_no: selectedEvaluation.version_no || 1,
+      is_current: selectedEvaluation.is_current ?? 1,
+    });
+  }, [selectedEvaluation]);
 
   const getPolicy = (key) => policies[key]?.policy_value;
 
@@ -1545,9 +1615,12 @@ const LoanAdd = () => {
             }}
           >
             <CustomerFinancialEvaluationTab
+              form={evaluationViewForm}
+              setForm={setEvaluationViewForm}
               customerId={loan.customer_id}
               customerIdentification={loan.customer_identification}
               customerName={loan.customer_name}
+              readOnly
             />
           </Paper>
         ) : (

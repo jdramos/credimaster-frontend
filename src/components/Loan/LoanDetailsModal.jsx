@@ -69,6 +69,7 @@ import LoanModificationSection from "../Loan/LoanModificationSection";
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
+import AssetAdjudicationModal from "../AssetAdjudicationModal";
 
 const urlGuarantee = process.env.REACT_APP_API_BASE_URL + "/api/guarantees";
 
@@ -264,6 +265,7 @@ const LoanDetailsModal = ({
   const [showDocuments, setShowDocuments] = useState(false);
   const [guaranteesTotal, setGuaranteesTotal] = useState(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [openAdjudication, setOpenAdjudication] = useState(false);
 
   const totalGuaranteeValue = useMemo(
     () => guarantees.reduce((sum, item) => sum + (Number(item.value) || 0), 0),
