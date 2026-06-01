@@ -10,6 +10,10 @@ import {
   Paper,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import EconomicActivitySelect from "../conami/actividadEconomicaSelect";
+
+const toStr = (value) =>
+  value === null || value === undefined || value === "" ? "" : String(value);
 
 const LoanExtraFields = ({
   formData,
@@ -21,6 +25,7 @@ const LoanExtraFields = ({
     tiposCredito = [],
     lineas = [],
     modalidadesCredito = [],
+    destinosCredito = [],
     monedas = [],
     origenesRecursos = [],
     sindicados = [],
@@ -43,21 +48,33 @@ const LoanExtraFields = ({
       size="small"
       name={name}
       label={label}
-      value={formData[name] ?? ""}
-      onChange={handleChange}
+      value={toStr(formData[name])}
+      onChange={(e) =>
+        handleChange({
+          target: {
+            name,
+            value: toStr(e.target.value),
+          },
+        })
+      }
       error={!!errors[name]}
       helperText={errors[name] || ""}
       InputLabelProps={{ shrink: true }}
     >
       <MenuItem value="">Seleccione</MenuItem>
+
       {options.map((item, index) => {
-        const optionValue = item?.[valueKey] ?? item?.id ?? item?.value ?? "";
+        const optionValue = toStr(
+          item?.[valueKey] ?? item?.id ?? item?.value ?? "",
+        );
+
         const optionLabel =
           item?.[labelKey] ??
           item?.name ??
           item?.label ??
           item?.description ??
           item?.descripcion ??
+          item?.code ??
           "";
 
         return (

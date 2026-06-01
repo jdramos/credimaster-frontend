@@ -120,6 +120,40 @@ const columns = [
       );
     },
   },
+  {
+    accessorKey: "status",
+    header: "Estado registro",
+    size: 120,
+    Cell: ({ row }) => {
+      const status = String(row.original.status || "").toUpperCase();
+
+      if (status === "DRAFT") {
+        return (
+          <Chip
+            size="small"
+            label="Borrador"
+            sx={{
+              bgcolor: "#FFF3E0",
+              color: "#ED6C02",
+              fontWeight: 800,
+            }}
+          />
+        );
+      }
+
+      return (
+        <Chip
+          size="small"
+          label="Final"
+          sx={{
+            bgcolor: "#E8F5E9",
+            color: "#2E7D32",
+            fontWeight: 800,
+          }}
+        />
+      );
+    },
+  },
 ];
 
 const exportToExcel = (data) => {
@@ -319,7 +353,7 @@ const LoanList = () => {
 
               <Box>
                 <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                  Listado de créditos
+                  Listado de créditos.
                 </Typography>
                 <Typography fontSize={13} sx={{ opacity: 0.85 }}>
                   Consulta, seguimiento y administración de créditos
@@ -396,6 +430,7 @@ const LoanList = () => {
                 sx={{ ...inputSx, minWidth: 200 }}
               >
                 <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="DRAFT">Borrador</MenuItem>
                 <MenuItem value="APROBADO">Aprobado</MenuItem>
                 <MenuItem value="RECHAZADO">Rechazado</MenuItem>
                 <MenuItem value="PENDIENTE">Pendiente</MenuItem>
@@ -502,6 +537,8 @@ const LoanList = () => {
               sortOrder={sortOrder}
               setSortBy={setSortBy}
               setSortOrder={setSortOrder}
+              draftEditRoute="/creditos/agregar"
+              hideActionsWhenDraft
             />
           )}
         </Box>

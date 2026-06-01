@@ -8,10 +8,14 @@ import {
 
 const url = process.env.REACT_APP_API_BASE_URL + "/api/promoters/branch/";
 const token = process.env.REACT_APP_API_TOKEN;
+
 const headers = {
   Authorization: token,
   "Content-Type": "application/json",
 };
+
+const toStr = (value) =>
+  value === null || value === undefined || value === "" ? "" : String(value);
 
 const PromoterSelect = (props) => {
   const [promoters, setPromoters] = useState([]);
@@ -28,15 +32,22 @@ const PromoterSelect = (props) => {
 
       try {
         const response = await fetch(`${url}${props.branch_id}`, { headers });
+
         if (!response.ok) throw new Error("Failed to retrieve data.");
+
         const jsonData = await response.json();
+        const rows = Array.isArray(jsonData)
+          ? jsonData
+          : Array.isArray(jsonData?.data)
+            ? jsonData.data
+            : [];
 
         if (jsonData?.error) {
           setError(jsonData.error);
           setPromoters([]);
         } else {
           setError(null);
-          setPromoters(jsonData || []);
+          setPromoters(rows);
         }
       } catch (e) {
         setError("Failed to retrieve data. Please try again later.");
@@ -48,8 +59,35 @@ const PromoterSelect = (props) => {
   }, [props.branch_id]);
 
   useEffect(() => {
-    setSelectedPromoter(null);
-  }, [props.branch_id]);
+    const value = toStr(props.value ?? props.selected);
+
+    if (!value) {
+      setSelectedPromoter(null);
+      return;
+    }
+
+    const found = promoters.find((item) => toStr(item.id) === value);
+
+    if (found) {
+      setSelectedPromoter(found);
+      return;
+    }
+
+    setSelectedPromoter({
+      id: value,
+      name: props.selectedLabel || props.promoter_name || "",
+      identification:
+        props.selectedIdentification || props.promoter_identification || "",
+    });
+  }, [
+    props.value,
+    props.selected,
+    props.selectedLabel,
+    props.promoter_name,
+    props.selectedIdentification,
+    props.promoter_identification,
+    promoters,
+  ]);
 
   return (
     <FormControl
@@ -57,17 +95,16 @@ const PromoterSelect = (props) => {
       sx={{
         m: 0,
         width: "100%",
-        minWidth: 0, // ✅ clave para grid
+        minWidth: 0,
       }}
     >
       <Autocomplete
-        size="small"
+        size={props.size || "small"}
         fullWidth
         options={promoters}
         value={selectedPromoter}
         getOptionLabel={(option) => option?.name || ""}
-        isOptionEqualToValue={(opt, val) => opt?.id === val?.id} // ✅ evita warnings y saltos
-        // ✅ z-index del dropdown arriba
+        isOptionEqualToValue={(opt, val) => toStr(opt?.id) === toStr(val?.id)}
         slotProps={{
           popper: { sx: { zIndex: (theme) => theme.zIndex.modal + 5 } },
         }}
@@ -80,6 +117,7 @@ const PromoterSelect = (props) => {
         }
         onChange={(event, newValue) => {
           setSelectedPromoter(newValue);
+
           props.onChange?.({
             target: {
               name: props.name,
@@ -105,7 +143,7 @@ const PromoterSelect = (props) => {
         )}
         sx={{
           width: "100%",
-          minWidth: 0, // ✅ por si el root intenta crecer
+          minWidth: 0,
         }}
       />
 

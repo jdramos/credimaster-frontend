@@ -124,7 +124,7 @@ function getRecommendationColor(value) {
 }
 
 export default function CustomerFinancialEvaluationTab({
-  form,
+  form = {},
   setForm,
   customerId,
   customerIdentification,
@@ -148,12 +148,14 @@ export default function CustomerFinancialEvaluationTab({
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!setForm) return;
+
     setForm((prev) => ({
-      ...prev,
+      ...(prev || {}),
       customer_id: customerId,
       loan_id: loanId,
     }));
-  }, [customerId, loanId]);
+  }, [customerId, loanId, setForm]);
 
   useEffect(() => {
     let active = true;

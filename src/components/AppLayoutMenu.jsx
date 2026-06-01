@@ -47,6 +47,7 @@ const sectionLabels = {
   users: "Usuarios y permisos",
   queries: "Consultas",
   conami_tables: "Tablas CONAMI",
+  accounting: "CONTABILIDAD",
   reports: "Reportes",
 };
 
@@ -107,6 +108,43 @@ const menuItems = {
       label: "Tablas CONAMI",
       iconName: "FaMoneyCheckAlt",
       to: "/conami/tablas",
+    },
+  ],
+  accounting: [
+    {
+      label: "Catálogo de cuentas",
+      iconName: "FaUniversity",
+      to: "/contabilidad/cuentas",
+    },
+    {
+      label: "Libro Diario",
+      iconName: "FaBook",
+      to: "/contabilidad/libro-diario",
+    },
+    {
+      label: "Mayor General",
+      iconName: "FaBalanceScale",
+      to: "/contabilidad/mayor",
+    },
+    {
+      label: "Balance comprobación",
+      iconName: "FaClipboardCheck",
+      to: "/contabilidad/balance-comprobacion",
+    },
+    {
+      label: "Estado resultados",
+      iconName: "FaChartPie",
+      to: "/contabilidad/estado-resultados",
+    },
+    {
+      label: "Balance general",
+      iconName: "FaLandmark",
+      to: "/contabilidad/balance-general",
+    },
+    {
+      label: "Contabilizar",
+      iconName: "FaMagic",
+      to: "/contabilidad/contabilizar",
     },
   ],
 
@@ -175,6 +213,7 @@ export default function AppLayoutMenu({
     users: false,
     queries: false,
     conami_tables: false,
+    accounting: false,
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);

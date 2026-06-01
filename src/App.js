@@ -66,6 +66,13 @@ import BalancesDashboard from "./components/dashboard/BalancesDashboard";
 import CreditFileTemplatePage from "./components/credit-files/CreditFileTemplatePage";
 import ConamiDefaultsManager from "./components/conami/ConamiDefaultsManager";
 import AppLayoutMenu from "./components/AppLayoutMenu";
+import AccountsList from "./components/accounting/AccountsList";
+import JournalList from "./components/accounting/JournalList";
+import LedgerList from "./components/accounting/LedgerList";
+import TrialBalance from "./components/accounting/TrialBalance";
+import IncomeStatement from "./components/accounting/IncomeStatement";
+import BalanceSheet from "./components/accounting/BalanceSheet";
+import PostingRuns from "./components/accounting/PostingRuns";
 import IccReportPage from "./pages/reports/conami/IccReportPage";
 import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
 
@@ -498,6 +505,27 @@ function AppRoutes({ themeMode, setThemeMode }) {
 
           <Route path="/dashboard/saldos" element={<BalancesDashboard />} />
 
+          {/* CONTABILIDAD */}
+
+          <Route path="/contabilidad/cuentas" element={<AccountsList />} />
+          <Route path="/contabilidad/libro-diario" element={<JournalList />} />
+          <Route path="/contabilidad/mayor" element={<LedgerList />} />
+          <Route
+            path="/contabilidad/balance-comprobacion"
+            element={<TrialBalance />}
+          />
+          <Route
+            path="/contabilidad/estado-resultados"
+            element={<IncomeStatement />}
+          />
+          <Route
+            path="/contabilidad/balance-general"
+            element={<BalanceSheet />}
+          />
+          <Route path="/contabilidad/contabilizar" element={<PostingRuns />} />
+          <Route path="/conami/icc" element={<IccGenerator />} />
+          <Route path="/reports/conami/icc" element={<IccReportPage />} />
+
           <Route
             path="*"
             element={
@@ -508,10 +536,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
-          <Route path="/conami/icc" element={<IccGenerator />} />
-
-          <Route path="/reports/conami/icc" element={<IccReportPage />} />
         </Routes>
       </AppLayoutMenu>
     </Box>

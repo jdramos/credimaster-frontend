@@ -42,6 +42,7 @@ import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluat
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import LoanExtraFields from "./LoanExtraFields";
+import ApprovalSummaryCard from "./ApprovalConfirmationDialog";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
