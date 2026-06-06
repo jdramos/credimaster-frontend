@@ -70,6 +70,7 @@ import LoanModificationSection from "../Loan/LoanModificationSection";
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
+import ApprovalConfirmationDialog from "./ApprovalConfirmationDialog";
 
 const HeaderBar = styled("div")(({ theme }) => ({
   background: theme.palette.primary.main,
@@ -256,6 +257,7 @@ const LoanDetailsModal = ({
   const [showDocuments, setShowDocuments] = useState(false);
   const [guaranteesTotal, setGuaranteesTotal] = useState(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [openAdjudication, setOpenAdjudication] = useState(false);
 
   const [financialEvaluationForm, setFinancialEvaluationForm] = useState({
     evaluation_date: dayjs().format("YYYY-MM-DD"),
@@ -325,7 +327,10 @@ const LoanDetailsModal = ({
     setLoadingCompliance(true);
 
     try {
-      const res = await API.get(`/api/loans/compliance/${loanId}`);
+      const res = await API.get(
+        `/api/loans/compliance/customer/${clientId}/${loanId}`,
+      );
+
       console.log("Compliance recibido:", res.data);
       setCompliance(res.data || null);
     } catch (err) {
@@ -507,7 +512,16 @@ const LoanDetailsModal = ({
     return approvalsNow;
   };
 
-  const handleApprove = async (approvalId) => {
+  const handleApprove = async (approvalId, approvalComment = "") => {
+    if (!approvalId) {
+      setSnackbar({
+        open: true,
+        message: "No se pudo determinar la aprobación seleccionada.",
+        severity: "error",
+      });
+      return;
+    }
+
     if (!isFormConsistentlyValid) {
       setSnackbar({
         open: true,
@@ -531,13 +545,16 @@ const LoanDetailsModal = ({
     setActionLoading(true);
 
     try {
-      await API.put(`/api/approvals/${approvalId}`, {
+      const res = await API.put(`/api/approvals/${approvalId}`, {
         status: "APPROVED",
         amount: editableAmount,
         term: editableTerm,
         interest_rate: editableRate,
         date: today(),
+        comment: approvalComment,
       });
+
+      console.log("Respuesta aprobación:", res.data);
 
       await refreshApprovalState();
 
@@ -547,6 +564,7 @@ const LoanDetailsModal = ({
         severity: "success",
       });
 
+      setConfirmOpen(false);
       onClose();
     } catch (error) {
       console.error(error);
@@ -561,12 +579,13 @@ const LoanDetailsModal = ({
     }
   };
 
-  const handleReject = async (approvalId) => {
+  const handleReject = async (approvalId, approvalComment) => {
     setActionLoading(true);
 
     try {
       await API.put(`/api/approvals/${approvalId}`, {
         status: "REJECTED",
+        comment: approvalComment,
       });
 
       const approvalsNow = await refreshApprovalState();
@@ -1237,7 +1256,9 @@ const LoanDetailsModal = ({
                                           <span>
                                             <IconButton
                                               onClick={() => {
-                                                setSelectedApprovalId(a.id);
+                                                setSelectedApprovalId(
+                                                  a.approver_id,
+                                                );
                                                 setConfirmOpen(true);
                                               }}
                                               color="primary"
@@ -1326,143 +1347,29 @@ const LoanDetailsModal = ({
           </Alert>
         </Snackbar>
 
-        <Dialog
+        <ApprovalConfirmationDialog
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogContent sx={{ pt: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-              Confirmar aprobación
-            </Typography>
-
-            {!isComplianceValid && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                No puedes aprobar este crédito porque faltan requisitos
-                regulatorios.
-              </Alert>
-            )}
-
-            {!isFormConsistentlyValid && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                Revisa monto, plazo, tasa o valor de garantías antes de aprobar.
-              </Alert>
-            )}
-
-            <Typography sx={{ mb: 1.5 }}>
-              Se registrará tu aprobación con los valores actuales:
-            </Typography>
-
-            <Box
-              sx={{
-                p: 1.5,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 1,
-                bgcolor: "grey.50",
-              }}
-            >
-              <Typography variant="body2">
-                <b>Monto:</b> C$ {formatMoney(editableAmount)}
-              </Typography>
-              <Typography variant="body2">
-                <b>Plazo:</b> {editableTerm} meses
-              </Typography>
-              <Typography variant="body2">
-                <b>Tasa:</b> {Number(editableRate || 0).toFixed(2)}%
-              </Typography>
-              <Typography variant="body2">
-                <b>Garantías:</b> C$ {formatMoney(guaranteesTotal)}
-              </Typography>
-            </Box>
-
-            {!!financialEvaluation && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 1.5,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  bgcolor: "grey.50",
-                }}
-              >
-                <Typography variant="body2">
-                  <b>Score final:</b> {financialEvaluation.final_score}
-                </Typography>
-                <Typography variant="body2">
-                  <b>Nivel de riesgo:</b> {financialEvaluation.risk_level}
-                </Typography>
-                <Typography variant="body2">
-                  <b>Recomendación:</b> {financialEvaluation.recommendation}
-                </Typography>
-                <Typography variant="body2">
-                  <b>Buró:</b> {financialEvaluation.bureau_result}
-                </Typography>
-              </Box>
-            )}
-
-            {!isComplianceValid && complianceMissingItems.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                  Pendientes de cumplimiento:
-                </Typography>
-
-                <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                  {complianceMissingItems.map((item, index) => (
-                    <li key={index}>
-                      <Typography variant="body2">{item}</Typography>
-                    </li>
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            {!!financialEvaluation?.analyst_comment && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  <CommentIcon
-                    sx={{
-                      fontSize: 16,
-                      mr: 0.5,
-                      verticalAlign: "middle",
-                    }}
-                  />
-                  Comentario del analista
-                </Typography>
-
-                <Typography variant="body2">
-                  {financialEvaluation.analyst_comment}
-                </Typography>
-              </Box>
-            )}
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={() => setConfirmOpen(false)} color="inherit">
-              Cancelar
-            </Button>
-
-            <Button
-              onClick={async () => {
-                if (!isFormConsistentlyValid || !isComplianceValid) return;
-
-                setConfirmOpen(false);
-
-                if (selectedApprovalId) {
-                  await handleApprove(selectedApprovalId);
-                }
-              }}
-              variant="contained"
-              disabled={
-                !isFormConsistentlyValid || !isComplianceValid || actionLoading
-              }
-            >
-              Aprobar
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onApprove={(approvalComment) =>
+            handleApprove(selectedApprovalId, approvalComment)
+          }
+          onReject={
+            typeof handleReject === "function"
+              ? (approvalComment) =>
+                  handleReject(selectedApprovalId, approvalComment)
+              : undefined
+          }
+          loading={actionLoading}
+          loan={loan?.data || loan}
+          financialEvaluation={financialEvaluation}
+          guaranteesTotal={guaranteesTotal}
+          editableAmount={editableAmount}
+          editableTerm={editableTerm}
+          editableRate={editableRate}
+          isComplianceValid={isComplianceValid}
+          isFormConsistentlyValid={isFormConsistentlyValid}
+          complianceMissingItems={complianceMissingItems}
+        />
 
         <Dialog
           open={showDocuments}

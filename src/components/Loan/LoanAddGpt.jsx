@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import Button from "@mui/material/Button";
 import Save from "@mui/icons-material/Save";
@@ -42,6 +42,7 @@ import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluat
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import LoanExtraFields from "./LoanExtraFields";
+import ApprovalSummaryCard from "./ApprovalConfirmationDialog";
 
 const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
 const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
@@ -59,15 +60,8 @@ const fieldSx = {
   "& .MuiFormHelperText-root": { marginLeft: 0 },
 };
 
-const toStr = (value) =>
-  value === null || value === undefined || value === "" ? "" : String(value);
-
 const LoanAdd = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  const draftId = searchParams.get("loanId");
-  const isEditingDraft = !!draftId;
 
   const currentUser = useMemo(() => {
     try {
@@ -81,7 +75,6 @@ const LoanAdd = () => {
   const [loading, setLoading] = useState(false);
 
   const [loan, setLoan] = useState({
-    id: null,
     customer_id: "",
     customer_identification: "",
     customer_name: "",
@@ -109,7 +102,6 @@ const LoanAdd = () => {
     credit_evaluation_id: "",
     created_by:
       currentUser?.user_name || currentUser?.username || currentUser?.id || "",
-    conami_id_actividad_economica: "",
     id_tipo_credito: "",
     id_garantia: "",
     id_linea: "",
@@ -152,7 +144,6 @@ const LoanAdd = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
-
   const [policies, setPolicies] = useState({});
   const [evaluations, setEvaluations] = useState([]);
 
@@ -160,30 +151,7 @@ const LoanAdd = () => {
   const [cancelDialog, setCancelDialog] = useState(false);
   const [docSummary, setDocSummary] = useState(null);
   const [showCustomerDocs, setShowCustomerDocs] = useState(false);
-  const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
-
-  const [financialEvaluationForm, setFinancialEvaluationForm] = useState({
-    evaluation_date: dayjs().format("YYYY-MM-DD"),
-    methodology: "INDIVIDUAL",
-    business_income: "",
-    salary_income: "",
-    other_income: "",
-    business_expenses: "",
-    family_expenses: "",
-    other_debts_installments: "",
-    proposed_installment: "",
-    years_in_business: "",
-    monthly_sales: "",
-    inventory_value: "",
-    business_location: "",
-    references_result: "FAVORABLE",
-    bureau_result: "NO_APLICA",
-    analyst_comment: "",
-    committee_comment: "",
-    change_reason: "",
-    version_no: 1,
-    is_current: 1,
-  });
+  const [evaluationViewForm, setEvaluationViewForm] = useState({});
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbarMessage(message);
@@ -191,128 +159,63 @@ const LoanAdd = () => {
     setSnackbarOpen(true);
   };
 
-  useEffect(() => {
-    const loadDraft = async () => {
-      if (!draftId) return;
+  const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
 
-      try {
-        setLoading(true);
+  const selectedEvaluation = useMemo(() => {
+    return (
+      evaluations.find(
+        (ev) => String(ev.id) === String(loan.credit_evaluation_id),
+      ) || null
+    );
+  }, [evaluations, loan.credit_evaluation_id]);
 
-        const { data } = await API.get(`/api/loans/${draftId}`);
+  const evaluationCustomer = useMemo(() => {
+    if (!selectedEvaluation) return null;
 
-        const draft = Array.isArray(data?.data)
-          ? data.data[0]
-          : Array.isArray(data)
-            ? data[0]
-            : data?.data || data;
+    return {
+      ...selectedEvaluation,
 
-        if (!draft) {
-          showSnackbar("No se encontró el borrador.", "error");
-          return;
-        }
+      id: loan.customer_id,
+      customer_id: loan.customer_id,
+      customerIdentification: loan.customer_identification,
+      customerName: loan.customer_name,
 
-        const draftStatus = String(draft.status || "").toUpperCase();
+      business_income: Number(selectedEvaluation.business_income || 0),
+      salary_income: Number(selectedEvaluation.salary_income || 0),
+      other_income: Number(selectedEvaluation.other_income || 0),
+      total_income: Number(selectedEvaluation.total_income || 0),
 
-        if (draftStatus !== "DRAFT") {
-          showSnackbar(
-            `Este crédito ya no está en borrador. Estado actual: ${
-              draftStatus || "SIN ESTADO"
-            }`,
-            "warning",
-          );
-          return;
-        }
+      business_expenses: Number(selectedEvaluation.business_expenses || 0),
+      family_expenses: Number(selectedEvaluation.family_expenses || 0),
+      financial_expenses: Number(selectedEvaluation.financial_expenses || 0),
+      total_expenses: Number(selectedEvaluation.total_expenses || 0),
 
-        setLoan((prev) => ({
-          ...prev,
-          id: draft.id,
-          customer_id: toStr(draft.customer_id),
-          customer_identification: draft.customer_identification || "",
-          customer_name: draft.customer_name || "",
+      net_income: Number(selectedEvaluation.net_income || 0),
+      payment_capacity: Number(selectedEvaluation.payment_capacity || 0),
+      recommended_amount: Number(selectedEvaluation.recommended_amount || 0),
 
-          requestDate: draft.request_date
-            ? dayjs(draft.request_date).format("YYYY-MM-DD")
-            : draft.date
-              ? dayjs(draft.date).format("YYYY-MM-DD")
-              : today(),
-
-          branch_id: toStr(draft.branch_id),
-          vendor_id: toStr(draft.vendor_id),
-          promoter_id: toStr(draft.promoter_id),
-
-          amount: draft.amount ?? "0.00",
-          fee: draft.fee ?? "0.00",
-          deduction: draft.deduction ?? "0.00",
-          insurance: draft.insurance ?? "0.00",
-          other_charges: draft.other_charges ?? "0.00",
-          term: draft.term ?? 0,
-
-          due_date: draft.due_date
-            ? dayjs(draft.due_date).format("YYYY-MM-DD")
-            : today(),
-
-          interest_type_id: draft.interest_type_id || 1,
-          interest_type_name: draft.interest_type_name || "compound",
-          interest_rate: draft.interest_rate ?? "1.00",
-          defaulted_rate: draft.defaulted_rate ?? "0.00",
-
-          frequency_id: toStr(draft.frequency || draft.frequency_id),
-          frequency_name: draft.frecuency_name || draft.frequency_name || "",
-
-          current_balance: draft.current_balance || 0,
-
-          credit_evaluation_id: toStr(draft.credit_evaluation_id),
-
-          conami_id_actividad_economica:
-            draft.conami_id_actividad_economica || "",
-
-          id_tipo_credito: toStr(draft.id_tipo_credito),
-          id_garantia: toStr(draft.id_garantia),
-          id_linea: toStr(draft.id_linea),
-          id_modalidad_credito: toStr(draft.id_modalidad_credito),
-          id_moneda: toStr(draft.id_moneda),
-          id_municipio: toStr(draft.id_municipio),
-          id_oficina: toStr(draft.id_oficina),
-          id_origen_recursos: toStr(draft.id_origen_recursos),
-          id_periodo_cobro_interes: toStr(draft.id_periodo_cobro_interes),
-          id_periodo_cobro_principal: toStr(draft.id_periodo_cobro_principal),
-          id_situacion_credito: draft.id_situacion_credito || 1,
-          id_tipo_agrupacion_credito: toStr(draft.id_tipo_agrupacion_credito),
-          id_sector_economico: toStr(draft.id_sector_economico),
-          id_met_atencion: toStr(draft.id_met_atencion),
-          id_tipo_zona: toStr(draft.id_tipo_zona),
-          id_estado_credito: draft.id_estado_credito || 1,
-          id_analista: toStr(draft.id_analista),
-
-          status: "DRAFT",
-        }));
-
-        showSnackbar("Borrador cargado correctamente.", "info");
-      } catch (error) {
-        showSnackbar(
-          error?.response?.data?.message ||
-            error?.response?.data?.error ||
-            "No se pudo cargar el borrador.",
-          "error",
-        );
-      } finally {
-        setLoading(false);
-      }
+      business_type_name: selectedEvaluation.business_type_name || "—",
+      total_loans: selectedEvaluation.total_loans || 0,
+      productOrService: selectedEvaluation.productOrService || "—",
+      creditLimit: selectedEvaluation.creditLimit || "—",
+      chanel: selectedEvaluation.chanel || "—",
+      province_name: selectedEvaluation.province_name || "—",
+      scores: selectedEvaluation.scores || {},
     };
-
-    loadDraft();
-  }, [draftId]);
-
+  }, [
+    selectedEvaluation,
+    loan.customer_id,
+    loan.customer_identification,
+    loan.customer_name,
+  ]);
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
         const res = await API.get("/api/credit-policies");
         const policyMap = {};
-
         res.data.forEach((policy) => {
           policyMap[policy.policy_key] = policy;
         });
-
         setPolicies(policyMap);
       } catch {
         toast.error("Error al obtener políticas de crédito");
@@ -331,7 +234,7 @@ const LoanAdd = () => {
 
       try {
         const { data } = await API.get(
-          `/api/customer-files/${loan.customer_id}/checklist-summary`,
+          `/api/customer-credit-evaluations/${loan.customer_id}/current`,
         );
 
         setDocSummary(data);
@@ -353,7 +256,6 @@ const LoanAdd = () => {
       }
 
       setLoading(true);
-
       try {
         const response = await fetch(`${urlGuarantee}/${loan.customer_id}`, {
           method: "GET",
@@ -370,15 +272,9 @@ const LoanAdd = () => {
           (sum, item) => sum + Number(item.value || 0),
           0,
         );
-
         setGuaranteeValue(totalValue);
         setGuarantees(data);
-
         setLoan((prev) => {
-          if (String(prev.status || "").toUpperCase() === "DRAFT") {
-            return prev;
-          }
-
           if (prev.credit_evaluation_id === "") return prev;
 
           return {
@@ -400,15 +296,7 @@ const LoanAdd = () => {
     const fetchCustomerEvaluations = async () => {
       if (!loan.customer_id) {
         setEvaluations([]);
-
-        setLoan((prev) => {
-          if (String(prev.status || "").toUpperCase() === "DRAFT") {
-            return prev;
-          }
-
-          return { ...prev, credit_evaluation_id: "" };
-        });
-
+        setLoan((prev) => ({ ...prev, credit_evaluation_id: "" }));
         return;
       }
 
@@ -421,43 +309,24 @@ const LoanAdd = () => {
 
         if (row) {
           setEvaluations([row]);
-
           setLoan((prev) => {
-            if (String(prev.status || "").toUpperCase() === "DRAFT") {
-              return prev;
-            }
-
             if (String(prev.credit_evaluation_id) === String(row.id)) {
               return prev;
             }
 
             return {
               ...prev,
-              credit_evaluation_id: String(row.id),
+              credit_evaluation_id: row.id,
             };
           });
         } else {
           setEvaluations([]);
-
-          setLoan((prev) => {
-            if (String(prev.status || "").toUpperCase() === "DRAFT") {
-              return prev;
-            }
-
-            return { ...prev, credit_evaluation_id: "" };
-          });
+          setLoan((prev) => ({ ...prev, credit_evaluation_id: "" }));
         }
       } catch (error) {
         console.error("Error obteniendo evaluación vigente:", error);
         setEvaluations([]);
-
-        setLoan((prev) => {
-          if (String(prev.status || "").toUpperCase() === "DRAFT") {
-            return prev;
-          }
-
-          return { ...prev, credit_evaluation_id: "" };
-        });
+        setLoan((prev) => ({ ...prev, credit_evaluation_id: "" }));
       }
     };
 
@@ -570,9 +439,189 @@ const LoanAdd = () => {
     loan.interest_type_name,
   ]);
 
+  useEffect(() => {
+    if (!selectedEvaluation) {
+      setEvaluationViewForm({});
+      return;
+    }
+
+    setEvaluationViewForm({
+      ...selectedEvaluation,
+      evaluation_date: selectedEvaluation.evaluation_date
+        ? dayjs(selectedEvaluation.evaluation_date).format("YYYY-MM-DD")
+        : dayjs().format("YYYY-MM-DD"),
+
+      methodology: selectedEvaluation.methodology || "INDIVIDUAL",
+
+      business_income: selectedEvaluation.business_income ?? "",
+      salary_income: selectedEvaluation.salary_income ?? "",
+      other_income: selectedEvaluation.other_income ?? "",
+
+      business_expenses: selectedEvaluation.business_expenses ?? "",
+      family_expenses: selectedEvaluation.family_expenses ?? "",
+      other_debts_installments:
+        selectedEvaluation.other_debts_installments ?? "",
+
+      proposed_installment: selectedEvaluation.proposed_installment ?? "",
+
+      years_in_business: selectedEvaluation.years_in_business ?? "",
+
+      monthly_sales: selectedEvaluation.monthly_sales ?? "",
+      inventory_value: selectedEvaluation.inventory_value ?? "",
+      business_location: selectedEvaluation.business_location ?? "",
+
+      references_result: selectedEvaluation.references_result || "FAVORABLE",
+
+      bureau_result: selectedEvaluation.bureau_result || "NO_APLICA",
+
+      analyst_comment: selectedEvaluation.analyst_comment || "",
+
+      committee_comment: selectedEvaluation.committee_comment || "",
+
+      version_no: selectedEvaluation.version_no || 1,
+      is_current: selectedEvaluation.is_current ?? 1,
+    });
+  }, [selectedEvaluation]);
+
+  const getPolicy = (key) => policies[key]?.policy_value;
+
+  const validateForm = (data) => {
+    const nextErrors = {};
+
+    if (docSummary && Number(docSummary.missing || 0) > 0) {
+      nextErrors.documents =
+        "El cliente no tiene completos los documentos obligatorios";
+    }
+
+    if (!data.customer_id) {
+      nextErrors.customer_id = "El cliente es requerido";
+    }
+
+    if (!data.requestDate) {
+      nextErrors.requestDate = "La fecha de solicitud es requerida";
+    }
+
+    if (!data.branch_id) {
+      nextErrors.branch_id = "La sucursal es requerida";
+    }
+
+    if (!data.amount || Number(data.amount) <= 0) {
+      nextErrors.amount = "El monto es requerido";
+    }
+
+    if (!data.term || Number(data.term) <= 0) {
+      nextErrors.term = "El plazo es requerido";
+    }
+
+    if (!data.due_date) {
+      nextErrors.due_date = "La fecha de vencimiento es requerida";
+    }
+
+    if (!data.interest_rate || Number(data.interest_rate) <= 0) {
+      nextErrors.interest_rate = "La tasa de interés es requerida";
+    }
+
+    if (!data.frequency_id) {
+      nextErrors.frequency_id = "La frecuencia es requerida";
+    }
+
+    if (!data.credit_evaluation_id) {
+      nextErrors.credit_evaluation_id =
+        "Debe seleccionar una evaluación financiera";
+    }
+
+    if (!data.id_tipo_credito) {
+      nextErrors.id_tipo_credito = "El tipo de crédito es requerido";
+    }
+
+    if (!data.id_moneda) {
+      nextErrors.id_moneda = "La moneda es requerida";
+    }
+
+    if (!data.id_estado_credito) {
+      nextErrors.id_estado_credito = "El estado del crédito es requerido";
+    }
+
+    if (!data.id_oficina) {
+      nextErrors.id_oficina = "La oficina es requerida";
+    }
+
+    if (!data.id_municipio) {
+      nextErrors.id_municipio = "El municipio es requerido";
+    }
+
+    if (
+      getPolicy("max_amount") &&
+      Number(data.amount) > Number(getPolicy("max_amount"))
+    ) {
+      nextErrors.amount = `El monto excede el máximo permitido: C$${getPolicy("max_amount")}`;
+    }
+
+    if (
+      getPolicy("max_interest_rate") &&
+      Number(data.interest_rate) * 12 > Number(getPolicy("max_interest_rate"))
+    ) {
+      nextErrors.interest_rate = `La tasa anual excede lo permitido: ${getPolicy("max_interest_rate")}%`;
+    }
+
+    if (
+      getPolicy("max_defaulted_rate") &&
+      Number(data.defaulted_rate) > Number(getPolicy("max_defaulted_rate"))
+    ) {
+      nextErrors.defaulted_rate = `La tasa de mora excede el máximo permitido: ${getPolicy("max_defaulted_rate")}%`;
+    }
+
+    if (
+      getPolicy("max_term_months") &&
+      Number(data.term) > Number(getPolicy("max_term_months"))
+    ) {
+      nextErrors.term = `El plazo excede el máximo permitido: ${getPolicy("max_term_months")} meses`;
+    }
+
+    if (
+      getPolicy("min_term_months") &&
+      Number(data.term) < Number(getPolicy("min_term_months"))
+    ) {
+      nextErrors.term = `El plazo es menor al mínimo permitido: ${getPolicy("min_term_months")} meses`;
+    }
+
+    if (
+      getPolicy("min_amount") &&
+      Number(data.amount) < Number(getPolicy("min_amount"))
+    ) {
+      nextErrors.amount = `El monto es menor al mínimo permitido: C$${getPolicy("min_amount")}`;
+    }
+
+    if (
+      getPolicy("min_interest_rate") &&
+      Number(data.interest_rate) < Number(getPolicy("min_interest_rate"))
+    ) {
+      nextErrors.interest_rate = `La tasa de interés es menor al mínimo permitido: ${getPolicy("min_interest_rate")}%`;
+    }
+
+    if (
+      getPolicy("max_late_interest_rate") &&
+      Number(data.defaulted_rate) > Number(data.interest_rate) / 4
+    ) {
+      nextErrors.defaulted_rate = "La tasa de mora excede el máximo permitido";
+    }
+
+    if (getPolicy("min_guarantee_coverage") && Number(guaranteeValue) > 0) {
+      const cobertura = (Number(data.amount) / Number(guaranteeValue)) * 100;
+      if (cobertura > Number(getPolicy("min_guarantee_coverage"))) {
+        nextErrors.amount = `Monto excede cobertura de garantías: ${getPolicy(
+          "min_guarantee_coverage",
+        )}%`;
+      }
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const getDefaultId = (rows = []) => {
     const found = rows.find((row) => Number(row.is_default) === 1);
-    return found ? String(found.id) : "";
+    return found ? found.id : "";
   };
 
   const loadConamiCatalogs = async () => {
@@ -586,26 +635,37 @@ const LoanAdd = () => {
         ...prev,
         id_tipo_credito:
           prev.id_tipo_credito || getDefaultId(data.tiposCredito),
+
         id_garantia: prev.id_garantia || getDefaultId(data.garantias),
+
         id_linea: prev.id_linea || getDefaultId(data.lineas),
+
         id_modalidad_credito:
           prev.id_modalidad_credito || getDefaultId(data.modalidadesCredito),
+
         id_moneda: prev.id_moneda || getDefaultId(data.monedas),
+
         id_oficina: prev.id_oficina || getDefaultId(data.oficinas),
+
         id_origen_recursos:
           prev.id_origen_recursos || getDefaultId(data.origenesRecursos),
+
         id_tipo_agrupacion_credito:
           prev.id_tipo_agrupacion_credito ||
           getDefaultId(data.tiposAgrupacionCredito),
+
         id_sector_economico:
           prev.id_sector_economico || getDefaultId(data.sectoresEconomicos),
+
         id_met_atencion:
           prev.id_met_atencion || getDefaultId(data.metodosAtencion),
+
         id_tipo_zona: prev.id_tipo_zona || getDefaultId(data.tiposZona),
+
         id_estado_credito:
           prev.id_estado_credito || getDefaultId(data.estadosCredito),
+
         id_analista: prev.id_analista || getDefaultId(data.analistas),
-        id_sindicado: prev.id_sindicado || getDefaultId(data.sindicados),
       }));
     } catch (error) {
       console.error("Error cargando catálogos:", error);
@@ -615,28 +675,6 @@ const LoanAdd = () => {
   useEffect(() => {
     loadConamiCatalogs();
   }, []);
-
-  const selectedEvaluation = useMemo(() => {
-    return (
-      evaluations.find(
-        (ev) => String(ev.id) === String(loan.credit_evaluation_id),
-      ) || null
-    );
-  }, [evaluations, loan.credit_evaluation_id]);
-
-  const evaluationCustomer = useMemo(() => {
-    if (!selectedEvaluation) return null;
-
-    return {
-      business_type_name: selectedEvaluation.business_type_name || "—",
-      total_loans: selectedEvaluation.total_loans || 0,
-      productOrService: selectedEvaluation.productOrService || "—",
-      creditLimit: selectedEvaluation.creditLimit || "—",
-      chanel: selectedEvaluation.chanel || "—",
-      province_name: selectedEvaluation.province_name || "—",
-      scores: selectedEvaluation.scores || {},
-    };
-  }, [selectedEvaluation]);
 
   const handleInputChange = (e, selectedOption = null) => {
     const {
@@ -667,9 +705,7 @@ const LoanAdd = () => {
           ? conami_id_actividad_economica
           : prev.conami_id_actividad_economica,
       id_municipio:
-        municipality_id !== undefined
-          ? toStr(municipality_id)
-          : prev.id_municipio,
+        municipality_id !== undefined ? municipality_id : prev.id_municipio,
       id_oficina: name === "branch_id" ? value : prev.id_oficina,
       id_analista:
         promoter_identification !== undefined
@@ -677,142 +713,21 @@ const LoanAdd = () => {
           : prev.id_analista,
       id_periodo_cobro_interes:
         frecuency_id !== undefined
-          ? toStr(frecuency_id)
+          ? frecuency_id
           : prev.id_periodo_cobro_interes,
       id_periodo_cobro_principal:
         frecuency_id !== undefined
-          ? toStr(frecuency_id)
+          ? frecuency_id
           : prev.id_periodo_cobro_principal,
     }));
   };
 
-  const getPolicy = (key) => policies[key]?.policy_value;
-
-  const validateForm = (data) => {
-    const nextErrors = {};
-
-    if (docSummary && Number(docSummary.missing || 0) > 0) {
-      nextErrors.documents =
-        "El cliente no tiene completos los documentos obligatorios";
-    }
-
-    if (!data.customer_id) nextErrors.customer_id = "El cliente es requerido";
-    if (!data.requestDate)
-      nextErrors.requestDate = "La fecha de solicitud es requerida";
-    if (!data.branch_id) nextErrors.branch_id = "La sucursal es requerida";
-    if (!data.amount || Number(data.amount) <= 0)
-      nextErrors.amount = "El monto es requerido";
-    if (!data.term || Number(data.term) <= 0)
-      nextErrors.term = "El plazo es requerido";
-    if (!data.due_date)
-      nextErrors.due_date = "La fecha de vencimiento es requerida";
-    if (!data.interest_rate || Number(data.interest_rate) <= 0)
-      nextErrors.interest_rate = "La tasa de interés es requerida";
-    if (!data.frequency_id)
-      nextErrors.frequency_id = "La frecuencia es requerida";
-    if (!data.credit_evaluation_id)
-      nextErrors.credit_evaluation_id =
-        "Debe seleccionar una evaluación financiera";
-    if (!data.id_tipo_credito)
-      nextErrors.id_tipo_credito = "El tipo de crédito es requerido";
-    if (!data.id_moneda) nextErrors.id_moneda = "La moneda es requerida";
-    if (!data.id_estado_credito)
-      nextErrors.id_estado_credito = "El estado del crédito es requerido";
-    if (!data.id_oficina) nextErrors.id_oficina = "La oficina es requerida";
-    if (!data.id_municipio)
-      nextErrors.id_municipio = "El municipio es requerido";
-
-    if (
-      getPolicy("max_amount") &&
-      Number(data.amount) > Number(getPolicy("max_amount"))
-    ) {
-      nextErrors.amount = `El monto excede el máximo permitido: C$${getPolicy(
-        "max_amount",
-      )}`;
-    }
-
-    if (
-      getPolicy("max_interest_rate") &&
-      Number(data.interest_rate) * 12 > Number(getPolicy("max_interest_rate"))
-    ) {
-      nextErrors.interest_rate = `La tasa anual excede lo permitido: ${getPolicy(
-        "max_interest_rate",
-      )}%`;
-    }
-
-    if (
-      getPolicy("max_defaulted_rate") &&
-      Number(data.defaulted_rate) > Number(getPolicy("max_defaulted_rate"))
-    ) {
-      nextErrors.defaulted_rate = `La tasa de mora excede el máximo permitido: ${getPolicy(
-        "max_defaulted_rate",
-      )}%`;
-    }
-
-    if (
-      getPolicy("max_term_months") &&
-      Number(data.term) > Number(getPolicy("max_term_months"))
-    ) {
-      nextErrors.term = `El plazo excede el máximo permitido: ${getPolicy(
-        "max_term_months",
-      )} meses`;
-    }
-
-    if (
-      getPolicy("min_term_months") &&
-      Number(data.term) < Number(getPolicy("min_term_months"))
-    ) {
-      nextErrors.term = `El plazo es menor al mínimo permitido: ${getPolicy(
-        "min_term_months",
-      )} meses`;
-    }
-
-    if (
-      getPolicy("min_amount") &&
-      Number(data.amount) < Number(getPolicy("min_amount"))
-    ) {
-      nextErrors.amount = `El monto es menor al mínimo permitido: C$${getPolicy(
-        "min_amount",
-      )}`;
-    }
-
-    if (
-      getPolicy("min_interest_rate") &&
-      Number(data.interest_rate) < Number(getPolicy("min_interest_rate"))
-    ) {
-      nextErrors.interest_rate = `La tasa de interés es menor al mínimo permitido: ${getPolicy(
-        "min_interest_rate",
-      )}%`;
-    }
-
-    if (
-      getPolicy("max_late_interest_rate") &&
-      Number(data.defaulted_rate) > Number(data.interest_rate) / 4
-    ) {
-      nextErrors.defaulted_rate = "La tasa de mora excede el máximo permitido";
-    }
-
-    if (getPolicy("min_guarantee_coverage") && Number(guaranteeValue) > 0) {
-      const cobertura = (Number(data.amount) / Number(guaranteeValue)) * 100;
-
-      if (cobertura > Number(getPolicy("min_guarantee_coverage"))) {
-        nextErrors.amount = `Monto excede cobertura de garantías: ${getPolicy(
-          "min_guarantee_coverage",
-        )}%`;
-      }
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
   const buildPayload = () => {
     return {
-      id: loan.id || null,
-      customer_id: loan.customer_id ? Number(loan.customer_id) : null,
+      customer_id: Number(loan.customer_id),
       customer_identification: loan.customer_identification || "",
       requestDate: dayjs(loan.requestDate).format("YYYY-MM-DD"),
-      branch_id: loan.branch_id ? Number(loan.branch_id) : null,
+      branch_id: Number(loan.branch_id),
       vendor_id: loan.vendor_id ? Number(loan.vendor_id) : null,
       promoter_id: loan.promoter_id ? Number(loan.promoter_id) : null,
       amount: Number(loan.amount || 0),
@@ -832,7 +747,7 @@ const LoanAdd = () => {
         ? Number(loan.credit_evaluation_id)
         : null,
       created_by: loan.created_by || null,
-      conami_id_actividad_economica: loan.conami_id_actividad_economica || null,
+      conami_id_actividad_economica: loan.conami_id_actividad_economica,
       id_tipo_credito: loan.id_tipo_credito
         ? Number(loan.id_tipo_credito)
         : null,
@@ -861,49 +776,8 @@ const LoanAdd = () => {
         ? Number(loan.id_estado_credito)
         : null,
       id_analista: loan.id_analista ? Number(loan.id_analista) : null,
-      id_sindicado: loan.id_sindicado ? Number(loan.id_sindicado) : null,
     };
   };
-
-  const saveDraft = async () => {
-    try {
-      setLoading(true);
-
-      const payload = {
-        ...buildPayload(),
-        save_as_draft: true,
-      };
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        showSnackbar(data?.message || "No se pudo guardar borrador", "error");
-        return;
-      }
-
-      setLoan((prev) => ({
-        ...prev,
-        id: data.loan_id,
-        status: "DRAFT",
-      }));
-
-      showSnackbar("Borrador guardado correctamente", "success");
-    } catch (err) {
-      showSnackbar(err.message, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const addLoan = async () => {
     setLoading(true);
 
@@ -923,22 +797,13 @@ const LoanAdd = () => {
 
       if (!response.ok) {
         showSnackbar(
-          responseData?.message ||
-            responseData?.error ||
-            "Error al guardar la solicitud.",
+          responseData?.error || "Error al guardar la solicitud.",
           "error",
         );
-
-        setOpenDialog(false);
         return;
       }
 
-      showSnackbar(
-        isEditingDraft
-          ? "Borrador enviado a aprobación correctamente."
-          : "Solicitud guardada exitosamente.",
-        "success",
-      );
+      showSnackbar("Solicitud guardada exitosamente.", "success");
 
       setTimeout(() => {
         setOpenDialog(false);
@@ -1028,11 +893,8 @@ const LoanAdd = () => {
         >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              {isEditingDraft
-                ? "Editar borrador de préstamo."
-                : "Solicitud de préstamos."}
+              Solicitud de préstamos.
             </Typography>
-
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
               Complete los datos y verifique amortización, evaluación y
               garantías.
@@ -1040,10 +902,6 @@ const LoanAdd = () => {
           </Box>
 
           <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-            {isEditingDraft && (
-              <Chip label="Borrador" color="warning" sx={{ fontWeight: 900 }} />
-            )}
-
             <Chip
               label={`Garantías: C$ ${Number(
                 guaranteeValue || 0,
@@ -1056,7 +914,6 @@ const LoanAdd = () => {
                 fontWeight: 800,
               }}
             />
-
             <Chip
               label={`Cuota: C$ ${Number(
                 installment?.paymentAmount || 0,
@@ -1088,7 +945,6 @@ const LoanAdd = () => {
           <Typography sx={{ fontWeight: 900, color: BAC.text }}>
             Datos principales
           </Typography>
-
           <Typography variant="body2" sx={{ color: BAC.muted, mb: 1 }}>
             Los campos se validan contra políticas de crédito y el backend
             valida evaluación y expediente.
@@ -1137,7 +993,6 @@ const LoanAdd = () => {
                 multiple={false}
                 label="Sucursal"
               />
-
               {!!errors.branch_id && (
                 <Typography variant="caption" color="error">
                   {errors.branch_id}
@@ -1150,14 +1005,10 @@ const LoanAdd = () => {
                 id="customer_code"
                 name="customer_id"
                 value={loan.customer_id}
-                selected={loan.customer_id}
-                selectedLabel={loan.customer_name}
-                selectedIdentification={loan.customer_identification}
                 onChange={handleInputChange}
                 size="small"
                 label="Nombre del cliente"
               />
-
               {!!errors.customer_id && (
                 <Typography variant="caption" color="error">
                   {errors.customer_id}
@@ -1170,8 +1021,6 @@ const LoanAdd = () => {
                 name="promoter_id"
                 onChange={handleInputChange}
                 value={loan.promoter_id}
-                selected={loan.promoter_id}
-                selectedLabel={loan.promoter_name}
                 branch_id={loan.branch_id}
                 size="small"
                 label="Nombre del promotor"
@@ -1184,12 +1033,9 @@ const LoanAdd = () => {
                 onChange={handleInputChange}
                 label="Nombre del gestor"
                 value={loan.vendor_id}
-                selectedLabel={loan.vendor_name}
-                selected={loan.vendor_id}
                 branch_id={loan.branch_id}
               />
             </Box>
-
             <Box
               sx={{
                 ...fieldSx,
@@ -1215,9 +1061,8 @@ const LoanAdd = () => {
                 }
               >
                 <MenuItem value="">Seleccione una evaluación</MenuItem>
-
                 {evaluations.map((ev) => (
-                  <MenuItem key={ev.id} value={String(ev.id)}>
+                  <MenuItem key={ev.id} value={ev.id}>
                     #{ev.id} - {dayjs(ev.evaluation_date).format("DD/MM/YYYY")}
                   </MenuItem>
                 ))}
@@ -1278,7 +1123,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -1305,7 +1153,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -1332,7 +1183,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -1359,7 +1213,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -1382,7 +1239,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -1409,7 +1269,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="start"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     C$
                   </InputAdornment>
                 ),
@@ -1468,7 +1331,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="end"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     %
                   </InputAdornment>
                 ),
@@ -1495,7 +1361,10 @@ const LoanAdd = () => {
               sx={fieldSx}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end" sx={{ color: BAC.primary }}>
+                  <InputAdornment
+                    position="end"
+                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                  >
                     %
                   </InputAdornment>
                 ),
@@ -1507,10 +1376,8 @@ const LoanAdd = () => {
                 label="Frecuencia de pago"
                 name="frequency_id"
                 value={loan.frequency_id}
-                selected={loan.frequency_id}
                 onChange={handleInputChange}
               />
-
               {!!errors.frequency_id && (
                 <Typography variant="caption" color="error">
                   {errors.frequency_id}
@@ -1593,21 +1460,46 @@ const LoanAdd = () => {
                   Ver documentos
                 </Button>
               </Stack>
-
               {errors.documents && (
                 <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
                   {errors.documents}
                 </Alert>
               )}
-
               {docSummary ? (
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   <Chip
                     label={`Requeridos: ${docSummary.total_required || 0}`}
                   />
-                  <Chip label={`Cargados: ${docSummary.uploaded || 0}`} />
-                  <Chip label={`Verificados: ${docSummary.verified || 0}`} />
-                  <Chip label={`Faltantes: ${docSummary.missing || 0}`} />
+                  <Chip
+                    label={`Cargados: ${docSummary.uploaded || 0}`}
+                    sx={{
+                      bgcolor: "#FFF3E0",
+                      color: "#ED6C02",
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Chip
+                    label={`Verificados: ${docSummary.verified || 0}`}
+                    sx={{
+                      bgcolor: "#E8F5E9",
+                      color: "#2E7D32",
+                      fontWeight: 700,
+                    }}
+                  />
+                  <Chip
+                    label={`Faltantes: ${docSummary.missing || 0}`}
+                    sx={{
+                      bgcolor:
+                        Number(docSummary.missing || 0) > 0
+                          ? "#FEE2E2"
+                          : "#E8F5E9",
+                      color:
+                        Number(docSummary.missing || 0) > 0
+                          ? "#B42318"
+                          : "#2E7D32",
+                      fontWeight: 700,
+                    }}
+                  />
                 </Stack>
               ) : (
                 <Alert severity="info" sx={{ borderRadius: 2 }}>
@@ -1643,7 +1535,7 @@ const LoanAdd = () => {
               "&:hover": { bgcolor: BAC.primaryDark },
             }}
           >
-            {isEditingDraft ? "Enviar a aprobación" : "Guardar"}
+            Guardar
           </Button>
 
           <Button
@@ -1660,10 +1552,6 @@ const LoanAdd = () => {
             }}
           >
             Cancelar
-          </Button>
-
-          <Button variant="outlined" onClick={saveDraft}>
-            Guardar como borrador
           </Button>
         </Box>
       </form>
@@ -1695,9 +1583,7 @@ const LoanAdd = () => {
         message={
           cancelDialog
             ? "¿Está seguro que desea cancelar? Se perderán los cambios realizados."
-            : isEditingDraft
-              ? "¿Está seguro que desea enviar este borrador a aprobación?"
-              : "¿Está seguro que desea guardar esta solicitud?"
+            : "¿Está seguro que desea guardar esta sucursal?"
         }
         confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
         cancelText="No"
@@ -1730,12 +1616,12 @@ const LoanAdd = () => {
             }}
           >
             <CustomerFinancialEvaluationTab
-              form={financialEvaluationForm}
-              setForm={setFinancialEvaluationForm}
+              form={evaluationViewForm}
+              setForm={setEvaluationViewForm}
               customerId={loan.customer_id}
               customerIdentification={loan.customer_identification}
               customerName={loan.customer_name}
-              loanId={loan.id}
+              readOnly
             />
           </Paper>
         ) : (
