@@ -512,71 +512,15 @@ const LoanDetailsModal = ({
     return approvalsNow;
   };
 
-  const handleApprove = async (approvalId, approvalComment = "") => {
-    if (!approvalId) {
-      setSnackbar({
-        open: true,
-        message: "No se pudo determinar la aprobación seleccionada.",
-        severity: "error",
-      });
-      return;
-    }
-
-    if (!isFormConsistentlyValid) {
-      setSnackbar({
-        open: true,
-        message:
-          "No se puede aprobar. Revisa monto, plazo, tasa o valor de garantías.",
-        severity: "error",
-      });
-      return;
-    }
-
-    if (!isComplianceValid) {
-      setSnackbar({
-        open: true,
-        message:
-          "No se puede aprobar. El expediente no cumple con todos los requisitos CONAMI.",
-        severity: "error",
-      });
-      return;
-    }
-
-    setActionLoading(true);
-
-    try {
-      const res = await API.put(`/api/approvals/${approvalId}`, {
-        status: "APPROVED",
-        amount: editableAmount,
-        term: editableTerm,
-        interest_rate: editableRate,
-        date: today(),
-        comment: approvalComment,
-      });
-
-      console.log("Respuesta aprobación:", res.data);
-
-      await refreshApprovalState();
-
-      setSnackbar({
-        open: true,
-        message: "Aprobación registrada correctamente.",
-        severity: "success",
-      });
-
-      setConfirmOpen(false);
-      onClose();
-    } catch (error) {
-      console.error(error);
-
-      setSnackbar({
-        open: true,
-        message: error.response?.data?.error || "Error al aprobar.",
-        severity: "error",
-      });
-    } finally {
-      setActionLoading(false);
-    }
+  const handleApprove = async (approvalId, comment = "") => {
+    await API.put(`/api/approvals/${approvalId}`, {
+      status: "APPROVED",
+      amount: editableAmount,
+      term: editableTerm,
+      interest_rate: editableRate,
+      date: today,
+      comment: comment,
+    });
   };
 
   const handleReject = async (approvalId, approvalComment) => {
@@ -1350,6 +1294,7 @@ const LoanDetailsModal = ({
         <ApprovalConfirmationDialog
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
+          approvalId={selectedApprovalId}
           onApprove={(approvalComment) =>
             handleApprove(selectedApprovalId, approvalComment)
           }

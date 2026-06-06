@@ -30,7 +30,7 @@ export default function ApprovalConfirmationDialog({
   onApprove,
   onReject,
   loading = false,
-
+  approvalId,
   loan,
   financialEvaluation,
   guaranteesTotal = 0,
@@ -59,7 +59,7 @@ export default function ApprovalConfirmationDialog({
   const handleApproveClick = async () => {
     if (!isReadyToApprove || loading) return;
 
-    await onApprove?.(approvalComment);
+    await onApprove?.(approvalId, approvalComment);
 
     setApprovalComment("");
   };
