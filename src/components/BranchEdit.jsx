@@ -28,9 +28,9 @@ import "react-toastify/dist/ReactToastify.css";
 import ProvinceSelect from "./ProvinceSelect";
 import MunicipalitySelect from "./MunicipalitySelect";
 import ConfirmDialog from "./ConfirmDialog";
+import API from "../api";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL + "/api/branches/";
-const token = process.env.REACT_APP_API_TOKEN;
+const baseUrl = "/api/branches/";
 
 const emptyBranch = {
   name: "",
@@ -56,18 +56,23 @@ function normalizeBranch(data = {}) {
 
 function validateBranch(data) {
   const errs = {};
+
   if (!data.name?.trim()) errs.name = "El nombre es requerido";
   if (!data.address?.trim()) errs.address = "La dirección es requerida";
   if (!data.manager?.trim()) errs.manager = "Nombre de gerente es requerido";
+
   if (!data.risk_id || Number(data.risk_id) === 0) {
     errs.risk_id = "Seleccione un tipo de riesgo";
   }
+
   if (!data.province_id || Number(data.province_id) === 0) {
     errs.province_id = "Seleccione un departamento";
   }
+
   if (!data.municipality_id || Number(data.municipality_id) === 0) {
     errs.municipality_id = "Seleccione un municipio";
   }
+
   return errs;
 }
 
@@ -124,26 +129,21 @@ const BranchEdit = () => {
     [branch, originalBranch],
   );
 
-  const showSnack = (type, msg) =>
-    setSnack({ open: true, alertType: type, alertMessage: msg });
+  const showSnack = (type, msg) => {
+    setSnack({
+      open: true,
+      alertType: type,
+      alertMessage: msg,
+    });
+  };
 
   useEffect(() => {
     const loadBranch = async () => {
       try {
         setLoading(true);
 
-        const resp = await fetch(`${baseUrl}${branchId}`, {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        });
-
-        const data = await resp.json().catch(() => ({}));
-
-        if (!resp.ok) {
-          throw new Error(data?.errors || "No se pudo cargar la sucursal.");
-        }
+        const resp = await API.get(`${baseUrl}${branchId}`);
+        const data = resp.data;
 
         if (!data) {
           throw new Error("La sucursal no fue encontrada.");
@@ -155,7 +155,14 @@ const BranchEdit = () => {
         setOriginalBranch(normalized);
       } catch (e) {
         console.error("Error cargando sucursal:", e);
-        showSnack("error", e.message || "Error al cargar la sucursal.");
+
+        showSnack(
+          "error",
+          e.response?.data?.error ||
+            e.response?.data?.message ||
+            e.message ||
+            "Error al cargar la sucursal.",
+        );
       } finally {
         setLoading(false);
       }
@@ -174,34 +181,22 @@ const BranchEdit = () => {
     try {
       setSaving(true);
 
-      const resp = await fetch(`${baseUrl}${branchId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json; charset=UTF-8",
-          Authorization: token,
-        },
-        body: JSON.stringify({
-          ...branch,
-          name: branch.name.trim(),
-          address: branch.address.trim(),
-          manager: branch.manager.trim(),
-          telephone: branch.telephone.trim(),
-          risk_id: Number(branch.risk_id),
-          province_id: Number(branch.province_id),
-          municipality_id: Number(branch.municipality_id),
-        }),
-      });
+      const payload = {
+        ...branch,
+        name: branch.name.trim(),
+        address: branch.address.trim(),
+        manager: branch.manager.trim(),
+        telephone: branch.telephone.trim(),
+        risk_id: Number(branch.risk_id),
+        province_id: Number(branch.province_id),
+        municipality_id: Number(branch.municipality_id),
+      };
 
-      const data = await resp.json().catch(() => ({}));
+      await API.put(`${baseUrl}${branchId}`, payload);
 
-      if (!resp.ok) {
-        showSnack("error", data?.errors || "Error al actualizar la sucursal.");
-        setOpenDialog(false);
-        return;
-      }
-
-      const normalized = normalizeBranch(branch);
+      const normalized = normalizeBranch(payload);
       setOriginalBranch(normalized);
+      setBranch(normalized);
 
       showSnack("success", "Sucursal actualizada exitosamente.");
       setOpenDialog(false);
@@ -209,7 +204,14 @@ const BranchEdit = () => {
       setTimeout(() => navigate("/sucursales"), 1200);
     } catch (e) {
       console.error("Error actualizando sucursal:", e);
-      showSnack("error", "Error de conexión: " + e.message);
+
+      showSnack(
+        "error",
+        e.response?.data?.error ||
+          e.response?.data?.message ||
+          "Error al actualizar la sucursal.",
+      );
+
       setOpenDialog(false);
     } finally {
       setSaving(false);
@@ -241,6 +243,7 @@ const BranchEdit = () => {
       navigate("/sucursales");
       return;
     }
+
     updateBranch();
   };
 
@@ -465,7 +468,7 @@ const BranchEdit = () => {
                       name="province_id"
                       label="Departamento"
                       onChange={handleInputChange}
-                      error={errors.province_id}
+                      error={Boolean(errors.province_id)}
                       helperText={errors.province_id || " "}
                     />
                   </Grid>
@@ -477,7 +480,7 @@ const BranchEdit = () => {
                       value={branch.municipality_id}
                       provinceId={branch.province_id}
                       onChange={handleInputChange}
-                      error={errors.municipality_id}
+                      error={Boolean(errors.municipality_id)}
                       helperText={errors.municipality_id || " "}
                     />
                   </Grid>

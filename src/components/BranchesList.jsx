@@ -17,13 +17,9 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import EditRoadIcon from "@mui/icons-material/EditRoad";
 import FmdGoodIcon from "@mui/icons-material/FmdGood";
-
+import API from "../api";
 import DataTable from "./DataTable";
 import EmptyNotice from "./EmptyNotice";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/branches";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
 
 const bacHeaderSx = {
   background: "linear-gradient(135deg, #0d47a1 0%, #1565c0 45%, #42a5f5 100%)",
@@ -69,22 +65,22 @@ const BranchesList = () => {
       try {
         setLoading(true);
 
-        const response = await fetch(url, { headers });
-        const jsonData = await response.json().catch(() => []);
-
-        if (!response.ok) {
-          showSnack(
-            "error",
-            `Respuesta del servidor: ${jsonData?.errors || "Error al consultar sucursales"}`,
-          );
-          setData([]);
-          return;
-        }
+        const response = await API.get("/api/branches");
+        const jsonData = response.data;
 
         setData(Array.isArray(jsonData) ? jsonData : []);
       } catch (error) {
         console.error(error);
-        showSnack("error", `Respuesta del servidor: ${error.message}`);
+
+        showSnack(
+          "error",
+          `Respuesta del servidor: ${
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            error.message
+          }`,
+        );
+
         setData([]);
       } finally {
         setLoading(false);

@@ -7,10 +7,9 @@ import {
   Typography,
   Box,
 } from "@mui/material";
+import API from "../api";
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/branches";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/branches";
 
 const BranchSelect = ({
   value = "",
@@ -35,13 +34,9 @@ const BranchSelect = ({
       try {
         setFetchError("");
 
-        const response = await fetch(url, { headers });
+        const response = await API.get(url);
 
-        if (!response.ok) {
-          throw new Error("No se pudieron cargar las sucursales.");
-        }
-
-        const jsonData = await response.json();
+        const jsonData = await response.data;
 
         const allowedBranches = userBranches.map((id) => Number(id));
 

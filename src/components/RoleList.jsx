@@ -30,10 +30,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import KeyIcon from "@mui/icons-material/Key";
-import axios from "axios";
-
-const API_URL = process.env.REACT_APP_API_BASE_URL;
-const TOKEN = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const BAC = {
   primary: "#D32F2F",
@@ -79,7 +76,11 @@ const getPermissionsCount = (role) => {
 };
 
 const getRoleStatus = (role) => {
-  if (role.role_status === 1 || role.role_status === "1" || role.role_status === "ACTIVO") {
+  if (
+    role.role_status === 1 ||
+    role.role_status === "1" ||
+    role.role_status === "ACTIVO"
+  ) {
     return {
       label: "Activo",
       color: BAC.success,
@@ -88,7 +89,11 @@ const getRoleStatus = (role) => {
     };
   }
 
-  if (role.role_status === 0 || role.role_status === "0" || role.role_status === "INACTIVO") {
+  if (
+    role.role_status === 0 ||
+    role.role_status === "0" ||
+    role.role_status === "INACTIVO"
+  ) {
     return {
       label: "Inactivo",
       color: BAC.grey700,
@@ -119,9 +124,7 @@ const RoleList = () => {
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/roles`, {
-        headers: { Authorization: TOKEN },
-      });
+      const res = await API.get(`${API_URL}/api/roles`);
       setRoles(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error al obtener roles:", err);
@@ -264,11 +267,7 @@ const RoleList = () => {
         </Stack>
       </Paper>
 
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={2}
-        sx={{ mb: 3 }}
-      >
+      <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 3 }}>
         <Paper
           elevation={0}
           sx={{
@@ -510,7 +509,9 @@ const RoleList = () => {
                     <TableCell width="180">
                       <TableSortLabel
                         active={orderBy === "permissions_count"}
-                        direction={orderBy === "permissions_count" ? order : "asc"}
+                        direction={
+                          orderBy === "permissions_count" ? order : "asc"
+                        }
                         onClick={() => handleSort("permissions_count")}
                         sx={{
                           color: "#fff !important",
@@ -541,7 +542,9 @@ const RoleList = () => {
                         hover
                         sx={{
                           backgroundColor:
-                            index % 2 === 0 ? BAC.white : alpha(BAC.grey200, 0.45),
+                            index % 2 === 0
+                              ? BAC.white
+                              : alpha(BAC.grey200, 0.45),
                           transition: "all 0.2s ease",
                           "&:hover": {
                             backgroundColor: alpha(BAC.primary, 0.05),
@@ -567,7 +570,11 @@ const RoleList = () => {
                         </TableCell>
 
                         <TableCell>
-                          <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Stack
+                            direction="row"
+                            spacing={1.5}
+                            alignItems="center"
+                          >
                             <Box
                               sx={{
                                 width: 40,
@@ -601,9 +608,12 @@ const RoleList = () => {
                             size="small"
                             sx={{
                               fontWeight: 700,
-                              color: permissionsCount > 0 ? BAC.info : BAC.grey700,
+                              color:
+                                permissionsCount > 0 ? BAC.info : BAC.grey700,
                               backgroundColor:
-                                permissionsCount > 0 ? BAC.infoSoft : BAC.grey100,
+                                permissionsCount > 0
+                                  ? BAC.infoSoft
+                                  : BAC.grey100,
                               border:
                                 permissionsCount > 0
                                   ? `1px solid ${alpha(BAC.info, 0.18)}`

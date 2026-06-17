@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { FormControl, InputLabel, MenuItem, Select, Autocomplete, TextField } from "@mui/material";
-import Snackbar from '@mui/material/Snackbar';
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Autocomplete,
+  TextField,
+} from "@mui/material";
+import API from "../api";
 
-
-const url = process.env.REACT_APP_API_BASE_URL + '/api/businesstypes';
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/businesstypes";
 
 const BusinessTypeSelect = (props) => {
   const [business, setBusiness] = useState([]); // State to store fetched data
@@ -14,17 +18,12 @@ const BusinessTypeSelect = (props) => {
   useEffect(() => {
     const fetchApi = async () => {
       try {
-        const response = await fetch(url, { headers });
-        if (!response.ok) {
-          throw new Error('Failed to retrieve data.');
-        }
-        const jsonData = await response.json()
-          ;
+        const response = await API.get(url);
 
+        const jsonData = await response.data;
         setBusiness(jsonData);
-
       } catch (error) {
-        setError('Failed to retrieve data. Please try again later.');
+        setError("Failed to retrieve data. Please try again later.");
       }
     };
 
@@ -32,7 +31,7 @@ const BusinessTypeSelect = (props) => {
   }, []); // Empty dependency array ensures this runs once on mount
 
   return (
-    <FormControl sx={{ mt: 0, ml: 0, minWidth: 300 }} size="small" >
+    <FormControl sx={{ mt: 0, ml: 0, minWidth: 300 }} size="small">
       <Autocomplete
         options={business}
         size="small"
@@ -41,17 +40,13 @@ const BusinessTypeSelect = (props) => {
           const syntheticEvent = {
             target: {
               name: props.name,
-              value: newValue ? newValue.id : ''
-            }
+              value: newValue ? newValue.id : "",
+            },
           };
           props.onChange(syntheticEvent);
         }}
         renderInput={(params) => (
-          <TextField
-            {...params}
-            label={props.label}
-            variant="outlined"
-          />
+          <TextField {...params} label={props.label} variant="outlined" />
         )}
         renderOption={(props, option) => (
           <MenuItem {...props} key={option.id} value={option.id}>
@@ -59,9 +54,11 @@ const BusinessTypeSelect = (props) => {
           </MenuItem>
         )}
       />
-      {props.error === 0 ? null : <span className="form-text text-danger">{props.error}</span>}
+      {props.error === 0 ? null : (
+        <span className="form-text text-danger">{props.error}</span>
+      )}
     </FormControl>
   );
-}
+};
 
 export default BusinessTypeSelect;

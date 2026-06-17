@@ -1,5 +1,5 @@
 // src/pages/LoginPage.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,6 +15,10 @@ import {
   CircularProgress,
   Divider,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
@@ -33,6 +37,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
+  const [sessionDialog, setSessionDialog] = useState(false);
+  const [sessionMessage, setSessionMessage] = useState("");
+
+  useEffect(() => {
+    const msg = localStorage.getItem("sessionExpiredMessage");
+
+    if (msg) {
+      setSessionMessage(msg);
+      setSessionDialog(true);
+      localStorage.removeItem("sessionExpiredMessage");
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -43,11 +60,15 @@ export default function LoginPage() {
       if (success) {
         navigate("/");
       } else {
-        setError("Ingreso fallido. Verifique sus credenciales e intente nuevamente.");
+        setError(
+          "Ingreso fallido. Verifique sus credenciales e intente nuevamente.",
+        );
       }
     } catch (err) {
       console.error(err);
-      setError("Ingreso fallido. Verifique sus credenciales e intente nuevamente.");
+      setError(
+        "Ingreso fallido. Verifique sus credenciales e intente nuevamente.",
+      );
     } finally {
       setLoading(false);
     }
@@ -85,7 +106,10 @@ export default function LoginPage() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
             <AccountBalanceIcon />
             <Box>
-              <Typography sx={{ fontWeight: 900, lineHeight: 1.1 }} variant="h6">
+              <Typography
+                sx={{ fontWeight: 900, lineHeight: 1.1 }}
+                variant="h6"
+              >
                 Credimaster
               </Typography>
               <Typography sx={{ opacity: 0.9 }} variant="body2">
@@ -159,11 +183,17 @@ export default function LoginPage() {
                   <InputAdornment position="end">
                     <IconButton
                       edge="end"
-                      aria-label={showPass ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      aria-label={
+                        showPass ? "Ocultar contraseña" : "Mostrar contraseña"
+                      }
                       onClick={() => setShowPass((p) => !p)}
                       tabIndex={-1}
                     >
-                      {showPass ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+                      {showPass ? (
+                        <VisibilityOffOutlinedIcon />
+                      ) : (
+                        <VisibilityOutlinedIcon />
+                      )}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -192,13 +222,44 @@ export default function LoginPage() {
 
             <Typography
               variant="caption"
-              sx={{ display: "block", textAlign: "center", mt: 2, color: "text.secondary" }}
+              sx={{
+                display: "block",
+                textAlign: "center",
+                mt: 2,
+                color: "text.secondary",
+              }}
             >
-              Por seguridad, no comparta sus credenciales. Si detecta actividad inusual, contacte al administrador.
+              Por seguridad, no comparta sus credenciales. Si detecta actividad
+              inusual, contacte al administrador.
             </Typography>
           </Box>
         </CardContent>
       </Card>
+
+      <Dialog open={sessionDialog} maxWidth="sm" fullWidth>
+        <DialogTitle
+          sx={{
+            bgcolor: "#FFF3CD",
+            color: "#851104",
+            fontWeight: 700,
+            textAlign: "center",
+          }}
+        >
+          Sesión Expirada
+        </DialogTitle>
+
+        <DialogContent sx={{ py: 4 }}>
+          <Typography variant="h6" align="center">
+            {sessionMessage}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ justifyContent: "center", pb: 3 }}>
+          <Button variant="contained" onClick={() => setSessionDialog(false)}>
+            Entendido
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

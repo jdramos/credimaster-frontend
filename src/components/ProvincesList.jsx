@@ -4,6 +4,7 @@ import EmptyNotice from "./EmptyNotice";
 import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import LocationCityOutlinedIcon from "@mui/icons-material/LocationCityOutlined";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -16,9 +17,7 @@ const BAC = {
   white: "#FFFFFF",
 };
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/provinces/";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/provinces/";
 
 export default function ProvincesList() {
   const [error, setError] = useState(null);
@@ -72,10 +71,8 @@ export default function ProvincesList() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(url, { headers });
-      if (!response.ok) throw new Error(await response.text());
-
-      const jsonData = await response.json();
+      const response = await API.get(url);
+      const jsonData = await response.data;
       setRows(Array.isArray(jsonData) ? jsonData : []);
     } catch (error) {
       console.error(error);

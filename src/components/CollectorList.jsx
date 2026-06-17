@@ -17,6 +17,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -29,9 +30,7 @@ const BAC = {
   white: "#FFFFFF",
 };
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/collectors/";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/collectors/";
 
 export default function CollectorList() {
   const [error, setError] = useState(null);
@@ -62,10 +61,9 @@ export default function CollectorList() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(url, { headers });
-      if (!response.ok) throw new Error(await response.text());
+      const response = await API.get(url);
 
-      const jsonData = await response.json();
+      const jsonData = await response.data;
       setRows(Array.isArray(jsonData) ? jsonData : []);
     } catch (error) {
       console.error(error);

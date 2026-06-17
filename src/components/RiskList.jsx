@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -27,9 +28,7 @@ const BAC = {
   white: "#FFFFFF",
 };
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/risks";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/risks";
 
 export default function RiskList() {
   const [error, setError] = useState(null);
@@ -162,14 +161,18 @@ export default function RiskList() {
       setLoading(true);
       setError(null);
 
-      const resp = await fetch(url, { headers });
-      if (!resp.ok) throw new Error(await resp.text());
+      const resp = await API.get(url);
+      const data = await resp.data;
 
-      const data = await resp.json();
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
-      setError("Ocurrió un error al cargar los riesgos. Intente más tarde.");
+
+      setError(
+        e.response?.data?.error ||
+          e.response?.data?.message ||
+          "Ocurrió un error al cargar los riesgos. Intente más tarde.",
+      );
     } finally {
       setLoading(false);
     }

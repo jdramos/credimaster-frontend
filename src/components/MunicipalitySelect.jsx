@@ -6,10 +6,9 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
+import API from "../api";
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/municipalities";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/municipalities";
 
 const toNumberOrEmpty = (v) => {
   if (v === "" || v === null || v === undefined) return "";
@@ -40,13 +39,9 @@ const MunicipalitySelect = ({
     const fetchApi = async () => {
       try {
         setFetchError("");
-        const response = await fetch(url, { headers });
+        const response = await API.get(url);
 
-        if (!response.ok) {
-          throw new Error("Failed to retrieve data.");
-        }
-
-        const jsonData = await response.json();
+        const jsonData = await response.data;
         setMunicipalities(Array.isArray(jsonData) ? jsonData : []);
       } catch (err) {
         console.error(err);

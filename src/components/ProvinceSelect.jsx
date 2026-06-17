@@ -6,10 +6,9 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
+import API from "../api";
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/provinces";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/provinces";
 
 const ProvinceSelect = ({
   value,
@@ -36,12 +35,9 @@ const ProvinceSelect = ({
       try {
         setFetchError("");
 
-        const response = await fetch(url, { headers });
-        if (!response.ok) {
-          throw new Error("Failed to retrieve data.");
-        }
+        const response = await API.get(url);
 
-        const jsonData = await response.json();
+        const jsonData = await response.data;
         setProvinces(Array.isArray(jsonData) ? jsonData : []);
       } catch (e) {
         console.error(e);

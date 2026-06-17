@@ -75,6 +75,7 @@ import BalanceSheet from "./components/accounting/BalanceSheet";
 import PostingRuns from "./components/accounting/PostingRuns";
 import IccReportPage from "./pages/reports/conami/IccReportPage";
 import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
+import IdleSessionHandler from "./components/IdleSessionHandler";
 
 function PageContainer({ children }) {
   return (
@@ -642,6 +643,7 @@ function App() {
                 path="/*"
                 element={
                   <ProtectedRoute>
+                    <IdleSessionHandler />
                     <AppRoutes
                       themeMode={themeMode}
                       setThemeMode={setThemeMode}

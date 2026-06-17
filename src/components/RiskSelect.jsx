@@ -6,13 +6,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import API from "../api";
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/risks";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+const url = "/api/risks";
 
 const CollectorSelect = (props) => {
   const [risk, setRisk] = useState([]); // State to store fetched data
@@ -21,11 +17,8 @@ const CollectorSelect = (props) => {
   useEffect(() => {
     const fetchApi = async () => {
       try {
-        const response = await fetch(`${url}`, { headers });
-        if (!response.ok) {
-          throw new Error("Failed to retrieve data.");
-        }
-        const jsonData = await response.json();
+        const response = await API.get(url);
+        const jsonData = await response.data;
 
         if (jsonData.error) {
           setError(jsonData.error);

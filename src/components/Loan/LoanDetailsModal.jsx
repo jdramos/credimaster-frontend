@@ -72,6 +72,8 @@ import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
 import ApprovalConfirmationDialog from "./ApprovalConfirmationDialog";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 const HeaderBar = styled("div")(({ theme }) => ({
   background: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
@@ -281,6 +283,36 @@ const LoanDetailsModal = ({
     version_no: 1,
     is_current: 1,
   });
+
+  const openConamiDocument = async (type) => {
+    try {
+      const response = await API.get(
+        `/api/conami-transparency/loans/${loanId}/document/${type}`,
+        {
+          responseType: "blob",
+        },
+      );
+
+      const blob = new Blob([response.data], {
+        type: "text/html;charset=utf-8",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, "_blank");
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 10000);
+    } catch (error) {
+      console.error(error);
+      setSnackbar({
+        open: true,
+        message: "No se pudo abrir el documento CONAMI",
+        severity: "error",
+      });
+    }
+  };
 
   const loadApprovals = async () => {
     const loanId = loanData?.id || loanData?.loan_id || loanData?.credit_id;
@@ -513,14 +545,40 @@ const LoanDetailsModal = ({
   };
 
   const handleApprove = async (approvalId, comment = "") => {
-    await API.put(`/api/approvals/${approvalId}`, {
-      status: "APPROVED",
-      amount: editableAmount,
-      term: editableTerm,
-      interest_rate: editableRate,
-      date: today,
-      comment: comment,
-    });
+    if (!approvalId) return;
+
+    setActionLoading(true);
+
+    try {
+      await API.put(`/api/approvals/${approvalId}`, {
+        status: "APPROVED",
+        amount: editableAmount,
+        term: editableTerm,
+        interest_rate: editableRate,
+        date: today,
+        comment,
+      });
+
+      await refreshApprovalState();
+
+      setConfirmOpen(false);
+      setSelectedApprovalId(null);
+
+      onClose?.(); // cierra el modal grande también
+    } catch (error) {
+      console.error(error);
+
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Error al aprobar.",
+        severity: "error",
+      });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleReject = async (approvalId, approvalComment) => {
@@ -752,6 +810,26 @@ const LoanDetailsModal = ({
                         Agregar pago
                       </Button>
                     )}
+                    <Button
+                      variant="outlined"
+                      onClick={() => openConamiDocument("summary")}
+                    >
+                      Hoja Resumen
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      onClick={() => openConamiDocument("contract")}
+                    >
+                      Contrato
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      onClick={() => openConamiDocument("amortization")}
+                    >
+                      Tabla de Amortización
+                    </Button>
                   </Stack>
                 </Stack>
               </CompactCard>
@@ -1200,9 +1278,7 @@ const LoanDetailsModal = ({
                                           <span>
                                             <IconButton
                                               onClick={() => {
-                                                setSelectedApprovalId(
-                                                  a.approver_id,
-                                                );
+                                                setSelectedApprovalId(a.id);
                                                 setConfirmOpen(true);
                                               }}
                                               color="primary"
@@ -1295,14 +1371,9 @@ const LoanDetailsModal = ({
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
           approvalId={selectedApprovalId}
-          onApprove={(approvalComment) =>
-            handleApprove(selectedApprovalId, approvalComment)
-          }
-          onReject={
-            typeof handleReject === "function"
-              ? (approvalComment) =>
-                  handleReject(selectedApprovalId, approvalComment)
-              : undefined
+          onApprove={handleApprove}
+          onReject={(approvalComment) =>
+            handleReject(selectedApprovalId, approvalComment)
           }
           loading={actionLoading}
           loan={loan?.data || loan}

@@ -44,10 +44,9 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import LoanModificationStatusChip from "./Loan/LoanModificationStatusChip";
+import API from "../api";
 
-const API_URL = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-const urlGuarantee = `${API_URL}/api/guarantees`;
+const urlGuarantee = `/api/guarantees`;
 
 const todayISO = () => dayjs().format("YYYY-MM-DD");
 
@@ -100,8 +99,6 @@ function LoanListDataTable({
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("error");
 
-  const headers = useMemo(() => ({ Authorization: token }), []);
-
   const openSnack = (msg, severity = "error") => {
     setSnackbarMessage(msg);
     setSnackbarSeverity(severity);
@@ -131,12 +128,9 @@ function LoanListDataTable({
     });
 
     try {
-      const loanResponse = await axios.get(`${API_URL}/api/loans/${loanId}`, {
-        headers,
-      });
-      const guaranteeResponse = await axios.get(
+      const loanResponse = await API.get(`/api/loans/${loanId}`);
+      const guaranteeResponse = await API.get(
         `${urlGuarantee}/${customerIdentification}`,
-        { headers },
       );
 
       const loanData = normalizeLoanResponse(loanResponse);
@@ -223,11 +217,7 @@ function LoanListDataTable({
               date: approvalForm.date,
             };
 
-      await axios.put(
-        `${API_URL}/api/approvals/${selectedApproval.id}`,
-        payload,
-        { headers },
-      );
+      await API.put(`$/api/approvals/${selectedApproval.id}`, payload);
 
       openSnack(
         approvalMode === "approve"
@@ -253,9 +243,7 @@ function LoanListDataTable({
 
   const handleOpenDisburseDialog = async (row) => {
     try {
-      const loanResp = await axios.get(`${API_URL}/api/loans/${row.id}`, {
-        headers,
-      });
+      const loanResp = await API.get(`/api/loans/${row.id}`);
       const loanData = normalizeLoanResponse(loanResp);
 
       if (!loanData) {
@@ -285,13 +273,9 @@ function LoanListDataTable({
     try {
       setDisburseLoading(true);
 
-      await axios.post(
-        `${API_URL}/api/loans/disburse/${selectedDisburseLoan.id}`,
-        {
-          disbursed_by: currentUserId,
-        },
-        { headers },
-      );
+      await API.post(`/api/loans/disburse/${selectedDisburseLoan.id}`, {
+        disbursed_by: currentUserId,
+      });
 
       openSnack("Crédito desembolsado correctamente.", "success");
       handleCloseDisburseDialog();

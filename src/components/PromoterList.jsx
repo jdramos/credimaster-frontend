@@ -17,6 +17,7 @@ import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -29,9 +30,7 @@ const BAC = {
   white: "#FFFFFF",
 };
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/promoters";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/promoters";
 
 export default function PromoterList() {
   const [rows, setRows] = useState([]);
@@ -60,12 +59,8 @@ export default function PromoterList() {
     try {
       setLoading(true);
 
-      const response = await fetch(url, { headers });
-      const jsonData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(jsonData?.errors || "Error al obtener los registros.");
-      }
+      const response = await API.get(url);
+      const jsonData = await response.data;
 
       setRows(Array.isArray(jsonData) ? jsonData : []);
     } catch (error) {

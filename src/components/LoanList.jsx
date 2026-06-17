@@ -26,6 +26,8 @@ import { saveAs } from "file-saver";
 import BranchSelect from "./BranchSelect";
 import LinearProgress from "@mui/material/LinearProgress";
 import LoanModificationModal from "./Loan/LoanModificationModal";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -38,16 +40,20 @@ const BAC = {
   white: "#FFFFFF",
 };
 
-const API_URL = process.env.REACT_APP_API_BASE_URL + "/api/loans";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const API_URL = "/api/loans";
 
 const getPaymentPercent = (row) => {
   const approvalStatus = String(row.approval_status || "").toUpperCase();
+
   if (!["APPROVED", "APROBADO"].includes(approvalStatus)) return 0;
 
-  const original = Number(row.amount || 0);
-  const balance = Number(row.current_balance || 0);
+  const disbursed = String(row.disbursed || "").toUpperCase();
+
+  // Si aún no está desembolsado, no debe mostrar avance de pago
+  if (disbursed !== "Y") return 0;
+
+  const original = Number(row.approved_amount || row.amount || 0);
+  const balance = Number(row.current_balance ?? original);
 
   if (original <= 0) return 0;
 
@@ -226,39 +232,38 @@ const LoanList = () => {
       });
 
       if (branchId) params.append("branch_id", branchId);
+
       if (startDate) {
         params.append("startDate", dayjs(startDate).format("YYYY-MM-DD"));
       }
+
       if (endDate) {
         params.append("endDate", dayjs(endDate).format("YYYY-MM-DD"));
       }
+
       if (search) params.append("search", search);
 
-      const response = await fetch(`${API_URL}?${params.toString()}`, {
-        headers,
-      });
+      const response = await API.get(`${API_URL}?${params.toString()}`);
+      const json = response.data;
 
-      const json = await response.json();
-
-      if (!response.ok) {
-        throw new Error(json?.errors?.[0] || response.statusText);
-      }
-
-      setData(json.data);
-      setTotal(json.total);
+      setData(Array.isArray(json.data) ? json.data : []);
+      setTotal(Number(json.total || 0));
     } catch (error) {
       console.error("Error al obtener créditos:", error);
 
       setAlert({
         open: true,
         type: "error",
-        message: "Error al obtener los créditos: " + error.message,
+        message:
+          "Error al obtener los créditos: " +
+          (error.response?.data?.error ||
+            error.response?.data?.message ||
+            error.message),
       });
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchApi();
   }, [
@@ -484,26 +489,42 @@ const LoanList = () => {
                   minWidth: 220,
                 }}
               />
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={fetchApi}
+                  disabled={loading}
+                  sx={{
+                    height: 40,
+                    borderRadius: 2,
+                    fontWeight: 800,
+                    textTransform: "none",
+                  }}
+                >
+                  Actualizar
+                </Button>
 
-              <Button
-                variant="contained"
-                onClick={() => exportToExcel(data)}
-                startIcon={<FileDownloadOutlinedIcon />}
-                sx={{
-                  height: 40,
-                  bgcolor: BAC.primary,
-                  borderRadius: 2,
-                  fontWeight: 800,
-                  textTransform: "none",
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: BAC.primaryDark,
+                <Button
+                  variant="contained"
+                  onClick={() => exportToExcel(data)}
+                  startIcon={<FileDownloadOutlinedIcon />}
+                  sx={{
+                    height: 40,
+                    bgcolor: BAC.primary,
+                    borderRadius: 2,
+                    fontWeight: 800,
+                    textTransform: "none",
                     boxShadow: "none",
-                  },
-                }}
-              >
-                Exportar
-              </Button>
+                    "&:hover": {
+                      bgcolor: BAC.primaryDark,
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Exportar
+                </Button>
+              </Stack>
             </Stack>
           </Paper>
 
