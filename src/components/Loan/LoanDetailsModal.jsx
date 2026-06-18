@@ -834,11 +834,27 @@ const LoanDetailsModal = ({
                 </Stack>
               </CompactCard>
 
-              <Grid container spacing={1.25}>
-                <Grid item xs={12}>
+              <Grid container spacing={0.5}>
+                <Grid item xs={14}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems="center"
+                    sx={{ mb: 1 }}
+                  >
+                    <Avatar
+                      sx={{ width: 24, height: 24, bgcolor: "primary.light" }}
+                    >
+                      <PersonIcon sx={{ fontSize: 16 }} />
+                    </Avatar>
+
+                    <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                      Información del cliente
+                    </Typography>
+                  </Stack>
                   <CompactCard>
-                    <Grid container spacing={0.75} alignItems="center">
-                      <Grid item xs={6} md={2.5}>
+                    <Grid container spacing={0.5} alignItems="center">
+                      <Grid item xs={14} md={2}>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           Cliente
                         </Muted>
@@ -849,14 +865,14 @@ const LoanDetailsModal = ({
                             lineHeight: 1.2,
                           }}
                         >
-                          {loan.customer_name}
+                          {loanData.customer_name}
                         </Typography>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           {currentIdentification}
                         </Muted>
                       </Grid>
 
-                      <Grid item xs={6} md={1.8}>
+                      <Grid item xs={6} md={1.5}>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           Monto
                         </Muted>
@@ -865,16 +881,16 @@ const LoanDetailsModal = ({
                         </Typography>
                       </Grid>
 
-                      <Grid item xs={4} md={1.2}>
+                      <Grid item xs={4} md={1}>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           Plazo
                         </Muted>
                         <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-                          {editableTerm}m
+                          {editableTerm} meses
                         </Typography>
                       </Grid>
 
-                      <Grid item xs={4} md={1.2}>
+                      <Grid item xs={4} md={1}>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           Tasa
                         </Muted>
@@ -883,50 +899,45 @@ const LoanDetailsModal = ({
                         </Typography>
                       </Grid>
 
+                      <Grid item xs={4} md={1}>
+                        <Muted variant="caption" sx={{ fontSize: 11 }}>
+                          Cuota
+                        </Muted>
+                        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                          C$ {formatMoney(loanData.installment || 0)}
+                        </Typography>
+                      </Grid>
+
                       <Grid item xs={4} md={2}>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           Vence
                         </Muted>
                         <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-                          {loan.due_date
-                            ? dayjs(loan.due_date).format("DD/MM/YY")
+                          {loanData.cancellation_date
+                            ? dayjs(loan.cancellation_date).format("DD/MM/YY")
                             : "N/A"}
                         </Typography>
                       </Grid>
 
-                      <Grid item xs={12} md={3.3}>
+                      <Grid item xs={4} md={3.3}>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
                           Sucursal / Promotor
                         </Muted>
                         <Typography sx={{ fontWeight: 700, fontSize: 12 }}>
-                          {loan.branch_name ?? "No asignada"}
+                          {loanData.branch_name ?? "No asignada"}
                         </Typography>
                         <Muted variant="caption" sx={{ fontSize: 11 }}>
-                          {loan.promoter_name ?? "No asignado"}
+                          {loanData.promoter_name ?? "No asignado"}
                         </Muted>
                       </Grid>
                     </Grid>
 
                     <Divider sx={{ my: 1.25 }} />
 
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      sx={{ mb: 1 }}
-                    >
-                      <Avatar
-                        sx={{ width: 24, height: 24, bgcolor: "primary.light" }}
-                      >
-                        <PersonIcon sx={{ fontSize: 16 }} />
-                      </Avatar>
-
-                      <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-                        Información del cliente
-                      </Typography>
-                    </Stack>
-
-                    <LoanInfo clientId={currentClientId} />
+                    <LoanInfo
+                      clientId={loanData.customer_id}
+                      loanId={loanData.id}
+                    />
                   </CompactCard>
                 </Grid>
 

@@ -16,6 +16,7 @@ import {
   Skeleton,
   Tooltip,
   IconButton,
+  Alert,
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { NumericFormat } from "react-number-format";
@@ -65,22 +66,20 @@ const SummaryTile = ({ label, value, helper }) => (
   </div>
 );
 
-const MetricRow = ({ label, a, today, b, c }) => (
+const MetricRow = ({ label, corriente, pagadoHoy, mora, vencido }) => (
   <TableRow hover>
-    <TableCell sx={{ fontWeight: 800, py: 0.45, fontSize: 12 }}>
-      {label}
+    <TableCell sx={{ fontWeight: 800 }}>{label}</TableCell>
+    <TableCell align="right">
+      <Money value={corriente} />
     </TableCell>
-    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
-      <Money value={a} />
+    <TableCell align="right">
+      <Money value={pagadoHoy} />
     </TableCell>
-    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
-      <Money value={today} />
+    <TableCell align="right">
+      <Money value={mora} />
     </TableCell>
-    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
-      <Money value={b} />
-    </TableCell>
-    <TableCell align="right" sx={{ py: 0.45, fontSize: 12 }}>
-      <Money value={c} />
+    <TableCell align="right">
+      <Money value={vencido} />
     </TableCell>
   </TableRow>
 );
@@ -94,35 +93,58 @@ const LoanInfo = ({
 }) => {
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     let mounted = true;
 
     if (!clientId) {
       setLoan(null);
+      setLoadError("");
       return;
     }
 
-    (async () => {
+    const loadLoan = async () => {
       try {
         setLoading(true);
+        setLoadError("");
+
         const res = await API.get(`/api/loans/customer/${clientId}`);
+
         const validLoans = Array.isArray(res.data)
           ? res.data.filter((l) => Number(l?.id) > 0)
           : [];
-        if (mounted) setLoan(validLoans[0] ?? {});
+
+        const selectedLoan =
+          loanId != null
+            ? validLoans.find((l) => Number(l.id) === Number(loanId))
+            : null;
+
+        if (mounted) {
+          setLoan(selectedLoan || validLoans[0] || {});
+        }
       } catch (err) {
-        console.error("Error loading loans", err);
-        if (mounted) setLoan({});
+        console.error("Error loading loan info:", err);
+
+        if (mounted) {
+          setLoan({});
+          setLoadError(
+            err?.response?.data?.error ||
+              err?.response?.data?.message ||
+              "No se pudo cargar la información del crédito.",
+          );
+        }
       } finally {
         if (mounted) setLoading(false);
       }
-    })();
+    };
+
+    loadLoan();
 
     return () => {
       mounted = false;
     };
-  }, [clientId]);
+  }, [clientId, loanId, refreshKey]);
 
   const totals = useMemo(() => {
     if (!loan || Object.keys(loan).length === 0) return null;
@@ -148,22 +170,45 @@ const LoanInfo = ({
       toMoney(loan.overdue_fee_balance) +
       toMoney(loan.overdue_other_charges_balance);
 
-    return { currentTotal, defaultedTotal, overdueTotal };
+    const todayTotal =
+      toMoney(loan.today_total_payment) ||
+      toMoney(loan.today_principal_payment) +
+        toMoney(loan.today_interest_payment) +
+        toMoney(loan.today_defaulted_interest) +
+        toMoney(loan.today_insurance_payment) +
+        toMoney(loan.today_fee_payment) +
+        toMoney(loan.today_other_charges_payment);
+
+    const grandTotal = currentTotal + defaultedTotal + overdueTotal;
+
+    return {
+      currentTotal,
+      defaultedTotal,
+      overdueTotal,
+      todayTotal,
+      grandTotal,
+    };
   }, [loan]);
+
+  const previewTotals = useMemo(() => {
+    if (!paymentPreview && !paymentAmount) return null;
+
+    const amount = toMoney(paymentAmount);
+
+    return {
+      paymentAmount: amount,
+      projectedBalance: Math.max(toMoney(totals?.grandTotal) - amount, 0),
+    };
+  }, [paymentPreview, paymentAmount, totals]);
 
   if (!clientId) return null;
 
-  // Loading UI
   if (loading) {
     return (
       <Card variant="outlined" className="bac-loan-card">
         <CardContent sx={{ p: 2 }}>
           <Stack spacing={2}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
+            <Stack direction="row" justifyContent="space-between">
               <Box>
                 <Skeleton variant="text" width={180} height={28} />
                 <Skeleton variant="text" width={260} height={18} />
@@ -177,31 +222,28 @@ const LoanInfo = ({
             <Divider />
 
             <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-              <Skeleton
-                variant="rounded"
-                height={78}
-                sx={{ flex: 1, borderRadius: 3 }}
-              />
-              <Skeleton
-                variant="rounded"
-                height={78}
-                sx={{ flex: 1, borderRadius: 3 }}
-              />
-              <Skeleton
-                variant="rounded"
-                height={78}
-                sx={{ flex: 1, borderRadius: 3 }}
-              />
+              <Skeleton variant="rounded" height={78} sx={{ flex: 1 }} />
+              <Skeleton variant="rounded" height={78} sx={{ flex: 1 }} />
+              <Skeleton variant="rounded" height={78} sx={{ flex: 1 }} />
             </Stack>
 
-            <Skeleton variant="rounded" height={240} sx={{ borderRadius: 3 }} />
+            <Skeleton variant="rounded" height={240} />
           </Stack>
         </CardContent>
       </Card>
     );
   }
 
-  // Empty UI
+  if (loadError) {
+    return (
+      <Card variant="outlined" className="bac-loan-card">
+        <CardContent sx={{ p: 2 }}>
+          <Alert severity="error">{loadError}</Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!loan || Object.keys(loan).length === 0) {
     return (
       <Card variant="outlined" className="bac-loan-card">
@@ -222,26 +264,18 @@ const LoanInfo = ({
   const classification = loan.provision_code ?? "N/A";
   const status = loan.loan_status ?? loan.status ?? "N/A";
 
-  const MetricSimple = ({ label, value, bold = false }) => (
-    <Stack direction="row" justifyContent="space-between">
-      <Typography variant="body2" fontWeight={bold ? 900 : 600}>
-        {label}
-      </Typography>
-      <Money value={value} bold={bold} />
-    </Stack>
-  );
-
   return (
     <Card variant="outlined" className="bac-loan-card">
       <CardContent sx={{ p: 0 }}>
-        {/* Header BAC */}
         <div className="bac-loan-card__head compact">
           <div>
             <Typography variant="subtitle1" className="bac-loan-title">
               Resumen del crédito
             </Typography>
+
             <div className="bac-loan-subtitle">
-              Saldos por concepto · Corriente, Mora y Vencido
+              Crédito: {loan.credit_code ?? loan.id ?? "N/D"} · Cliente:{" "}
+              {loan.customer_name ?? loan.customer_identification ?? "N/D"}
             </div>
           </div>
 
@@ -262,18 +296,19 @@ const LoanInfo = ({
 
         <Box sx={{ p: 1 }}>
           <Stack spacing={0.75}>
-            {/* Totales */}
             <div className="bac-tiles">
               <SummaryTile
                 label="Saldo corriente"
                 value={totals?.currentTotal ?? 0}
-                helper="Capital + interés + seguro + comisión + otros cargos (corriente)."
+                helper="Capital + interés + seguro + comisión + otros cargos corrientes."
               />
+
               <SummaryTile
                 label="Saldo mora"
                 value={totals?.defaultedTotal ?? 0}
                 helper="Capital en mora + interés moratorio + cargos en mora."
               />
+
               <SummaryTile
                 label="Saldo vencido"
                 value={totals?.overdueTotal ?? 0}
@@ -281,7 +316,15 @@ const LoanInfo = ({
               />
             </div>
 
-            {/* Tabla */}
+            {previewTotals ? (
+              <Alert severity="info" sx={{ py: 0.5 }}>
+                Pago ingresado:{" "}
+                <Money value={previewTotals.paymentAmount} bold /> · Saldo
+                estimado después del pago:{" "}
+                <Money value={previewTotals.projectedBalance} bold />
+              </Alert>
+            ) : null}
+
             <TableContainer
               className="bac-table"
               sx={{
@@ -302,7 +345,7 @@ const LoanInfo = ({
                 },
               }}
             >
-              <Table size="small" className="bac-table">
+              <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Concepto</TableCell>
@@ -316,67 +359,64 @@ const LoanInfo = ({
                 <TableBody>
                   <MetricRow
                     label="Capital"
-                    a={loan.capital_balance}
-                    today={loan.today_principal_payment}
-                    b={loan.defaulted_capital}
-                    c={loan.overdue_capital}
+                    corriente={loan.capital_balance}
+                    pagadoHoy={loan.today_principal_payment}
+                    mora={loan.defaulted_capital}
+                    vencido={loan.overdue_capital}
                   />
 
                   <MetricRow
                     label="Intereses"
-                    a={loan.interest_balance}
-                    today={loan.today_interest_payment}
-                    b={0}
-                    c={loan.overdue_interest_balance}
+                    corriente={loan.interest_balance}
+                    pagadoHoy={loan.today_interest_payment}
+                    mora={0}
+                    vencido={loan.overdue_interest_balance}
                   />
 
                   <MetricRow
                     label="Interés moratorio"
-                    a={0}
-                    today={loan.today_defaulted_interest}
-                    b={loan.defaulted_interest}
-                    c={0}
+                    corriente={0}
+                    pagadoHoy={loan.today_defaulted_interest}
+                    mora={loan.defaulted_interest}
+                    vencido={0}
                   />
 
                   <MetricRow
                     label="Seguro"
-                    a={loan.insurance_balance}
-                    today={loan.today_insurance_payment}
-                    b={loan.defaulted_insurance}
-                    c={loan.overdue_insurance_balance}
+                    corriente={loan.insurance_balance}
+                    pagadoHoy={loan.today_insurance_payment}
+                    mora={loan.defaulted_insurance}
+                    vencido={loan.overdue_insurance_balance}
                   />
 
                   <MetricRow
                     label="Comisión"
-                    a={loan.fee_balance}
-                    today={loan.today_fee_payment}
-                    b={loan.defaulted_fee}
-                    c={loan.overdue_fee_balance}
+                    corriente={loan.fee_balance}
+                    pagadoHoy={loan.today_fee_payment}
+                    mora={loan.defaulted_fee}
+                    vencido={loan.overdue_fee_balance}
                   />
 
                   <MetricRow
                     label="Otros cargos"
-                    a={loan.other_charges_balance}
-                    today={loan.today_other_charges_payment}
-                    b={loan.defaulted_other_charges}
-                    c={loan.overdue_other_charges_balance}
+                    corriente={loan.other_charges_balance}
+                    pagadoHoy={loan.today_other_charges_payment}
+                    mora={loan.defaulted_other_charges}
+                    vencido={loan.overdue_other_charges_balance}
                   />
 
-                  {/* Total */}
                   <TableRow className="bac-table-total">
-                    <TableCell sx={{ fontWeight: 900, py: 0.5 }}>
-                      Total
-                    </TableCell>
-                    <TableCell align="right" sx={{ py: 0.5 }}>
+                    <TableCell sx={{ fontWeight: 900 }}>Total</TableCell>
+                    <TableCell align="right">
                       <Money value={totals?.currentTotal ?? 0} bold />
                     </TableCell>
-                    <TableCell align="right" sx={{ py: 0.5 }}>
-                      <Money value={loan.today_total_payment ?? 0} bold />
+                    <TableCell align="right">
+                      <Money value={totals?.todayTotal ?? 0} bold />
                     </TableCell>
-                    <TableCell align="right" sx={{ py: 0.5 }}>
+                    <TableCell align="right">
                       <Money value={totals?.defaultedTotal ?? 0} bold />
                     </TableCell>
-                    <TableCell align="right" sx={{ py: 0.5 }}>
+                    <TableCell align="right">
                       <Money value={totals?.overdueTotal ?? 0} bold />
                     </TableCell>
                   </TableRow>
@@ -384,7 +424,6 @@ const LoanInfo = ({
               </Table>
             </TableContainer>
 
-            {/* Footer */}
             <Stack
               direction="row"
               justifyContent="space-between"
@@ -394,7 +433,14 @@ const LoanInfo = ({
                 Cliente:{" "}
                 {loan.customer_name ?? loan.customer_identification ?? "N/D"}
               </span>
-              <span className="bac-footer">Crédito ID: {loan.id ?? "N/D"}</span>
+
+              <span className="bac-footer">
+                Crédito: {loan.credit_code ?? loan.id ?? "N/D"}
+              </span>
+
+              <span className="bac-footer">
+                Total saldo: <Money value={totals?.grandTotal ?? 0} bold />
+              </span>
             </Stack>
           </Stack>
         </Box>
