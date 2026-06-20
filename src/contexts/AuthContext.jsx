@@ -15,6 +15,24 @@ export const AuthProvider = ({ children }) => {
 
   const [token, setToken] = useState(localStorage.getItem("token"));
 
+  const [tenant, setTenant] = useState(() => {
+    try {
+      const session = JSON.parse(localStorage.getItem("session") || "null");
+      return session?.tenant || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "null");
+      return user || null;
+    } catch {
+      return null;
+    }
+  });
+
   const { setPermissions, setRole, setUserBranches, setUser, setFullName } =
     useContext(UserContext);
 
@@ -26,6 +44,16 @@ export const AuthProvider = ({ children }) => {
     setUserBranches(session.branches || []);
     setUser(session.user_id || null);
     setFullName(session.full_name || "");
+
+    setTenant(session.tenant || null);
+
+    setAuthUser({
+      id: session.user_id,
+      user_name: session.user_name,
+      full_name: session.full_name,
+      role_id: session.role_id,
+      tenant: session.tenant || null,
+    });
   };
 
   useEffect(() => {
@@ -39,13 +67,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.clear();
         setIsAuthenticated(false);
         setToken(null);
+        setTenant(null);
+        setAuthUser(null);
       }
     }
   }, []);
 
   const login = async (username, password) => {
     try {
-      // limpiar sesión vieja antes de iniciar
       localStorage.removeItem("token");
       localStorage.removeItem("session");
       localStorage.removeItem("user");
@@ -83,20 +112,21 @@ export const AuthProvider = ({ children }) => {
         tenant,
       };
 
+      const userToStore = {
+        id: user_id,
+        user_name,
+        full_name,
+        role_id,
+        tenant,
+      };
+
       localStorage.setItem("token", token);
       localStorage.setItem("session", JSON.stringify(session));
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: user_id,
-          user_name,
-          full_name,
-          role_id,
-          tenant,
-        }),
-      );
+      localStorage.setItem("user", JSON.stringify(userToStore));
 
       setToken(token);
+      setTenant(tenant || null);
+      setAuthUser(userToStore);
       hydrateUserContext(session);
       setIsAuthenticated(true);
 
@@ -117,6 +147,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setIsAuthenticated(false);
+    setTenant(null);
+    setAuthUser(null);
 
     setPermissions([]);
     setRole(null);
@@ -135,6 +167,8 @@ export const AuthProvider = ({ children }) => {
         value={{
           isAuthenticated,
           token,
+          tenant,
+          user: authUser,
           login,
           logout,
         }}

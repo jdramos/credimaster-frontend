@@ -21,9 +21,9 @@ import { NumericFormat } from "react-number-format";
 import dayjs from "dayjs";
 
 import PaymentForm from "./PaymentForm";
+import API from "../api";
 
-const API_URL = process.env.REACT_APP_API_BASE_URL + "/api/payments";
-const HEADERS = { Authorization: process.env.REACT_APP_API_TOKEN };
+const API_URL = "/api/payments";
 
 const Money = ({ value }) => (
   <NumericFormat
@@ -50,7 +50,9 @@ const PaymentList = () => {
   const [pageSize, setPageSize] = useState(10);
 
   // filters
-  const [dateFrom, setDateFrom] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
+  const [dateFrom, setDateFrom] = useState(
+    dayjs().startOf("month").format("YYYY-MM-DD"),
+  );
   const [dateTo, setDateTo] = useState(dayjs().format("YYYY-MM-DD"));
   const [branchId, setBranchId] = useState("");
   const [collectorId, setCollectorId] = useState("");
@@ -67,9 +69,11 @@ const PaymentList = () => {
   const fetchBranches = async () => {
     // Ajusta endpoints si en tu API tienen otro nombre
     try {
-      const res = await fetch(process.env.REACT_APP_API_BASE_URL + "/api/branches", { headers: HEADERS });
-      const json = await res.json();
-      setBranches(Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : []);
+      const res = await API.get("/api/branches");
+      const json = res.data;
+      setBranches(
+        Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [],
+      );
     } catch (e) {
       setBranches([]);
     }
@@ -78,9 +82,11 @@ const PaymentList = () => {
   const fetchCollectors = async () => {
     // Ajusta endpoints si en tu API tienen otro nombre
     try {
-      const res = await fetch(process.env.REACT_APP_API_BASE_URL + "/api/collectors", { headers: HEADERS });
-      const json = await res.json();
-      setCollectors(Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : []);
+      const res = await API.get("/api/collectors");
+      const json = await res.data;
+      setCollectors(
+        Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [],
+      );
     } catch (e) {
       setCollectors([]);
     }
@@ -107,11 +113,15 @@ const PaymentList = () => {
       setLoading(true);
 
       const qs = buildQuery();
-      const response = await fetch(`${API_URL}?${qs}`, { headers: HEADERS });
-      const json = await response.json();
+      const response = await API.get(`${API_URL}?${qs}`);
+      const json = await response.data;
 
       // ✅ Esperado: { data, total }
-      const data = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+      const data = Array.isArray(json?.data)
+        ? json.data
+        : Array.isArray(json)
+          ? json
+          : [];
       const count = Number(json?.total ?? data.length ?? 0);
 
       setTotal(json.total);
@@ -162,40 +172,40 @@ const PaymentList = () => {
   return (
     <Box className="bac-page">
       {/* Header */}
-          <Box
+      <Box
         sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(4,1fr)" },
-            gap: 2,
-            mb: 2
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(4,1fr)" },
+          gap: 2,
+          mb: 2,
         }}
-        >
+      >
         <Box className="bac-summary-card">
-            <Typography variant="caption">Cantidad de Pagos</Typography>
-            <Typography variant="h6">{summary?.payments_count || 0}</Typography>
+          <Typography variant="caption">Cantidad de Pagos</Typography>
+          <Typography variant="h6">{summary?.payments_count || 0}</Typography>
         </Box>
 
         <Box className="bac-summary-card">
-            <Typography variant="caption">Capital Cobrado</Typography>
-            <Typography variant="h6">
+          <Typography variant="caption">Capital Cobrado</Typography>
+          <Typography variant="h6">
             C$ {Number(summary?.total_principal || 0).toLocaleString()}
-            </Typography>
+          </Typography>
         </Box>
 
         <Box className="bac-summary-card">
-            <Typography variant="caption">Intereses Cobrados</Typography>
-            <Typography variant="h6">
+          <Typography variant="caption">Intereses Cobrados</Typography>
+          <Typography variant="h6">
             C$ {Number(summary?.total_interest || 0).toLocaleString()}
-            </Typography>
+          </Typography>
         </Box>
 
         <Box className="bac-summary-card">
-            <Typography variant="caption">Total Cobrado</Typography>
-            <Typography variant="h6">
+          <Typography variant="caption">Total Cobrado</Typography>
+          <Typography variant="h6">
             C$ {Number(summary?.total_collected || 0).toLocaleString()}
-            </Typography>
+          </Typography>
         </Box>
-        </Box>
+      </Box>
       <Box className="bac-page-header">
         <Box>
           <Typography variant="h5" className="bac-page-title">
@@ -204,7 +214,6 @@ const PaymentList = () => {
           <div className="bac-page-subtitle">
             Filtra por fecha, sucursal y colector · Vista paginada
           </div>
-          
         </Box>
 
         <Stack direction="row" spacing={1}>
@@ -275,7 +284,10 @@ const PaymentList = () => {
               <MenuItem value="">Todas</MenuItem>
               {branches.map((b) => (
                 <MenuItem key={b.id ?? b.branch_id} value={b.id ?? b.branch_id}>
-                  {b.name ?? b.branch_name ?? b.description ?? `Sucursal ${b.id ?? b.branch_id}`}
+                  {b.name ??
+                    b.branch_name ??
+                    b.description ??
+                    `Sucursal ${b.id ?? b.branch_id}`}
                 </MenuItem>
               ))}
             </TextField>
@@ -289,15 +301,23 @@ const PaymentList = () => {
             >
               <MenuItem value="">Todos</MenuItem>
               {collectors.map((c) => (
-                <MenuItem key={c.id ?? c.collector_id} value={c.id ?? c.collector_id}>
-                  {c.name ?? c.full_name ?? c.collector_name ?? `Colector ${c.id ?? c.collector_id}`}
+                <MenuItem
+                  key={c.id ?? c.collector_id}
+                  value={c.id ?? c.collector_id}
+                >
+                  {c.name ??
+                    c.full_name ??
+                    c.collector_name ??
+                    `Colector ${c.id ?? c.collector_id}`}
                 </MenuItem>
               ))}
             </TextField>
-              
-            
-            
-            <Button variant="outlined" onClick={clearFilters} className="bac-btn-muted">
+
+            <Button
+              variant="outlined"
+              onClick={clearFilters}
+              className="bac-btn-muted"
+            >
               Limpiar
             </Button>
             <Button
@@ -306,17 +326,15 @@ const PaymentList = () => {
               className="bac-btn-primary"
               disabled={loading}
             >
-              {loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Aplicar"}
+              {loading ? (
+                <CircularProgress size={18} sx={{ color: "#fff" }} />
+              ) : (
+                "Aplicar"
+              )}
             </Button>
-          
-            
           </Box>
-
-        
         </Box>
       </Box>
-
-  
 
       {/* Table */}
       <Box className="bac-table-card">
@@ -350,7 +368,10 @@ const PaymentList = () => {
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} sx={{ color: "var(--bac-muted)", py: 3 }}>
+                  <TableCell
+                    colSpan={9}
+                    sx={{ color: "var(--bac-muted)", py: 3 }}
+                  >
                     No hay pagos para mostrar con esos filtros.
                   </TableCell>
                 </TableRow>
@@ -358,11 +379,17 @@ const PaymentList = () => {
                 rows.map((p) => (
                   <TableRow key={p.id} hover>
                     <TableCell>{p.id}</TableCell>
-                    <TableCell>{p.credit_code ?? p.loan_id ?? p.credit_id ?? "—"}</TableCell>
+                    <TableCell>
+                      {p.credit_code ?? p.loan_id ?? p.credit_id ?? "—"}
+                    </TableCell>
 
                     {/* ✅ nuevos campos (ajusta keys según tu API) */}
-                    <TableCell>{p.customer_identification ?? p.identification ?? "—"}</TableCell>
-                    <TableCell>{p.customer_name ?? p.client_name ?? "—"}</TableCell>
+                    <TableCell>
+                      {p.customer_identification ?? p.identification ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {p.customer_name ?? p.client_name ?? "—"}
+                    </TableCell>
 
                     <TableCell>{p.payment_date}</TableCell>
 
@@ -374,7 +401,9 @@ const PaymentList = () => {
                     </TableCell>
 
                     <TableCell>{p.branch_name ?? "—"}</TableCell>
-                    <TableCell>{p.collector_name ?? p.collector ?? "—"}</TableCell>
+                    <TableCell>
+                      {p.collector_name ?? p.collector ?? "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -399,7 +428,11 @@ const PaymentList = () => {
       </Box>
 
       {/* ✅ PaymentForm ya es Dialog (no anidar Dialogs) */}
-      <PaymentForm open={open} onClose={handleClose} onSuccess={handlePaymentSaved} />
+      <PaymentForm
+        open={open}
+        onClose={handleClose}
+        onSuccess={handlePaymentSaved}
+      />
     </Box>
   );
 };

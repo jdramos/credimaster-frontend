@@ -6,12 +6,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import debounce from "lodash.debounce";
+import API from "../../api";
 
-const baseUrl = process.env.REACT_APP_API_BASE_URL;
-const url = `${baseUrl}/api/customers/getCustomerList`;
-
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = `/api/customers/getCustomerList`;
 
 const buildLabel = (option) => {
   if (!option) return "";
@@ -48,11 +45,11 @@ const CustomerSelect = (props) => {
       setError(null);
 
       const q = encodeURIComponent(query);
-      const resp = await fetch(`${url}?query=${q}`, { headers });
+      const resp = await API.get(`${url}?query=${q}`);
 
       if (!resp.ok) throw new Error("Failed to retrieve data.");
 
-      const json = await resp.json();
+      const json = await resp.data;
 
       if (json?.error) {
         setCustomers([]);

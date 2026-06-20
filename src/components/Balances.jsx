@@ -30,7 +30,9 @@ import BranchSelect from "./BranchSelect";
 import AccountStatementModal from "./AccountStatementModal";
 import LoanDetailsModal from "./Loan/LoanDetailsModal";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-
+import PrintIcon from "@mui/icons-material/Print";
+import { printCustomerBalanceReport } from "../reports/customerBalanceReport";
+import { useAuth } from "../contexts/AuthContext";
 // PrimeReact CSS base (tu ya lo tenías)
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
@@ -83,6 +85,7 @@ const CustomerBalanceViewer = () => {
   // ✅ Modal crédito
   const [creditModalOpen, setCreditModalOpen] = useState(false);
   const [selectedCredit, setSelectedCredit] = useState(null);
+  const { tenant, user } = useAuth();
 
   const openCreditModal = useCallback((row) => {
     if (!row?.loan) return;
@@ -157,6 +160,179 @@ const CustomerBalanceViewer = () => {
       today.subtract(daysRange - 1 - i, "day").format("YYYY-MM-DD"),
     );
   }, []);
+
+  const printReport = () => {
+    const rows = [];
+
+    nodes.forEach((branch) => {
+      rows.push({
+        level: "BRANCH",
+        ...branch.data,
+      });
+
+      if (!expandedKeys[branch.key]) return;
+
+      (branch.children || []).forEach((vendor) => {
+        rows.push({
+          level: "VENDOR",
+          ...vendor.data,
+        });
+
+        if (!expandedKeys[vendor.key]) return;
+
+        (vendor.children || []).forEach((customer) => {
+          rows.push({
+            level: "CUSTOMER",
+            ...customer.data,
+          });
+        });
+      });
+    });
+
+    const html = `
+    <html>
+    <head>
+      <title>Reporte de Saldos</title>
+
+      <style>
+        body{
+          font-family: Arial, sans-serif;
+          padding:20px;
+        }
+
+        h2{
+          margin-bottom:5px;
+        }
+
+        table{
+          width:100%;
+          border-collapse:collapse;
+          font-size:12px;
+        }
+
+        th{
+          background:#005AA7;
+          color:white;
+          padding:6px;
+          border:1px solid #ccc;
+        }
+
+        td{
+          padding:5px;
+          border:1px solid #ddd;
+        }
+
+        .branch{
+          background:#DCEEFF;
+          font-weight:bold;
+        }
+
+        .vendor{
+          background:#F5F8FC;
+          font-weight:bold;
+        }
+
+        .customer{
+          background:white;
+        }
+
+        .indent1{
+          padding-left:20px;
+        }
+
+        .indent2{
+          padding-left:40px;
+        }
+      </style>
+    </head>
+
+    <body>
+
+      <h2>Consulta de Saldos por Cliente</h2>
+
+      <div>
+        Fecha Corte: ${dayjs(date).format("DD/MM/YYYY")}
+      </div>
+
+      <br/>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Cliente / Grupo</th>
+            <th>Identificación</th>
+            <th>Crédito</th>
+            <th>Saldo Capital</th>
+            <th>Saldo Interés</th>
+            <th>Capital Mora</th>
+            <th>Capital Vencido</th>
+            <th># Clientes</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          ${rows
+            .map((r) => {
+              const cls =
+                r.level === "BRANCH"
+                  ? "branch"
+                  : r.level === "VENDOR"
+                    ? "vendor"
+                    : "customer";
+
+              const indent =
+                r.level === "VENDOR"
+                  ? "indent1"
+                  : r.level === "CUSTOMER"
+                    ? "indent2"
+                    : "";
+
+              return `
+                <tr class="${cls}">
+                  <td class="${indent}">${r.name || ""}</td>
+                  <td>${r.identification || ""}</td>
+                  <td>${r.loan || ""}</td>
+                  <td>${r.capital || ""}</td>
+                  <td>${r.interest || ""}</td>
+                  <td>${r.defaulted || ""}</td>
+                  <td>${r.overdue || ""}</td>
+                  <td>${r.count || ""}</td>
+                </tr>
+              `;
+            })
+            .join("")}
+
+        </tbody>
+
+      </table>
+
+    </body>
+    </html>
+  `;
+
+    const w = window.open("", "_blank");
+
+    w.document.write(html);
+    w.document.close();
+
+    setTimeout(() => {
+      w.print();
+    }, 500);
+  };
+
+  const handlePrintReport = () => {
+    printCustomerBalanceReport({
+      company: tenant,
+      user,
+      nodes,
+      expandedKeys,
+      date,
+      balanceType,
+      globalTotals,
+    });
+  };
 
   const [currentIndex, setCurrentIndex] = useState(daysRange - 1);
   const date = allDates[currentIndex];
@@ -493,6 +669,22 @@ const CustomerBalanceViewer = () => {
                 Exportar
               </Button>
             </Tooltip>
+
+            <Button
+              onClick={handlePrintReport}
+              variant="contained"
+              startIcon={<PrintIcon />}
+              sx={{
+                bgcolor: "#198754",
+                color: "#fff",
+                fontWeight: 900,
+                "&:hover": { bgcolor: "#157347" },
+                borderRadius: 2,
+                textTransform: "none",
+              }}
+            >
+              Imprimir
+            </Button>
           </Stack>
         </Stack>
       </Paper>
