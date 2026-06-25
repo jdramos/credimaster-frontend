@@ -23,7 +23,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
@@ -94,17 +94,6 @@ const menuItems = {
   ],
   conami_tables: [
     {
-      label: "Actividad económica",
-      iconName: "FaIndustry",
-      to: "/conami/actividad-economica",
-    },
-    { label: "Géneros", iconName: "FaUsers", to: "/generos" },
-    {
-      label: "Estado civil",
-      iconName: "FaAddressCard",
-      to: "/conami/estado-civil",
-    },
-    {
       label: "Tablas CONAMI",
       iconName: "FaMoneyCheckAlt",
       to: "/conami/tablas",
@@ -158,6 +147,11 @@ const menuItems = {
       label: "ICC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/icc",
+    },
+    {
+      label: "Reportes personalizados",
+      to: "/custom-reports",
+      iconName: "Assessment",
     },
   ],
 };

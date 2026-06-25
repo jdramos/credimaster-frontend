@@ -26,6 +26,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import API from "../api";
 import PrintIcon from "@mui/icons-material/Print";
+import { printAccountStatementReport } from "../reports/accountStatementReport";
+import { useAuth } from "../contexts/AuthContext";
 
 const BAC = {
   blue: "#005AA7",
@@ -114,6 +116,8 @@ export default function AccountStatementModal({
   const [rows, setRows] = useState([]);
 
   const finalCutDate = cutDate || dayjs().format("YYYY-MM-DD");
+
+  const { tenant, user } = useAuth();
 
   useEffect(() => {
     if (!open || !loanId) return;
@@ -250,415 +254,17 @@ export default function AccountStatementModal({
 
   const h = header || {};
 
-  const handlePrint = () => {
-    const content = document.getElementById("account-statement-print");
-
-    if (!content) {
-      window.print();
-      return;
-    }
-
-    const printWindow = window.open("", "_blank", "width=1000,height=700");
-
-    printWindow.document.write(`
-    <html>
-      <head>
-        <title>Estado de Cuenta - Crédito ${loanId}</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            color: #0F172A;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px;
-          }
-
-          th, td {
-            border: 1px solid #CBD5E1;
-            padding: 4px;
-            text-align: left;
-          }
-
-          th {
-            background: #F1F5F9;
-            font-weight: bold;
-          }
-
-          .MuiPaper-root {
-            box-shadow: none !important;
-          }
-
-          @page {
-            size: landscape;
-            margin: 10mm;
-          }
-        </style>
-      </head>
-      <body>
-        ${content.innerHTML}
-      </body>
-    </html>
-  `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
-  };
-
   const handlePrintReport = () => {
-    const h = header || {};
-
-    const rowsHtml = (rows || [])
-      .map(
-        (r) => `
-        <tr>
-          <td>${r.payment_number || ""}</td>
-          <td>${fmtDate(r.payment_date)}</td>
-          <td>${fmtDate(r.paid_at)}</td>
-          <td>${r.status_label || ""}</td>
-          <td class="num">${money(r.payment_principal)}</td>
-          <td class="num">${money(r.payment_interest)}</td>
-          <td class="num">${money(r.payment_insurance)}</td>
-          <td class="num">${money(r.payment_fee)}</td>
-          <td class="num">${money(r.payment_other_charges)}</td>
-          <td class="num strong">${money(r.installment_total)}</td>
-          <td class="num">${money(r.paid_principal)}</td>
-          <td class="num">${money(r.paid_interest)}</td>
-          <td class="num strong">${money(r.paid_total)}</td>
-          <td class="num">${money(r.pending_principal)}</td>
-          <td class="num">${money(r.pending_interest)}</td>
-          <td class="num strong">${money(r.pending_total)}</td>
-        </tr>
-      `,
-      )
-      .join("");
-
-    const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Estado de Cuenta - Crédito ${loanId}</title>
-        <style>
-          @page {
-            size: landscape;
-            margin: 10mm;
-          }
-
-          * {
-            box-sizing: border-box;
-          }
-
-          body {
-            font-family: Arial, Helvetica, sans-serif;
-            color: #0F172A;
-            margin: 0;
-            padding: 0;
-            font-size: 11px;
-          }
-
-          .report {
-            width: 100%;
-          }
-
-          .header {
-            border-bottom: 3px solid #005AA7;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-          }
-
-          .brand {
-            font-size: 18px;
-            font-weight: 900;
-            color: #005AA7;
-          }
-
-          .title {
-            font-size: 15px;
-            font-weight: 900;
-            margin-top: 3px;
-          }
-
-          .subtitle {
-            font-size: 11px;
-            color: #475569;
-            margin-top: 2px;
-          }
-
-          .section-title {
-            font-size: 12px;
-            font-weight: 900;
-            background: #F1F5F9;
-            border: 1px solid #CBD5E1;
-            padding: 5px 7px;
-            margin-top: 8px;
-          }
-
-          .info-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 8px;
-          }
-
-          .info-grid td {
-            border: 1px solid #CBD5E1;
-            padding: 5px;
-            vertical-align: top;
-          }
-
-          .label {
-            font-size: 9px;
-            color: #475569;
-            font-weight: 800;
-            text-transform: uppercase;
-          }
-
-          .value {
-            font-size: 11px;
-            font-weight: 800;
-            margin-top: 2px;
-          }
-
-          .kpi-grid {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 8px;
-          }
-
-          .kpi-grid td {
-            border: 1px solid #CBD5E1;
-            padding: 5px;
-            width: 12.5%;
-          }
-
-          .kpi-label {
-            font-size: 9px;
-            color: #475569;
-            font-weight: 800;
-          }
-
-          .kpi-value {
-            font-size: 12px;
-            font-weight: 900;
-          }
-
-          table.detail {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9px;
-          }
-
-          table.detail th {
-            background: #005AA7;
-            color: white;
-            padding: 4px;
-            border: 1px solid #CBD5E1;
-            text-align: center;
-          }
-
-          table.detail td {
-            border: 1px solid #CBD5E1;
-            padding: 3px;
-          }
-
-          .num {
-            text-align: right;
-            white-space: nowrap;
-          }
-
-          .strong {
-            font-weight: 900;
-          }
-
-          .footer {
-            margin-top: 10px;
-            font-size: 9px;
-            color: #64748B;
-            display: flex;
-            justify-content: space-between;
-          }
-
-          .status-pagada {
-            color: #15803D;
-            font-weight: 900;
-          }
-
-          .status-parcial {
-            color: #C2410C;
-            font-weight: 900;
-          }
-
-          .status-atrasado {
-            color: #B91C1C;
-            font-weight: 900;
-          }
-
-          .status-vigente {
-            color: #005AA7;
-            font-weight: 900;
-          }
-        </style>
-      </head>
-
-      <body>
-        <div class="report">
-          <div class="header">
-            <div class="brand">CrediMaster</div>
-            <div class="title">Estado de Cuenta</div>
-            <div class="subtitle">
-              Crédito #${loanId} · Corte ${fmtDate(h.cut_date || finalCutDate)}
-            </div>
-          </div>
-
-          <div class="section-title">Información del crédito</div>
-
-          <table class="info-grid">
-            <tr>
-              <td>
-                <div class="label">Cliente</div>
-                <div class="value">${h.customer_name || customerName || ""}</div>
-              </td>
-              <td>
-                <div class="label">Identificación</div>
-                <div class="value">${h.customer_identification || identification || ""}</div>
-              </td>
-              <td>
-                <div class="label">Sucursal</div>
-                <div class="value">${h.branch_name || ""}</div>
-              </td>
-              <td>
-                <div class="label">Promotor</div>
-                <div class="value">${h.promoter_name || ""}</div>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div class="label">Fecha solicitud</div>
-                <div class="value">${fmtDate(h.date)}</div>
-              </td>
-              <td>
-                <div class="label">Fecha aprobación</div>
-                <div class="value">${fmtDate(h.approval_date)}</div>
-              </td>
-              <td>
-                <div class="label">Fecha desembolso</div>
-                <div class="value">${fmtDate(h.disbursement_date)}</div>
-              </td>
-              <td>
-                <div class="label">Vencimiento</div>
-                <div class="value">${fmtDate(h.due_date)}</div>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div class="label">Monto aprobado</div>
-                <div class="value">${money(h.approved_amount || h.amount)}</div>
-              </td>
-              <td>
-                <div class="label">Plazo</div>
-                <div class="value">${h.approved_term || h.term || 0}</div>
-              </td>
-              <td>
-                <div class="label">Tasa</div>
-                <div class="value">${Number(h.approved_rate || h.interest_rate || 0).toFixed(2)}%</div>
-              </td>
-              <td>
-                <div class="label">Frecuencia</div>
-                <div class="value">${h.frequency_name || h.frequency || ""}</div>
-              </td>
-            </tr>
-          </table>
-
-          <div class="section-title">Resumen financiero</div>
-
-          <table class="kpi-grid">
-            <tr>
-              <td>
-                <div class="kpi-label">Saldo capital</div>
-                <div class="kpi-value">${money(totals.capitalBalance)}</div>
-              </td>
-              <td>
-                <div class="kpi-label">Saldo interés</div>
-                <div class="kpi-value">${money(totals.interestBalance)}</div>
-              </td>
-              <td>
-                <div class="kpi-label">Seguro/Comisión</div>
-                <div class="kpi-value">${money(totals.insuranceBalance + totals.feeBalance)}</div>
-              </td>
-              <td>
-                <div class="kpi-label">Total adeudado</div>
-                <div class="kpi-value">${money(totals.totalBalance)}</div>
-              </td>
-              <td>
-                <div class="kpi-label">Días mora</div>
-                <div class="kpi-value">${totals.defaultedDays}</div>
-              </td>
-              <td>
-                <div class="kpi-label">% pagado</div>
-                <div class="kpi-value">${totals.paymentProgress.toFixed(0)}%</div>
-              </td>
-              <td>
-                <div class="kpi-label">Cuotas pagadas</div>
-                <div class="kpi-value">${totals.paidInstallments}</div>
-              </td>
-              <td>
-                <div class="kpi-label">Cuotas pendientes</div>
-                <div class="kpi-value">${totals.pendingInstallments}</div>
-              </td>
-            </tr>
-          </table>
-
-          <div class="section-title">Detalle de cuotas</div>
-
-          <table class="detail">
-            <thead>
-              <tr>
-                <th>Cuota</th>
-                <th>Fecha</th>
-                <th>Pagado el</th>
-                <th>Estado</th>
-                <th>Capital</th>
-                <th>Interés</th>
-                <th>Seguro</th>
-                <th>Comisión</th>
-                <th>Otros</th>
-                <th>Total cuota</th>
-                <th>Pag. capital</th>
-                <th>Pag. interés</th>
-                <th>Total pagado</th>
-                <th>Pend. capital</th>
-                <th>Pend. interés</th>
-                <th>Total pendiente</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            <div>Generado desde CrediMaster</div>
-            <div>Fecha de impresión: ${dayjs().format("DD/MM/YYYY HH:mm")}</div>
-          </div>
-        </div>
-
-        <script>
-          window.onload = function() {
-            window.print();
-          };
-        </script>
-      </body>
-    </html>
-  `;
-
-    const printWindow = window.open("", "_blank", "width=1200,height=800");
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
+    printAccountStatementReport({
+      company: tenant,
+      user: JSON.parse(localStorage.getItem("user") || "{}"),
+      loanId: loanId,
+      customerName: customerName,
+      identification: identification,
+      rows: rows,
+      header: header,
+      cutDate,
+    });
   };
 
   return (
@@ -931,7 +537,11 @@ export default function AccountStatementModal({
                         <TableCell>{fmtDate(r.paid_at)}</TableCell>
 
                         <TableCell>
-                          <StatusChip status={r.status} />
+                          {r.payment_number === 0 ? (
+                            ""
+                          ) : (
+                            <StatusChip status={r.status} />
+                          )}
                         </TableCell>
 
                         <TableCell align="right">

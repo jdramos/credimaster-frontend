@@ -10,19 +10,18 @@ import {
   Tooltip,
   Button,
   IconButton,
+  alpha,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PrintIcon from "@mui/icons-material/Print";
 import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import API from "../../api";
+import BAC from "../../styles/bac";
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/accounting/accounts`;
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+const API_URL = `/api/accounting/accounts`;
 
 export default function AccountsList() {
   const [rows, setRows] = useState([]);
@@ -42,22 +41,20 @@ export default function AccountsList() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
+      const params = {};
+      if (search.trim()) params.search = search.trim();
 
-      const res = await fetch(`${API_URL}?${params.toString()}`, {
-        headers,
-      });
+      const res = await API.get(API_URL, { params });
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error cargando cuentas");
-      }
-
-      setRows(json.data || []);
+      setRows(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error al cargar cuentas",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -208,6 +205,14 @@ export default function AccountsList() {
             }}
           >
             Nueva cuenta
+          </Button>
+
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={fetchAccounts}
+          >
+            Actualizar
           </Button>
         </Box>
 

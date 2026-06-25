@@ -10,13 +10,7 @@ import {
   Snackbar,
   Typography,
 } from "@mui/material";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-};
+import API from "../../api";
 
 export default function JournalDetailDialog({ open, onClose, journalId }) {
   const [loading, setLoading] = useState(false);
@@ -41,26 +35,30 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
 
     try {
       setLoading(true);
+      setEntry(null);
 
-      const res = await fetch(
-        `${API_BASE}/api/accounting/journal/${journalId}`,
-        { headers },
-      );
+      const res = await API.get(`/api/accounting/journal/${journalId}`);
 
-      const json = await res.json();
+      const json = res.data || {};
 
-      console.log("DETALLE COMPROBANTE:", json);
-
-      if (!res.ok || !json.ok) {
+      if (json.ok === false) {
         throw new Error(json.message || "Error cargando comprobante");
       }
 
+      const data = json.data || json;
+
       setEntry({
-        ...(json.data?.entry || {}),
-        details: json.data?.lines || [],
+        ...(data.entry || {}),
+        details: data.lines || data.details || [],
       });
     } catch (error) {
-      showAlert(error.message);
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error cargando comprobante",
+        "error",
+      );
     } finally {
       setLoading(false);
     }

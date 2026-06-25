@@ -76,6 +76,7 @@ import PostingRuns from "./components/accounting/PostingRuns";
 import IccReportPage from "./pages/reports/conami/IccReportPage";
 import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
 import IdleSessionHandler from "./components/IdleSessionHandler";
+import CustomReportsPage from "./pages/customReports/CustomReportsPage";
 
 function PageContainer({ children }) {
   return (
@@ -526,6 +527,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/contabilidad/contabilizar" element={<PostingRuns />} />
           <Route path="/conami/icc" element={<IccGenerator />} />
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
+
+          <Route path="/custom-reports" element={<CustomReportsPage />} />
 
           <Route
             path="*"

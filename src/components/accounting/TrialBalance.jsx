@@ -11,13 +11,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-};
+import API from "../../api";
 
 export default function TrialBalance() {
   const [rows, setRows] = useState([]);
@@ -43,28 +37,35 @@ export default function TrialBalance() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
+      const params = {};
+      if (filters.from_date) params.from_date = filters.from_date;
+      if (filters.to_date) params.to_date = filters.to_date;
 
-      if (filters.from_date) params.append("from_date", filters.from_date);
-      if (filters.to_date) params.append("to_date", filters.to_date);
+      const res = await API.get("/api/accounting/trial-balance", { params });
 
-      const res = await fetch(
-        `${API_BASE}/api/accounting/trial-balance?${params.toString()}`,
-        { headers },
-      );
+      const json = res.data || {};
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
+      if (json.ok === false) {
         throw new Error(
           json.message || "Error cargando balance de comprobación",
         );
       }
 
-      setRows(json.data?.rows || json.data || []);
-      setSummary(json.data?.summary || null);
+      const data = json.data || json;
+
+      setRows(
+        Array.isArray(data.rows) ? data.rows : Array.isArray(data) ? data : [],
+      );
+
+      setSummary(data.summary || null);
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error cargando balance de comprobación",
+        "error",
+      );
     } finally {
       setLoading(false);
     }

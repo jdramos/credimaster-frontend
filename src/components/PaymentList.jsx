@@ -19,6 +19,9 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { NumericFormat } from "react-number-format";
 import dayjs from "dayjs";
+import PrintIcon from "@mui/icons-material/Print";
+import { printPaymentsReceivedReport } from "../reports/printPaymentsReceivedReport";
+import { useAuth } from "../contexts/AuthContext";
 
 import PaymentForm from "./PaymentForm";
 import API from "../api";
@@ -62,6 +65,7 @@ const PaymentList = () => {
   const [collectors, setCollectors] = useState([]);
 
   const [summary, setSummary] = useState(null);
+  const { tenant, user } = useAuth();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -127,10 +131,59 @@ const PaymentList = () => {
       setTotal(json.total);
       setRows(data);
       setTotal(count);
+      setSummary(json?.summary || null);
     } catch (error) {
       console.error("Error fetching payments:", error);
       setRows([]);
       setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePrintReport = async () => {
+    try {
+      setLoading(true);
+
+      const params = new URLSearchParams();
+
+      params.set("page", "1");
+      params.set("pageSize", "5000");
+      params.set("report", "1");
+
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+      if (branchId) params.set("branchId", String(branchId));
+      if (collectorId) params.set("collectorId", String(collectorId));
+
+      const response = await API.get(`${API_URL}?${params.toString()}`);
+      const json = response.data;
+
+      const branchName =
+        branches.find((b) => String(b.id ?? b.branch_id) === String(branchId))
+          ?.name || "Todas";
+
+      const collectorName =
+        collectors.find(
+          (c) => String(c.id ?? c.collector_id) === String(collectorId),
+        )?.name || "Todos";
+
+      printPaymentsReceivedReport({
+        company: tenant,
+        user: JSON.parse(localStorage.getItem("user") || "{}"),
+        rows: Array.isArray(json?.data) ? json.data : [],
+        summary: json?.summary || {},
+        filters: {
+          dateFrom,
+          dateTo,
+          branchId,
+          branchName,
+          collectorId,
+          collectorName,
+        },
+      });
+    } catch (error) {
+      console.error("Error imprimiendo reporte:", error);
     } finally {
       setLoading(false);
     }
@@ -217,6 +270,16 @@ const PaymentList = () => {
         </Box>
 
         <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrintReport}
+            className="bac-btn-muted"
+            disabled={loading}
+          >
+            Imprimir
+          </Button>
+
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}

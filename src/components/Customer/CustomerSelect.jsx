@@ -13,9 +13,11 @@ const url = `/api/customers/getCustomerList`;
 const buildLabel = (option) => {
   if (!option) return "";
 
-  return `${option.id ?? ""} ${option.customer_name ?? ""} (${
-    option.identification ?? ""
-  })`.trim();
+  const id = option.id ?? "";
+  const name = option.customer_name ?? "";
+  const identification = option.identification ?? "";
+
+  return `${id} ${name} (${identification})`.trim();
 };
 
 const CustomerSelect = (props) => {
@@ -26,17 +28,11 @@ const CustomerSelect = (props) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const normalize = (json) => {
-    const arr = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.data)
-        ? json.data
-        : Array.isArray(json?.rows)
-          ? json.rows
-          : Array.isArray(json?.result)
-            ? json.result
-            : [];
-
-    return arr;
+    if (Array.isArray(json)) return json;
+    if (Array.isArray(json?.data)) return json.data;
+    if (Array.isArray(json?.rows)) return json.rows;
+    if (Array.isArray(json?.result)) return json.result;
+    return [];
   };
 
   const fetchApi = async (query) => {
@@ -44,12 +40,13 @@ const CustomerSelect = (props) => {
       setLoading(true);
       setError(null);
 
-      const q = encodeURIComponent(query);
-      const resp = await API.get(`${url}?query=${q}`);
+      const resp = await API.get(url, {
+        params: {
+          query,
+        },
+      });
 
-      if (!resp.ok) throw new Error("Failed to retrieve data.");
-
-      const json = await resp.data;
+      const json = resp.data;
 
       if (json?.error) {
         setCustomers([]);
@@ -59,15 +56,23 @@ const CustomerSelect = (props) => {
 
       setCustomers(normalize(json));
     } catch (err) {
+      console.error("CustomerSelect error:", err);
       setCustomers([]);
-      setError(err.message || "Failed to retrieve data.");
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to retrieve data.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const debouncedFetch = useCallback(
-    debounce((q) => fetchApi(q), 400),
+    debounce((q) => {
+      fetchApi(q);
+    }, 400),
     [],
   );
 
@@ -127,16 +132,34 @@ const CustomerSelect = (props) => {
         size={props.size}
         options={customers}
         value={selectedCustomer}
+        inputValue={inputValue}
         filterOptions={(options) => options}
         loading={loading}
         isOptionEqualToValue={(option, value) =>
           String(option?.id) === String(value?.id)
         }
         getOptionLabel={buildLabel}
-        inputValue={inputValue}
         onInputChange={(event, newInputValue, reason) => {
           if (reason === "reset") return;
+
           setInputValue(newInputValue);
+
+          if (
+            selectedCustomer &&
+            newInputValue !== buildLabel(selectedCustomer)
+          ) {
+            setSelectedCustomer(null);
+
+            props.onChange?.({
+              target: {
+                name: props.name,
+                value: "",
+                customer_identification: "",
+                customer_name: "",
+                conami_id_actividad_economica: "",
+              },
+            });
+          }
         }}
         onChange={(event, newValue) => {
           setError(null);
@@ -161,11 +184,7 @@ const CustomerSelect = (props) => {
           });
         }}
         noOptionsText={
-          selectedCustomer
-            ? ""
-            : inputValue.trim().length
-              ? "Sin resultados"
-              : "Escribe para buscar"
+          inputValue.trim().length ? "Sin resultados" : "Escribe para buscar"
         }
         renderInput={(params) => (
           <TextField

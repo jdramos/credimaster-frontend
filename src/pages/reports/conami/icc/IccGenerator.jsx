@@ -19,9 +19,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { DataGrid } from "@mui/x-data-grid";
-
-const API_URL = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../../../../api";
 
 export default function IccGenerator() {
   const [form, setForm] = useState({
@@ -33,11 +31,6 @@ export default function IccGenerator() {
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [validation, setValidation] = useState(null);
   const [error, setError] = useState("");
-
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: token,
-  };
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -69,24 +62,22 @@ export default function IccGenerator() {
       setLoadingValidate(true);
       setError("");
 
-      const response = await fetch(
-        `${API_URL}/api/reports/conami/icc/validate`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify(form),
-        },
-      );
+      const res = await API.post("/api/reports/conami/icc/validate", form);
 
-      const data = await response.json();
+      const data = res.data || {};
 
-      if (!response.ok || !data.ok) {
+      if (data.ok === false) {
         throw new Error(data.message || "No se pudo validar el ICC.");
       }
 
-      setValidation(data);
+      setValidation(data.data || data);
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message ||
+          "No se pudo validar el ICC.",
+      );
     } finally {
       setLoadingValidate(false);
     }
@@ -104,21 +95,22 @@ export default function IccGenerator() {
       setLoadingGenerate(true);
       setError("");
 
-      const response = await fetch(`${API_URL}/api/conami/icc/generate`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(form),
-      });
+      const res = await API.post("/api/conami/icc/generate", form);
 
-      const data = await response.json();
+      const data = res.data || {};
 
-      if (!response.ok || !data.ok) {
+      if (data.ok === false) {
         throw new Error(data.message || "No se pudo generar el ICC.");
       }
 
       alert("ICC generado correctamente.");
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message ||
+          "No se pudo generar el ICC.",
+      );
     } finally {
       setLoadingGenerate(false);
     }

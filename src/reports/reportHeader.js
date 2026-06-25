@@ -1,58 +1,81 @@
 import dayjs from "dayjs";
 
-export const buildReportHeader = ({ company, title, subtitle = "" }) => {
-  return `
-    <div class="report-header">
+export const buildHeader = ({
+  company = {},
+  title = "",
+  subtitle = "",
+  user = user,
+} = {}) => `
 
-      ${
-        company?.logo_url
-          ? `
+
+  <div class="report-header">
+
+    ${
+      company.logo_url
+        ? `
+        <div class="logo-box">
           <img
             src="${company.logo_url}"
             class="company-logo"
           />
-        `
+        </div>
+      `
+        : ""
+    }
+
+    <div class="company-info">
+
+      <div class="company-name">
+        ${company.commercial_name || company.legal_name || ""}
+      </div>
+
+      ${
+        company.legal_name &&
+        company.commercial_name &&
+        company.legal_name !== company.commercial_name
+          ? `<div class="company-legal">${company.legal_name}</div>`
           : ""
       }
 
-      <div class="company-info">
+      <div class="company-line">
+        ${company.tax_id ? `RUC: ${company.tax_id}` : ""}
+        ${
+          company.phone
+            ? `${company.tax_id ? " | " : ""}Tel: ${company.phone}`
+            : ""
+        }
+      </div>
 
-        <div class="company-name">
-          ${company?.commercial_name || company?.legal_name || ""}
-        </div>
+      ${
+        company.address
+          ? `<div class="company-line">${company.address}</div>`
+          : ""
+      }
 
-        <div>
-          ${company?.legal_name || ""}
-        </div>
+    </div>
 
-        <div>
-          RUC: ${company?.tax_id || ""}
-        </div>
+    <div class="report-title-box">
 
-        <div>
-          ${company?.address || ""}
-        </div>
+      <div class="report-title">
+        ${title}
+      </div>
 
-        <div>
-          Tel: ${company?.phone || ""}
-        </div>
+      ${
+        subtitle
+          ? `
+            <div class="report-subtitle">
+              ${subtitle}
+            </div>
+          `
+          : ""
+      }
 
+      <div class="report-meta">
+        Fecha: ${dayjs().format("DD/MM/YYYY HH:mm")}
+        ${user?.full_name ? `<br>Usuario: ${user.full_name}` : ""}
       </div>
 
     </div>
 
-    <div class="report-title">
-      ${title}
-    </div>
-
-    ${
-      subtitle
-        ? `
-          <div class="report-subtitle">
-            ${subtitle}
-          </div>
-        `
-        : ""
-    }
-  `;
-};
+  </div>
+`;

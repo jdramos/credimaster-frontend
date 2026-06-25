@@ -33,17 +33,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
-import axios from "axios";
+import API from "../api";
 
 const AlertMessage = React.forwardRef(function AlertMessage(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-const API_URL = process.env.REACT_APP_API_BASE_URL;
-const TOKEN = process.env.REACT_APP_API_TOKEN;
-
 const BAC = {
-
   primary: "#0057B8",
   primaryDark: "#003E8A",
   soft: "#EAF2FF",
@@ -93,7 +89,7 @@ const getModuleStyle = (module) => {
   const styles = {
     clientes: {
       color: BAC.primary,
-      backgroundColor: BAC.primaryLight,
+      backgroundColor: BAC.soft,
       border: `1px solid ${alpha(BAC.primary, 0.18)}`,
     },
     creditos: {
@@ -203,20 +199,26 @@ const RolePermissionManager = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-  const headers = { Authorization: TOKEN };
-
   const fetchInitialData = async () => {
     setInitialLoading(true);
+
     try {
       const [rolesRes, permissionsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/roles`, { headers }),
-        axios.get(`${API_URL}/api/permissions`, { headers }),
+        API.get(`/api/roles`),
+        API.get(`/api/permissions`),
       ]);
 
       setRoles(Array.isArray(rolesRes.data) ? rolesRes.data : []);
-      setPermissions(Array.isArray(permissionsRes.data) ? permissionsRes.data : []);
+      setPermissions(
+        Array.isArray(permissionsRes.data) ? permissionsRes.data : [],
+      );
     } catch (err) {
-      console.error("Error cargando datos iniciales:", err);
+      console.error("Error cargando datos iniciales:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+
       setRoles([]);
       setPermissions([]);
     } finally {
@@ -237,10 +239,7 @@ const RolePermissionManager = () => {
     const fetchAssignedPermissions = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(
-          `${API_URL}/api/roles/${selectedRole}/permissions`,
-          { headers }
-        );
+        const res = await API.get(`/api/roles/${selectedRole}/permissions`);
         const assignedPerms = Array.isArray(res.data) ? res.data : [];
         setAssigned(assignedPerms.map((p) => p.id));
       } catch (err) {
@@ -280,7 +279,9 @@ const RolePermissionManager = () => {
   }, [filteredPermissions]);
 
   const moduleNames = useMemo(() => {
-    return Object.keys(groupedPermissions).sort((a, b) => a.localeCompare(b, "es"));
+    return Object.keys(groupedPermissions).sort((a, b) =>
+      a.localeCompare(b, "es"),
+    );
   }, [groupedPermissions]);
 
   const totalAssignedVisible = useMemo(() => {
@@ -291,7 +292,7 @@ const RolePermissionManager = () => {
     setAssigned((prev) =>
       prev.includes(permId)
         ? prev.filter((id) => id !== permId)
-        : [...prev, permId]
+        : [...prev, permId],
     );
   };
 
@@ -308,17 +309,22 @@ const RolePermissionManager = () => {
   };
 
   const handleSave = async () => {
+    if (!selectedRole) return;
+
     setConfirmOpen(false);
 
     try {
-      await axios.put(
-        `${API_URL}/api/roles/${selectedRole}/permissions`,
-        { permissionIds: assigned },
-        { headers }
-      );
+      await API.put(`/api/roles/${selectedRole}/permissions`, {
+        permissionIds: assigned,
+      });
+
       setSuccessOpen(true);
     } catch (error) {
-      console.error("Error al actualizar permisos:", error);
+      console.error("Error al actualizar permisos:", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
     }
   };
 
@@ -543,7 +549,9 @@ const RolePermissionManager = () => {
           }}
         >
           <CircularProgress sx={{ color: BAC.primary, mb: 2 }} />
-          <Typography color="text.secondary">Cargando información...</Typography>
+          <Typography color="text.secondary">
+            Cargando información...
+          </Typography>
         </Paper>
       ) : !selectedRole ? (
         <Paper
@@ -594,7 +602,11 @@ const RolePermissionManager = () => {
           }}
         >
           <Box sx={{ p: 2.5 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ color: BAC.secondary }}>
+            <Typography
+              variant="h6"
+              fontWeight={700}
+              sx={{ color: BAC.secondary }}
+            >
               Permisos disponibles
             </Typography>
             <Typography variant="body2" sx={{ color: BAC.textSoft, mt: 0.5 }}>
@@ -623,7 +635,7 @@ const RolePermissionManager = () => {
                   const modulePermissions = groupedPermissions[module] || [];
                   const moduleIds = modulePermissions.map((p) => p.id);
                   const selectedCount = moduleIds.filter((id) =>
-                    assigned.includes(id)
+                    assigned.includes(id),
                   ).length;
                   const allSelected =
                     moduleIds.length > 0 && selectedCount === moduleIds.length;
@@ -799,7 +811,8 @@ const RolePermissionManager = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: BAC.textSoft }}>
-            ¿Está seguro de que desea guardar los cambios en los permisos del rol seleccionado?
+            ¿Está seguro de que desea guardar los cambios en los permisos del
+            rol seleccionado?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

@@ -18,14 +18,9 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import JournalForm from "./JournalForm";
 import JournalDetailDialog from "./JournalDetailDialog";
+import API from "../../api";
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/accounting/journal`;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+const API_URL = `/api/accounting/journal`;
 
 export default function JournalList() {
   const [rows, setRows] = useState([]);
@@ -53,22 +48,30 @@ export default function JournalList() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
+      const params = {};
+      if (filters.from_date) params.from_date = filters.from_date;
+      if (filters.to_date) params.to_date = filters.to_date;
+      if (filters.search.trim()) params.search = filters.search.trim();
 
-      if (filters.from_date) params.append("from_date", filters.from_date);
-      if (filters.to_date) params.append("to_date", filters.to_date);
-      if (filters.search) params.append("search", filters.search);
+      const res = await API.get(API_URL, { params });
 
-      const res = await fetch(`${API_URL}?${params.toString()}`, { headers });
-      const json = await res.json();
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.data?.rows)
+            ? res.data.data.rows
+            : [];
 
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error cargando libro diario");
-      }
-
-      setRows(json.data || []);
+      setRows(data);
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error cargando libro diario",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -84,21 +87,18 @@ export default function JournalList() {
     if (!ok) return;
 
     try {
-      const res = await fetch(`${API_URL}/${id}/void`, {
-        method: "PUT",
-        headers,
-      });
+      await API.put(`{API_URL}/${id}/void`);
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error anulando comprobante");
-      }
-
-      showAlert(json.message || "Comprobante anulado correctamente");
+      showAlert("Comprobante anulado correctamente", "success");
       fetchJournal();
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error anulando comprobante",
+        "error",
+      );
     }
   };
 

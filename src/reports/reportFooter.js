@@ -1,19 +1,9 @@
 import dayjs from "dayjs";
 
-export const buildReportFooter = ({ user }) => `
+export const buildFooter = ({ company = {}, user = {} } = {}) => `
   <div class="report-footer">
-
-    Usuario:
-    ${user?.full_name || ""}
-
-    |
-    
-    Fecha impresión:
-    ${dayjs().format("DD/MM/YYYY HH:mm")}
-
-    |
-
-    Generado por CrediMaster
-
+    Generado el ${dayjs().format("DD/MM/YYYY HH:mm")}
+    ${user?.full_name ? ` por ${user.full_name}` : ""}
+    ${company?.commercial_name || company?.legal_name ? ` | ${company.commercial_name || company.legal_name}` : ""}
   </div>
 `;

@@ -16,28 +16,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { DataGrid } from "@mui/x-data-grid";
-
-const API = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: token,
-};
-
-const BAC = {
-  primary: "#0057B8",
-  primaryDark: "#003E8A",
-  bg: "#F6F8FC",
-  soft: "#EAF2FF",
-  border: "#D8E2F0",
-  text: "#1F2937",
-  muted: "#6B7280",
-  white: "#FFFFFF",
-  danger: "#DC2626",
-  success: "#15803D",
-  warning: "#B45309",
-};
+import BAC from "../../../styles/bac";
+import API from "../../../api";
 
 const getDefaultMonth = () => {
   const today = new Date();
@@ -64,19 +44,23 @@ export default function IccReportPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API}/api/reports/conami/icc/runs`, {
-        headers: { Authorization: token },
-      });
+      const res = await API.get("/api/reports/conami/icc/runs");
 
-      const json = await res.json();
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
 
-      if (!res.ok) {
-        throw new Error(json.message || "No se pudo cargar el historial.");
-      }
-
-      setRuns(json.data || []);
+      setRuns(data);
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -84,22 +68,23 @@ export default function IccReportPage() {
 
   const fetchErrors = async (runId) => {
     try {
-      const res = await fetch(
-        `${API}/api/reports/conami/icc/runs/${runId}/errors`,
-        {
-          headers: { Authorization: token },
-        },
-      );
+      const res = await API.get(`/api/reports/conami/icc/runs/${runId}/errors`);
 
-      const json = await res.json();
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
 
-      if (!res.ok) {
-        throw new Error(json.message || "No se pudieron cargar los errores.");
-      }
-
-      setErrors(json.data || []);
+      setErrors(data);
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message,
+      });
     }
   };
 
@@ -116,29 +101,27 @@ export default function IccReportPage() {
 
       const cutoffDate = getCutoffDate(reportMonth);
 
-      const res = await fetch(`${API}/api/reports/conami/icc/generate`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          report_month: reportMonth,
-          cutoff_date: cutoffDate,
-        }),
+      const res = await API.post("/api/reports/conami/icc/generate", {
+        report_month: reportMonth,
+        cutoff_date: cutoffDate,
       });
 
-      const json = await res.json();
+      const data = res.data || {};
 
-      if (!res.ok) {
-        throw new Error(json.message || "No se pudo generar el ICC.");
+      if (data.ok === false) {
+        throw new Error(data.message || "No se pudo generar el ICC.");
       }
 
-      if (json.data?.status === "WITH_ERRORS") {
+      const result = data.data || data;
+
+      if (result.status === "WITH_ERRORS") {
         setMessage({
           type: "warning",
-          text: `La corrida se generó con ${json.data.total_errors} errores. Corrige los datos antes de descargar.`,
+          text: `La corrida se generó con ${result.total_errors || 0} errores. Corrige los datos antes de descargar.`,
         });
 
-        setSelectedRun(json.data.run_id);
-        await fetchErrors(json.data.run_id);
+        setSelectedRun(result.run_id);
+        await fetchErrors(result.run_id);
       } else {
         setMessage({
           type: "success",
@@ -148,7 +131,13 @@ export default function IccReportPage() {
 
       await fetchRuns();
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message,
+      });
     } finally {
       setGenerating(false);
     }
@@ -156,23 +145,14 @@ export default function IccReportPage() {
 
   const handleDownload = async (runId) => {
     try {
-      const response = await fetch(
-        `${API}/api/reports/conami/icc/runs/${runId}/download`,
+      const response = await API.get(
+        `/api/reports/conami/icc/runs/${runId}/download`,
         {
-          method: "GET",
-          headers: {
-            Authorization: token,
-          },
+          responseType: "blob",
         },
       );
 
-      if (!response.ok) {
-        throw new Error("No se pudo descargar el ZIP");
-      }
-
-      const blob = await response.blob();
-
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(response.data);
 
       const link = document.createElement("a");
 
@@ -180,18 +160,17 @@ export default function IccReportPage() {
       link.download = `icc_run_${runId}.zip`;
 
       document.body.appendChild(link);
-
       link.click();
 
       link.remove();
-
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error(error);
-
       setMessage({
         type: "error",
-        text: error.message,
+        text:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message,
       });
     }
   };

@@ -12,14 +12,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+import API from "../../api";
 
 export default function LedgerList() {
   const [accounts, setAccounts] = useState([]);
@@ -45,22 +38,25 @@ export default function LedgerList() {
 
   const fetchAccounts = async () => {
     try {
-      const res = await fetch(
-        `${API_BASE}/api/accounting/accounts?is_active=1`,
-        { headers },
-      );
+      const res = await API.get("/api/accounting/accounts", {
+        params: { is_active: 1 },
+      });
 
-      const json = await res.json();
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
 
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error cargando cuentas");
-      }
-
-      setAccounts(
-        (json.data || []).filter((acc) => Number(acc.is_movement) === 1),
-      );
+      setAccounts(data.filter((acc) => Number(acc.is_movement) === 1));
     } catch (error) {
-      showAlert(error.message);
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error cargando cuentas contables",
+        "error",
+      );
     }
   };
 
@@ -73,26 +69,36 @@ export default function LedgerList() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
-      params.append("account_id", selectedAccount.id);
+      const params = {
+        account_id: selectedAccount.id,
+      };
 
-      if (filters.from_date) params.append("from_date", filters.from_date);
-      if (filters.to_date) params.append("to_date", filters.to_date);
+      if (filters.from_date) params.from_date = filters.from_date;
+      if (filters.to_date) params.to_date = filters.to_date;
 
-      const res = await fetch(`${API_BASE}/api/accounting/ledger?${params}`, {
-        headers,
-      });
+      const res = await API.get("/api/accounting/ledger", { params });
 
-      const json = await res.json();
+      const data = res.data?.data || res.data || {};
 
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error cargando mayor");
-      }
+      setRows(
+        Array.isArray(data.movements)
+          ? data.movements
+          : Array.isArray(data.rows)
+            ? data.rows
+            : Array.isArray(data)
+              ? data
+              : [],
+      );
 
-      setRows(json.data?.movements || json.data || []);
-      setSummary(json.data?.summary || null);
+      setSummary(data.summary || null);
     } catch (error) {
-      showAlert(error.message);
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error cargando mayor general",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -278,7 +284,9 @@ export default function LedgerList() {
             columns={columns}
             loading={loading}
             getRowId={(row) =>
-              row.id || `${row.journal_entry_id}-${row.account_id}`
+              row.id ||
+              row.journal_line_id ||
+              `${row.journal_entry_id}-${row.account_id}-${row.entry_date}-${row.debit}-${row.credit}`
             }
             pageSizeOptions={[10, 25, 50, 100]}
             initialState={{

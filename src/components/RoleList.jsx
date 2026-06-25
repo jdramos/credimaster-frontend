@@ -124,7 +124,7 @@ const RoleList = () => {
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const res = await API.get(`${API_URL}/api/roles`);
+      const res = await API.get(`/api/roles`);
       setRoles(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error al obtener roles:", err);

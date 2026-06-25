@@ -35,7 +35,7 @@ import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
-
+import { useAuth } from "../../contexts/AuthContext";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -60,7 +60,6 @@ import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CommentIcon from "@mui/icons-material/Comment";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PaymentsIcon from "@mui/icons-material/Payments";
-
 import LoanAmortization from "../LoanAmortization";
 import PaymentForm from "../PaymentForm";
 import today from "../../functions/today";
@@ -71,8 +70,7 @@ import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
 import ApprovalConfirmationDialog from "./ApprovalConfirmationDialog";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+import { printLoanApplicationReport } from "../../reports/loanApplicationReport";
 
 const HeaderBar = styled("div")(({ theme }) => ({
   background: theme.palette.primary.main,
@@ -223,8 +221,18 @@ const LoanDetailsModal = ({
   onLoanUpdated,
 }) => {
   const { user } = useContext(UserContext);
+  const { tenant } = useAuth();
   const loanData = loan?.data || loan;
   const loanId = loanData?.id || loanData?.loan_id || loanData?.credit_id;
+
+  const company = {
+    commercial_name: tenant?.commercial_name || tenant?.name || "",
+    legal_name: tenant?.legal_name || tenant?.company_name || "",
+    tax_id: tenant?.tax_id || tenant?.ruc || "",
+    address: tenant?.address || "",
+    phone: tenant?.phone || "",
+    logo_url: tenant?.logo_url || "",
+  };
 
   const userId = user?.id || user?.user_id || user;
 
@@ -829,6 +837,36 @@ const LoanDetailsModal = ({
                       onClick={() => openConamiDocument("amortization")}
                     >
                       Tabla de Amortización
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      startIcon={<DescriptionIcon />}
+                      onClick={() =>
+                        printLoanApplicationReport({
+                          company,
+                          user: {
+                            id: userId,
+                            full_name: user?.full_name || "",
+                          },
+                          loan: loanData || {},
+                          customer: {
+                            id: clientId || loanData?.customer_id,
+                            full_name:
+                              loanData?.customer_name ||
+                              loanData?.full_name ||
+                              loanData?.customer_full_name,
+                            identification:
+                              clientIdentification ||
+                              loanData?.customer_identification ||
+                              loanData?.identification,
+                          },
+                          guarantees,
+                          evaluation: financialEvaluationForm,
+                        })
+                      }
+                    >
+                      Solicitud de Crédito
                     </Button>
                   </Stack>
                 </Stack>

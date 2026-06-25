@@ -11,11 +11,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = { Authorization: token };
+import API from "../../api";
 
 export default function BalanceSheet() {
   const [rows, setRows] = useState([]);
@@ -34,23 +30,16 @@ export default function BalanceSheet() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
-      if (filters.to_date) params.append("to_date", filters.to_date);
+      const params = {};
+      if (filters.to_date) params.to_date = filters.to_date;
 
-      const res = await fetch(
-        `${API_BASE}/api/accounting/trial-balance?${params}`,
-        {
-          headers,
-        },
-      );
+      const res = await API.get("/api/accounting/trial-balance", { params });
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error generando balance general");
-      }
-
-      const data = json.data?.rows || json.data || [];
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
 
       const filtered = data.filter((row) =>
         [
@@ -65,7 +54,13 @@ export default function BalanceSheet() {
 
       setRows(filtered);
     } catch (error) {
-      showAlert(error.message);
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error al generar balance general",
+        "error",
+      );
     } finally {
       setLoading(false);
     }

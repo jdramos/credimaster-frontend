@@ -11,11 +11,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = { Authorization: token };
+import API from "../../api";
 
 export default function IncomeStatement() {
   const [rows, setRows] = useState([]);
@@ -34,24 +30,19 @@ export default function IncomeStatement() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
-      if (filters.from_date) params.append("from_date", filters.from_date);
-      if (filters.to_date) params.append("to_date", filters.to_date);
+      const params = {};
+      if (filters.from_date) params.from_date = filters.from_date;
+      if (filters.to_date) params.to_date = filters.to_date;
 
-      const res = await fetch(
-        `${API_BASE}/api/accounting/trial-balance?${params}`,
-        {
-          headers,
-        },
-      );
+      const res = await API.get("/api/accounting/trial-balance", { params });
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error generando estado de resultados");
-      }
-
-      const data = json.data?.rows || json.data || [];
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data?.rows)
+          ? res.data.data.rows
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : [];
 
       const filtered = data.filter((row) =>
         ["INGRESO", "INCOME", "GASTO", "EXPENSE", "COSTO", "COST"].includes(
@@ -61,7 +52,13 @@ export default function IncomeStatement() {
 
       setRows(filtered);
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "Error generando estado de resultados",
+        "error",
+      );
     } finally {
       setLoading(false);
     }
@@ -92,32 +89,36 @@ export default function IncomeStatement() {
     };
   }, [rows]);
 
-  const columns = [
-    { field: "muc_code", headerName: "Código", width: 140 },
-    { field: "account_name", headerName: "Cuenta", flex: 1, minWidth: 300 },
-    { field: "account_type", headerName: "Tipo", width: 130 },
-    {
-      field: "amount",
-      headerName: "Importe",
-      width: 160,
-      type: "number",
-      valueGetter: (params) => {
-        const type = String(params.row.account_type || "").toUpperCase();
-        const debit = Number(params.row.total_debit || params.row.debit || 0);
-        const credit = Number(
-          params.row.total_credit || params.row.credit || 0,
-        );
+  const columns = useMemo(
+    () => [
+      { field: "muc_code", headerName: "Código", width: 140 },
+      { field: "account_name", headerName: "Cuenta", flex: 1, minWidth: 300 },
+      { field: "account_type", headerName: "Tipo", width: 130 },
+      {
+        field: "amount",
+        headerName: "Importe",
+        width: 160,
+        type: "number",
+        valueGetter: (params) => {
+          const type = String(params.row.account_type || "").toUpperCase();
+          const debit = Number(params.row.total_debit || params.row.debit || 0);
+          const credit = Number(
+            params.row.total_credit || params.row.credit || 0,
+          );
 
-        if (["INGRESO", "INCOME"].includes(type)) return credit - debit;
-        return debit - credit;
+          if (["INGRESO", "INCOME"].includes(type)) return credit - debit;
+
+          return debit - credit;
+        },
+        valueFormatter: (params) =>
+          Number(params.value || 0).toLocaleString("es-NI", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
       },
-      valueFormatter: (params) =>
-        Number(params.value || 0).toLocaleString("es-NI", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
-    },
-  ];
+    ],
+    [],
+  );
 
   return (
     <Box sx={{ p: 2 }}>

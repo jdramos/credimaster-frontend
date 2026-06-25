@@ -40,12 +40,9 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
-import axios from "axios";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import PermissionFormDialog from "./PermissionFormDialog";
-import ConfirmDialog from "./ConfirmDialog";
-
-const API_URL = process.env.REACT_APP_API_BASE_URL;
-const TOKEN = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -145,9 +142,7 @@ const PermissionList = () => {
   const fetchPermissions = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/permissions`, {
-        headers: { Authorization: TOKEN },
-      });
+      const res = await API.get(`/api/permissions`);
 
       const data = Array.isArray(res.data) ? res.data : [];
       setPermissions(data);
@@ -287,12 +282,7 @@ const PermissionList = () => {
     if (!permissionToDelete?.id) return;
 
     try {
-      await axios.delete(
-        `${API_URL}/api/permissions/${permissionToDelete.id}`,
-        {
-          headers: { Authorization: TOKEN },
-        },
-      );
+      await API.delete(`/api/permissions/${permissionToDelete.id}`);
 
       await fetchPermissions();
       showSnackbar("Permiso eliminado correctamente", "success");
@@ -412,6 +402,28 @@ const PermissionList = () => {
               }}
             >
               Agregar Permiso
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={<RefreshIcon />}
+              onClick={fetchPermissions}
+              sx={{
+                backgroundColor: alpha(BAC.white, 0.14),
+                color: BAC.white,
+                fontWeight: 700,
+                borderRadius: 2,
+                px: 2.5,
+                py: 1,
+                boxShadow: "none",
+                border: "1px solid rgba(255,255,255,0.18)",
+                "&:hover": {
+                  backgroundColor: alpha(BAC.white, 0.22),
+                  boxShadow: "none",
+                },
+              }}
+            >
+              Actualizar
             </Button>
           </Stack>
         </Stack>
