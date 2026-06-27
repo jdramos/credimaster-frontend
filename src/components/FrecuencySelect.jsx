@@ -6,10 +6,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import API from "../api";
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/frecuencies";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+const url = "/api/frecuencies";
 
 const FrecuencySelect = (props) => {
   const [frecuency, setFrecuency] = useState([]);
@@ -22,10 +21,9 @@ const FrecuencySelect = (props) => {
   useEffect(() => {
     const fetchApi = async () => {
       try {
-        const response = await fetch(url, { headers });
-        if (!response.ok) throw new Error("Failed to retrieve data.");
+        const response = await API.get(url);
 
-        const jsonData = await response.json();
+        const jsonData = await response.data;
         setFrecuency(jsonData);
 
         const defaultItem = jsonData.find((f) => f.default === "Y");

@@ -5,14 +5,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import API from "../api";
 
-const url = process.env.REACT_APP_API_BASE_URL + "/api/promoters/branch/";
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+const url = "/api/promoters/branch/";
 
 const toStr = (value) =>
   value === null || value === undefined || value === "" ? "" : String(value);
@@ -31,11 +26,9 @@ const PromoterSelect = (props) => {
       }
 
       try {
-        const response = await fetch(`${url}${props.branch_id}`, { headers });
+        const response = await API.get(`${url}${props.branch_id}`);
 
-        if (!response.ok) throw new Error("Failed to retrieve data.");
-
-        const jsonData = await response.json();
+        const jsonData = await response.data;
         const rows = Array.isArray(jsonData)
           ? jsonData
           : Array.isArray(jsonData?.data)

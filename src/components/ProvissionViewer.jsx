@@ -27,15 +27,11 @@ import API from "../api";
 import BranchSelect from "./BranchSelect";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primereact/resources/primereact.css";
 
-
 dayjs.extend(customParseFormat);
-
-const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 /** 🎨 BAC palette */
 const BAC = {
@@ -74,8 +70,8 @@ const ProvissionViewer = () => {
   const [balanceType, setBalanceType] = useState("FINAL");
 
   useEffect(() => {
-    API.get(`${API_URL}/api/branches`).then((res) => setBranches(res.data));
-    API.get(`${API_URL}/api/vendors`).then((res) => setVendors(res.data));
+    API.get(`/api/branches`).then((res) => setBranches(res.data));
+    API.get(`/api/vendors`).then((res) => setVendors(res.data));
   }, []);
 
   const calculateTotals = (customers) => {
@@ -88,7 +84,14 @@ const ProvissionViewer = () => {
         acc.provission_amount += Number(c.provission_amount || 0);
         return acc;
       },
-      { capital: 0, interest: 0, defaulted: 0, overdue: 0, provission_amount: 0, count: 0 }
+      {
+        capital: 0,
+        interest: 0,
+        defaulted: 0,
+        overdue: 0,
+        provission_amount: 0,
+        count: 0,
+      },
     );
   };
 
@@ -117,7 +120,9 @@ const ProvissionViewer = () => {
     if (selectedVendor) params.vendor_id = selectedVendor;
 
     try {
-      const res = await API.get(`${API_URL}/api/balances/loan-provisions`, { params });
+      const res = await API.get(`/api/balances/loan-provisions`, {
+        params,
+      });
 
       let grandTotal = {
         capital: 0,
@@ -134,7 +139,7 @@ const ProvissionViewer = () => {
             .filter(
               (c) =>
                 c.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-                c.identification.toLowerCase().includes(search.toLowerCase())
+                c.identification.toLowerCase().includes(search.toLowerCase()),
             )
             .map((customer) => ({
               key: `customer-${customer.identification}-${customer.loan_id}`,
@@ -270,7 +275,7 @@ const ProvissionViewer = () => {
   const allDates = useMemo(() => {
     const today = dayjs();
     return Array.from({ length: daysRange }, (_, i) =>
-      today.subtract(daysRange - 1 - i, "day").format("YYYY-MM-DD")
+      today.subtract(daysRange - 1 - i, "day").format("YYYY-MM-DD"),
     );
   }, []);
   const [currentIndex, setCurrentIndex] = useState(daysRange - 1);
@@ -296,7 +301,13 @@ const ProvissionViewer = () => {
           boxShadow: "0 10px 24px rgba(0,0,0,0.12)",
         }}
       >
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={2}
+        >
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 900 }}>
               Provisiones por Sucursal y Vendedor
@@ -309,15 +320,27 @@ const ProvissionViewer = () => {
           <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
             <Chip
               label={`Clientes: ${Number(globalTotals.count || 0).toLocaleString()}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
             <Chip
               label={`Capital: ${money(globalTotals.capital)}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
             <Chip
               label={`Provisión: ${money(globalTotals.provission_amount)}`}
-              sx={{ bgcolor: "rgba(255,255,255,0.16)", color: BAC.white, fontWeight: 800 }}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.16)",
+                color: BAC.white,
+                fontWeight: 800,
+              }}
             />
           </Box>
         </Box>
@@ -359,8 +382,15 @@ const ProvissionViewer = () => {
                 borderRadius: 2,
                 fontWeight: 900,
                 ...(d === date
-                  ? { bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }
-                  : { borderColor: "rgba(0,87,184,0.35)", color: BAC.primary, "&:hover": { bgcolor: BAC.soft } }),
+                  ? {
+                      bgcolor: BAC.primary,
+                      "&:hover": { bgcolor: BAC.primaryDark },
+                    }
+                  : {
+                      borderColor: "rgba(0,87,184,0.35)",
+                      color: BAC.primary,
+                      "&:hover": { bgcolor: BAC.soft },
+                    }),
               }}
             >
               {dayjs(d).format("DD/MM")}
@@ -368,7 +398,9 @@ const ProvissionViewer = () => {
           ))}
 
           <IconButton
-            onClick={() => setCurrentIndex((i) => Math.min(allDates.length - 1, i + 1))}
+            onClick={() =>
+              setCurrentIndex((i) => Math.min(allDates.length - 1, i + 1))
+            }
             disabled={currentIndex >= allDates.length - 1}
             sx={{ color: BAC.primary }}
           >
@@ -413,7 +445,14 @@ const ProvissionViewer = () => {
         </Typography>
         <Divider sx={{ mb: 2, borderColor: BAC.border }} />
 
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
           <TextField
             label="Fecha"
             type="date"
@@ -425,12 +464,20 @@ const ProvissionViewer = () => {
           />
 
           <FormControl size="small" sx={{ minWidth: 220 }}>
-            <BranchSelect value={selectedBranch} size="small" onChange={(e) => setSelectedBranch(e.target.value)} />
+            <BranchSelect
+              value={selectedBranch}
+              size="small"
+              onChange={(e) => setSelectedBranch(e.target.value)}
+            />
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Vendedor</InputLabel>
-            <Select value={selectedVendor} label="Vendedor" onChange={(e) => setSelectedVendor(e.target.value)}>
+            <Select
+              value={selectedVendor}
+              label="Vendedor"
+              onChange={(e) => setSelectedVendor(e.target.value)}
+            >
               <MenuItem value="">Todos</MenuItem>
               {vendors.map((v) => (
                 <MenuItem key={v.id} value={v.id}>
@@ -442,7 +489,11 @@ const ProvissionViewer = () => {
 
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Tipo de saldo</InputLabel>
-            <Select value={balanceType} label="Tipo de saldo" onChange={(e) => setBalanceType(e.target.value)}>
+            <Select
+              value={balanceType}
+              label="Tipo de saldo"
+              onChange={(e) => setBalanceType(e.target.value)}
+            >
               <MenuItem value="FINAL">FINAL</MenuItem>
               <MenuItem value="INICIAL">INICIAL</MenuItem>
             </Select>
@@ -486,7 +537,9 @@ const ProvissionViewer = () => {
               const allKeys = {};
               nodes.forEach((branch) => {
                 allKeys[branch.key] = true;
-                (branch.children || []).forEach((vendor) => (allKeys[vendor.key] = true));
+                (branch.children || []).forEach(
+                  (vendor) => (allKeys[vendor.key] = true),
+                );
               });
               setExpandedKeys(allKeys);
             }}
@@ -510,15 +563,48 @@ const ProvissionViewer = () => {
           rowHover
           className="bac-treetable p-treetable-hoverable-rows"
         >
-          <Column field="name" header="Cliente / Grupo" expander style={{ width: "30%" }} />
-          <Column field="identification" header="Identificación" style={{ width: "10%" }} />
+          <Column
+            field="name"
+            header="Cliente / Grupo"
+            expander
+            style={{ width: "30%" }}
+          />
+          <Column
+            field="identification"
+            header="Identificación"
+            style={{ width: "10%" }}
+          />
           <Column field="loan" header="Crédito No." style={{ width: "10%" }} />
-          <Column field="capital" header="Saldo Capital" style={{ width: "10%" }} />
-          <Column field="interest" header="Saldo Interés" style={{ width: "10%" }} />
-          <Column field="overdue_days" header="Días de Mora" style={{ width: "6%" }} />
-          <Column field="provission_code" header="Clasificación Riesgo" style={{ width: "7%" }} />
-          <Column field="provission_percentage" header="Provisión (%)" style={{ width: "7%" }} />
-          <Column field="provission_amount" header="Monto Provisión" style={{ width: "10%" }} />
+          <Column
+            field="capital"
+            header="Saldo Capital"
+            style={{ width: "10%" }}
+          />
+          <Column
+            field="interest"
+            header="Saldo Interés"
+            style={{ width: "10%" }}
+          />
+          <Column
+            field="overdue_days"
+            header="Días de Mora"
+            style={{ width: "6%" }}
+          />
+          <Column
+            field="provission_code"
+            header="Clasificación Riesgo"
+            style={{ width: "7%" }}
+          />
+          <Column
+            field="provission_percentage"
+            header="Provisión (%)"
+            style={{ width: "7%" }}
+          />
+          <Column
+            field="provission_amount"
+            header="Monto Provisión"
+            style={{ width: "10%" }}
+          />
           <Column field="count" header="# Clientes" style={{ width: "5%" }} />
         </TreeTable>
       </Box>

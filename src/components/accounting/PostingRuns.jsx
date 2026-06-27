@@ -12,14 +12,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+import API from "../../api";
 
 export default function PostingRuns() {
   const [rows, setRows] = useState([]);
@@ -51,17 +44,10 @@ export default function PostingRuns() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/api/accounting/posting-runs`, {
-        headers,
-      });
+      const res = await API.get(`/api/accounting/posting-runs`);
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error cargando contabilizaciones");
-      }
-
-      setRows(json.data || []);
+      const json = await res.data;
+      setRows(json || []);
     } catch (error) {
       showAlert(error.message, "error");
     } finally {
@@ -82,9 +68,7 @@ export default function PostingRuns() {
 
       setPosting(true);
 
-      const res = await fetch(`${API_BASE}/api/accounting/post-operations`, {
-        method: "POST",
-        headers,
+      const res = await API.handlePost(`/api/accounting/post-operations`, {
         body: JSON.stringify(form),
       });
 

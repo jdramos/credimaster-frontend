@@ -38,12 +38,7 @@ import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primereact/resources/primereact.css";
 
-// + Importa el bac-prime.css en tu App.jsx (recomendado)
-// import "../styles/bac-prime.css";
-
 dayjs.extend(customParseFormat);
-
-const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 const BAC = {
   blue: "#005AA7",
@@ -356,7 +351,7 @@ const CustomerBalanceViewer = () => {
 
   // Cargar catálogos
   useEffect(() => {
-    API.get(`${API_URL}/api/vendors`).then((res) => setVendors(res.data));
+    API.get(`/api/vendors`).then((res) => setVendors(res.data));
   }, []);
 
   const calculateTotals = (customers) =>
@@ -392,7 +387,7 @@ const CustomerBalanceViewer = () => {
       if (selectedVendor) params.vendor_id = selectedVendor;
 
       try {
-        const res = await API.get(`${API_URL}/api/balances/vendors-balance`, {
+        const res = await API.get(`/api/balances/vendors-balance`, {
           params,
         });
 

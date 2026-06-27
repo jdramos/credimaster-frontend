@@ -15,15 +15,8 @@ import {
   Divider,
   Alert,
 } from "@mui/material";
-
-const API = process.env.REACT_APP_API_BASE_URL + "/api/asset-adjudications";
-
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: `Bearer ${token}`,
-  "Content-Type": "application/json",
-};
+import API from "../api";
+const API = "/api/asset-adjudications";
 
 export default function AssetAdjudicationModal({
   open,
@@ -111,9 +104,7 @@ export default function AssetAdjudicationModal({
         throw new Error("Debe ingresar descripción del bien");
       }
 
-      const response = await fetch(API, {
-        method: "POST",
-        headers,
+      const response = await API.post(API, {
         body: JSON.stringify({
           loan_id: loan.id,
           customer_id: customer.id,

@@ -44,9 +44,8 @@ import BAC from "../../styles/bac";
 import LoanExtraFields from "./LoanExtraFields";
 import ApprovalSummaryCard from "./ApprovalConfirmationDialog";
 
-const url = `${process.env.REACT_APP_API_BASE_URL}/api/loans`;
-const urlGuarantee = `${process.env.REACT_APP_API_BASE_URL}/api/guarantees`;
-const token = process.env.REACT_APP_API_TOKEN;
+const url = `/api/loans`;
+const urlGuarantee = `/api/guarantees`;
 
 const fieldSx = {
   "& .MuiInputLabel-root": { fontWeight: 700 },
@@ -208,10 +207,11 @@ const LoanAdd = () => {
     loan.customer_identification,
     loan.customer_name,
   ]);
+
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
-        const res = await API.get("/api/credit-policies");
+        const res = await API.get("api/credit-policies");
         const policyMap = {};
         res.data.forEach((policy) => {
           policyMap[policy.policy_key] = policy;
@@ -257,16 +257,9 @@ const LoanAdd = () => {
 
       setLoading(true);
       try {
-        const response = await fetch(`${urlGuarantee}/${loan.customer_id}`, {
-          method: "GET",
-          headers: { Authorization: token },
-        });
+        const response = await API.get(`${urlGuarantee}/${loan.customer_id}`);
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data?.error || "Error al obtener garantías");
-        }
+        const data = await response.data;
 
         const totalValue = data.reduce(
           (sum, item) => sum + Number(item.value || 0),
@@ -337,7 +330,7 @@ const LoanAdd = () => {
     let cancelled = false;
 
     const fetchAmortizationTable = async () => {
-      if (
+      const isMissingRequiredData =
         !loan.amount ||
         !loan.interest_rate ||
         !loan.term ||
@@ -346,8 +339,9 @@ const LoanAdd = () => {
         loan.insurance === "" ||
         !loan.requestDate ||
         !loan.due_date ||
-        loan.other_charges === ""
-      ) {
+        loan.other_charges === "";
+
+      if (isMissingRequiredData) {
         setAmortizationTable([]);
         setInstallment(null);
         return;
@@ -356,37 +350,25 @@ const LoanAdd = () => {
       setLoading(true);
 
       try {
-        const response = await fetch(`${url}/amortization`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-          body: JSON.stringify({
-            amount: Number(loan.amount || 0),
-            interest_rate: Number(loan.interest_rate || 0),
-            term: Number(loan.term || 0),
-            requestDate: dayjs(loan.requestDate).format("YYYY-MM-DD"),
-            due_date: dayjs(loan.due_date).format("YYYY-MM-DD"),
-            fee: Number(loan.fee || 0),
-            insurance: Number(loan.insurance || 0),
-            other_charges: Number(loan.other_charges || 0),
-            interest_type_name: loan.interest_type_name || "compound",
-            frequency_id: loan.frequency_id,
-          }),
-        });
+        const payload = {
+          amount: Number(loan.amount || 0),
+          interest_rate: Number(loan.interest_rate || 0),
+          term: Number(loan.term || 0),
+          requestDate: dayjs(loan.requestDate).format("YYYY-MM-DD"),
+          due_date: dayjs(loan.due_date).format("YYYY-MM-DD"),
+          fee: Number(loan.fee || 0),
+          insurance: Number(loan.insurance || 0),
+          other_charges: Number(loan.other_charges || 0),
+          interest_type_name: loan.interest_type_name || "compound",
+          frequency_id: loan.frequency_id,
+        };
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data?.error || "Error al obtener la tabla de amortización",
-          );
-        }
+        const response = await API.post(`${url}/amortization`, payload);
 
         if (cancelled) return;
 
-        const rows = Array.isArray(data) ? data : [];
+        const rows = Array.isArray(response.data) ? response.data : [];
+
         setAmortizationTable(rows);
 
         const firstInstallment =
@@ -397,9 +379,10 @@ const LoanAdd = () => {
         const lastPayment = rows[rows.length - 1];
         const lastPaymentDate = lastPayment?.paymentDate;
 
+        if (!lastPaymentDate) return;
+
         setLoan((prevLoan) => {
           if (prevLoan.frequency_id === "V") return prevLoan;
-          if (!lastPaymentDate) return prevLoan;
 
           const newDueDate = dayjs(lastPaymentDate).format("YYYY-MM-DD");
 
@@ -413,12 +396,16 @@ const LoanAdd = () => {
       } catch (error) {
         if (!cancelled) {
           toast.error(
-            error.message ||
+            error?.response?.data?.message ||
+              error?.response?.data?.error ||
+              error?.message ||
               "Error de conexión al obtener la tabla de amortización",
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -432,6 +419,7 @@ const LoanAdd = () => {
     loan.interest_rate,
     loan.term,
     loan.requestDate,
+    loan.due_date,
     loan.frequency_id,
     loan.fee,
     loan.insurance,
@@ -784,24 +772,9 @@ const LoanAdd = () => {
     try {
       const payload = buildPayload();
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=UTF-8",
-          Authorization: token,
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await API.post(url, payload);
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        showSnackbar(
-          responseData?.error || "Error al guardar la solicitud.",
-          "error",
-        );
-        return;
-      }
+      const responseData = await response.data;
 
       showSnackbar("Solicitud guardada exitosamente.", "success");
 

@@ -16,14 +16,7 @@ import {
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/Add";
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-  "Content-Type": "application/json",
-};
+import API from "../../api";
 
 const emptyLine = {
   account_id: null,
@@ -57,18 +50,11 @@ export default function JournalForm({ open, onClose, onSaved }) {
 
   const fetchAccounts = async () => {
     try {
-      const res = await fetch(
-        `${API_BASE}/api/accounting/accounts?is_active=1`,
-        { headers },
-      );
+      const res = await API.get(`/api/accounting/accounts?is_active=1`);
 
-      const json = await res.json();
+      const json = await res.data;
 
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error cargando cuentas");
-      }
-
-      const movementAccounts = (json.data || []).filter(
+      const movementAccounts = (json || []).filter(
         (x) => Number(x.is_movement) === 1,
       );
 
@@ -201,9 +187,7 @@ export default function JournalForm({ open, onClose, onSaved }) {
         })),
       };
 
-      const res = await fetch(`${API_BASE}/api/accounting/journal`, {
-        method: "POST",
-        headers,
+      const res = await API.post(`/api/accounting/journal`, {
         body: JSON.stringify(payload),
       });
 

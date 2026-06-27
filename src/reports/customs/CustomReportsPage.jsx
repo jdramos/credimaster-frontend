@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-import CustomReportsList from "../../reports/customs/CustomReportsList";
-import CustomReportDesigner from "../../reports/customs/CustomReportDesigner";
-import CustomReportRunner from "../../reports/customs/CustomReportRunner";
+import CustomReportsList from "./CustomReportsList";
+import CustomReportDesigner from "./CustomReportDesigner";
+import CustomReportRunner from "./CustomReportRunner";
 
 const CustomReportsPage = () => {
   const [mode, setMode] = useState("list");

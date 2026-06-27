@@ -9,14 +9,7 @@ import AmortizationTable from "./AmortizationTable";
 import ConfirmDialog from "./ConfirmDialog";
 import { useLoanForm } from "./Loan/Hooks/useLoanForm";
 import "react-toastify/dist/ReactToastify.css";
-import axios from "axios";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const API_TOKEN = process.env.REACT_APP_API_TOKEN;
-const HEADERS = {
-  Authorization: API_TOKEN,
-  "Content-Type": "application/json",
-};
+import API from "../api";
 
 const LoanShow = () => {
   const navigate = useNavigate();
@@ -34,11 +27,12 @@ const LoanShow = () => {
 
   async function fetchAmortizationTable(loanData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/loans/amortization`, {
-        method: "POST",
-        headers: HEADERS,
-        body: JSON.stringify(loanData),
-      });
+      const response = await API.post(
+        `${API_BASE_URL}/api/loans/amortization`,
+        {
+          body: JSON.stringify(loanData),
+        },
+      );
 
       if (!response.ok)
         throw new Error("Error al obtener la tabla de amortización");
@@ -52,15 +46,9 @@ const LoanShow = () => {
 
   async function handleLoanSubmission() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/loans`, {
-        method: "POST",
-        headers: HEADERS,
+      const response = await API.post(`${API_BASE_URL}/api/loans`, {
         body: JSON.stringify(loan),
       });
-
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.errors || "Error al guardar el préstamo");
 
       setAlert({ type: "success", message: "Préstamo guardado exitosamente" });
       setTimeout(() => navigate("/loans"), 2000);

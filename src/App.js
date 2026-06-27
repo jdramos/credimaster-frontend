@@ -77,6 +77,7 @@ import IccReportPage from "./pages/reports/conami/IccReportPage";
 import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
 import IdleSessionHandler from "./components/IdleSessionHandler";
 import CustomReportsPage from "./pages/customReports/CustomReportsPage";
+import CustomReportDesigner from "./reports/customs/CustomReportDesigner";
 
 function PageContainer({ children }) {
   return (
@@ -144,7 +145,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/aprobadores/agregar"
             element={
@@ -153,7 +153,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/aprobadores"
             element={
@@ -162,7 +161,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/saldos"
             element={
@@ -171,7 +169,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/colectores"
             element={
@@ -180,7 +177,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/colectores/agregar"
             element={
@@ -189,7 +185,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/colectores/editar/:colectorId"
             element={
@@ -198,7 +193,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/conami/actividad-economica"
             element={
@@ -207,7 +201,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/conami/estado-civil"
             element={
@@ -216,7 +209,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/clientes"
             element={
@@ -225,7 +217,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/clientes/agregar"
             element={
@@ -234,7 +225,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/clientes/editar/:customerId"
             element={
@@ -243,7 +233,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/clientes/ver/:customerId"
             element={
@@ -252,7 +241,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/crear-saldos"
             element={
@@ -261,7 +249,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/creditos"
             element={
@@ -270,7 +257,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/creditos/archivos"
             element={
@@ -279,7 +265,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/creditos/agregar"
             element={
@@ -288,7 +273,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/creditos/politicas"
             element={
@@ -297,7 +281,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/departamentos"
             element={
@@ -306,7 +289,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/departamentos/agregar"
             element={
@@ -315,7 +297,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/departamentos/editar/:provinceId"
             element={
@@ -324,7 +305,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/generos"
             element={
@@ -333,7 +313,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/pagos"
             element={
@@ -342,7 +321,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/permisos"
             element={
@@ -351,7 +329,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/promotores"
             element={
@@ -360,7 +337,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/promotores/agregar"
             element={
@@ -369,7 +345,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/promotores/editar/:promoterId"
             element={
@@ -378,7 +353,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/conami/tablas"
             element={
@@ -387,7 +361,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/provisiones"
             element={
@@ -396,7 +369,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/riesgos"
             element={
@@ -405,7 +377,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/riesgos/agregar"
             element={
@@ -414,7 +385,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/riesgos/editar/:riskId"
             element={
@@ -423,7 +393,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/roles"
             element={
@@ -432,7 +401,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/sucursales"
             element={
@@ -441,7 +409,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/sucursales/agregar"
             element={
@@ -450,7 +417,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/sucursales/editar/:branchId"
             element={
@@ -459,7 +425,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/sinriesgos"
             element={
@@ -468,7 +433,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/usuarios"
             element={
@@ -477,7 +441,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/usuarios/agregar"
             element={
@@ -486,7 +449,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/bandeja-de-aprobacion"
             element={
@@ -495,7 +457,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route
             path="/reclamos"
             element={
@@ -504,11 +465,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-
           <Route path="/dashboard/saldos" element={<BalancesDashboard />} />
-
           {/* CONTABILIDAD */}
-
           <Route path="/contabilidad/cuentas" element={<AccountsList />} />
           <Route path="/contabilidad/libro-diario" element={<JournalList />} />
           <Route path="/contabilidad/mayor" element={<LedgerList />} />
@@ -529,7 +487,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
 
           <Route path="/custom-reports" element={<CustomReportsPage />} />
-
           <Route
             path="*"
             element={
