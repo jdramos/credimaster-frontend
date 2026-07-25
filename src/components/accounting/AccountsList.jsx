@@ -18,6 +18,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import PrintIcon from "@mui/icons-material/Print";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import API from "../../api";
 import BAC from "../../styles/bac";
 
@@ -67,6 +68,19 @@ export default function AccountsList() {
 
   const handleSearch = () => {
     fetchAccounts();
+  };
+
+  const approveAccount = async (account) => {
+    try {
+      await API.put(`${API_URL}/${account.id}/approve`);
+      showAlert(`Cuenta "${account.muc_code} - ${account.account_name}" aprobada`, "success");
+      fetchAccounts();
+    } catch (error) {
+      showAlert(
+        error.response?.data?.message || error.message || "Error al aprobar la cuenta",
+        "error",
+      );
+    }
   };
 
   const columns = useMemo(
@@ -136,13 +150,36 @@ export default function AccountsList() {
           ),
       },
       {
+        field: "approval_status",
+        headerName: "Autorización",
+        width: 150,
+        renderCell: (params) => {
+          const value = params.value || "APPROVED";
+          return value === "APPROVED" ? (
+            <Chip size="small" color="success" label="Aprobada" />
+          ) : (
+            <Tooltip title="Cap. I del MUC: cuenta fuera del catálogo oficial, no puede usarse en mapeos ni asientos hasta ser aprobada">
+              <Chip size="small" color="warning" label="Pendiente" />
+            </Tooltip>
+          );
+        },
+      },
+      {
         field: "actions",
         headerName: "Acciones",
-        width: 120,
+        width: 160,
         sortable: false,
         filterable: false,
-        renderCell: () => (
+        renderCell: (params) => (
           <Box sx={{ display: "flex", gap: 1 }}>
+            {params.row.approval_status === "PENDING" && (
+              <Tooltip title="Aprobar cuenta">
+                <IconButton size="small" color="success" onClick={() => approveAccount(params.row)}>
+                  <CheckCircleIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
             <Tooltip title="Consultar movimientos">
               <IconButton size="small">
                 <VisibilityIcon fontSize="small" />
@@ -158,6 +195,7 @@ export default function AccountsList() {
         ),
       },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

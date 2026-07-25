@@ -33,9 +33,7 @@ import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import "dayjs/locale/en-gb";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../../api";
 
 const isEmpty = (v) =>
   v === null || v === undefined || (typeof v === "string" && v.trim() === "");
@@ -207,10 +205,8 @@ const CustomerForm = ({ mode }) => {
   // Cargar cliente en edit/show
   useEffect(() => {
     if (mode === "edit" || mode === "show") {
-      fetch(`${url}/${customerId}`, {
-        headers: { Authorization: token },
-      })
-        .then((response) => response.json())
+      API.get(`/api/customers/${customerId}`)
+        .then((response) => response.data)
         .then((data) => {
           const c = data.customer || {};
           // normalizar fechas a dayjs cuando vengan como string
@@ -262,53 +258,47 @@ const CustomerForm = ({ mode }) => {
   const addCustomer = async () => {
     setAlertState((s) => ({ ...s, open: true }));
 
-    const requestOptions = {
-      method: mode === "edit" ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify({ customer, guarantees }),
-    };
+    const path =
+      mode === "edit" ? `/api/customers/${customerId}` : "/api/customers";
+    const body = { customer, guarantees };
 
     try {
-      const response = await fetch(
-        mode === "edit" ? `${url}/${customerId}` : url,
-        requestOptions,
-      );
-      const responseData = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const serverErrors = responseData?.errors;
-
-        if (Array.isArray(serverErrors) && serverErrors.length > 0) {
-          // muestra TODOS los errores del server (sin saltarte pares/impares)
-          serverErrors.forEach((e) => toast.error(e.msg || String(e)));
-          setAlert({
-            alertType: "error",
-            alertMessage: "Respuesta del servidor: hay errores de validación.",
-          });
-        } else {
-          toast.error(responseData?.message || "Error al guardar");
-          setAlert({
-            alertType: "error",
-            alertMessage: responseData?.message || "Error al guardar",
-          });
-        }
+      if (mode === "edit") {
+        await API.put(path, body);
       } else {
-        setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
-        });
-        setTimeout(() => navigate("/clientes"), 1500);
+        await API.post(path, body);
       }
-    } catch (error) {
-      console.log(error);
-      toast.error("Error al guardar (catch)");
+
       setAlert({
-        alertType: "error",
-        alertMessage: "Error al guardar el registro.",
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
       });
+      setTimeout(() => navigate("/clientes"), 1500);
+    } catch (error) {
+      const responseData = error.response?.data;
+      const serverErrors = responseData?.errors;
+
+      if (Array.isArray(serverErrors) && serverErrors.length > 0) {
+        // muestra TODOS los errores del server (sin saltarte pares/impares)
+        serverErrors.forEach((e) => toast.error(e.msg || String(e)));
+        setAlert({
+          alertType: "error",
+          alertMessage: "Respuesta del servidor: hay errores de validación.",
+        });
+      } else if (responseData) {
+        toast.error(responseData?.message || "Error al guardar");
+        setAlert({
+          alertType: "error",
+          alertMessage: responseData?.message || "Error al guardar",
+        });
+      } else {
+        console.log(error);
+        toast.error("Error al guardar (catch)");
+        setAlert({
+          alertType: "error",
+          alertMessage: "Error al guardar el registro.",
+        });
+      }
     } finally {
       setOpenDialog(false);
     }

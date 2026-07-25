@@ -6,14 +6,7 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/conami/tipo-documento";
-
-const token = process.env.REACT_APP_API_TOKEN;
-
-const headers = {
-  Authorization: token,
-};
+import API from "../api";
 
 const toNumberOrEmpty = (v) => {
   if (v === "" || v === null || v === undefined) return "";
@@ -50,13 +43,9 @@ export default function TipoDocumentoSelect({
       try {
         setFetchError("");
 
-        const response = await fetch(url, { headers });
+        const response = await API.get("/api/conami/tipo-documento");
 
-        if (!response.ok) {
-          throw new Error("Error obteniendo tipos de documento");
-        }
-
-        const json = await response.json();
+        const json = response.data;
 
         const rows = Array.isArray(json)
           ? json

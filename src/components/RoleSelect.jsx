@@ -6,28 +6,19 @@ import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { FormHelperText } from "@mui/material";
+import API from "../api";
 
 const RoleSelect = (props) => {
   const [roles, setRoles] = useState([]); // State to store fetched data
   const [error, setError] = useState(null); // State for error handling
-
-  const url = process.env.REACT_APP_API_BASE_URL + '/api/roles';
-  const token = process.env.REACT_APP_API_TOKEN;
-  const headers = { Authorization: token };
 
   useEffect(() => {
     const fetchRoles = async () => {
 
       try {
 
-        const response = await fetch(url, { headers });
-
-        if (!response.ok) {
-
-          throw new Error('Error al recuperar roles.');
-
-        }
-        const jsonData = await response.json();
+        const response = await API.get('/api/roles');
+        const jsonData = response.data;
         setRoles(jsonData); // Update the state with fetched data
 
       } catch (error) {

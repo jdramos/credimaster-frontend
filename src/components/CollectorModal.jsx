@@ -17,6 +17,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import BranchSelect from "./BranchSelect";
 import { MarginTwoTone } from "@mui/icons-material";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -28,9 +29,6 @@ const BAC = {
   muted: "#6B7280",
   white: "#FFFFFF",
 };
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/collectors";
-const token = process.env.REACT_APP_API_TOKEN;
 
 const initialForm = {
   id: null,
@@ -97,30 +95,19 @@ export default function CollectorModal({
       setSaving(true);
       setServerError("");
 
-      const method = isEdit ? "PUT" : "POST";
-      const endpoint = isEdit ? `${url}/${collector.id}` : url;
+      const endpoint = isEdit
+        ? `/api/collectors/${collector.id}`
+        : "/api/collectors";
+      const payload = {
+        name: collector.name,
+        telephone: collector.telephone,
+        branch_id: collector.branch_id,
+      };
 
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json; charset=UTF-8",
-          Authorization: token,
-        },
-        body: JSON.stringify({
-          name: collector.name,
-          telephone: collector.telephone,
-          branch_id: collector.branch_id,
-        }),
-      });
-
-      const responseData = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          responseData?.errors?.[0] ||
-            responseData?.message ||
-            "No fue posible guardar el registro.",
-        );
+      if (isEdit) {
+        await API.put(endpoint, payload);
+      } else {
+        await API.post(endpoint, payload);
       }
 
       onSaved?.({
@@ -133,7 +120,12 @@ export default function CollectorModal({
       onClose();
     } catch (error) {
       console.error(error);
-      setServerError(error.message || "Ocurrió un error al guardar.");
+      const responseData = error.response?.data;
+      setServerError(
+        responseData?.errors?.[0] ||
+          responseData?.message ||
+          "No fue posible guardar el registro.",
+      );
     } finally {
       setSaving(false);
     }

@@ -56,9 +56,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const success = await login(username.trim(), password);
-      if (success) {
-        navigate("/");
+      const result = await login(username.trim(), password);
+      if (result) {
+        navigate(result.type === "SUPERADMIN" ? "/superadmin" : "/");
       } else {
         setError(
           "Ingreso fallido. Verifique sus credenciales e intente nuevamente.",

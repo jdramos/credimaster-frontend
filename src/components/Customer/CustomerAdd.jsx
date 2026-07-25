@@ -13,9 +13,7 @@ import dayjs from "dayjs";
 import Typography from "@mui/material/Typography";
 import CustomerDocuments from "./CustomerDocuments";
 import CustomerChecklist from "./CustomerCheckList";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../../api";
 
 const TabPanel = ({ children, value, index }) => (
   <div role="tabpanel" style={{ display: value === index ? "block" : "none" }}>
@@ -192,8 +190,8 @@ const CustomerAdd = () => {
   useEffect(() => {
     if (mode === "edit" || mode === "show") {
       setLoading(true);
-      fetch(`${url}/${customerId}`, { headers: { Authorization: token } })
-        .then((r) => r.json())
+      API.get(`/api/customers/${customerId}`)
+        .then((r) => r.data)
         .then((data) => {
           const payload = data?.data ?? data ?? {};
           const c = payload.customer ?? payload ?? {};
@@ -253,26 +251,28 @@ const CustomerAdd = () => {
       Boolean(isEmployee),
     );
 
-    const requestOptions = {
-      method: mode === "edit" ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify({
-        customer: payloadCustomer,
-        guarantees: cleanedGuarantees,
-      }),
+    const path =
+      mode === "edit" ? `/api/customers/${customerId}` : "/api/customers";
+    const body = {
+      customer: payloadCustomer,
+      guarantees: cleanedGuarantees,
     };
 
     try {
-      const response = await fetch(
-        mode === "edit" ? `${url}/${customerId}` : url,
-        requestOptions,
-      );
-      const result = await response.json().catch(() => ({}));
+      if (mode === "edit") {
+        await API.put(path, body);
+      } else {
+        await API.post(path, body);
+      }
 
-      if (!response.ok) {
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+      setTimeout(() => navigate("/clientes"), 800);
+    } catch (error) {
+      const result = error.response?.data;
+      if (result) {
         applyServerErrorsToForm(result?.errors, setErrors);
         setAlert({
           alertType: "error",
@@ -280,17 +280,11 @@ const CustomerAdd = () => {
         });
       } else {
         setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
+          alertType: "error",
+          alertMessage: "Error de red: " + error.message,
         });
-        setTimeout(() => navigate("/clientes"), 800);
+        toast.error("Error de red");
       }
-    } catch (error) {
-      setAlert({
-        alertType: "error",
-        alertMessage: "Error de red: " + error.message,
-      });
-      toast.error("Error de red");
     } finally {
       setOpenDialog(false);
       setAlertState({ open: false });

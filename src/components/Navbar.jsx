@@ -9,14 +9,29 @@ import {
   Menu,
   MenuItem,
   Divider,
-  Badge
+  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  InputAdornment,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNoneOutlined";
 
 import { UserContext } from "../contexts/UserContext";
+import API from "../api";
+
+const emptyPasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
 function Navbar({ toggleSidebar, handleLogout, notificationsCount = 0 }) {
 
@@ -24,6 +39,13 @@ function Navbar({ toggleSidebar, handleLogout, notificationsCount = 0 }) {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState(emptyPasswordForm);
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   const initials = useMemo(() => {
     const s = String(fullName || "").trim();
@@ -45,6 +67,66 @@ function Navbar({ toggleSidebar, handleLogout, notificationsCount = 0 }) {
   const handleLogoutClick = () => {
     handleLogout();
     handleMenuClose();
+  };
+
+  const handleOpenPasswordDialog = () => {
+    setPasswordForm(emptyPasswordForm);
+    setPasswordError("");
+    setShowPasswords(false);
+    setPasswordDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleClosePasswordDialog = () => {
+    if (savingPassword) return;
+    setPasswordDialogOpen(false);
+  };
+
+  const handlePasswordFieldChange = (field) => (e) => {
+    setPasswordForm((f) => ({ ...f, [field]: e.target.value }));
+    setPasswordError("");
+  };
+
+  const handleSubmitPasswordChange = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword) {
+      setPasswordError("Ingrese su contraseña actual.");
+      return;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("La confirmación no coincide con la nueva contraseña.");
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError("La nueva contraseña debe ser diferente a la actual.");
+      return;
+    }
+
+    try {
+      setSavingPassword(true);
+      setPasswordError("");
+
+      await API.put(`/api/users/${user}/reset-password`, {
+        currentPassword,
+        newPassword,
+      });
+
+      setPasswordDialogOpen(false);
+      setPasswordSuccess(true);
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.message ||
+          err.response?.data?.errors ||
+          "No se pudo actualizar la contraseña.",
+      );
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   return (
@@ -130,6 +212,16 @@ function Navbar({ toggleSidebar, handleLogout, notificationsCount = 0 }) {
 
                 <Divider />
 
+                <MenuItem onClick={handleOpenPasswordDialog}>
+                  <LockOutlinedIcon
+                    fontSize="small"
+                    style={{ marginRight: 10 }}
+                  />
+                  Cambiar contraseña
+                </MenuItem>
+
+                <Divider />
+
                 <MenuItem
                   onClick={handleLogoutClick}
                   className="bac-menu-item-danger"
@@ -148,6 +240,79 @@ function Navbar({ toggleSidebar, handleLogout, notificationsCount = 0 }) {
         </Toolbar>
 
       </AppBar>
+
+      <Dialog open={passwordDialogOpen} onClose={handleClosePasswordDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>Cambiar contraseña</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Contraseña actual"
+              type={showPasswords ? "text" : "password"}
+              value={passwordForm.currentPassword}
+              onChange={handlePasswordFieldChange("currentPassword")}
+              autoFocus
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Nueva contraseña"
+              type={showPasswords ? "text" : "password"}
+              value={passwordForm.newPassword}
+              onChange={handlePasswordFieldChange("newPassword")}
+              helperText="Mínimo 8 caracteres"
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Confirmar nueva contraseña"
+              type={showPasswords ? "text" : "password"}
+              value={passwordForm.confirmPassword}
+              onChange={handlePasswordFieldChange("confirmPassword")}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => setShowPasswords((v) => !v)}
+                      edge="end"
+                    >
+                      {showPasswords ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {passwordError && <Alert severity="error">{passwordError}</Alert>}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePasswordDialog} disabled={savingPassword} sx={{ textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmitPasswordChange}
+            disabled={savingPassword}
+            sx={{ textTransform: "none" }}
+          >
+            {savingPassword ? "Guardando..." : "Guardar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={passwordSuccess}
+        autoHideDuration={4000}
+        onClose={() => setPasswordSuccess(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert severity="success" onClose={() => setPasswordSuccess(false)}>
+          Contraseña actualizada correctamente.
+        </Alert>
+      </Snackbar>
 
     </Box>
   );

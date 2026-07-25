@@ -42,6 +42,15 @@ const money = (value) =>
     maximumFractionDigits: 2,
   });
 
+const EMPTY_PAYMENT_APPLICATION = {
+  interest: 0,
+  defaulted_interest: 0,
+  insurance: 0,
+  fee: 0,
+  other_charges: 0,
+  principal: 0,
+};
+
 const PaymentForm = ({
   open,
   onClose,
@@ -201,54 +210,55 @@ const PaymentForm = ({
     }
   };
 
-  const simulatePaymentApplication = () => {
-    let remaining = paymentAmount;
-
-    const balances = {
-      interest: Number(selectedLoan?.interest_balance || 0),
-      defaulted_interest: Number(selectedLoan?.defaulted_interest || 0),
-      insurance: Number(selectedLoan?.insurance_balance || 0),
-      fee: Number(selectedLoan?.fee_balance || 0),
-      other_charges: Number(selectedLoan?.other_charges_balance || 0),
-      principal: Number(
-        selectedLoan?.capital_balance || selectedLoan?.current_balance || 0,
-      ),
-    };
-
-    const applied = {
-      interest: 0,
-      defaulted_interest: 0,
-      insurance: 0,
-      fee: 0,
-      other_charges: 0,
-      principal: 0,
-    };
-
-    const apply = (key) => {
-      if (remaining <= 0) return;
-
-      const amount = Math.min(remaining, balances[key]);
-      applied[key] = amount;
-      remaining -= amount;
-    };
-
-    apply("interest");
-    apply("defaulted_interest");
-    apply("insurance");
-    apply("fee");
-    apply("other_charges");
-    apply("principal");
-
-    return applied;
-  };
-
   const paymentAmount = useMemo(() => {
     return Number(form.payment_amount || 0);
   }, [form.payment_amount]);
 
-  const paymentApplication = useMemo(() => {
-    return simulatePaymentApplication();
-  }, [paymentAmount, selectedLoan]);
+  const [paymentApplication, setPaymentApplication] = useState(
+    EMPTY_PAYMENT_APPLICATION,
+  );
+  const [paymentApplicationLoading, setPaymentApplicationLoading] = useState(false);
+  const [paymentApplicationError, setPaymentApplicationError] = useState("");
+
+  // El preview se calcula en el backend (POST /api/payments/simulate), con
+  // la misma lógica que create() usará al guardar el pago realmente — así
+  // nunca queda desincronizado del cálculo real (interés → moratorio →
+  // cuota vigente de seguro/comisión/otros cargos, salvo cancelación total
+  // → capital).
+  useEffect(() => {
+    if (!form.loan_id || !form.payment_date || !paymentAmount || paymentAmount <= 0) {
+      setPaymentApplication(EMPTY_PAYMENT_APPLICATION);
+      setPaymentApplicationError("");
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        setPaymentApplicationLoading(true);
+        setPaymentApplicationError("");
+
+        const res = await API.post("/api/payments/simulate", {
+          params: {
+            loan_id: form.loan_id,
+            payment_date: form.payment_date,
+            payment_amount: paymentAmount,
+          },
+        });
+
+        setPaymentApplication(res.data?.applied || EMPTY_PAYMENT_APPLICATION);
+      } catch (err) {
+        setPaymentApplicationError(
+          err.response?.data?.error ||
+            "No se pudo calcular la aplicación del pago.",
+        );
+        setPaymentApplication(EMPTY_PAYMENT_APPLICATION);
+      } finally {
+        setPaymentApplicationLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [form.loan_id, form.payment_date, paymentAmount]);
 
   const approvedAmount = Number(
     selectedLoan?.approved_amount ||
@@ -601,7 +611,15 @@ const PaymentForm = ({
                         </Typography>
                       </Box>
 
-                      <Stack spacing={1.2} sx={{ p: 2 }}>
+                      <Stack
+                        spacing={1.2}
+                        sx={{ p: 2, opacity: paymentApplicationLoading ? 0.5 : 1 }}
+                      >
+                        {paymentApplicationError && (
+                          <Alert severity="error" sx={{ borderRadius: 2 }}>
+                            {paymentApplicationError}
+                          </Alert>
+                        )}
                         <PayLine
                           label="Intereses"
                           value={paymentApplication.interest}
@@ -689,8 +707,10 @@ const PaymentForm = ({
                         Orden de aplicación
                       </Typography>
                       <Typography variant="body2">
-                        Intereses → Moratorio → Seguro → Comisión → Otros cargos
-                        → Capital
+                        Intereses → Moratorio → Seguro, comisión y otros cargos
+                        (solo la cuota vigente) → Capital. El saldo completo
+                        de cargos solo se liquida si el pago cancela el
+                        crédito en su totalidad.
                       </Typography>
                     </Alert>
                   </Stack>
@@ -727,7 +747,7 @@ const PaymentForm = ({
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={loading || initialLoading}
+              disabled={loading || initialLoading || paymentApplicationLoading}
               startIcon={
                 loading ? (
                   <CircularProgress size={18} sx={{ color: "#fff" }} />

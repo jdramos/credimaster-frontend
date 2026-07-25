@@ -6,10 +6,7 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/countries";
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+import API from "../api";
 
 const toNumberOrEmpty = (v) => {
   if (v === "" || v === null || v === undefined) return "";
@@ -40,13 +37,9 @@ export default function CountrySelect({
       try {
         setFetchError("");
 
-        const response = await fetch(url, { headers });
+        const response = await API.get("/api/countries");
 
-        if (!response.ok) {
-          throw new Error("Failed to retrieve data.");
-        }
-
-        const jsonData = await response.json().catch(() => []);
+        const jsonData = response.data;
         setCountries(Array.isArray(jsonData) ? jsonData : []);
       } catch (e) {
         console.error(e);

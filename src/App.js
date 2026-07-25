@@ -51,10 +51,12 @@ import RolePermissionManager from "./components/RolePermissionManager";
 import PermissionList from "./components/PermissionList";
 import PaymentList from "./components/PaymentList";
 import GenerateBalances from "./components/GenerateBalances";
+import BusinessDayPanel from "./components/BusinessDayPanel";
 import CreditPolicyManager from "./components/CreditPolicyManager";
 import BalanceSummary from "./components/Balances";
 import ProvissionViewer from "./components/ProvissionViewer";
 import SinRiesgoReport from "./components/Sinriesgo";
+import WrittenOffLoansList from "./components/WrittenOffLoansList";
 import EconomicActivitiesPage from "./pages/EconomicActivitiesPage";
 import GenrePage from "./pages/GenrePage";
 import MaritalStatusPage from "./pages/MaritalStatusPage";
@@ -72,12 +74,41 @@ import LedgerList from "./components/accounting/LedgerList";
 import TrialBalance from "./components/accounting/TrialBalance";
 import IncomeStatement from "./components/accounting/IncomeStatement";
 import BalanceSheet from "./components/accounting/BalanceSheet";
+import EquityChanges from "./components/accounting/EquityChanges";
+import CashFlowStatement from "./components/accounting/CashFlowStatement";
+import FinancialStatementNotes from "./components/accounting/FinancialStatementNotes";
+import YearEndClosing from "./components/accounting/YearEndClosing";
+import FixedAssetsList from "./components/accounting/FixedAssetsList";
+import FixedAssetDepreciation from "./components/accounting/FixedAssetDepreciation";
+import BankAccountsList from "./components/banks/BankAccountsList";
+import BankMovementsList from "./components/banks/BankMovementsList";
+import BankReconciliation from "./components/banks/BankReconciliation";
+import CashRegistersList from "./components/caja/CashRegistersList";
+import CashMovementsList from "./components/caja/CashMovementsList";
+import CollectorArqueosList from "./components/caja/CollectorArqueosList";
+import EmployeesList from "./components/hr/EmployeesList";
+import HrConfigPanel from "./components/hr/HrConfigPanel";
+import EmployeeLoansList from "./components/hr/EmployeeLoansList";
+import PayrollRunsList from "./components/hr/PayrollRunsList";
+import MyVacations from "./components/hr/MyVacations";
+import VacationApprovalInbox from "./components/hr/VacationApprovalInbox";
+import IncidentsList from "./components/hr/IncidentsList";
+import LiquidationsList from "./components/hr/LiquidationsList";
+import HrReports from "./components/hr/HrReports";
 import PostingRuns from "./components/accounting/PostingRuns";
+import AccountMappingsManager from "./components/accounting/AccountMappingsManager";
+import PendingItemsAging from "./components/accounting/PendingItemsAging";
 import IccReportPage from "./pages/reports/conami/IccReportPage";
 import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
 import IdleSessionHandler from "./components/IdleSessionHandler";
 import CustomReportsPage from "./pages/customReports/CustomReportsPage";
-import CustomReportDesigner from "./reports/customs/CustomReportDesigner";
+import CustomReportDesigner from "./reports/custom/CustomReportDesigner";
+import Studio from "./reports/studio/Studio";
+import AuditLog from "./components/AuditLog";
+import BranchCalendarManager from "./components/BranchCalendarManager";
+import SuperAdminLayout from "./components/SuperAdminLayout";
+import TenantsPage from "./pages/superadmin/TenantsPage";
+import TenantMigrationPanel from "./pages/superadmin/TenantMigrationPanel";
 
 function PageContainer({ children }) {
   return (
@@ -107,8 +138,8 @@ function PageContainer({ children }) {
   );
 }
 
-function AppRoutes({ themeMode, setThemeMode }) {
-  const { isAuthenticated, logout } = useAuth();
+function SuperAdminRoutes() {
+  const { isAuthenticated, isSuperAdmin, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -118,6 +149,43 @@ function AppRoutes({ themeMode, setThemeMode }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Una sesión de tenant normal no tiene permiso para este módulo — se
+  // manda a su propio dashboard en vez de dejarla ver una pantalla que de
+  // todas formas le devolvería 403 en cada llamada.
+  if (!isSuperAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <SuperAdminLayout onLogout={handleLogout}>
+      <Routes>
+        <Route path="/" element={<TenantsPage />} />
+        <Route path="/tenants/:id/migration" element={<TenantMigrationPanel />} />
+      </Routes>
+    </SuperAdminLayout>
+  );
+}
+
+function AppRoutes({ themeMode, setThemeMode }) {
+  const { isAuthenticated, isSuperAdmin, logout, tenant } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Una sesión de superadmin no tiene database_name — cualquier llamada
+  // tenant-scoped desde estas pantallas normales devolvería 403 de
+  // tenantDb. Se manda directo a su propio shell en vez de intentarlo.
+  if (isSuperAdmin) {
+    return <Navigate to="/superadmin" replace />;
   }
 
   return (
@@ -135,6 +203,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
         setThemeMode={setThemeMode}
         onLogout={handleLogout}
         appName="CrediMaster"
+        tenantName={tenant?.commercial_name || tenant?.legal_name}
       >
         <Routes>
           <Route
@@ -246,6 +315,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <GenerateBalances />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/cierre-del-dia"
+            element={
+              <PageContainer>
+                <BusinessDayPanel />
               </PageContainer>
             }
           />
@@ -434,6 +511,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             }
           />
           <Route
+            path="/cartera-saneada"
+            element={
+              <PageContainer>
+                <WrittenOffLoansList />
+              </PageContainer>
+            }
+          />
+          <Route
             path="/usuarios"
             element={
               <PageContainer>
@@ -482,11 +567,39 @@ function AppRoutes({ themeMode, setThemeMode }) {
             path="/contabilidad/balance-general"
             element={<BalanceSheet />}
           />
+          <Route path="/contabilidad/cambios-patrimonio" element={<EquityChanges />} />
+          <Route path="/contabilidad/flujo-efectivo" element={<CashFlowStatement />} />
+          <Route path="/contabilidad/notas-eeff" element={<FinancialStatementNotes />} />
+          <Route path="/contabilidad/cierre-ejercicio" element={<YearEndClosing />} />
+          <Route path="/contabilidad/activo-fijo" element={<FixedAssetsList />} />
+          <Route path="/contabilidad/activo-fijo/depreciacion" element={<FixedAssetDepreciation />} />
+          <Route path="/bancos/cuentas" element={<BankAccountsList />} />
+          <Route path="/bancos/movimientos" element={<BankMovementsList />} />
+          <Route path="/bancos/conciliacion" element={<BankReconciliation />} />
+          <Route path="/caja/cajas" element={<CashRegistersList />} />
+          <Route path="/caja/movimientos" element={<CashMovementsList />} />
+          <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
+          <Route path="/rrhh/empleados" element={<EmployeesList />} />
+          <Route path="/rrhh/planillas" element={<PayrollRunsList />} />
+          <Route path="/rrhh/prestamos" element={<EmployeeLoansList />} />
+          <Route path="/rrhh/configuracion" element={<HrConfigPanel />} />
+          <Route path="/rrhh/mis-vacaciones" element={<MyVacations />} />
+          <Route path="/rrhh/aprobar-vacaciones" element={<VacationApprovalInbox />} />
+          <Route path="/rrhh/incidencias" element={<IncidentsList />} />
+          <Route path="/rrhh/liquidaciones" element={<LiquidationsList />} />
+          <Route path="/rrhh/reportes" element={<HrReports />} />
           <Route path="/contabilidad/contabilizar" element={<PostingRuns />} />
+          <Route path="/contabilidad/mapeos" element={<AccountMappingsManager />} />
+          <Route path="/contabilidad/partidas-pendientes" element={<PendingItemsAging />} />
           <Route path="/conami/icc" element={<IccGenerator />} />
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
 
           <Route path="/custom-reports" element={<CustomReportsPage />} />
+
+          <Route path="/reports/studio" element={<Studio />} />
+          <Route path="/auditoria" element={<PageContainer><AuditLog /></PageContainer>} />
+          <Route path="/configuracion/calendarios" element={<PageContainer><BranchCalendarManager /></PageContainer>} />
+
           <Route
             path="*"
             element={
@@ -596,9 +709,17 @@ function App() {
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <AuthProvider>
-          <Router>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route
+                path="/superadmin/*"
+                element={
+                  <ProtectedRoute>
+                    <SuperAdminRoutes />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/*"
                 element={

@@ -21,6 +21,13 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import AssessmentIcon from "@mui/icons-material/Assessment";
@@ -33,9 +40,27 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import * as FaIcons from "react-icons/fa";
 import { UserContext } from "../contexts/UserContext";
+import { useAuth } from "../contexts/AuthContext";
+import API from "../api";
+
+// Secciones del menú respaldadas por un módulo opcional habilitable por
+// tenant desde superadmin (ver api/superadmin/moduleRegistry.js — la
+// "key" de cada módulo ahí DEBE coincidir con el valor aquí). Una sección
+// sin entrada en este mapa (main, management, accounting, etc.) es parte
+// del producto base y nunca se oculta.
+const SECTION_MODULE_KEY = {
+  banks: "banks",
+  caja: "caja",
+  rrhh: "hr",
+};
+
+const emptyPasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
 const DRAWER_OPEN = 260;
 const DRAWER_CLOSED = 72;
@@ -48,6 +73,9 @@ const sectionLabels = {
   queries: "Consultas",
   conami_tables: "Tablas CONAMI",
   accounting: "CONTABILIDAD",
+  banks: "BANCOS",
+  caja: "CAJA",
+  rrhh: "RECURSOS HUMANOS",
   reports: "Reportes",
 };
 
@@ -69,6 +97,7 @@ const menuItems = {
     },
     { label: "Pagos", iconName: "FaCashRegister", to: "/pagos" },
     { label: "Crear saldos", iconName: "FaCalculator", to: "/crear-saldos" },
+    { label: "Cierre del día", iconName: "FaLock", to: "/cierre-del-dia" },
     {
       label: "Políticas crédito",
       iconName: "FaFileSignature",
@@ -82,6 +111,7 @@ const menuItems = {
     { label: "Reclamos", iconName: "FaExclamationCircle", to: "/reclamos" },
   ],
   users: [
+    { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
     { label: "Usuarios", iconName: "FaUser", to: "/usuarios" },
     { label: "Roles", iconName: "FaUserShield", to: "/roles" },
     { label: "Permisos", iconName: "FaKey", to: "/permisos" },
@@ -91,6 +121,7 @@ const menuItems = {
     { label: "Saldos", iconName: "FaChartBar", to: "/saldos" },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
+    { label: "Cartera saneada", iconName: "FaFileInvoiceDollar", to: "/cartera-saneada" },
   ],
   conami_tables: [
     {
@@ -131,13 +162,82 @@ const menuItems = {
       to: "/contabilidad/balance-general",
     },
     {
+      label: "Cambios patrimonio",
+      iconName: "FaChartLine",
+      to: "/contabilidad/cambios-patrimonio",
+    },
+    {
+      label: "Flujo de efectivo",
+      iconName: "FaWater",
+      to: "/contabilidad/flujo-efectivo",
+    },
+    {
+      label: "Notas a los EEFF",
+      iconName: "FaStickyNote",
+      to: "/contabilidad/notas-eeff",
+    },
+    {
+      label: "Cierre de ejercicio",
+      iconName: "FaCalendarCheck",
+      to: "/contabilidad/cierre-ejercicio",
+    },
+    {
+      label: "Activo Fijo",
+      iconName: "FaWarehouse",
+      to: "/contabilidad/activo-fijo",
+    },
+    {
+      label: "Depreciación de Activos",
+      iconName: "FaChartArea",
+      to: "/contabilidad/activo-fijo/depreciacion",
+    },
+    {
       label: "Contabilizar",
       iconName: "FaMagic",
       to: "/contabilidad/contabilizar",
     },
+    {
+      label: "Cuentas por operación",
+      iconName: "FaSitemap",
+      to: "/contabilidad/mapeos",
+    },
+    {
+      label: "Partidas pendientes",
+      iconName: "FaHourglassHalf",
+      to: "/contabilidad/partidas-pendientes",
+    },
+  ],
+
+  banks: [
+    { label: "Cuentas Bancarias", iconName: "FaUniversity", to: "/bancos/cuentas" },
+    { label: "Movimientos", iconName: "FaExchangeAlt", to: "/bancos/movimientos" },
+    { label: "Conciliación Bancaria", iconName: "FaBalanceScaleRight", to: "/bancos/conciliacion" },
+  ],
+
+  caja: [
+    { label: "Cajas", iconName: "FaCashRegister", to: "/caja/cajas" },
+    { label: "Movimientos", iconName: "FaExchangeAlt", to: "/caja/movimientos" },
+    { label: "Arqueo de Cobradores", iconName: "FaClipboardCheck", to: "/caja/arqueos" },
+  ],
+
+  rrhh: [
+    { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados" },
+    { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas" },
+    { label: "Préstamos de Empleados", iconName: "FaHandHoldingUsd", to: "/rrhh/prestamos" },
+    { label: "Configuración de RRHH", iconName: "FaCogs", to: "/rrhh/configuracion" },
+    { label: "Incidencias", iconName: "FaCalendarTimes", to: "/rrhh/incidencias" },
+    { label: "Liquidaciones", iconName: "FaUserSlash", to: "/rrhh/liquidaciones" },
+    { label: "Reportes RRHH", iconName: "FaChartBar", to: "/rrhh/reportes" },
+    { label: "Mis Vacaciones", iconName: "FaUmbrellaBeach", to: "/rrhh/mis-vacaciones" },
+    { label: "Aprobar Vacaciones", iconName: "FaClipboardCheck", to: "/rrhh/aprobar-vacaciones" },
   ],
 
   reports: [
+    {
+      label: "Auditoría",
+      iconName: "FaHistory",
+      to: "/auditoria",
+    },
     {
       label: "ICC - CONAMI",
       iconName: "FaFileInvoiceDollar",
@@ -149,9 +249,9 @@ const menuItems = {
       to: "/conami/icc",
     },
     {
-      label: "Reportes personalizados",
-      to: "/custom-reports",
-      iconName: "Assessment",
+      label: "CrediMaster Studio",
+      to: "/reports/studio",
+      iconName: "",
     },
   ],
 };
@@ -164,6 +264,7 @@ function MenuIcon({ iconName, size = 17 }) {
 export default function AppLayoutMenu({
   children,
   appName = "CrediMaster",
+  tenantName = "",
   themeMode = "light",
   setThemeMode = () => {},
   onLogout,
@@ -171,6 +272,17 @@ export default function AppLayoutMenu({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
+  const { tenant } = useAuth();
+
+  // enabled_modules null/undefined = todos habilitados (tenant sin
+  // restricción explícita, o token viejo emitido antes de esta función).
+  const enabledModules = tenant?.enabled_modules ?? null;
+  const isSectionEnabled = (section) => {
+    const moduleKey = SECTION_MODULE_KEY[section];
+    if (!moduleKey) return true;
+    if (enabledModules === null) return true;
+    return Array.isArray(enabledModules) && enabledModules.includes(moduleKey);
+  };
 
   const userCtx = useContext(UserContext) || {};
 
@@ -208,9 +320,79 @@ export default function AppLayoutMenu({
     queries: false,
     conami_tables: false,
     accounting: false,
+    banks: false,
+    caja: false,
+    rrhh: false,
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState(emptyPasswordForm);
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  const handleOpenPasswordDialog = () => {
+    setPasswordForm(emptyPasswordForm);
+    setPasswordError("");
+    setShowPasswords(false);
+    setPasswordDialogOpen(true);
+    setUserMenuAnchor(null);
+  };
+
+  const handleClosePasswordDialog = () => {
+    if (savingPassword) return;
+    setPasswordDialogOpen(false);
+  };
+
+  const handlePasswordFieldChange = (field) => (e) => {
+    setPasswordForm((f) => ({ ...f, [field]: e.target.value }));
+    setPasswordError("");
+  };
+
+  const handleSubmitPasswordChange = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword) {
+      setPasswordError("Ingrese su contraseña actual.");
+      return;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("La confirmación no coincide con la nueva contraseña.");
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError("La nueva contraseña debe ser diferente a la actual.");
+      return;
+    }
+
+    try {
+      setSavingPassword(true);
+      setPasswordError("");
+
+      await API.put(`/api/users/${user}/reset-password`, {
+        currentPassword,
+        newPassword,
+      });
+
+      setPasswordDialogOpen(false);
+      setPasswordSuccess(true);
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.message ||
+          err.response?.data?.errors ||
+          "No se pudo actualizar la contraseña.",
+      );
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   const isCompact = !isMobile && !drawerOpen;
 
@@ -224,13 +406,19 @@ export default function AppLayoutMenu({
     }));
   }, [favorites]);
 
-  const fullMenu = useMemo(
-    () => ({
+  const fullMenu = useMemo(() => {
+    const base = {
       ...(favoritesSection.length > 0 ? { favorites: favoritesSection } : {}),
       ...menuItems,
-    }),
-    [favoritesSection],
-  );
+    };
+
+    const result = {};
+    Object.entries(base).forEach(([section, items]) => {
+      if (isSectionEnabled(section)) result[section] = items;
+    });
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favoritesSection, enabledModules]);
 
   const filteredMenu = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -326,7 +514,7 @@ export default function AppLayoutMenu({
                 {appName}
               </Typography>
               <Typography fontSize={11} color="rgba(255,255,255,.7)" noWrap>
-                Gestión crediticia
+                {tenantName ? `Licencia para: ${tenantName}` : "Gestión crediticia"}
               </Typography>
             </Box>
           )}
@@ -730,6 +918,11 @@ export default function AppLayoutMenu({
           Mi perfil
         </MenuItem>
 
+        <MenuItem onClick={handleOpenPasswordDialog}>
+          <LockOutlinedIcon sx={{ mr: 1.2, fontSize: 18 }} />
+          Cambiar contraseña
+        </MenuItem>
+
         <MenuItem
           onClick={() => {
             setUserMenuAnchor(null);
@@ -753,6 +946,79 @@ export default function AppLayoutMenu({
           Cerrar sesión
         </MenuItem>
       </Menu>
+
+      <Dialog open={passwordDialogOpen} onClose={handleClosePasswordDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>Cambiar contraseña</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Contraseña actual"
+              type={showPasswords ? "text" : "password"}
+              value={passwordForm.currentPassword}
+              onChange={handlePasswordFieldChange("currentPassword")}
+              autoFocus
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Nueva contraseña"
+              type={showPasswords ? "text" : "password"}
+              value={passwordForm.newPassword}
+              onChange={handlePasswordFieldChange("newPassword")}
+              helperText="Mínimo 8 caracteres"
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Confirmar nueva contraseña"
+              type={showPasswords ? "text" : "password"}
+              value={passwordForm.confirmPassword}
+              onChange={handlePasswordFieldChange("confirmPassword")}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => setShowPasswords((v) => !v)}
+                      edge="end"
+                    >
+                      {showPasswords ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {passwordError && <Alert severity="error">{passwordError}</Alert>}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePasswordDialog} disabled={savingPassword} sx={{ textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmitPasswordChange}
+            disabled={savingPassword}
+            sx={{ textTransform: "none" }}
+          >
+            {savingPassword ? "Guardando..." : "Guardar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={passwordSuccess}
+        autoHideDuration={4000}
+        onClose={() => setPasswordSuccess(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert severity="success" onClose={() => setPasswordSuccess(false)}>
+          Contraseña actualizada correctamente.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

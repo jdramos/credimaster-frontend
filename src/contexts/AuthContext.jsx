@@ -24,6 +24,15 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
+  const [sessionType, setSessionType] = useState(() => {
+    try {
+      const session = JSON.parse(localStorage.getItem("session") || "null");
+      return session?.type || "TENANT";
+    } catch {
+      return "TENANT";
+    }
+  });
+
   const [authUser, setAuthUser] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -85,6 +94,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       const {
+        type,
         token,
         permissions,
         role_id,
@@ -102,6 +112,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const session = {
+        type: type || "TENANT",
         token,
         permissions: permissions || [],
         role_id,
@@ -126,11 +137,12 @@ export const AuthProvider = ({ children }) => {
 
       setToken(token);
       setTenant(tenant || null);
+      setSessionType(session.type);
       setAuthUser(userToStore);
       hydrateUserContext(session);
       setIsAuthenticated(true);
 
-      return true;
+      return { ok: true, type: session.type };
     } catch (err) {
       console.error(err);
 
@@ -148,6 +160,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setIsAuthenticated(false);
     setTenant(null);
+    setSessionType("TENANT");
     setAuthUser(null);
 
     setPermissions([]);
@@ -168,6 +181,8 @@ export const AuthProvider = ({ children }) => {
           isAuthenticated,
           token,
           tenant,
+          sessionType,
+          isSuperAdmin: sessionType === "SUPERADMIN",
           user: authUser,
           login,
           logout,

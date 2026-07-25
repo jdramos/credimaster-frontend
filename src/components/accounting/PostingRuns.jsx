@@ -264,6 +264,8 @@ export default function PostingRuns() {
 
             <MenuItem value="LOAN_DISBURSEMENT">Desembolsos</MenuItem>
 
+            <MenuItem value="INTEREST_ACCRUAL">Devengo de intereses</MenuItem>
+
             <MenuItem value="PROVISION">Provisiones</MenuItem>
 
             <MenuItem value="DEFAULT_INTEREST">Mora</MenuItem>

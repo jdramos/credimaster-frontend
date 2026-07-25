@@ -29,7 +29,7 @@ export const printPaymentReceiptReport = ({
     user,
     title: "Recibo de Pago",
     subtitle: `Recibo No. ${payment?.id || "—"} | Fecha: ${receiptDate}`,
-    orientation: "portrait",
+    orientation: "landscape",
 
     sections: [
       {

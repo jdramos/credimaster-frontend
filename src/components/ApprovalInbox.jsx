@@ -119,6 +119,20 @@ function getApprovalProgressChip(row, currentUserId) {
   return <Chip size="small" color="warning" label="Pendiente" />;
 }
 
+const getCommitteeChip = (row) => {
+  // La distinción comité/aprobador único solo aplica a la solicitud
+  // original de crédito (loans_data.requires_committee) — las
+  // modificaciones (prórroga/reestructuración/refinanciamiento) usan su
+  // propio flujo de niveles secuenciales, no este mecanismo.
+  if (row.item_type !== "LOAN") return null;
+
+  return Boolean(row.requires_committee) ? (
+    <Chip size="small" color="secondary" variant="outlined" label="Comité de Crédito" />
+  ) : (
+    <Chip size="small" variant="outlined" label="Aprobador único" />
+  );
+};
+
 const SummaryCard = ({ title, value, icon, color = "#0057B8" }) => {
   return (
     <Card
@@ -549,6 +563,9 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                     Subtipo
                   </TableCell>
                   <TableCell sx={{ color: "#fff", fontWeight: 700 }}>
+                    Comité
+                  </TableCell>
+                  <TableCell sx={{ color: "#fff", fontWeight: 700 }}>
                     Crédito
                   </TableCell>
                   <TableCell sx={{ color: "#fff", fontWeight: 700 }}>
@@ -593,7 +610,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
               <TableBody>
                 {filteredRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center">
+                    <TableCell colSpan={11} align="center">
                       <Box sx={{ py: 4 }}>
                         <Typography variant="body2" color="text.secondary">
                           No hay elementos pendientes en la bandeja
@@ -606,6 +623,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                     <TableRow key={`${row.item_type}-${row.approval_id}`} hover>
                       <TableCell>{getTypeChip(row)}</TableCell>
                       <TableCell>{getSubtypeChip(row.item_subtype)}</TableCell>
+                      <TableCell>{getCommitteeChip(row)}</TableCell>
                       <TableCell>{row.credit_code}</TableCell>
                       <TableCell>{row.customer_name}</TableCell>
                       <TableCell>{row.branch_name}</TableCell>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -9,8 +9,10 @@ import {
   CircularProgress,
   Divider,
   Grid,
+  IconButton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
@@ -18,8 +20,20 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import EditIcon from "@mui/icons-material/Edit";
 import { DataGrid } from "@mui/x-data-grid";
 import API from "../../../../api";
+
+const MONTH_LABELS = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+const monthLabel = (reportMonth) => {
+  if (!reportMonth) return "";
+  const [year, month] = reportMonth.split("-");
+  return `${MONTH_LABELS[Number(month) - 1] || month} ${year}`;
+};
 
 export default function IccGenerator() {
   const [form, setForm] = useState({
@@ -31,6 +45,51 @@ export default function IccGenerator() {
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [validation, setValidation] = useState(null);
   const [error, setError] = useState("");
+
+  const [reminder, setReminder] = useState(null);
+  const [loadingReminder, setLoadingReminder] = useState(true);
+  const [editingDeadline, setEditingDeadline] = useState(false);
+  const [deadlineDraft, setDeadlineDraft] = useState("");
+  const [savingDeadline, setSavingDeadline] = useState(false);
+
+  const loadReminder = async () => {
+    try {
+      setLoadingReminder(true);
+      const res = await API.get("/api/reports/conami/icc/reminder");
+      setReminder(res.data?.data || null);
+    } catch (err) {
+      setReminder(null);
+    } finally {
+      setLoadingReminder(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReminder();
+  }, []);
+
+  const handleEditDeadline = () => {
+    setDeadlineDraft(String(reminder?.dia_limite ?? 10));
+    setEditingDeadline(true);
+  };
+
+  const handleSaveDeadline = async () => {
+    try {
+      setSavingDeadline(true);
+      await API.put("/api/reports/conami/icc/reminder", {
+        dia_limite: Number(deadlineDraft),
+      });
+      setEditingDeadline(false);
+      await loadReminder();
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "No se pudo actualizar el día límite del recordatorio.",
+      );
+    } finally {
+      setSavingDeadline(false);
+    }
+  };
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -203,6 +262,50 @@ export default function IccGenerator() {
         </Box>
 
         <CardContent>
+          {!loadingReminder && reminder && (
+            <Alert
+              severity={
+                reminder.generated ? "success" : reminder.vencido ? "error" : "warning"
+              }
+              sx={{ mb: 2 }}
+              action={
+                editingDeadline ? (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <TextField
+                      size="small"
+                      type="number"
+                      value={deadlineDraft}
+                      onChange={(e) => setDeadlineDraft(e.target.value)}
+                      inputProps={{ min: 1, max: 28, style: { width: 50 } }}
+                    />
+                    <Button
+                      size="small"
+                      onClick={handleSaveDeadline}
+                      disabled={savingDeadline}
+                    >
+                      Guardar
+                    </Button>
+                    <Button size="small" onClick={() => setEditingDeadline(false)}>
+                      Cancelar
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Tooltip title="Cambiar día límite del mes">
+                    <IconButton size="small" onClick={handleEditDeadline}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )
+              }
+            >
+              {reminder.generated
+                ? `ICC de ${monthLabel(reminder.report_month)} ya generado.`
+                : reminder.vencido
+                  ? `Venció el plazo para enviar el ICC de ${monthLabel(reminder.report_month)} (límite: día ${reminder.dia_limite}, ${reminder.fecha_limite}). Aún no se ha generado.`
+                  : `Falta generar el ICC de ${monthLabel(reminder.report_month)} — vence en ${reminder.dias_restantes} día(s) (límite: día ${reminder.dia_limite}, ${reminder.fecha_limite}).`}
+            </Alert>
+          )}
+
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={3}>
               <TextField

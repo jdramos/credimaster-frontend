@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Chip,
+  MenuItem,
   Paper,
   Snackbar,
   TextField,
@@ -11,7 +12,10 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
+import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
+import { printAccountingReport } from "./printAccountingReport";
+import ReportSignaturesDialog from "./ReportSignaturesDialog";
 
 export default function TrialBalance() {
   const [rows, setRows] = useState([]);
@@ -21,6 +25,7 @@ export default function TrialBalance() {
   const [filters, setFilters] = useState({
     from_date: "",
     to_date: "",
+    scope: "ALL",
   });
 
   const [alert, setAlert] = useState({
@@ -37,9 +42,9 @@ export default function TrialBalance() {
     try {
       setLoading(true);
 
-      const params = {};
-      if (filters.from_date) params.from_date = filters.from_date;
-      if (filters.to_date) params.to_date = filters.to_date;
+      const params = { scope: filters.scope };
+      if (filters.from_date) params.start_date = filters.from_date;
+      if (filters.to_date) params.end_date = filters.to_date;
 
       const res = await API.get("/api/accounting/trial-balance", { params });
 
@@ -57,7 +62,22 @@ export default function TrialBalance() {
         Array.isArray(data.rows) ? data.rows : Array.isArray(data) ? data : [],
       );
 
-      setSummary(data.summary || null);
+      // El backend expone los totales de control en json.totals (ya excluye
+      // encabezados y cuentas de orden/contingentes, ver ledgerController.js
+      // getTrialBalance) — no en data.summary, que nunca existió en la
+      // respuesta real; sin esto, la UI siempre caía al cálculo local
+      // ingenuo (localSummary) que suma TODAS las filas, incluidas las de
+      // encabezado ya acumuladas, inflando el total varias veces.
+      setSummary(
+        json.totals
+          ? {
+              totalDebit: json.totals.debit,
+              totalCredit: json.totals.credit,
+              difference: json.totals.difference,
+              balanced: Math.abs(json.totals.difference) < 0.01,
+            }
+          : null,
+      );
     } catch (error) {
       showAlert(
         error.response?.data?.message ||
@@ -72,13 +92,20 @@ export default function TrialBalance() {
   };
 
   const localSummary = useMemo(() => {
+    // Respaldo por si el backend no envía "totals" — replica su misma
+    // lógica: solo cuentas de movimiento (los encabezados ya traen la suma
+    // acumulada de sus hijas, sumarlos de nuevo duplicaría el monto) y
+    // excluyendo cuentas de orden/contingentes (fuera de balance).
+    const isRealMovement = (row) =>
+      row.is_movement && !["ORDEN", "CONTINGENTE"].includes(row.account_type);
+
     const totalDebit = rows.reduce(
-      (sum, row) => sum + Number(row.total_debit || row.debit || 0),
+      (sum, row) => (isRealMovement(row) ? sum + Number(row.total_debit || row.debit || 0) : sum),
       0,
     );
 
     const totalCredit = rows.reduce(
-      (sum, row) => sum + Number(row.total_credit || row.credit || 0),
+      (sum, row) => (isRealMovement(row) ? sum + Number(row.total_credit || row.credit || 0) : sum),
       0,
     );
 
@@ -100,12 +127,26 @@ export default function TrialBalance() {
         field: "muc_code",
         headerName: "Código MUC",
         width: 150,
+        cellClassName: (params) =>
+          params.row.is_movement ? "" : "tb-header-cell",
       },
       {
         field: "account_name",
         headerName: "Cuenta",
         flex: 1,
         minWidth: 300,
+        renderCell: (params) => (
+          <span
+            style={{
+              paddingLeft: Math.max(Number(params.row.level_no || 1) - 1, 0) * 16,
+              fontWeight: params.row.is_movement ? 400 : 700,
+            }}
+          >
+            {params.value}
+          </span>
+        ),
+        cellClassName: (params) =>
+          params.row.is_movement ? "" : "tb-header-cell",
       },
       {
         field: "account_type",
@@ -136,6 +177,8 @@ export default function TrialBalance() {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }),
+        cellClassName: (params) =>
+          params.row.is_movement ? "" : "tb-header-cell",
       },
       {
         field: "total_credit",
@@ -149,6 +192,8 @@ export default function TrialBalance() {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }),
+        cellClassName: (params) =>
+          params.row.is_movement ? "" : "tb-header-cell",
       },
       {
         field: "balance",
@@ -167,10 +212,25 @@ export default function TrialBalance() {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }),
+        cellClassName: (params) =>
+          params.row.is_movement ? "" : "tb-header-cell",
       },
     ],
     [],
   );
+
+  const printReport = () => printAccountingReport({
+    title: "Balance de Comprobación de Saldos",
+    subtitle: "Forma E - Manual Único de Cuentas CONAMI",
+    period: `Del ${filters.from_date || "inicio"} al ${filters.to_date || "corte"}`,
+    columns: [
+      { field: "muc_code", label: "Código" }, { field: "account_name", label: "Denominación" },
+      { field: "previous_balance", label: "Saldo anterior", numeric: true, format: (v) => Number(v).toLocaleString("es-NI", { minimumFractionDigits: 2 }) },
+      { field: "total_debit", label: "Cargos", numeric: true, format: (v) => Number(v).toLocaleString("es-NI", { minimumFractionDigits: 2 }) },
+      { field: "total_credit", label: "Abonos", numeric: true, format: (v) => Number(v).toLocaleString("es-NI", { minimumFractionDigits: 2 }) },
+      { field: "balance", label: "Saldo actual", numeric: true, format: (v) => Number(v).toLocaleString("es-NI", { minimumFractionDigits: 2 }) },
+    ], rows,
+  });
 
   return (
     <Box sx={{ p: 2 }}>
@@ -201,7 +261,7 @@ export default function TrialBalance() {
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              md: "180px 180px 130px",
+              md: "180px 180px 200px 130px 130px",
             },
             gap: 1,
           }}
@@ -228,6 +288,19 @@ export default function TrialBalance() {
             InputLabelProps={{ shrink: true }}
           />
 
+          <TextField
+            select
+            size="small"
+            label="Cuentas a mostrar"
+            value={filters.scope}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, scope: e.target.value }))
+            }
+          >
+            <MenuItem value="ALL">Todas las cuentas</MenuItem>
+            <MenuItem value="WITH_MOVEMENTS">Solo con movimientos</MenuItem>
+          </TextField>
+
           <Button
             variant="outlined"
             onClick={fetchTrialBalance}
@@ -235,6 +308,8 @@ export default function TrialBalance() {
           >
             Generar
           </Button>
+          <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
+          <ReportSignaturesDialog />
         </Box>
 
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -283,6 +358,10 @@ export default function TrialBalance() {
               borderRadius: 2,
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "#F8FAFC",
+                fontWeight: 700,
+              },
+              "& .tb-header-cell": {
+                backgroundColor: "#F1F5F9",
                 fontWeight: 700,
               },
             }}

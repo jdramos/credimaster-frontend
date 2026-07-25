@@ -6,6 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { FormHelperText, CircularProgress } from "@mui/material";
+import API from "../api";
 
 const ProvinceSelect = (props) => {
   const [province, setProvince] = useState([]);
@@ -21,18 +22,12 @@ const ProvinceSelect = (props) => {
   const [loadingProvinces, setLoadingProvinces] = useState(true);
   const [loadingCities, setLoadingCities] = useState(true);
 
-  const provinceUrl = process.env.REACT_APP_API_BASE_URL + '/api/provinces';
-  const cityUrl = process.env.REACT_APP_API_BASE_URL + '/api/municipalities';
-  const token = process.env.REACT_APP_API_TOKEN;
-  const headers = { Authorization: token };
-
   // Fetch provinces and cities on mount
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await fetch(provinceUrl, { headers });
-        if (!response.ok) throw new Error('Failed to retrieve provinces.');
-        const jsonData = await response.json();
+        const response = await API.get('/api/provinces');
+        const jsonData = response.data;
         setProvince(jsonData);
       } catch (error) {
         console.error(error);
@@ -44,9 +39,8 @@ const ProvinceSelect = (props) => {
 
     const fetchCities = async () => {
       try {
-        const response = await fetch(cityUrl, { headers });
-        if (!response.ok) throw new Error('Failed to retrieve cities.');
-        const jsonData = await response.json();
+        const response = await API.get('/api/municipalities');
+        const jsonData = response.data;
         setCities(jsonData);
       } catch (error) {
         console.error(error);

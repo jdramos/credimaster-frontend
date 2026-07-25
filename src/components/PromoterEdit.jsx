@@ -10,9 +10,7 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import BranchSelect from "./BranchSelect";
 import ConfirmDialog from "./ConfirmDialog";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/vendors/";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const PromoterEdit = (props) => {
   const navigate = useNavigate();
@@ -64,41 +62,31 @@ const PromoterEdit = (props) => {
 
   async function editPromoter() {
     setSnackState({ ...snackState, open: true });
-    const requestOptions = {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify(promoter),
-    };
 
     try {
-      const response = await fetch(url + promoter.id, requestOptions);
-      const responseData = await response.json();
+      await API.put("/api/vendors/" + promoter.id, promoter);
 
-      if (!response.ok) {
-        if (responseData.errors && responseData.errors.length > 0) {
-          setAlert({
-            alertType: "error",
-            alertMessage: `Repuesta del servidor: ` + responseData.errors,
-          });
-        }
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+      setOpenDialog(false);
+      setTimeout(() => {
+        navigate("/promotores");
+      }, 2000);
+    } catch (error) {
+      const responseData = error.response?.data;
+      if (responseData?.errors && responseData.errors.length > 0) {
+        setAlert({
+          alertType: "error",
+          alertMessage: `Repuesta del servidor: ` + responseData.errors,
+        });
       } else {
         setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
+          alertType: "error",
+          alertMessage: "catch.Error al guardar el registro." + error,
         });
-        setOpenDialog(false);
-        setTimeout(() => {
-          navigate("/promotores");
-        }, 2000);
       }
-    } catch (error) {
-      setAlert({
-        alertType: "error",
-        alertMessage: "catch.Error al guardar el registro." + error,
-      });
       console.log(error);
     }
   }

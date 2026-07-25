@@ -16,8 +16,9 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { useStudio } from "../studio/context/StudioContext";
 
-import { useReportDefinition } from "../customs/context/ReportDefinitionContext";
+import { useReportDefinition } from "../custom/context/ReportDefinitionContext";
 
 const FieldsTab = () => {
   const {
@@ -32,6 +33,7 @@ const FieldsTab = () => {
 
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
+  const { setSelectedObject } = useStudio();
 
   const activeCategory = category || categories[0]?.category || "";
 
@@ -133,7 +135,15 @@ const FieldsTab = () => {
                             variant={selected ? "outlined" : "contained"}
                             startIcon={<AddIcon />}
                             disabled={selected}
-                            onClick={() => addField(field)}
+                            onClick={() => {
+                              addField(field);
+
+                              setSelectedObject({
+                                ...field,
+                                type: "field",
+                                objectType: "sourceField",
+                              });
+                            }}
                           >
                             {selected ? "Agregado" : "Agregar"}
                           </Button>

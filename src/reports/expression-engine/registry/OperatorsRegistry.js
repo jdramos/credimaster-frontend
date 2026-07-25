@@ -1,0 +1,98 @@
+export const OPERATORS = [
+  {
+    id: "+",
+    label: "Sumar",
+    symbol: "+",
+    category: "Matemáticos",
+    accepts: ["number", "currency"],
+    returnType: "number",
+    precedence: 20,
+  },
+  {
+    id: "-",
+    label: "Restar",
+    symbol: "-",
+    category: "Matemáticos",
+    accepts: ["number", "currency"],
+    returnType: "number",
+    precedence: 20,
+  },
+  {
+    id: "*",
+    label: "Multiplicar",
+    symbol: "*",
+    category: "Matemáticos",
+    accepts: ["number", "currency"],
+    returnType: "number",
+    precedence: 30,
+  },
+  {
+    id: "/",
+    label: "Dividir",
+    symbol: "/",
+    category: "Matemáticos",
+    accepts: ["number", "currency"],
+    returnType: "number",
+    precedence: 30,
+  },
+  {
+    id: ">",
+    label: "Mayor que",
+    symbol: ">",
+    category: "Comparación",
+    accepts: ["number", "currency", "date"],
+    returnType: "boolean",
+    precedence: 10,
+  },
+  {
+    id: "<",
+    label: "Menor que",
+    symbol: "<",
+    category: "Comparación",
+    accepts: ["number", "currency", "date"],
+    returnType: "boolean",
+    precedence: 10,
+  },
+  {
+    id: "=",
+    label: "Igual a",
+    symbol: "=",
+    category: "Comparación",
+    accepts: ["number", "currency", "string", "date", "boolean"],
+    returnType: "boolean",
+    precedence: 10,
+  },
+  {
+    id: "<>",
+    label: "Diferente de",
+    symbol: "<>",
+    category: "Comparación",
+    accepts: ["number", "currency", "string", "date", "boolean"],
+    returnType: "boolean",
+    precedence: 10,
+  },
+  {
+    id: "AND",
+    label: "Y",
+    symbol: "Y",
+    category: "Lógicos",
+    accepts: ["boolean"],
+    returnType: "boolean",
+    precedence: 5,
+  },
+  {
+    id: "OR",
+    label: "O",
+    symbol: "O",
+    category: "Lógicos",
+    accepts: ["boolean"],
+    returnType: "boolean",
+    precedence: 4,
+  },
+];
+
+export const getOperators = () => OPERATORS;
+
+export const getOperatorById = (id) => {
+  return OPERATORS.find((operator) => operator.id === id) || null;
+};

@@ -8,9 +8,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-
-const baseUrl = process.env.REACT_APP_API_BASE_URL + "/api/risks";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 export default function RiskForm() {
   const { riskId } = useParams();          // si existe → EDIT
@@ -52,13 +50,9 @@ export default function RiskForm() {
 
       try {
         setLoading(true);
-        const resp = await fetch(`${baseUrl}/${riskId}`, {
-          headers: { Authorization: token },
-        });
+        const resp = await API.get(`/api/risks/${riskId}`);
 
-        if (!resp.ok) throw new Error(await resp.text());
-
-        const data = await resp.json();
+        const data = resp.data;
         const r = Array.isArray(data) ? data[0] : data;
 
         if (!r) {
@@ -102,8 +96,7 @@ export default function RiskForm() {
       setLoading(true);
       setError(null);
 
-      const method = isEdit ? "PUT" : "POST";
-      const endpoint = isEdit ? `${baseUrl}/${riskId}` : baseUrl;
+      const endpoint = isEdit ? `/api/risks/${riskId}` : "/api/risks";
 
       const body = {
         name,
@@ -113,16 +106,11 @@ export default function RiskForm() {
         color,
       };
 
-      const resp = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!resp.ok) throw new Error(await resp.text());
+      if (isEdit) {
+        await API.put(endpoint, body);
+      } else {
+        await API.post(endpoint, body);
+      }
 
       navigate("/riesgos");
     } catch (e) {

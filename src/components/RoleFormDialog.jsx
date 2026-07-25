@@ -3,7 +3,7 @@ import {
 	Box, Typography, Button, TextField, CircularProgress, Paper, List, ListItem, ListItemText
 } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import axios from 'axios';
+import API from '../api';
 
 // ... (código anterior sin cambios)
 
@@ -17,9 +17,7 @@ const RoleFormDialog = ({ role, onClose, refreshTrigger }) => {
 	useEffect(() => {
 		const fetchPermissions = async () => {
 			try {
-				const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/permissions`, {
-					headers: { Authorization: process.env.REACT_APP_API_TOKEN }
-				});
+				const res = await API.get('/api/permissions');
 				setPermissions(res.data);
 			} catch (err) {
 				console.error('Error al cargar permisos:', err);
@@ -33,9 +31,7 @@ const RoleFormDialog = ({ role, onClose, refreshTrigger }) => {
 		const fetchRolePermissions = async () => {
 			if (!role) return;
 			try {
-				const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/roles/${role.id}/permissions`, {
-					headers: { Authorization: process.env.REACT_APP_API_TOKEN }
-				});
+				const res = await API.get(`/api/roles/${role.id}/permissions`);
 				setAssignedPermissions(res.data);
 			} catch (err) {
 				console.error('Error al obtener permisos del rol:', err);
@@ -54,13 +50,9 @@ const RoleFormDialog = ({ role, onClose, refreshTrigger }) => {
 		};
 		try {
 			if (role) {
-				await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/roles/${role.id}`, payload, {
-					headers: { Authorization: process.env.REACT_APP_API_TOKEN }
-				});
+				await API.put(`/api/roles/${role.id}`, payload);
 			} else {
-				await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/roles`, payload, {
-					headers: { Authorization: process.env.REACT_APP_API_TOKEN }
-				});
+				await API.post('/api/roles', payload);
 			}
 			onClose();
 		} catch (err) {

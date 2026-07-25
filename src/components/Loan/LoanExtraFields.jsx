@@ -33,6 +33,7 @@ const LoanExtraFields = ({
     sectoresEconomicos = [],
     metodosAtencion = [],
     tiposZona = [],
+    garantias = [],
   } = catalogs;
 
   const renderSelect = ({
@@ -188,6 +189,14 @@ const LoanExtraFields = ({
                 name: "id_tipo_zona",
                 label: "Tipo zona",
                 options: tiposZona,
+              })}
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={4}>
+              {renderSelect({
+                name: "id_garantia",
+                label: "Garantía",
+                options: garantias,
               })}
             </Grid>
           </Grid>

@@ -9,9 +9,7 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import BranchSelect from "./BranchSelect";
 import ConfirmDialog from "./ConfirmDialog";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/vendors";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const PromoterAdd = (props) => {
   const navigate = useNavigate();
@@ -51,40 +49,30 @@ const PromoterAdd = (props) => {
 
   const addPromoter = async () => {
     setState({ ...state, open: true });
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify(promoter),
-    };
 
     try {
-      const response = await fetch(url, requestOptions);
-      const responseData = await response.json();
+      await API.post("/api/vendors", promoter);
 
-      if (!response.ok) {
-        if (responseData.errors && responseData.errors.length > 0) {
-          responseData.errors.forEach((error) => {
-            toast.error(error.msg);
-          });
-        }
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+      setOpenDialog(false);
+      setTimeout(() => {
+        navigate("/promotores");
+      }, 2000);
+    } catch (error) {
+      const responseData = error.response?.data;
+      if (responseData?.errors && responseData.errors.length > 0) {
+        responseData.errors.forEach((err) => {
+          toast.error(err.msg);
+        });
       } else {
         setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
+          alertType: "error",
+          alertMessage: "catch.Error al guardar el registro." + error,
         });
-        setOpenDialog(false);
-        setTimeout(() => {
-          navigate("/promotores");
-        }, 2000);
       }
-    } catch (error) {
-      setAlert({
-        alertType: "error",
-        alertMessage: "catch.Error al guardar el registro." + error,
-      });
       console.log(error);
     }
   };

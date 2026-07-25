@@ -2,15 +2,27 @@ import React, { useEffect, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   Chip,
   Dialog,
   DialogContent,
   DialogTitle,
   Divider,
   Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
+import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
+import { printAccountingReport } from "./printAccountingReport";
+
+const money = (value) =>
+  Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2 });
 
 export default function JournalDetailDialog({ open, onClose, journalId }) {
   const [loading, setLoading] = useState(false);
@@ -83,18 +95,50 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
     0,
   );
 
+  const handlePrint = () => {
+    if (!entry) return;
+
+    printAccountingReport({
+      title: "Comprobante Contable",
+      subtitle: `N° ${entry.entry_number || entry.entry_no || ""}`,
+      period: entry.entry_date ? String(entry.entry_date).substring(0, 10) : "",
+      columns: [
+        { field: "account", label: "Cuenta", value: (row) => `${row.muc_code} - ${row.account_name}` },
+        { field: "description", label: "Descripción" },
+        { field: "debit", label: "Débito", numeric: true, format: money },
+        { field: "credit", label: "Crédito", numeric: true, format: money },
+      ],
+      rows: details,
+      totals: [
+        { value: "Totales", colspan: 2 },
+        { value: money(totalDebit), numeric: true },
+        { value: money(totalCredit), numeric: true },
+      ],
+    });
+  };
+
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-        <DialogTitle sx={{ fontWeight: 900 }}>
+      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           Detalle del comprobante
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrint}
+            disabled={!entry}
+            sx={{ textTransform: "none" }}
+          >
+            Imprimir
+          </Button>
         </DialogTitle>
 
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ p: 2 }}>
           {loading ? (
-            <Typography>Cargando...</Typography>
+            <Typography variant="body2">Cargando...</Typography>
           ) : !entry ? (
-            <Typography>No hay información</Typography>
+            <Typography variant="body2">No hay información</Typography>
           ) : (
             <>
               <Box
@@ -102,10 +146,10 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
                   display: "grid",
                   gridTemplateColumns: {
                     xs: "1fr",
-                    md: "180px 1fr 180px 160px",
+                    md: "140px 1fr 110px 100px",
                   },
-                  gap: 2,
-                  mb: 2,
+                  gap: 1.5,
+                  mb: 1.5,
                 }}
               >
                 <Box>
@@ -113,7 +157,7 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
                     Comprobante
                   </Typography>
 
-                  <Typography fontWeight={800}>
+                  <Typography variant="body2" fontWeight={700}>
                     {entry.entry_number || entry.entry_no}
                   </Typography>
                 </Box>
@@ -123,7 +167,7 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
                     Descripción
                   </Typography>
 
-                  <Typography fontWeight={700}>
+                  <Typography variant="body2" fontWeight={600}>
                     {entry.description || entry.memo || entry.concept || ""}
                   </Typography>
                 </Box>
@@ -133,7 +177,7 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
                     Fecha
                   </Typography>
 
-                  <Typography fontWeight={700}>
+                  <Typography variant="body2" fontWeight={600}>
                     {entry.entry_date
                       ? String(entry.entry_date).substring(0, 10)
                       : ""}
@@ -145,7 +189,7 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
                     Estado
                   </Typography>
 
-                  <Box sx={{ mt: 0.5 }}>
+                  <Box sx={{ mt: 0.25 }}>
                     {entry.status === "VOID" ? (
                       <Chip size="small" color="error" label="Anulado" />
                     ) : (
@@ -155,85 +199,52 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
                 </Box>
               </Box>
 
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 1.5 }} />
+
+              <TableContainer>
+                <Table size="small" sx={{ "& td, & th": { py: 0.5, px: 1, fontSize: 13 } }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 800 }}>Cuenta</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }}>Descripción</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }} align="right">Débito</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }} align="right">Crédito</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {details.map((row, index) => (
+                      <TableRow key={index} hover>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {row.muc_code} - {row.account_name}
+                        </TableCell>
+                        <TableCell>{row.description}</TableCell>
+                        <TableCell align="right">{money(row.debit)}</TableCell>
+                        <TableCell align="right">{money(row.credit)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
               <Box
                 sx={{
-                  display: "grid",
-                  gridTemplateColumns: "2fr 2fr 140px 140px",
-                  gap: 1,
-                  mb: 1,
-                  px: 1,
-                }}
-              >
-                <Typography fontWeight={900}>Cuenta</Typography>
-
-                <Typography fontWeight={900}>Descripción</Typography>
-
-                <Typography fontWeight={900}>Débito</Typography>
-
-                <Typography fontWeight={900}>Crédito</Typography>
-              </Box>
-
-              {(entry.details || []).map((row, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "2fr 2fr 140px 140px",
-                    gap: 1,
-                    mb: 1,
-                    p: 1,
-                    borderRadius: 2,
-                    border: "1px solid #E5E7EB",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography fontWeight={700}>
-                    {row.muc_code} - {row.account_name}
-                  </Typography>
-
-                  <Typography>{row.description}</Typography>
-
-                  <Typography fontWeight={700}>
-                    {Number(row.debit || 0).toLocaleString("es-NI", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </Typography>
-
-                  <Typography fontWeight={700}>
-                    {Number(row.credit || 0).toLocaleString("es-NI", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </Typography>
-                </Box>
-              ))}
-
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  borderRadius: 2,
+                  mt: 1.5,
+                  p: 1,
+                  borderRadius: 1,
                   bgcolor: "#F8FAFC",
                   border: "1px solid #E5E7EB",
                   display: "flex",
-                  justifyContent: "space-between",
-                  gap: 2,
+                  justifyContent: "flex-end",
+                  gap: 3,
                   flexWrap: "wrap",
                 }}
               >
-                <Typography fontWeight={900}>
-                  Débito:{" "}
-                  {totalDebit.toLocaleString("es-NI", {
-                    minimumFractionDigits: 2,
-                  })}
+                <Typography variant="body2" fontWeight={800}>
+                  Débito: {money(totalDebit)}
                 </Typography>
 
-                <Typography fontWeight={900}>
-                  Crédito:{" "}
-                  {totalCredit.toLocaleString("es-NI", {
-                    minimumFractionDigits: 2,
-                  })}
+                <Typography variant="body2" fontWeight={800}>
+                  Crédito: {money(totalCredit)}
                 </Typography>
               </Box>
             </>

@@ -21,10 +21,7 @@ import RoleSelect from "./RoleSelect";
 import Snackbar from "@mui/material/Snackbar";
 import ConfirmDialog from "./ConfirmDialog";
 import BranchAllSelect from "./BranchAllSelect";
-
-const URL_API = process.env.REACT_APP_API_BASE_URL;
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+import API from "../api";
 
 const UserAdd = ({ onClose, userToEdit }) => {
   const navigate = useNavigate();
@@ -195,53 +192,41 @@ const UserAdd = ({ onClose, userToEdit }) => {
 
   const addUser = async () => {
     setState({ ...state, open: true });
-    const url = userToEdit ? `/api/users/${userToEdit.id}` : `/api/users`;
-    const method = userToEdit ? "PUT" : "POST";
+    const path = userToEdit ? `/api/users/${userToEdit.id}` : `/api/users`;
 
     try {
-      const response = await fetch(URL_API + url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-        body: JSON.stringify(user),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        if (responseData.errors && responseData.errors.length > 0) {
-          const errorMessages = responseData.errors
-            .map((error) => error.msg)
-            .join(", ");
-          setAlert({
-            alertType: "error",
-            alertMessage: "Mensaje del servidor: " + errorMessages,
-          });
-          setOpenDialog(false);
-        } else {
-          setAlert({
-            alertType: "success",
-            alertMessage: "Registro guardado exitosamente..",
-          });
-        }
+      if (userToEdit) {
+        await API.put(path, user);
       } else {
+        await API.post(path, user);
+      }
+
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+      setOpenDialog(false);
+
+      setTimeout(() => {
+        if (onClose)
+          onClose(); // 👉 cerrar el modal después de guardar
+        else navigate("/usuarios");
+      }, 2000);
+    } catch (error) {
+      const responseData = error.response?.data;
+      if (responseData?.errors && responseData.errors.length > 0) {
+        const errorMessages = responseData.errors
+          .map((err) => err.msg)
+          .join(", ");
         setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
+          alertType: "error",
+          alertMessage: "Mensaje del servidor: " + errorMessages,
         });
         setOpenDialog(false);
-
-        setTimeout(() => {
-          if (onClose)
-            onClose(); // 👉 cerrar el modal después de guardar
-          else navigate("/usuarios");
-        }, 2000);
+      } else {
+        toast.error("Error al crear el usuario:", error);
+        setOpenDialog(false);
       }
-    } catch (error) {
-      toast.error("Error al crear el usuario:", error);
-      setOpenDialog(false);
     }
   };
 
@@ -514,37 +499,10 @@ const UserAdd = ({ onClose, userToEdit }) => {
                   }
 
                   try {
-                    const response = await fetch(
-                      `${URL_API}/api/users/${userToEdit.id}/reset-password`,
-                      {
-                        method: "PUT",
-                        headers: {
-                          "Content-Type": "application/json",
-                          Authorization: token,
-                        },
-                        body: JSON.stringify({ newPassword }),
-                      },
+                    await API.put(
+                      `/api/users/${userToEdit.id}/reset-password`,
+                      { newPassword },
                     );
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                      if (data && data.errors) {
-                        const mensaje = Array.isArray(data.errors)
-                          ? data.errors
-                              .map((e) => e.msg || e.message)
-                              .join(", ")
-                          : data.errors.message || JSON.stringify(data.errors);
-
-                        setPasswordResetError(mensaje);
-                      } else {
-                        setPasswordResetError(
-                          data.message ||
-                            "Error desconocido al restablecer contraseña.",
-                        );
-                      }
-                      return;
-                    }
 
                     toast.success("Contraseña restablecida correctamente");
                     setResetPasswordModal(false);
@@ -552,9 +510,25 @@ const UserAdd = ({ onClose, userToEdit }) => {
                     setConfirmPassword("");
                     setPasswordResetError("");
                   } catch (err) {
-                    setPasswordResetError(
-                      "No se pudo restablecer la contraseña." + err.message,
-                    );
+                    const data = err.response?.data;
+                    if (data && data.errors) {
+                      const mensaje = Array.isArray(data.errors)
+                        ? data.errors
+                            .map((e) => e.msg || e.message)
+                            .join(", ")
+                        : data.errors.message || JSON.stringify(data.errors);
+
+                      setPasswordResetError(mensaje);
+                    } else if (data) {
+                      setPasswordResetError(
+                        data.message ||
+                          "Error desconocido al restablecer contraseña.",
+                      );
+                    } else {
+                      setPasswordResetError(
+                        "No se pudo restablecer la contraseña." + err.message,
+                      );
+                    }
                   }
                 }}
               >

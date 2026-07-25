@@ -11,12 +11,10 @@ const CustomerReferencesTab = forwardRef(({ customer, setCustomer, errors, setEr
 
             const fields = [
                 "reference_name",
-                "reference_address",
                 "reference_telephone",
                 "reference_known_time",
                 "reference_relationship",
                 "reference2_name",
-                "reference2_address",
                 "reference2_telephone",
                 "reference2_known_time",
                 "reference2_relationship",

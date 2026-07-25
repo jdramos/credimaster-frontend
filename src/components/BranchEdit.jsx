@@ -29,6 +29,7 @@ import ProvinceSelect from "./ProvinceSelect";
 import MunicipalitySelect from "./MunicipalitySelect";
 import ConfirmDialog from "./ConfirmDialog";
 import API from "../api";
+import BranchCalendarFields from "./BranchCalendarFields";
 
 const baseUrl = "/api/branches/";
 
@@ -40,6 +41,8 @@ const emptyBranch = {
   risk_id: "",
   province_id: "",
   municipality_id: "",
+  works_saturday: false,
+  holidays: [],
 };
 
 function normalizeBranch(data = {}) {
@@ -51,6 +54,8 @@ function normalizeBranch(data = {}) {
     risk_id: data.risk_id ? Number(data.risk_id) : "",
     province_id: data.province_id ? Number(data.province_id) : "",
     municipality_id: data.municipality_id ? Number(data.municipality_id) : "",
+    works_saturday: Boolean(data.works_saturday),
+    holidays: Array.isArray(data.holidays) ? data.holidays : [],
   };
 }
 
@@ -485,6 +490,7 @@ const BranchEdit = () => {
                     />
                   </Grid>
                 </Grid>
+                <BranchCalendarFields value={branch} onChange={(next) => setBranch(next)} />
               </Stack>
             </CardContent>
           </Card>

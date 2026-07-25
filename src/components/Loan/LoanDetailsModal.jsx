@@ -67,10 +67,12 @@ import LoanInfo from "../LoanInfo";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
 import LoanModificationSection from "../Loan/LoanModificationSection";
 import CustomerChecklist from "../Customer/CustomerCheckList";
+import RiskBureauQueryPanel from "./RiskBureauQueryPanel";
 import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
 import ApprovalConfirmationDialog from "./ApprovalConfirmationDialog";
 import { printLoanApplicationReport } from "../../reports/loanApplicationReport";
+import { printCommitteeMinutesReport } from "../../reports/committeeMinutesReport";
 
 const HeaderBar = styled("div")(({ theme }) => ({
   background: theme.palette.primary.main,
@@ -449,10 +451,16 @@ const LoanDetailsModal = ({
       String(a.status).toUpperCase() === "APPROVED",
   );
 
+  // Con aprobador único (requires_committee=0) el crédito puede resolverse
+  // con UNA sola decisión de cualquier aprobador, no necesariamente el que
+  // está viendo el modal ni todos los de la sucursal — por eso el estado
+  // real del préstamo (loans_data.status) es la fuente de verdad, no solo
+  // el arreglo local de approvals.
   const isReadOnly =
-    approvals.length > 0 &&
-    (approvals.every((a) => String(a.status).toUpperCase() === "APPROVED") ||
-      hasUserApproved);
+    ["APPROVED", "REJECTED"].includes(String(loanData?.status).toUpperCase()) ||
+    (approvals.length > 0 &&
+      (approvals.every((a) => String(a.status).toUpperCase() === "APPROVED") ||
+        hasUserApproved));
 
   const canEditFinancialEvaluation = useMemo(() => {
     return approvals.some(
@@ -625,6 +633,37 @@ const LoanDetailsModal = ({
       });
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handlePrintCommitteeMinutes = async () => {
+    if (!loanId) return;
+
+    try {
+      const res = await API.get(`/api/approvals/committee-minutes/${loanId}`);
+      const data = res.data?.data;
+
+      if (!data) {
+        throw new Error("No se pudo obtener la información del acta.");
+      }
+
+      printCommitteeMinutesReport({
+        company,
+        user: { id: userId, full_name: user?.full_name || "" },
+        loan: data.loan,
+        members: data.members,
+      });
+    } catch (error) {
+      console.error(error);
+
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.message ||
+          error.message ||
+          "Error al generar el acta de comité de crédito.",
+        severity: "error",
+      });
     }
   };
 
@@ -1217,6 +1256,12 @@ const LoanDetailsModal = ({
                               </Box>
                             </Alert>
                           )}
+
+                        <RiskBureauQueryPanel
+                          customerId={clientId}
+                          loanId={loanId}
+                          readOnly={false}
+                        />
                       </>
                     )}
                   </CompactAccordion>
@@ -1243,9 +1288,31 @@ const LoanDetailsModal = ({
                           size="small"
                           variant="outlined"
                         />
+                        <Chip
+                          label={
+                            loanData?.requires_committee
+                              ? "Comité de Crédito"
+                              : "Aprobador único"
+                          }
+                          size="small"
+                          color={loanData?.requires_committee ? "secondary" : "default"}
+                          variant="outlined"
+                        />
                       </>
                     }
                   >
+                    {Boolean(loanData?.requires_committee) && isReadOnly && (
+                      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<DescriptionIcon />}
+                          onClick={handlePrintCommitteeMinutes}
+                        >
+                          Imprimir Acta de Comité
+                        </Button>
+                      </Box>
+                    )}
                     {loadingApprovals ? (
                       <Box
                         display="flex"

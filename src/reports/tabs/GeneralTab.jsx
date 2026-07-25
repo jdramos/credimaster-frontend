@@ -1,11 +1,13 @@
 import React from "react";
-import { MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { useReportDefinition } from "../customs/context/ReportDefinitionContext";
+import { Alert, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { useReportDefinition } from "../custom/context/ReportDefinitionContext";
 
 const GeneralTab = () => {
   const {
     definition,
     sources,
+    sourcesLoading,
+    sourcesError,
     updateDefinition,
     changeSource,
     updatePageHeader,
@@ -17,11 +19,15 @@ const GeneralTab = () => {
         Información general
       </Typography>
 
+      {sourcesError && <Alert severity="warning">{sourcesError}</Alert>}
+
       <TextField
         select
         label="Fuente de datos"
         value={definition.source || ""}
         onChange={(e) => changeSource(e.target.value)}
+        disabled={sourcesLoading}
+        helperText={sourcesLoading ? "Cargando fuentes..." : ""}
       >
         <MenuItem value="">Seleccione...</MenuItem>
 

@@ -74,14 +74,7 @@ export default function GenreSelect({
         fullWidth={fullWidth}
         isOptionEqualToValue={(opt, val) => Number(opt.id) === Number(val.id)}
         getOptionLabel={(opt) => (opt ? `${opt.id} - ${opt.name}` : "")}
-        onChange={(_, newVal) =>
-          onChange?.({
-            target: {
-              name,
-              value: newVal ? Number(newVal.id) : "",
-            },
-          })
-        }
+        onChange={(_, newVal) => onChange?.(newVal ? Number(newVal.id) : "")}
         clearOnBlur={false}
         renderInput={(params) => (
           <TextField
@@ -103,8 +96,8 @@ export default function GenreSelect({
             }}
           />
         )}
-        renderOption={(props, option) => (
-          <li {...props}>
+        renderOption={({ key, ...optionProps }, option) => (
+          <li key={key} {...optionProps}>
             {option.id} - {option.name}
           </li>
         )}

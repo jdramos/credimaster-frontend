@@ -33,6 +33,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import GavelIcon from "@mui/icons-material/Gavel";
 
 import GeneralInfoTab from "./CustomerGeneralInfoTab";
 import GuaranteesTab from "./CustomerGuaranteesTab";
@@ -41,10 +42,9 @@ import CustomerBusinessTab from "./CustomerBusinessTab";
 import CustomerReferencesTab from "./CustomerReferencesTab";
 import CustomerChecklist from "./CustomerCheckList";
 import CustomerFinancialEvaluationTab from "./CustomerFinancialEvaluationTab";
+import CustomerAmlCompliance from "./CustomerAmlCompliance";
 import ConfirmDialog from "../ConfirmDialog";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../../api";
 
 const TabPanel = ({ children, value, index }) => (
   <Box
@@ -108,6 +108,7 @@ const CustomerForm = () => {
 
   const businessRef = useRef(null);
   const referencesRef = useRef(null);
+  const amlRef = useRef(null);
 
   const navigate = useNavigate();
   const { customerId } = useParams();
@@ -254,8 +255,8 @@ const CustomerForm = () => {
 
     setLoading(true);
 
-    fetch(`${url}/${customerId}`, { headers: { Authorization: token } })
-      .then((r) => r.json())
+    API.get(`/api/customers/${customerId}`)
+      .then((r) => r.data)
       .then((data) => {
         const payload = data?.data ?? data ?? {};
         const c = payload.customer ?? payload ?? {};
@@ -401,6 +402,9 @@ const CustomerForm = () => {
     reference2_telephone: 3,
     reference2_relationship: 3,
     reference2_known_time: 3,
+
+    is_pep: 6,
+    pep_details: 6,
   };
 
   const handleSubmit = (e) => {
@@ -410,12 +414,14 @@ const CustomerForm = () => {
     const vBusiness = normalizeValidate(businessRef.current?.validate?.());
     const vGuarantees = normalizeValidate(guaranteesRef.current?.validate?.());
     const vReferences = normalizeValidate(referencesRef.current?.validate?.());
+    const vAml = normalizeValidate(amlRef.current?.validate?.());
 
     const mergedErrors = cleanErrors({
       ...vGeneral.errors,
       ...vBusiness.errors,
       ...vGuarantees.errors,
       ...vReferences.errors,
+      ...vAml.errors,
     });
 
     setErrors(mergedErrors);
@@ -443,34 +449,19 @@ const CustomerForm = () => {
       Boolean(isEmployee),
     );
 
+    const path =
+      mode === "edit" ? `/api/customers/${customerId}` : "/api/customers";
+    const body = {
+      customer: payloadCustomer,
+      guarantees: cleanedGuarantees,
+      financial_evaluation: financialEvaluation,
+    };
+
     try {
-      const response = await fetch(
-        mode === "edit" ? `${url}/${customerId}` : url,
-        {
-          method: mode === "edit" ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json; charset=UTF-8",
-            Authorization: token,
-          },
-          body: JSON.stringify({
-            customer: payloadCustomer,
-            guarantees: cleanedGuarantees,
-            financial_evaluation: financialEvaluation,
-          }),
-        },
-      );
-
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        applyServerErrorsToForm(result?.errors, setErrors);
-
-        setAlert({
-          alertType: "error",
-          alertMessage: result?.message || "Error al guardar",
-        });
-
-        return;
+      if (mode === "edit") {
+        await API.put(path, body);
+      } else {
+        await API.post(path, body);
       }
 
       setAlert({
@@ -480,12 +471,22 @@ const CustomerForm = () => {
 
       setTimeout(() => navigate("/clientes"), 800);
     } catch (error) {
-      setAlert({
-        alertType: "error",
-        alertMessage: "Error de red: " + error.message,
-      });
+      const result = error.response?.data;
+      if (result) {
+        applyServerErrorsToForm(result?.errors, setErrors);
 
-      toast.error("Error de red");
+        setAlert({
+          alertType: "error",
+          alertMessage: result?.message || "Error al guardar",
+        });
+      } else {
+        setAlert({
+          alertType: "error",
+          alertMessage: "Error de red: " + error.message,
+        });
+
+        toast.error("Error de red");
+      }
     } finally {
       setOpenDialog(false);
       setAlertState({ open: false });
@@ -865,6 +866,11 @@ const CustomerForm = () => {
                 iconPosition="start"
                 label="Documentos"
               />
+              <Tab
+                icon={getTabIcon(6, <GavelIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Cumplimiento PLA-FT"
+              />
             </Tabs>
           </Box>
 
@@ -935,6 +941,15 @@ const CustomerForm = () => {
                 customerId={customer.id}
                 customerName={customer.customer_name}
                 readOnly={internalMode === "show"}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={6}>
+              <CustomerAmlCompliance
+                ref={amlRef}
+                customer={customer}
+                setCustomer={setCustomer}
+                mode={internalMode}
               />
             </TabPanel>
           </Box>

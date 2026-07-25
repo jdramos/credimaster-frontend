@@ -18,6 +18,7 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import BranchSelect from "./BranchSelect";
 import TipoDocumentoSelect from "./TipoDocumentoSelect";
 import GenreSelect from "./Genre/GenreSelect";
+import API from "../api";
 
 const BAC = {
   primary: "#0057B8",
@@ -29,9 +30,6 @@ const BAC = {
   muted: "#6B7280",
   white: "#FFFFFF",
 };
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/promoters";
-const token = process.env.REACT_APP_API_TOKEN;
 
 const initialForm = {
   id: null,
@@ -128,35 +126,22 @@ export default function PromoterModal({
       setSaving(true);
       setServerError("");
 
-      const method = isEdit ? "PUT" : "POST";
-      const endpoint = isEdit ? `${url}/${promoter.id}` : url;
+      const endpoint = isEdit
+        ? `/api/promoters/${promoter.id}`
+        : "/api/promoters";
+      const payload = {
+        name: promoter.name,
+        identification: promoter.identification,
+        id_tipo_documento: Number(promoter.id_tipo_documento),
+        id_genero: Number(promoter.id_genero),
+        telephone: promoter.telephone,
+        branch_id: promoter.branch_id ? Number(promoter.branch_id) : null,
+      };
 
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json; charset=UTF-8",
-          Authorization: token,
-        },
-        body: JSON.stringify({
-          name: promoter.name,
-          identification: promoter.identification,
-          id_tipo_documento: Number(promoter.id_tipo_documento),
-          id_genero: Number(promoter.id_genero),
-          telephone: promoter.telephone,
-          branch_id: promoter.branch_id ? Number(promoter.branch_id) : null,
-        }),
-      });
-
-      const responseData = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          responseData?.errors?.[0]?.msg ||
-            responseData?.errors?.[0] ||
-            responseData?.errors ||
-            responseData?.message ||
-            "No fue posible guardar el registro.",
-        );
+      if (isEdit) {
+        await API.put(endpoint, payload);
+      } else {
+        await API.post(endpoint, payload);
       }
 
       onSaved?.({
@@ -169,7 +154,14 @@ export default function PromoterModal({
       onClose();
     } catch (error) {
       console.error(error);
-      setServerError(error.message || "Ocurrió un error al guardar.");
+      const responseData = error.response?.data;
+      setServerError(
+        responseData?.errors?.[0]?.msg ||
+          responseData?.errors?.[0] ||
+          responseData?.errors ||
+          responseData?.message ||
+          "No fue posible guardar el registro.",
+      );
     } finally {
       setSaving(false);
     }

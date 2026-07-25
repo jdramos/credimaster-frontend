@@ -9,9 +9,7 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import BranchSelect from "./BranchSelect";
 import ConfirmDialog from "./ConfirmDialog";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/Collectors";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const CollectorAdd = (props) => {
   const navigate = useNavigate();
@@ -51,41 +49,31 @@ const CollectorAdd = (props) => {
 
   const addCollector = async () => {
     setState({ ...state, open: true });
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify(collector),
-    };
 
     try {
-      const response = await fetch(url, requestOptions);
-      const responseData = await response.json();
+      await API.post("/api/Collectors", collector);
 
-      if (!response.ok) {
-        if (responseData.errors && responseData.errors.length > 0) {
-          setAlert({
-            alertType: "error",
-            alertMessage: `Repuesta del servidor: ` + responseData.errors,
-          });
-        }
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+
+      setTimeout(() => {
+        navigate("/colectores");
+      }, 2000);
+    } catch (error) {
+      const responseData = error.response?.data;
+      if (responseData?.errors && responseData.errors.length > 0) {
+        setAlert({
+          alertType: "error",
+          alertMessage: `Repuesta del servidor: ` + responseData.errors,
+        });
       } else {
         setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
+          alertType: "error",
+          alertMessage: "catch.Error al guardar el registro." + error,
         });
-
-        setTimeout(() => {
-          navigate("/colectores");
-        }, 2000);
       }
-    } catch (error) {
-      setAlert({
-        alertType: "error",
-        alertMessage: "catch.Error al guardar el registro." + error,
-      });
       console.log(error);
     }
     setOpenDialog(false);

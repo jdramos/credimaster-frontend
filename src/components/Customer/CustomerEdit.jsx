@@ -36,18 +36,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import DividerChip from "../DividerChip";
 import "dayjs/locale/en-gb";
 import formatNumber from "../../functions/thousandSeparator";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/customers";
-const token = process.env.REACT_APP_API_TOKEN;
-const urlGuarantee = process.env.REACT_APP_API_BASE_URL + "/api/guarantees";
-
-const requestOptions = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json; charset=UTF-8",
-    Authorization: token,
-  },
-};
+import API from "../../api";
 
 const DisableFields = ({ children, disabled }) => {
   return Children.map(children, (child) => {
@@ -152,8 +141,8 @@ const CustomerEdit = (props) => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const response = await fetch(`${url}/${customerId}`, requestOptions);
-        const data = await response.json();
+        const response = await API.get(`/api/customers/${customerId}`);
+        const data = response.data;
         const record = data[0];
 
         const formattedCustomer = {
@@ -181,11 +170,10 @@ const CustomerEdit = (props) => {
 
         // ✅ Solo después de tener identificación válida
         if (record.identification) {
-          const gResponse = await fetch(
-            `${urlGuarantee}/${record.identification}`,
-            requestOptions,
+          const gResponse = await API.get(
+            `/api/guarantees/${record.identification}`,
           );
-          const guarantees = await gResponse.json();
+          const guarantees = gResponse.data;
           setGuarantees(guarantees);
         }
       } catch (error) {
@@ -288,47 +276,36 @@ const CustomerEdit = (props) => {
   const addCustomer = async () => {
     setState({ ...state, open: true });
 
-    const requestOptions = {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        Authorization: token,
-      },
-      body: JSON.stringify({ customer, guarantees }),
-    };
-
     try {
-      const response = await fetch(`${url}/customerId`, requestOptions);
-      const responseData = await response.json();
+      await API.put(`/api/customers/${customerId}`, { customer, guarantees });
 
-      if (!response.ok) {
-        if (responseData.errors && responseData.errors.length > 0) {
-          for (let i = 0; i < responseData.errors.length; i++) {
-            if (i === 0 && responseData.errors.length === 1) {
-              toast.error(responseData.errors[i].msg);
-            } else if (i % 2 === 1) {
-              toast.error(responseData.errors[i].msg);
-              setAlert({
-                alertType: "error",
-                alertMessage: `Repuesta del servidor: ` + responseData.errors,
-              });
-            }
+      setAlert({
+        alertType: "success",
+        alertMessage: "Registro guardado exitosamente",
+      });
+      setTimeout(() => {
+        navigate("/clientes");
+      }, 2000);
+    } catch (error) {
+      const responseData = error.response?.data;
+      if (responseData?.errors && responseData.errors.length > 0) {
+        for (let i = 0; i < responseData.errors.length; i++) {
+          if (i === 0 && responseData.errors.length === 1) {
+            toast.error(responseData.errors[i].msg);
+          } else if (i % 2 === 1) {
+            toast.error(responseData.errors[i].msg);
+            setAlert({
+              alertType: "error",
+              alertMessage: `Repuesta del servidor: ` + responseData.errors,
+            });
           }
         }
       } else {
         setAlert({
-          alertType: "success",
-          alertMessage: "Registro guardado exitosamente",
+          alertType: "error",
+          alertMessage: "catch.Error al guardar el registro." + error,
         });
-        setTimeout(() => {
-          navigate("/clientes");
-        }, 2000);
       }
-    } catch (error) {
-      setAlert({
-        alertType: "error",
-        alertMessage: "catch.Error al guardar el registro." + error,
-      });
     }
     setOpenDialog(false);
   };

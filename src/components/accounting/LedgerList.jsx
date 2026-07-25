@@ -12,7 +12,13 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
+import { printAccountingReport } from "./printAccountingReport";
+import JournalDetailDialog from "./JournalDetailDialog";
+
+const money = (value) =>
+  Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function LedgerList() {
   const [accounts, setAccounts] = useState([]);
@@ -25,6 +31,15 @@ export default function LedgerList() {
     from_date: "",
     to_date: "",
   });
+
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedJournalId, setSelectedJournalId] = useState(null);
+
+  const handleOpenDetail = (journalEntryId) => {
+    if (!journalEntryId) return;
+    setSelectedJournalId(journalEntryId);
+    setDetailOpen(true);
+  };
 
   const [alert, setAlert] = useState({
     open: false,
@@ -73,24 +88,32 @@ export default function LedgerList() {
         account_id: selectedAccount.id,
       };
 
-      if (filters.from_date) params.from_date = filters.from_date;
-      if (filters.to_date) params.to_date = filters.to_date;
+      if (filters.from_date) params.start_date = filters.from_date;
+      if (filters.to_date) params.end_date = filters.to_date;
 
       const res = await API.get("/api/accounting/ledger", { params });
 
-      const data = res.data?.data || res.data || {};
+      // La respuesta es { ok, data: [...], summary: {...} } — data y summary
+      // son hermanos, no summary anidado dentro de data. "res.data?.data ||
+      // res.data" fallaba en cuanto data era un array (siempre truthy,
+      // incluso vacío []), dejando el resto del código leyendo summary
+      // desde el array de movimientos — por eso "Saldo inicial" nunca
+      // aparecía en pantalla.
+      const payload = res.data || {};
 
       setRows(
-        Array.isArray(data.movements)
-          ? data.movements
-          : Array.isArray(data.rows)
-            ? data.rows
-            : Array.isArray(data)
-              ? data
-              : [],
+        Array.isArray(payload.data)
+          ? payload.data
+          : Array.isArray(payload.movements)
+            ? payload.movements
+            : Array.isArray(payload.rows)
+              ? payload.rows
+              : Array.isArray(payload)
+                ? payload
+                : [],
       );
 
-      setSummary(data.summary || null);
+      setSummary(payload.summary || null);
     } catch (error) {
       showAlert(
         error.response?.data?.message ||
@@ -121,49 +144,106 @@ export default function LedgerList() {
         field: "entry_no",
         headerName: "Comprobante",
         width: 150,
+        renderCell: (params) =>
+          params.row.journal_entry_id ? (
+            <Button
+              size="small"
+              onClick={() => handleOpenDetail(params.row.journal_entry_id)}
+              sx={{ textTransform: "none", minWidth: 0, p: 0, fontWeight: 700 }}
+            >
+              {params.value}
+            </Button>
+          ) : (
+            params.value
+          ),
       },
       {
         field: "description",
         headerName: "Descripción",
         flex: 1,
         minWidth: 280,
+        // El backend expone la descripción de la línea (line_description) y
+        // la del comprobante (entry_description) por separado, no un campo
+        // "description" plano — sin esto la columna quedaba siempre vacía.
+        // La línea es más específica; si no tiene una propia, se usa la del
+        // comprobante (que siempre existe, es NOT NULL).
+        valueGetter: (params) =>
+          params.row.line_description || params.row.entry_description || "",
       },
       {
         field: "debit",
         headerName: "Débito",
         width: 140,
         type: "number",
-        valueFormatter: (params) =>
-          Number(params.value || 0).toLocaleString("es-NI", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }),
+        valueFormatter: (params) => money(params.value),
       },
       {
         field: "credit",
         headerName: "Crédito",
         width: 140,
         type: "number",
-        valueFormatter: (params) =>
-          Number(params.value || 0).toLocaleString("es-NI", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }),
+        valueFormatter: (params) => money(params.value),
       },
       {
-        field: "running_balance",
+        field: "balance",
         headerName: "Saldo",
         width: 150,
         type: "number",
-        valueFormatter: (params) =>
-          Number(params.value || 0).toLocaleString("es-NI", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }),
+        valueFormatter: (params) => money(params.value),
       },
     ],
     [],
   );
+
+  // Fila sintética de "Saldo Inicial" al principio del mayor — solo
+  // informativa (no tiene journal_entry_id, el comprobante no es clicable
+  // en esta fila) y visible tanto en pantalla como en el reporte impreso,
+  // ya que displayRows alimenta a ambos.
+  const displayRows = useMemo(() => {
+    if (!summary) return rows;
+
+    const openingRow = {
+      id: "opening-balance",
+      entry_date: filters.from_date || "",
+      entry_no: "",
+      entry_description: "Saldo Inicial",
+      line_description: "",
+      debit: null,
+      credit: null,
+      balance: summary.opening_balance,
+    };
+
+    return [openingRow, ...rows];
+  }, [rows, summary, filters.from_date]);
+
+  const printReport = () => {
+    if (!selectedAccount) return;
+
+    printAccountingReport({
+      title: "Mayor General",
+      subtitle: `${selectedAccount.muc_code} - ${selectedAccount.account_name}`,
+      period: filters.from_date || filters.to_date
+        ? `${filters.from_date || "..."} a ${filters.to_date || "..."}`
+        : "",
+      columns: [
+        { field: "entry_date", label: "Fecha", value: (row) => (row.entry_date ? String(row.entry_date).substring(0, 10) : "") },
+        { field: "entry_no", label: "Comprobante" },
+        { field: "description", label: "Descripción", value: (row) => row.line_description || row.entry_description || "" },
+        { field: "debit", label: "Débito", numeric: true, format: money },
+        { field: "credit", label: "Crédito", numeric: true, format: money },
+        { field: "balance", label: "Saldo", numeric: true, format: money },
+      ],
+      rows: displayRows,
+      totals: summary
+        ? [
+            { value: `Totales (saldo inicial: ${money(summary.opening_balance)})`, colspan: 3 },
+            { value: money(summary.total_debit), numeric: true },
+            { value: money(summary.total_credit), numeric: true },
+            { value: money(summary.closing_balance), numeric: true },
+          ]
+        : [],
+    });
+  };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -194,7 +274,7 @@ export default function LedgerList() {
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              md: "2fr 180px 180px 120px",
+              md: "2fr 180px 180px 120px 120px",
             },
             gap: 1,
           }}
@@ -241,6 +321,16 @@ export default function LedgerList() {
           >
             Buscar
           </Button>
+
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={printReport}
+            disabled={!displayRows.length}
+            sx={{ borderRadius: 2, textTransform: "none" }}
+          >
+            Imprimir
+          </Button>
         </Box>
 
         {summary && (
@@ -280,7 +370,7 @@ export default function LedgerList() {
 
         <Box sx={{ height: 620 }}>
           <DataGrid
-            rows={rows}
+            rows={displayRows}
             columns={columns}
             loading={loading}
             getRowId={(row) =>
@@ -306,6 +396,12 @@ export default function LedgerList() {
           />
         </Box>
       </Paper>
+
+      <JournalDetailDialog
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        journalId={selectedJournalId}
+      />
 
       <Snackbar
         open={alert.open}

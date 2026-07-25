@@ -27,9 +27,8 @@ import RiskSelect from "./RiskSelect";
 import ProvinceSelect from "./ProvinceSelect";
 import MunicipalitySelect from "./MunicipalitySelect";
 import ConfirmDialog from "./ConfirmDialog";
-
-const url = process.env.REACT_APP_API_BASE_URL + "/api/branches/";
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
+import BranchCalendarFields from "./BranchCalendarFields";
 
 const initialBranch = {
   name: "",
@@ -39,6 +38,8 @@ const initialBranch = {
   risk_id: "",
   province_id: "",
   municipality_id: "",
+  works_saturday: false,
+  holidays: [],
 };
 
 function validateBranch(data) {
@@ -112,36 +113,16 @@ const BranchAdd = () => {
 
   const addBranch = async () => {
     try {
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=UTF-8",
-          Authorization: token,
-        },
-        body: JSON.stringify({
-          ...branch,
-          name: branch.name.trim(),
-          address: branch.address.trim(),
-          manager: branch.manager.trim(),
-          telephone: branch.telephone.trim(),
-          risk_id: Number(branch.risk_id),
-          province_id: Number(branch.province_id),
-          municipality_id: Number(branch.municipality_id),
-        }),
+      await API.post("/api/branches/", {
+        ...branch,
+        name: branch.name.trim(),
+        address: branch.address.trim(),
+        manager: branch.manager.trim(),
+        telephone: branch.telephone.trim(),
+        risk_id: Number(branch.risk_id),
+        province_id: Number(branch.province_id),
+        municipality_id: Number(branch.municipality_id),
       });
-
-      const data = await resp.json().catch(() => ({}));
-
-      if (!resp.ok) {
-        showSnack(
-          "error",
-          data?.errors
-            ? `Mensaje del servidor: ${data.errors}`
-            : "Error al guardar",
-        );
-        setOpenDialog(false);
-        return;
-      }
 
       showSnack("success", "Sucursal guardada exitosamente.");
       setOpenDialog(false);
@@ -149,7 +130,13 @@ const BranchAdd = () => {
       setTimeout(() => navigate("/sucursales"), 1200);
     } catch (e) {
       console.error(e);
-      showSnack("error", "Error de conexión: " + e.message);
+      const data = e.response?.data;
+      showSnack(
+        "error",
+        data?.errors
+          ? `Mensaje del servidor: ${data.errors}`
+          : "Error al guardar",
+      );
       setOpenDialog(false);
     }
   };
@@ -395,6 +382,7 @@ const BranchAdd = () => {
                     />
                   </Grid>
                 </Grid>
+                <BranchCalendarFields value={branch} onChange={(next) => setBranch(next)} />
               </Stack>
             </CardContent>
           </Card>

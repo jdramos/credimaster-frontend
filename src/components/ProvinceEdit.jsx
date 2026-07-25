@@ -8,9 +8,7 @@ import Cancel from '@mui/icons-material/Cancel';
 import Alert from '@mui/material/Alert';
 import RiskSelect from "./RiskSelect";
 import Snackbar from '@mui/material/Snackbar';
-
-const url = process.env.REACT_APP_API_BASE_URL + '/api/provinces/';
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const ProvinceEdit = (props) => {
 
@@ -55,41 +53,24 @@ const ProvinceEdit = (props) => {
 	const editProvince = async () => {
 		setState({ ...state, open: true });
 
-		const requestOptions = {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json; charset=UTF-8',
-				'Authorization': token
-			},
-			body: JSON.stringify(province)
-		};
-
-
 		try {
-			const response = await fetch(url + province.id, requestOptions)
-			const responseData = await response.json();
+			await API.put('/api/provinces/' + province.id, province);
 
-			if (!response.ok) {
-				if (responseData.errors && responseData.errors.length > 0) {
-					responseData.errors.forEach(error => {
-						setAlert({ alertType: "error", alertMessage: `Repuesta del servidor: ` + error.msg })
-					});
-				} else {
+			setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" })
 
-					setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente." })
-				}
-			} else {
-				setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" })
-
-				setTimeout(() => {
-					navigate("/departamentos")
-				}, 2000)
-
-			}
+			setTimeout(() => {
+				navigate("/departamentos")
+			}, 2000)
 
 		} catch (error) {
-
-			setAlert({ alertType: "error", alertMessage: 'Catch: Error al guardar el registro departamento.' + error })
+			const responseData = error.response?.data;
+			if (responseData?.errors && responseData.errors.length > 0) {
+				responseData.errors.forEach(err => {
+					setAlert({ alertType: "error", alertMessage: `Repuesta del servidor: ` + err.msg })
+				});
+			} else {
+				setAlert({ alertType: "error", alertMessage: 'Catch: Error al guardar el registro departamento.' + error })
+			}
 		}
 
 	};

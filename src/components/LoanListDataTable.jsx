@@ -43,7 +43,6 @@ import AccountStatementModal from "./AccountStatementModal";
 import axios from "axios";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import LoanModificationStatusChip from "./Loan/LoanModificationStatusChip";
 import API from "../api";
 
 const urlGuarantee = `/api/guarantees`;
@@ -407,6 +406,11 @@ function LoanListDataTable({
           color: "warning",
           icon: <DescriptionIcon fontSize="small" />,
         },
+        WRITTEN_OFF: {
+          label: "Castigado",
+          color: "error",
+          icon: <CancelIcon fontSize="small" />,
+        },
       };
 
       const chip = map[raw] || {
@@ -647,7 +651,6 @@ function LoanListDataTable({
             </TableRow>
           )}
 
-          <LoanModificationStatusChip />
         </TableBody>
       </Table>
 

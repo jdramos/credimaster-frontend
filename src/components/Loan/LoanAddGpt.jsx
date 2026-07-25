@@ -88,7 +88,6 @@ const LoanAdd = () => {
     other_charges: "0.00",
     term: 0,
     due_date: today(),
-    loan_group_id: "",
     interest_type_id: 1,
     interest_type_name: "compound",
     interest_rate: "1.00",
@@ -109,6 +108,7 @@ const LoanAdd = () => {
     id_municipio: "",
     id_oficina: "",
     id_origen_recursos: "",
+    id_sindicado: "",
     id_periodo_cobro_interes: "",
     id_periodo_cobro_principal: "",
     id_situacion_credito: 1,
@@ -361,6 +361,7 @@ const LoanAdd = () => {
           other_charges: Number(loan.other_charges || 0),
           interest_type_name: loan.interest_type_name || "compound",
           frequency_id: loan.frequency_id,
+          branch_id: loan.branch_id,
         };
 
         const response = await API.post(`${url}/amortization`, payload);
@@ -725,7 +726,6 @@ const LoanAdd = () => {
       other_charges: Number(loan.other_charges || 0),
       term: Number(loan.term || 0),
       due_date: dayjs(loan.due_date).format("YYYY-MM-DD"),
-      loan_group_id: loan.loan_group_id || null,
       interest_type_id: Number(loan.interest_type_id || 1),
       interest_type_name: loan.interest_type_name || "compound",
       interest_rate: Number(loan.interest_rate || 0),
@@ -749,6 +749,16 @@ const LoanAdd = () => {
       id_oficina: loan.id_oficina ? Number(loan.id_oficina) : null,
       id_origen_recursos: loan.id_origen_recursos
         ? Number(loan.id_origen_recursos)
+        : null,
+      id_sindicado: loan.id_sindicado ? Number(loan.id_sindicado) : null,
+      id_periodo_cobro_interes: loan.id_periodo_cobro_interes
+        ? Number(loan.id_periodo_cobro_interes)
+        : null,
+      id_periodo_cobro_principal: loan.id_periodo_cobro_principal
+        ? Number(loan.id_periodo_cobro_principal)
+        : null,
+      id_situacion_credito: loan.id_situacion_credito
+        ? Number(loan.id_situacion_credito)
         : null,
       id_tipo_agrupacion_credito: loan.id_tipo_agrupacion_credito
         ? Number(loan.id_tipo_agrupacion_credito)

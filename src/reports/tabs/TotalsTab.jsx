@@ -13,7 +13,7 @@ import {
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
-import { useReportDefinition } from "../customs/context/ReportDefinitionContext";
+import { useReportDefinition } from "../custom/context/ReportDefinitionContext";
 
 const BAC = {
   border: "#D8E2F0",

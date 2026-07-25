@@ -7,10 +7,7 @@ import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
 import { FormHelperText } from "@mui/material";
 import { UserContext } from "../contexts/UserContext";
-
-const url = process.env.REACT_APP_API_BASE_URL + '/api/branches';
-const token = process.env.REACT_APP_API_TOKEN;
-const headers = { Authorization: token };
+import API from "../api";
 
 const BranchMultipleSelect = (props) => {
 	const [data, setData] = useState([]);
@@ -23,13 +20,9 @@ const BranchMultipleSelect = (props) => {
 		const fetchApi = async () => {
 			try {
 				setLoading(true);
-				const response = await fetch(url, { headers });
+				const response = await API.get('/api/branches');
 
-				if (!response.ok) {
-					throw new Error('Failed to retrieve data.');
-				}
-
-				const jsonData = await response.json();
+				const jsonData = response.data;
 				const filteredData = jsonData.filter(branch => userBranches.includes(branch.id));
 				setData(jsonData);
 			} catch (error) {

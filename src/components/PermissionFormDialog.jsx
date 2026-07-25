@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button
 } from '@mui/material';
-import axios from 'axios';
+import API from '../api';
 
 const PermissionFormDialog = ({ open, onClose, onSuccess, permissionToEdit }) => {
     const [permissionName, setPermissionName] = useState('');
@@ -28,13 +28,11 @@ const PermissionFormDialog = ({ open, onClose, onSuccess, permissionToEdit }) =>
                 permission_tag: permissionTag
             };
             const endpoint = permissionToEdit
-                ? `${process.env.REACT_APP_API_BASE_URL}/api/permissions/${permissionToEdit.id}`
-                : `${process.env.REACT_APP_API_BASE_URL}/api/permissions`;
+                ? `/api/permissions/${permissionToEdit.id}`
+                : `/api/permissions`;
             const method = permissionToEdit ? 'put' : 'post';
 
-            await axios[method](endpoint, payload, {
-                headers: { Authorization: process.env.REACT_APP_API_TOKEN }
-            });
+            await API[method](endpoint, payload);
 
             onSuccess();
         } catch (err) {

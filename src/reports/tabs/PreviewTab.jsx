@@ -12,7 +12,7 @@ import {
 import RefreshIcon from "@mui/icons-material/Refresh";
 import PrintIcon from "@mui/icons-material/Print";
 
-import { useReportDefinition } from "../customs/context/ReportDefinitionContext";
+import { useReportDefinition } from "../custom/context/ReportDefinitionContext";
 import API from "../../api";
 
 const PreviewTab = () => {

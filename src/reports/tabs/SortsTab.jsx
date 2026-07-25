@@ -15,7 +15,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
-import { useReportDefinition } from "../customs/context/ReportDefinitionContext";
+import { useReportDefinition } from "../custom/context/ReportDefinitionContext";
 
 const BAC = {
   border: "#D8E2F0",

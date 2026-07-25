@@ -8,9 +8,7 @@ import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import { SaveButton, CancelButton } from './MyButtons';
-
-const url = process.env.REACT_APP_API_BASE_URL + '/api/risks/';
-const token = process.env.REACT_APP_API_TOKEN;
+import API from "../api";
 
 const RiskEdit = () => {
 	const location = useLocation();
@@ -113,32 +111,20 @@ const RiskEdit = () => {
 	};
 
 	const handleConfirmation = async () => {
-		const requestOptions = {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json; charset=UTF-8',
-				'Authorization': token
-			},
-			body: JSON.stringify(risk)
-		};
-
 		try {
-			const response = await fetch(url + risk.id, requestOptions)
-			const responseData = await response.json();
-			if (!response.ok) {
-				if (responseData.errors && responseData.errors.length > 0) {
-					responseData.errors.forEach(error => {
-						setAlert({ alertType: "error", alertMessage: error.msg })
-					});
-				} else {
-					setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" })
-				}
-			} else {
-				setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" })
-			}
+			await API.put('/api/risks/' + risk.id, risk);
+
+			setAlert({ alertType: "success", alertMessage: "Registro guardado exitosamente" })
 
 		} catch (error) {
-			setAlert({ alertType: "error", alertMessage: error.message });
+			const responseData = error.response?.data;
+			if (responseData?.errors && responseData.errors.length > 0) {
+				responseData.errors.forEach(err => {
+					setAlert({ alertType: "error", alertMessage: err.msg })
+				});
+			} else {
+				setAlert({ alertType: "error", alertMessage: error.message });
+			}
 		}
 		setState({ ...state, open: true });
 	}
