@@ -28,7 +28,7 @@ export const getBalancesFastAging = async (params) => {
 };
 
 export const getBalancesDetail = async (params) => {
-  const { data } = await API.get("/api/balance/balances-detail", { params });
+  const { data } = await API.get("/api/balances/balances-detail", { params });
   return data;
 };
 
