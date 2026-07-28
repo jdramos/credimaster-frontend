@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Grid,
@@ -9,6 +9,9 @@ import {
   Button,
   CircularProgress,
   Divider,
+  Chip,
+  Stack,
+  Alert,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { saveAs } from "file-saver";
@@ -23,13 +26,27 @@ import {
   Tooltip,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
   Cell,
   Legend,
 } from "recharts";
 import dayjs from "dayjs";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
+import DownloadIcon from "@mui/icons-material/Download";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import PercentIcon from "@mui/icons-material/Percent";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import ShieldIcon from "@mui/icons-material/Shield";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import DonutLargeIcon from "@mui/icons-material/DonutLarge";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import KpiCard from "../../components/dashboard/KpiCard";
+import { UserContext } from "../../contexts/UserContext";
 import {
   getDashboardCatalogs,
   getBalancesFastSummary,
@@ -38,14 +55,14 @@ import {
   getBalancesDetail,
 } from "../../api/dashboardBalances";
 
-const COLORS = [
-  "#1565c0",
-  "#2e7d32",
-  "#ef6c00",
-  "#c62828",
-  "#6a1b9a",
-  "#00838f",
-];
+const AGING_COLORS = {
+  "Al día": "#2E7D32",
+  "1-15": "#8BC34A",
+  "16-30": "#FBC02D",
+  "31-60": "#EF6C00",
+  "61-90": "#E53935",
+  "90+": "#B71C1C",
+};
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("es-NI", {
@@ -54,8 +71,55 @@ const formatCurrency = (value) =>
     minimumFractionDigits: 2,
   }).format(Number(value || 0));
 
+function SectionHeader({ icon: Icon, title, subtitle, action }) {
+  return (
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="space-between"
+      mb={2}
+      flexWrap="wrap"
+      gap={1}
+    >
+      <Stack direction="row" spacing={1.2} alignItems="center">
+        {Icon && (
+          <Box
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: 2,
+              bgcolor: "#EEF3FB",
+              color: "#0F4C81",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon sx={{ fontSize: 18 }} />
+          </Box>
+        )}
+        <Box>
+          <Typography variant="h6" fontWeight={800} fontSize={16}>
+            {title}
+          </Typography>
+          {subtitle && (
+            <Typography variant="caption" color="text.secondary">
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
+      </Stack>
+      {action}
+    </Box>
+  );
+}
+
 export default function BalancesDashboardPro() {
+  const { role, permissions = [] } = useContext(UserContext) || {};
+  const canView = role === 1 || permissions.includes("balances.ver");
+
   const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [catalogs, setCatalogs] = useState({
     branches: [],
     promoters: [],
@@ -116,6 +180,7 @@ export default function BalancesDashboardPro() {
       setSummary(summaryRes?.data || null);
       setPortfolioByMonth(monthRes?.data || []);
       setAging(agingRes?.data || []);
+      setLastUpdated(dayjs());
     } catch (error) {
       console.error("loadDashboard error:", error);
     } finally {
@@ -144,17 +209,32 @@ export default function BalancesDashboardPro() {
   };
 
   useEffect(() => {
+    if (!canView) return;
     loadCatalogs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView]);
 
   useEffect(() => {
+    if (!canView) return;
     loadDashboard();
     loadDetail({
       page: 0,
       pageSize: detailPageSize,
       overdue_bucket: detailBucket,
     });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView]);
+
+  if (!canView) {
+    return (
+      <Box p={3}>
+        <Alert severity="warning" icon={<LockOutlinedIcon />} sx={{ borderRadius: 2 }}>
+          No tienes permiso para ver el Dashboard de Saldos. Contacta a tu administrador
+          si necesitas acceso (permiso <strong>balances.ver</strong>).
+        </Alert>
+      </Box>
+    );
+  }
 
   const handleFilterChange = (field) => (event) => {
     setFilters((prev) => ({
@@ -173,8 +253,8 @@ export default function BalancesDashboardPro() {
     });
   };
 
-  const handleAgingClick = async (_, index) => {
-    const bucket = aging[index]?.bucket;
+  const handleAgingClick = async (data) => {
+    const bucket = data?.bucket;
 
     const map = {
       "Al día": "current",
@@ -270,22 +350,68 @@ export default function BalancesDashboardPro() {
     },
   ];
 
+  const currentPortfolio = Math.max(
+    0,
+    Number(summary?.total_portfolio || 0) - Number(summary?.overdue_portfolio || 0),
+  );
+
+  const activeFilterChips = [
+    filters.balance_type && `Tipo: ${filters.balance_type}`,
+    filters.branch_id &&
+      `Sucursal: ${catalogs.branches.find((b) => b.id === filters.branch_id)?.name || filters.branch_id}`,
+    filters.promoter_id &&
+      `Promotor: ${catalogs.promoters.find((p) => p.id === filters.promoter_id)?.name || filters.promoter_id}`,
+    filters.vendor_id &&
+      `Vendedor: ${catalogs.vendors.find((v) => v.id === filters.vendor_id)?.name || filters.vendor_id}`,
+    filters.collector_id &&
+      `Cobrador: ${catalogs.collectors.find((c) => c.id === filters.collector_id)?.name || filters.collector_id}`,
+  ].filter(Boolean);
+
   return (
-    <Box p={2}>
-      <Box mb={3}>
-        <Typography variant="h4" fontWeight={700}>
-          Dashboard Pro de Saldos
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Resumen rápido desde tabla resumida + detalle operativo desde balances
-        </Typography>
+    <Box p={{ xs: 1.5, md: 2 }}>
+      <Box
+        sx={{
+          mb: 3,
+          p: { xs: 2, md: 3 },
+          borderRadius: 3,
+          color: "#fff",
+          background: "linear-gradient(120deg, #0B1F3A 0%, #0F4C81 100%)",
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={1.5}
+        >
+          <Box>
+            <Typography variant="h5" fontWeight={800}>
+              Dashboard de Saldos
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              Cartera, mora y provisión — {dayjs(filters.date_from).format("DD/MM/YYYY")} al{" "}
+              {dayjs(filters.date_to).format("DD/MM/YYYY")}
+            </Typography>
+          </Box>
+
+          {lastUpdated && (
+            <Chip
+              size="small"
+              label={`Actualizado ${lastUpdated.format("HH:mm:ss")}`}
+              sx={{ bgcolor: "rgba(255,255,255,.14)", color: "#fff", fontWeight: 700 }}
+            />
+          )}
+        </Stack>
       </Box>
 
       <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
+        <SectionHeader icon={FilterAltIcon} title="Filtros" />
+
         <Grid container spacing={2}>
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
+              size="small"
               type="date"
               label="Desde"
               value={filters.date_from}
@@ -297,6 +423,7 @@ export default function BalancesDashboardPro() {
           <Grid item xs={12} md={2}>
             <TextField
               fullWidth
+              size="small"
               type="date"
               label="Hasta"
               value={filters.date_to}
@@ -309,6 +436,7 @@ export default function BalancesDashboardPro() {
             <TextField
               select
               fullWidth
+              size="small"
               label="Tipo"
               value={filters.balance_type}
               onChange={handleFilterChange("balance_type")}
@@ -322,6 +450,7 @@ export default function BalancesDashboardPro() {
             <TextField
               select
               fullWidth
+              size="small"
               label="Sucursal"
               value={filters.branch_id}
               onChange={handleFilterChange("branch_id")}
@@ -339,6 +468,7 @@ export default function BalancesDashboardPro() {
             <TextField
               select
               fullWidth
+              size="small"
               label="Promotor"
               value={filters.promoter_id}
               onChange={handleFilterChange("promoter_id")}
@@ -356,6 +486,7 @@ export default function BalancesDashboardPro() {
             <TextField
               select
               fullWidth
+              size="small"
               label="Vendedor"
               value={filters.vendor_id}
               onChange={handleFilterChange("vendor_id")}
@@ -373,6 +504,7 @@ export default function BalancesDashboardPro() {
             <TextField
               select
               fullWidth
+              size="small"
               label="Cobrador"
               value={filters.collector_id}
               onChange={handleFilterChange("collector_id")}
@@ -395,16 +527,17 @@ export default function BalancesDashboardPro() {
             alignItems="center"
             gap={1}
           >
-            <Button variant="contained" onClick={handleApplyFilters}>
+            <Button variant="contained" onClick={handleApplyFilters} startIcon={<FilterAltIcon />}>
               Aplicar filtros
             </Button>
 
-            <Button variant="outlined" onClick={exportToExcel}>
+            <Button variant="outlined" onClick={exportToExcel} startIcon={<DownloadIcon />}>
               Exportar Excel
             </Button>
 
             <Button
               variant="text"
+              startIcon={<RestartAltIcon />}
               onClick={async () => {
                 setDetailBucket("");
                 setDetailPage(0);
@@ -418,6 +551,16 @@ export default function BalancesDashboardPro() {
               Limpiar drill-down
             </Button>
           </Grid>
+
+          {activeFilterChips.length > 0 && (
+            <Grid item xs={12}>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {activeFilterChips.map((label) => (
+                  <Chip key={label} size="small" label={label} variant="outlined" />
+                ))}
+              </Stack>
+            </Grid>
+          )}
         </Grid>
       </Paper>
 
@@ -428,43 +571,97 @@ export default function BalancesDashboardPro() {
       ) : (
         <>
           <Grid container spacing={2} mb={3}>
-            <Grid item xs={12} md={3}>
-              <KpiCard title="Cartera total" value={summary?.total_portfolio} />
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Cartera Total"
+                value={summary?.total_portfolio}
+                icon={AccountBalanceIcon}
+                color="primary"
+              />
             </Grid>
-            <Grid item xs={12} md={3}>
-              <KpiCard title="Capital" value={summary?.total_capital} />
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Cartera Vigente"
+                value={currentPortfolio}
+                icon={CheckCircleOutlineIcon}
+                color="success"
+              />
             </Grid>
-            <Grid item xs={12} md={3}>
-              <KpiCard title="Mora" value={summary?.overdue_portfolio} />
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Mora"
+                value={summary?.overdue_portfolio}
+                icon={WarningAmberIcon}
+                color="error"
+              />
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <KpiCard
                 title="% Mora"
                 value={summary?.overdue_rate}
                 type="percent"
+                icon={PercentIcon}
+                color="warning"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Capital"
+                value={summary?.total_capital}
+                icon={PaymentsIcon}
+                color="info"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Provisión Estimada"
+                value={summary?.estimated_provision}
+                icon={ShieldIcon}
+                color="purple"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Clientes"
+                value={summary?.total_customers}
+                type="number"
+                icon={PeopleAltIcon}
+                color="primary"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <KpiCard
+                title="Créditos Activos"
+                value={summary?.total_loans}
+                type="number"
+                icon={AssignmentTurnedInIcon}
+                color="info"
               />
             </Grid>
           </Grid>
 
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} lg={8}>
-              <Paper sx={{ p: 2, borderRadius: 3, height: 380 }}>
-                <Typography variant="h6" mb={2}>
-                  Evolución de cartera
-                </Typography>
-                <ResponsiveContainer width="100%" height="90%">
+              <Paper sx={{ p: 2, borderRadius: 3, height: 400 }}>
+                <SectionHeader
+                  icon={ShowChartIcon}
+                  title="Evolución de cartera"
+                  subtitle="Cartera total, mora y provisión por mes"
+                />
+                <ResponsiveContainer width="100%" height="85%">
                   <LineChart data={portfolioByMonth}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EEF1F5" />
+                    <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Line
                       type="monotone"
                       dataKey="total_portfolio"
                       name="Cartera"
                       stroke="#1565c0"
                       strokeWidth={3}
+                      dot={{ r: 3 }}
                     />
                     <Line
                       type="monotone"
@@ -472,6 +669,7 @@ export default function BalancesDashboardPro() {
                       name="Mora"
                       stroke="#c62828"
                       strokeWidth={2}
+                      dot={{ r: 3 }}
                     />
                     <Line
                       type="monotone"
@@ -479,6 +677,7 @@ export default function BalancesDashboardPro() {
                       name="Provisión"
                       stroke="#ef6c00"
                       strokeWidth={2}
+                      dot={{ r: 3 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -486,59 +685,48 @@ export default function BalancesDashboardPro() {
             </Grid>
 
             <Grid item xs={12} lg={4}>
-              <Paper sx={{ p: 2, borderRadius: 3, height: 380 }}>
-                <Typography variant="h6" mb={2}>
-                  Aging de cartera
-                </Typography>
-                <ResponsiveContainer width="100%" height="90%">
-                  <PieChart>
-                    <Pie
-                      data={aging}
+              <Paper sx={{ p: 2, borderRadius: 3, height: 400 }}>
+                <SectionHeader
+                  icon={DonutLargeIcon}
+                  title="Aging de cartera"
+                  subtitle="Clic en una barra para ver el detalle"
+                />
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={aging} layout="vertical" margin={{ left: 10, right: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#EEF1F5" horizontal={false} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v)} />
+                    <YAxis type="category" dataKey="bucket" tick={{ fontSize: 12 }} width={70} />
+                    <Tooltip formatter={(value) => formatCurrency(value)} />
+                    <Bar
                       dataKey="total_balance"
-                      nameKey="bucket"
-                      outerRadius={110}
-                      label
+                      name="Saldo"
+                      radius={[0, 6, 6, 0]}
+                      cursor="pointer"
                       onClick={handleAgingClick}
                     >
-                      {aging.map((entry, index) => (
+                      {aging.map((entry) => (
                         <Cell
                           key={entry.bucket}
-                          fill={COLORS[index % COLORS.length]}
+                          fill={AGING_COLORS[entry.bucket] || "#1565c0"}
                         />
                       ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(value)} />
-                    <Legend />
-                  </PieChart>
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </Paper>
             </Grid>
           </Grid>
 
           <Paper sx={{ p: 2, borderRadius: 3 }}>
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={2}
-            >
-              <Box>
-                <Typography variant="h6">
-                  Detalle operativo de saldos
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {detailBucket
-                    ? `Filtro aging activo: ${detailBucket}`
-                    : "Sin filtro de aging"}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Registros: {detailTotal}
-                </Typography>
-              </Box>
-            </Box>
+            <SectionHeader
+              icon={TableChartIcon}
+              title="Detalle operativo de saldos"
+              subtitle={
+                detailBucket
+                  ? `Filtro aging activo: ${detailBucket} · ${detailTotal} registros`
+                  : `Sin filtro de aging · ${detailTotal} registros`
+              }
+            />
 
             <Divider sx={{ mb: 2 }} />
 

@@ -122,6 +122,7 @@ const menuItems = {
     { label: "Aprobadores", iconName: "FaUserCheck", to: "/aprobadores" },
   ],
   queries: [
+    { label: "Dashboard de Saldos", iconName: "FaChartPie", to: "/dashboard/saldos", permission: "menu.dashboard" },
     { label: "Saldos", iconName: "FaChartBar", to: "/saldos" },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
@@ -318,6 +319,7 @@ export default function AppLayoutMenu({
     user,
     fullName,
     role,
+    permissions = [],
     userBranches = [],
     logout,
   } = userCtx;
@@ -431,6 +433,12 @@ export default function AppLayoutMenu({
     }));
   }, [favorites]);
 
+  // Solo items que declaran "permission" quedan sujetos a este filtro — el
+  // resto del menú sigue visible para cualquier usuario autenticado, igual
+  // que antes. role === 1 (Gerente General) ve todo, sin excepción.
+  const hasItemAccess = (item) =>
+    !item.permission || role === 1 || permissions.includes(item.permission);
+
   const fullMenu = useMemo(() => {
     const base = {
       ...(favoritesSection.length > 0 ? { favorites: favoritesSection } : {}),
@@ -439,11 +447,13 @@ export default function AppLayoutMenu({
 
     const result = {};
     Object.entries(base).forEach(([section, items]) => {
-      if (isSectionEnabled(section)) result[section] = items;
+      if (!isSectionEnabled(section)) return;
+      const visibleItems = items.filter(hasItemAccess);
+      if (visibleItems.length) result[section] = visibleItems;
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [favoritesSection, enabledModules]);
+  }, [favoritesSection, enabledModules, permissions, role]);
 
   const filteredMenu = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
