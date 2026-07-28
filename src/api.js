@@ -11,14 +11,14 @@ const API = axios.create({
 
 let isLoggingOut = false;
 
-const logoutExpiredSession = () => {
+const logoutExpiredSession = (message) => {
   if (isLoggingOut) return;
 
   isLoggingOut = true;
 
   localStorage.setItem(
     "sessionExpiredMessage",
-    "Su sesión expiró por seguridad. Debe iniciar sesión nuevamente.",
+    message || "Su sesión expiró por seguridad. Debe iniciar sesión nuevamente.",
   );
 
   localStorage.removeItem("token");
@@ -68,7 +68,10 @@ API.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       console.warn("Sesión expirada");
-      logoutExpiredSession();
+      const isSessionReplaced = error.response?.data?.code === "SESSION_REPLACED";
+      logoutExpiredSession(
+        isSessionReplaced ? "Tu sesión se cerró porque se inició sesión en otro equipo." : undefined,
+      );
     }
 
     return Promise.reject(error);
