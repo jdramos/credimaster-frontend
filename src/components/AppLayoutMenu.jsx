@@ -68,6 +68,7 @@ const DRAWER_CLOSED = 72;
 
 const sectionLabels = {
   favorites: "Favoritos",
+  dashboard: "Dashboard",
   main: "Catálogos",
   management: "Operaciones",
   users: "Usuarios y permisos",
@@ -83,6 +84,9 @@ const sectionLabels = {
 };
 
 const menuItems = {
+  dashboard: [
+    { label: "Dashboard de Saldos", iconName: "FaChartPie", to: "/dashboard/saldos", permission: "menu.dashboard" },
+  ],
   main: [
     { label: "Clientes", iconName: "FaPeopleArrows", to: "/clientes" },
     { label: "Sucursales", iconName: "FaRegBuilding", to: "/sucursales" },
@@ -122,7 +126,6 @@ const menuItems = {
     { label: "Aprobadores", iconName: "FaUserCheck", to: "/aprobadores" },
   ],
   queries: [
-    { label: "Dashboard de Saldos", iconName: "FaChartPie", to: "/dashboard/saldos", permission: "menu.dashboard" },
     { label: "Saldos", iconName: "FaChartBar", to: "/saldos" },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
@@ -341,6 +344,7 @@ export default function AppLayoutMenu({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState({
     favorites: true,
+    dashboard: true,
     main: true,
     management: true,
     users: false,
