@@ -8,12 +8,22 @@ const AuthContext = createContext();
 
 const url = "/api/login";
 
-export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token"),
-  );
+const getStoredToken = () => {
+  const flatToken = localStorage.getItem("token");
+  if (flatToken) return flatToken;
 
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  try {
+    const session = JSON.parse(localStorage.getItem("session") || "null");
+    return session?.token || null;
+  } catch {
+    return null;
+  }
+};
+
+export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getStoredToken());
+
+  const [token, setToken] = useState(getStoredToken());
 
   const [tenant, setTenant] = useState(() => {
     try {

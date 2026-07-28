@@ -22,6 +22,10 @@ const logoutExpiredSession = () => {
   );
 
   localStorage.removeItem("token");
+  localStorage.removeItem("session");
+  localStorage.removeItem("user");
+  // Llaves planas heredadas de un diseño de auth anterior — ya no se
+  // escriben en login(), pero se limpian por si quedaron de una sesión vieja.
   localStorage.removeItem("permissions");
   localStorage.removeItem("role_id");
   localStorage.removeItem("branches");
@@ -33,9 +37,21 @@ const logoutExpiredSession = () => {
   window.location.replace("/login");
 };
 
+const getStoredToken = () => {
+  const flatToken = localStorage.getItem("token");
+  if (flatToken) return flatToken;
+
+  try {
+    const session = JSON.parse(localStorage.getItem("session") || "null");
+    return session?.token || null;
+  } catch {
+    return null;
+  }
+};
+
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = getStoredToken();
 
     if (!token) {
       return config;
