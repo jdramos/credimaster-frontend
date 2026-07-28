@@ -76,6 +76,15 @@ import IncomeStatement from "./components/accounting/IncomeStatement";
 import BalanceSheet from "./components/accounting/BalanceSheet";
 import EquityChanges from "./components/accounting/EquityChanges";
 import CashFlowStatement from "./components/accounting/CashFlowStatement";
+import GuaranteesReport from "./components/GuaranteesReport";
+import AmlRiskCriteriaConfig from "./components/Compliance/AmlRiskCriteriaConfig";
+import PicReviewReminders from "./components/Compliance/PicReviewReminders";
+import WatchlistManagement from "./components/Compliance/WatchlistManagement";
+import AmlAlertsInbox from "./components/Compliance/AmlAlertsInbox";
+import RosCasesList from "./components/Compliance/RosCasesList";
+import AmlMonthlyReport from "./components/Compliance/AmlMonthlyReport";
+import ComplianceOfficerHistory from "./components/Compliance/ComplianceOfficerHistory";
+import AssetAdjudicationsList from "./components/AssetAdjudicationsList";
 import FinancialStatementNotes from "./components/accounting/FinancialStatementNotes";
 import YearEndClosing from "./components/accounting/YearEndClosing";
 import FixedAssetsList from "./components/accounting/FixedAssetsList";
@@ -83,6 +92,9 @@ import FixedAssetDepreciation from "./components/accounting/FixedAssetDepreciati
 import BankAccountsList from "./components/banks/BankAccountsList";
 import BankMovementsList from "./components/banks/BankMovementsList";
 import BankReconciliation from "./components/banks/BankReconciliation";
+import FinanciadoresList from "./components/obligations/FinanciadoresList";
+import LineasCreditoList from "./components/obligations/LineasCreditoList";
+import ObligacionesList from "./components/obligations/ObligacionesList";
 import CashRegistersList from "./components/caja/CashRegistersList";
 import CashMovementsList from "./components/caja/CashMovementsList";
 import CollectorArqueosList from "./components/caja/CollectorArqueosList";
@@ -100,6 +112,7 @@ import AccountMappingsManager from "./components/accounting/AccountMappingsManag
 import PendingItemsAging from "./components/accounting/PendingItemsAging";
 import IccReportPage from "./pages/reports/conami/IccReportPage";
 import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
+import IscGenerator from "./pages/reports/conami/isc/IscGenerator";
 import IdleSessionHandler from "./components/IdleSessionHandler";
 import CustomReportsPage from "./pages/customReports/CustomReportsPage";
 import CustomReportDesigner from "./reports/custom/CustomReportDesigner";
@@ -569,10 +582,22 @@ function AppRoutes({ themeMode, setThemeMode }) {
           />
           <Route path="/contabilidad/cambios-patrimonio" element={<EquityChanges />} />
           <Route path="/contabilidad/flujo-efectivo" element={<CashFlowStatement />} />
+          <Route path="/garantias/reporte" element={<GuaranteesReport />} />
+          <Route path="/cumplimiento/matriz-riesgo" element={<AmlRiskCriteriaConfig />} />
+          <Route path="/cumplimiento/pic" element={<PicReviewReminders />} />
+          <Route path="/cumplimiento/listas" element={<WatchlistManagement />} />
+          <Route path="/cumplimiento/alertas" element={<AmlAlertsInbox />} />
+          <Route path="/cumplimiento/ros" element={<RosCasesList />} />
+          <Route path="/cumplimiento/informe-mensual" element={<AmlMonthlyReport />} />
+          <Route path="/cumplimiento/oficial-cumplimiento" element={<ComplianceOfficerHistory />} />
+          <Route path="/adjudicaciones" element={<AssetAdjudicationsList />} />
           <Route path="/contabilidad/notas-eeff" element={<FinancialStatementNotes />} />
           <Route path="/contabilidad/cierre-ejercicio" element={<YearEndClosing />} />
           <Route path="/contabilidad/activo-fijo" element={<FixedAssetsList />} />
           <Route path="/contabilidad/activo-fijo/depreciacion" element={<FixedAssetDepreciation />} />
+          <Route path="/obligaciones/financiadores" element={<FinanciadoresList />} />
+          <Route path="/obligaciones/lineas-credito" element={<LineasCreditoList />} />
+          <Route path="/obligaciones" element={<ObligacionesList />} />
           <Route path="/bancos/cuentas" element={<BankAccountsList />} />
           <Route path="/bancos/movimientos" element={<BankMovementsList />} />
           <Route path="/bancos/conciliacion" element={<BankReconciliation />} />
@@ -592,6 +617,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/contabilidad/mapeos" element={<AccountMappingsManager />} />
           <Route path="/contabilidad/partidas-pendientes" element={<PendingItemsAging />} />
           <Route path="/conami/icc" element={<IccGenerator />} />
+          <Route path="/conami/isc" element={<IscGenerator />} />
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
 
           <Route path="/custom-reports" element={<CustomReportsPage />} />

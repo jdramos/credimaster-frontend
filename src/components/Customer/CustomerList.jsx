@@ -25,6 +25,7 @@ import {
   Add as AddIcon,
   Clear as ClearIcon,
   Edit as EditIcon,
+  Print as PrintIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Visibility as VisibilityIcon,
@@ -32,7 +33,10 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import { Link as RouterLink } from "react-router-dom";
 import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
 import API from "../../api";
+import { printPicReport } from "../../reports/picReport";
+import { printCustomerProfileReport } from "../../reports/customerProfileReport";
 
 const url = "/api/customers";
 
@@ -45,11 +49,29 @@ const BAC = {
   muted: "#6B7280",
 };
 
+const RISK_CHIP = {
+  BAJO: { label: "BAJO", color: "success" },
+  MEDIO: { label: "MEDIO", color: "warning" },
+  ALTO: { label: "ALTO", color: "error" },
+};
+
 export default function CustomerList() {
-  const { permissions = [], role } = useContext(UserContext);
+  const { permissions = [], role, user } = useContext(UserContext);
+  const { tenant } = useAuth();
+
+  const company = {
+    commercial_name: tenant?.commercial_name || tenant?.name || "",
+    legal_name: tenant?.legal_name || tenant?.company_name || "",
+    tax_id: tenant?.tax_id || tenant?.ruc || "",
+    address: tenant?.address || "",
+    phone: tenant?.phone || "",
+    logo_url: tenant?.logo_url || "",
+  };
 
   const [rows, setRows] = useState([]);
   const [rowCount, setRowCount] = useState(0);
+  const [printingId, setPrintingId] = useState(null);
+  const [printingProfileId, setPrintingProfileId] = useState(null);
 
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
@@ -73,11 +95,67 @@ export default function CustomerList() {
   const canCreate = role === 1 || permissions.includes("clientes.crear");
   const canEdit = role === 1 || permissions.includes("clientes.editar");
   const canView = role === 1 || permissions.includes("clientes.mostrar");
+  const canPrintPic = role === 1 || permissions.includes("cumplimiento.matriz_riesgo.ver");
 
   const showSnack = useCallback((type, msg) => {
     setSnack({ type, msg });
     setSnackOpen(true);
   }, []);
+
+  const handlePrintPic = useCallback(
+    async (customerId) => {
+      try {
+        setPrintingId(customerId);
+        const { data } = await API.get(`/api/aml/customers/${customerId}/pic`);
+        printPicReport({ company, user, customer: data.customer, screenings: data.screenings });
+      } catch (err) {
+        showSnack(
+          "error",
+          err?.response?.data?.message || "No se pudo generar el PIC del cliente",
+        );
+      } finally {
+        setPrintingId(null);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showSnack],
+  );
+
+  const handlePrintProfile = useCallback(
+    async (customerId) => {
+      try {
+        setPrintingProfileId(customerId);
+        const [customerRes, docsRes] = await Promise.all([
+          API.get(`/api/customers/${customerId}`),
+          API.get(`/api/customer-files/${customerId}/checklist`),
+        ]);
+        const payload = customerRes?.data?.data ?? customerRes?.data ?? {};
+        const docsData = docsRes?.data;
+        const documents = Array.isArray(docsData?.rows)
+          ? docsData.rows
+          : Array.isArray(docsData)
+            ? docsData
+            : [];
+        printCustomerProfileReport({
+          company,
+          user,
+          customer: payload.customer ?? {},
+          guarantees: payload.guarantees ?? [],
+          financialEvaluation: payload.financial_evaluation ?? null,
+          documents,
+        });
+      } catch (err) {
+        showSnack(
+          "error",
+          err?.response?.data?.message || "No se pudo generar la ficha del cliente",
+        );
+      } finally {
+        setPrintingProfileId(null);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showSnack],
+  );
 
   const columns = useMemo(
     () => [
@@ -108,9 +186,19 @@ export default function CustomerList() {
         ),
       },
       {
+        field: "risk_level",
+        headerName: "Riesgo LA/FT/FP",
+        width: 140,
+        renderCell: (params) => {
+          const cfg = RISK_CHIP[params.value];
+          if (!cfg) return <Chip size="small" label="Sin calcular" />;
+          return <Chip size="small" label={cfg.label} color={cfg.color} />;
+        },
+      },
+      {
         field: "actions",
         headerName: "Acciones",
-        width: 130,
+        width: 210,
         sortable: false,
         filterable: false,
         disableColumnMenu: true,
@@ -155,11 +243,61 @@ export default function CustomerList() {
                 </IconButton>
               </Tooltip>
             )}
+
+            {canPrintPic && (
+              <Tooltip title="Imprimir PIC">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handlePrintPic(params.row.id)}
+                    disabled={printingId === params.row.id}
+                    sx={{
+                      color: "#0F766E",
+                      bgcolor: "#ECFDF5",
+                      "&:hover": {
+                        bgcolor: "#D1FAE5",
+                      },
+                    }}
+                  >
+                    <PrintIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+
+            {canView && (
+              <Tooltip title="Imprimir ficha del cliente">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => handlePrintProfile(params.row.id)}
+                    disabled={printingProfileId === params.row.id}
+                    sx={{
+                      color: BAC.primary,
+                      bgcolor: BAC.soft,
+                      "&:hover": {
+                        bgcolor: BAC.border,
+                      },
+                    }}
+                  >
+                    <PrintIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
           </Stack>
         ),
       },
     ],
-    [canEdit, canView],
+    [
+      canEdit,
+      canView,
+      canPrintPic,
+      printingId,
+      handlePrintPic,
+      printingProfileId,
+      handlePrintProfile,
+    ],
   );
 
   const fetchData = useCallback(

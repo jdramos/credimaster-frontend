@@ -58,6 +58,7 @@ const SECTION_MODULE_KEY = {
   banks: "banks",
   caja: "caja",
   rrhh: "hr",
+  obligations: "obligations",
 };
 
 const emptyPasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
@@ -76,7 +77,9 @@ const sectionLabels = {
   banks: "BANCOS",
   caja: "CAJA",
   rrhh: "RECURSOS HUMANOS",
+  obligations: "OBLIGACIONES FINANCIERAS",
   reports: "Reportes",
+  compliance: "CUMPLIMIENTO LA/FT/FP",
 };
 
 const menuItems = {
@@ -109,6 +112,7 @@ const menuItems = {
       to: "/creditos/archivos",
     },
     { label: "Reclamos", iconName: "FaExclamationCircle", to: "/reclamos" },
+    { label: "Adjudicaciones de Bienes", iconName: "FaGavel", to: "/adjudicaciones" },
   ],
   users: [
     { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
@@ -122,6 +126,16 @@ const menuItems = {
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
     { label: "Cartera saneada", iconName: "FaFileInvoiceDollar", to: "/cartera-saneada" },
+    { label: "Reporte de Garantías", iconName: "FaLock", to: "/garantias/reporte" },
+  ],
+  compliance: [
+    { label: "Matriz de Riesgo LA/FT/FP", iconName: "FaBalanceScale", to: "/cumplimiento/matriz-riesgo" },
+    { label: "Recordatorio PIC", iconName: "FaClipboardList", to: "/cumplimiento/pic" },
+    { label: "Listas de Riesgo", iconName: "FaListUl", to: "/cumplimiento/listas" },
+    { label: "Alertas de Operaciones Inusuales", iconName: "FaExclamationTriangle", to: "/cumplimiento/alertas" },
+    { label: "Casos ROS", iconName: "FaGavel", to: "/cumplimiento/ros" },
+    { label: "Informe Mensual PLA/FT/FP", iconName: "FaChartBar", to: "/cumplimiento/informe-mensual" },
+    { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento" },
   ],
   conami_tables: [
     {
@@ -220,6 +234,12 @@ const menuItems = {
     { label: "Arqueo de Cobradores", iconName: "FaClipboardCheck", to: "/caja/arqueos" },
   ],
 
+  obligations: [
+    { label: "Financiadores", iconName: "FaLandmark", to: "/obligaciones/financiadores" },
+    { label: "Líneas de Crédito", iconName: "FaLink", to: "/obligaciones/lineas-credito" },
+    { label: "Obligaciones", iconName: "FaFileInvoiceDollar", to: "/obligaciones" },
+  ],
+
   rrhh: [
     { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados" },
     { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas" },
@@ -247,6 +267,11 @@ const menuItems = {
       label: "ICC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/icc",
+    },
+    {
+      label: "ISC - CONAMI (generador)",
+      iconName: "FaFileInvoice",
+      to: "/conami/isc",
     },
     {
       label: "CrediMaster Studio",

@@ -1,4 +1,4 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import React, { forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useState } from "react";
 import {
   Box,
   Paper,
@@ -24,7 +24,11 @@ import {
   CircularProgress,
 } from "@mui/material";
 import GavelIcon from "@mui/icons-material/Gavel";
+import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { printPicReport } from "../../reports/picReport";
 
 const BAC = {
   primary: "#D32F2F",
@@ -76,6 +80,17 @@ function screeningResultChip(result) {
   );
 }
 
+function riskLevelChip(level) {
+  const map = {
+    BAJO: { label: "Riesgo BAJO", bg: "#E8F5E9", color: BAC.success },
+    MEDIO: { label: "Riesgo MEDIO", bg: "#FFF3E0", color: BAC.warning },
+    ALTO: { label: "Riesgo ALTO", bg: "#FEE2E2", color: "#B42318" },
+  };
+  const s = map[level];
+  if (!s) return <Chip label="Sin calcular" size="small" />;
+  return <Chip label={s.label} size="small" sx={{ bgcolor: s.bg, color: s.color, fontWeight: 700 }} />;
+}
+
 /**
  * Panel de debida diligencia PLA-FT: declaracion PEP, origen de fondos
  * y tamizaje contra listas de sanciones. El tamizaje contra listas de
@@ -92,6 +107,35 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
   const disabled = mode === "show";
   const isCreate = mode !== "edit" && mode !== "show";
   const customerId = customer?.id;
+
+  const { user } = useContext(UserContext);
+  const { tenant } = useAuth();
+  const company = {
+    commercial_name: tenant?.commercial_name || tenant?.name || "",
+    legal_name: tenant?.legal_name || tenant?.company_name || "",
+    tax_id: tenant?.tax_id || tenant?.ruc || "",
+    address: tenant?.address || "",
+    phone: tenant?.phone || "",
+    logo_url: tenant?.logo_url || "",
+  };
+
+  const [printingPic, setPrintingPic] = useState(false);
+  const [picError, setPicError] = useState("");
+
+  const handlePrintPic = async () => {
+    if (!customerId) return;
+    try {
+      setPrintingPic(true);
+      setPicError("");
+      const { data } = await API.get(`/api/aml/customers/${customerId}/pic`);
+      printPicReport({ company, user, customer: data.customer, screenings: data.screenings });
+    } catch (err) {
+      console.error(err);
+      setPicError(err?.response?.data?.message || "No se pudo generar el PIC.");
+    } finally {
+      setPrintingPic(false);
+    }
+  };
 
   const [isPep, setIsPep] = useState(
     customer?.is_pep === 1 || customer?.is_pep === true
@@ -145,6 +189,29 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
 
     if (isCreate) {
       setCustomer((prev) => ({ ...prev, pep_details: value }));
+    }
+  };
+
+  const [recalculatingRisk, setRecalculatingRisk] = useState(false);
+  const [riskError, setRiskError] = useState("");
+
+  const handleRecalculateRisk = async () => {
+    if (!customerId) return;
+    try {
+      setRecalculatingRisk(true);
+      setRiskError("");
+      const { data } = await API.post(`/api/aml/customers/${customerId}/recalculate-risk`);
+      setCustomer((prev) => ({
+        ...prev,
+        risk_score: data.risk_score,
+        risk_level: data.risk_level,
+        risk_calculated_at: new Date().toISOString(),
+      }));
+    } catch (err) {
+      console.error(err);
+      setRiskError(err?.response?.data?.message || "No se pudo recalcular el riesgo.");
+    } finally {
+      setRecalculatingRisk(false);
     }
   };
 
@@ -258,6 +325,54 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
           tamizaje contra listas de sanciones estará disponible después de
           guardar.
         </Alert>
+      )}
+
+      {customerId && (
+        <Section
+          title="Matriz de riesgo LA/FT/FP"
+          subtitle="Clasificación calculada automáticamente según los criterios vigentes (Art. 29-30 CD-CONAMI-070-01OCT07-2025)."
+        >
+          <Stack spacing={1}>
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+              {riskLevelChip(customer?.risk_level)}
+              {customer?.risk_score != null && (
+                <Typography variant="body2" color="text.secondary">
+                  Puntaje: {customer.risk_score}
+                </Typography>
+              )}
+              {customer?.risk_calculated_at && (
+                <Typography variant="caption" color="text.secondary">
+                  Calculado: {formatDateTime(customer.risk_calculated_at)}
+                </Typography>
+              )}
+            </Stack>
+
+            {riskError && <Alert severity="error">{riskError}</Alert>}
+            {picError && <Alert severity="error">{picError}</Alert>}
+
+            <Stack direction="row" spacing={1}>
+              {!disabled && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={handleRecalculateRisk}
+                  disabled={recalculatingRisk}
+                >
+                  {recalculatingRisk ? "Recalculando..." : "Recalcular riesgo"}
+                </Button>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<PrintIcon fontSize="small" />}
+                onClick={handlePrintPic}
+                disabled={printingPic}
+              >
+                {printingPic ? "Generando..." : "Imprimir PIC"}
+              </Button>
+            </Stack>
+          </Stack>
+        </Section>
       )}
 
       <Section

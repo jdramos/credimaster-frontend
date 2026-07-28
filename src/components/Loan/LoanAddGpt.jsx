@@ -150,6 +150,7 @@ const LoanAdd = () => {
   const [cancelDialog, setCancelDialog] = useState(false);
   const [docSummary, setDocSummary] = useState(null);
   const [showCustomerDocs, setShowCustomerDocs] = useState(false);
+  const [activeLoansSummary, setActiveLoansSummary] = useState(null);
   const [evaluationViewForm, setEvaluationViewForm] = useState({});
 
   const showSnackbar = (message, severity = "success") => {
@@ -283,6 +284,27 @@ const LoanAdd = () => {
     };
 
     fetchGuaranteesByCustomer();
+  }, [loan.customer_id]);
+
+  useEffect(() => {
+    const fetchActiveLoansSummary = async () => {
+      if (!loan.customer_id) {
+        setActiveLoansSummary(null);
+        return;
+      }
+
+      try {
+        const { data } = await API.get(
+          `${url}/customer/${loan.customer_id}/active-summary`,
+        );
+        setActiveLoansSummary(data);
+      } catch (error) {
+        console.error("Error obteniendo créditos activos del cliente:", error);
+        setActiveLoansSummary(null);
+      }
+    };
+
+    fetchActiveLoansSummary();
   }, [loan.customer_id]);
 
   useEffect(() => {
@@ -1375,6 +1397,38 @@ const LoanAdd = () => {
             catalogs={catalogs}
             errors={errors}
           />
+
+          {!!activeLoansSummary?.count && (
+            <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
+              <Typography sx={{ fontWeight: 800 }}>
+                Este cliente tiene {activeLoansSummary.count} crédito
+                {activeLoansSummary.count === 1 ? "" : "s"} activo
+                {activeLoansSummary.count === 1 ? "" : "s"} con saldo
+                pendiente de C${" "}
+                {Number(activeLoansSummary.total_balance || 0).toLocaleString(
+                  undefined,
+                  { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                )}
+                . Considere esta deuda al evaluar su capacidad de pago.
+              </Typography>
+
+              <Stack spacing={0.5} sx={{ mt: 1 }}>
+                {activeLoansSummary.loans.map((l) => (
+                  <Typography key={l.id} variant="body2">
+                    Crédito #{l.id} ({l.branch_name || "—"}) — desembolsado{" "}
+                    {l.disbursement_date
+                      ? dayjs(l.disbursement_date).format("DD/MM/YYYY")
+                      : "—"}{" "}
+                    — saldo C${" "}
+                    {Number(l.current_balance || 0).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Typography>
+                ))}
+              </Stack>
+            </Alert>
+          )}
 
           <Box
             sx={{

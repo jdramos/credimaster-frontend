@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Tabs,
@@ -34,6 +34,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import GavelIcon from "@mui/icons-material/Gavel";
+import PrintIcon from "@mui/icons-material/Print";
 
 import GeneralInfoTab from "./CustomerGeneralInfoTab";
 import GuaranteesTab from "./CustomerGuaranteesTab";
@@ -45,6 +46,9 @@ import CustomerFinancialEvaluationTab from "./CustomerFinancialEvaluationTab";
 import CustomerAmlCompliance from "./CustomerAmlCompliance";
 import ConfirmDialog from "../ConfirmDialog";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { printCustomerProfileReport } from "../../reports/customerProfileReport";
 
 const TabPanel = ({ children, value, index }) => (
   <Box
@@ -91,6 +95,17 @@ const normalizeCustomerForApi = (customer, isEmployee) => ({
 });
 
 const CustomerForm = () => {
+  const { user } = useContext(UserContext);
+  const { tenant } = useAuth();
+  const company = {
+    commercial_name: tenant?.commercial_name || tenant?.name || "",
+    legal_name: tenant?.legal_name || tenant?.company_name || "",
+    tax_id: tenant?.tax_id || tenant?.ruc || "",
+    address: tenant?.address || "",
+    phone: tenant?.phone || "",
+    logo_url: tenant?.logo_url || "",
+  };
+
   const [activeTab, setActiveTab] = useState(0);
 
   const [guarantees, setGuarantees] = useState([
@@ -450,7 +465,9 @@ const CustomerForm = () => {
     );
 
     const path =
-      mode === "edit" ? `/api/customers/${customerId}` : "/api/customers";
+      internalMode === "edit"
+        ? `/api/customers/${customerId}`
+        : "/api/customers";
     const body = {
       customer: payloadCustomer,
       guarantees: cleanedGuarantees,
@@ -458,7 +475,7 @@ const CustomerForm = () => {
     };
 
     try {
-      if (mode === "edit") {
+      if (internalMode === "edit") {
         await API.put(path, body);
       } else {
         await API.post(path, body);
@@ -491,6 +508,38 @@ const CustomerForm = () => {
       setOpenDialog(false);
       setAlertState({ open: false });
     }
+  };
+
+  const handlePrintProfile = async () => {
+    let evaluation = financialEvaluation;
+    let documents = [];
+
+    try {
+      const [evalRes, docsRes] = await Promise.all([
+        API.get(`/api/customer-credit-evaluations/${customer.id}/current`),
+        API.get(`/api/customer-files/${customer.id}/checklist`),
+      ]);
+
+      if (evalRes?.data) evaluation = evalRes.data;
+
+      const docsData = docsRes?.data;
+      documents = Array.isArray(docsData?.rows)
+        ? docsData.rows
+        : Array.isArray(docsData)
+          ? docsData
+          : [];
+    } catch (err) {
+      console.error("Error cargando datos para la ficha:", err);
+    }
+
+    printCustomerProfileReport({
+      company,
+      user,
+      customer,
+      guarantees: cleanedGuarantees,
+      financialEvaluation: evaluation,
+      documents,
+    });
   };
 
   const handleDialogConfirmation = () => {
@@ -783,6 +832,17 @@ const CustomerForm = () => {
             </Stack>
 
             <Stack direction="row" spacing={1}>
+              {customer?.id && (
+                <Button
+                  variant="outlined"
+                  startIcon={<PrintIcon />}
+                  onClick={handlePrintProfile}
+                  sx={{ borderRadius: 2, fontWeight: 800 }}
+                >
+                  Imprimir ficha
+                </Button>
+              )}
+
               {internalMode === "show" && (
                 <Button
                   variant="contained"

@@ -14,50 +14,71 @@ import {
   Chip,
   Divider,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import API from "../api";
-const API = "/api/asset-adjudications";
 
-export default function AssetAdjudicationModal({
-  open,
-  onClose,
-  loan,
-  customer,
-  guarantees = [],
-  onSaved,
-}) {
+const emptyForm = {
+  guarantee_id: "",
+  adjudication_date: new Date().toISOString().substring(0, 10),
+  adjudication_reason: "",
+  asset_description: "",
+  asset_type: "",
+  appraisal_value: "",
+  adjudicated_value: "",
+  applied_to_principal: "",
+  applied_to_interest: "",
+  applied_to_default_interest: "",
+  notes: "",
+};
+
+export default function AssetAdjudicationModal({ open, onClose, loan, onSuccess }) {
   const [loading, setLoading] = useState(false);
+  const [loadingGuarantees, setLoadingGuarantees] = useState(false);
   const [error, setError] = useState("");
+  const [guarantees, setGuarantees] = useState([]);
+  const [excludedGuaranteeIds, setExcludedGuaranteeIds] = useState(new Set());
+  const [form, setForm] = useState(emptyForm);
 
-  const [form, setForm] = useState({
-    guarantee_id: "",
+  const availableGuarantees = useMemo(
+    () => guarantees.filter((g) => !excludedGuaranteeIds.has(Number(g.id))),
+    [guarantees, excludedGuaranteeIds],
+  );
 
-    adjudication_date: new Date().toISOString().substring(0, 10),
+  useEffect(() => {
+    if (!open || !loan?.customer_id) return;
 
-    adjudication_reason: "",
+    setForm(emptyForm);
+    setError("");
+    setLoadingGuarantees(true);
 
-    asset_description: "",
-    asset_type: "",
+    Promise.all([
+      API.get(`/api/guarantees/${loan.customer_id}`),
+      API.get(`/api/asset-adjudications`, { params: { customer_id: loan.customer_id } }),
+    ])
+      .then(([guaranteesRes, adjudicationsRes]) => {
+        setGuarantees(Array.isArray(guaranteesRes.data) ? guaranteesRes.data : []);
 
-    appraisal_value: "",
-    adjudicated_value: "",
-
-    applied_to_principal: "",
-    applied_to_interest: "",
-    applied_to_default_interest: "",
-    applied_to_fees: "",
-    applied_to_other_charges: "",
-
-    notes: "",
-  });
+        const excluded = new Set(
+          (Array.isArray(adjudicationsRes.data) ? adjudicationsRes.data : [])
+            .filter((a) => a.status !== "CANCELLED" && a.guarantee_id)
+            .map((a) => Number(a.guarantee_id)),
+        );
+        setExcludedGuaranteeIds(excluded);
+      })
+      .catch((err) => {
+        console.error("Error cargando garantías/adjudicaciones:", err);
+        setGuarantees([]);
+        setExcludedGuaranteeIds(new Set());
+      })
+      .finally(() => setLoadingGuarantees(false));
+  }, [open, loan?.customer_id]);
 
   const totalApplied = useMemo(() => {
     return (
       Number(form.applied_to_principal || 0) +
       Number(form.applied_to_interest || 0) +
-      Number(form.applied_to_default_interest || 0) +
-      Number(form.applied_to_fees || 0) +
-      Number(form.applied_to_other_charges || 0)
+      Number(form.applied_to_default_interest || 0)
     );
   }, [form]);
 
@@ -65,69 +86,58 @@ export default function AssetAdjudicationModal({
     return Math.max(Number(loan?.current_balance || 0) - totalApplied, 0);
   }, [loan, totalApplied]);
 
-  useEffect(() => {
-    if (!open) return;
-
-    setError("");
-  }, [open]);
-
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleGuaranteeChange = (e) => {
     const guaranteeId = e.target.value;
-
-    const guarantee = guarantees.find(
-      (g) => Number(g.id) === Number(guaranteeId),
-    );
+    const guarantee = availableGuarantees.find((g) => Number(g.id) === Number(guaranteeId));
 
     setForm({
       ...form,
       guarantee_id: guaranteeId,
-      asset_description: guarantee?.description || "",
-      asset_type: guarantee?.guarantee_type || "",
-      appraisal_value: guarantee?.commercial_value || "",
-      adjudicated_value: guarantee?.commercial_value || "",
+      asset_description: guarantee
+        ? [guarantee.article, guarantee.brand].filter(Boolean).join(" - ")
+        : form.asset_description,
+      appraisal_value: guarantee ? guarantee.value : form.appraisal_value,
+      adjudicated_value: guarantee ? guarantee.value : form.adjudicated_value,
     });
   };
 
   const handleSubmit = async () => {
+    if (!form.asset_description) {
+      setError("Debe ingresar la descripción del bien");
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
 
-      if (!form.asset_description) {
-        throw new Error("Debe ingresar descripción del bien");
-      }
-
-      const response = await API.post(API, {
-        body: JSON.stringify({
-          loan_id: loan.id,
-          customer_id: customer.id,
-
-          ...form,
-
-          remaining_balance: remainingBalance,
-        }),
+      const { data } = await API.post("/api/asset-adjudications", {
+        loan_id: loan.id,
+        customer_id: loan.customer_id,
+        guarantee_id: form.guarantee_id || null,
+        adjudication_date: form.adjudication_date,
+        adjudication_reason: form.adjudication_reason,
+        asset_description: form.asset_description,
+        asset_type: form.asset_type,
+        appraisal_value: Number(form.appraisal_value || 0),
+        adjudicated_value: Number(form.adjudicated_value || 0),
+        applied_to_principal: Number(form.applied_to_principal || 0),
+        applied_to_interest: Number(form.applied_to_interest || 0),
+        applied_to_default_interest: Number(form.applied_to_default_interest || 0),
+        remaining_balance: remainingBalance,
+        notes: form.notes,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Error guardando adjudicación");
-      }
-
-      if (onSaved) {
-        onSaved(data);
-      }
-
+      onSuccess?.(data);
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(
+        err?.response?.data?.message || err.message || "Error registrando la adjudicación",
+      );
     } finally {
       setLoading(false);
     }
@@ -141,15 +151,9 @@ export default function AssetAdjudicationModal({
         <Box mb={2}>
           <Typography variant="h6">{loan?.credit_code}</Typography>
 
-          <Typography variant="body2">
-            {customer?.first_name} {customer?.first_last_name}
-          </Typography>
-
           <Chip
             size="small"
-            label={`Saldo Actual: ${Number(
-              loan?.current_balance || 0,
-            ).toLocaleString()}`}
+            label={`Saldo Actual: C$ ${Number(loan?.current_balance || 0).toLocaleString()}`}
             color="primary"
             sx={{ mt: 1 }}
           />
@@ -168,16 +172,23 @@ export default function AssetAdjudicationModal({
             <TextField
               select
               fullWidth
-              label="Garantía"
+              label="Garantía registrada (opcional)"
               name="guarantee_id"
               value={form.guarantee_id}
               onChange={handleGuaranteeChange}
+              disabled={loadingGuarantees}
+              helperText={
+                loadingGuarantees
+                  ? "Cargando garantías..."
+                  : "Solo se muestran garantías del cliente aún no adjudicadas"
+              }
             >
-              <MenuItem value="">Ninguna</MenuItem>
+              <MenuItem value="">Sin garantía específica</MenuItem>
 
-              {guarantees.map((g) => (
+              {availableGuarantees.map((g) => (
                 <MenuItem key={g.id} value={g.id}>
-                  {g.description}
+                  {[g.article, g.brand].filter(Boolean).join(" - ")}
+                  {g.series ? ` (#${g.series})` : ""} — C$ {Number(g.value).toLocaleString()}
                 </MenuItem>
               ))}
             </TextField>
@@ -187,20 +198,18 @@ export default function AssetAdjudicationModal({
             <TextField
               fullWidth
               type="date"
-              label="Fecha"
+              label="Fecha de adjudicación"
               name="adjudication_date"
               value={form.adjudication_date}
               onChange={handleChange}
-              InputLabelProps={{
-                shrink: true,
-              }}
+              InputLabelProps={{ shrink: true }}
             />
           </Grid>
 
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Descripción del Bien"
+              label="Descripción del bien"
               name="asset_description"
               value={form.asset_description}
               onChange={handleChange}
@@ -210,7 +219,7 @@ export default function AssetAdjudicationModal({
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Tipo de Bien"
+              label="Tipo de bien"
               name="asset_type"
               value={form.asset_type}
               onChange={handleChange}
@@ -231,7 +240,7 @@ export default function AssetAdjudicationModal({
             <TextField
               fullWidth
               type="number"
-              label="Valor Avalúo"
+              label="Valor de avalúo"
               name="appraisal_value"
               value={form.appraisal_value}
               onChange={handleChange}
@@ -242,7 +251,7 @@ export default function AssetAdjudicationModal({
             <TextField
               fullWidth
               type="number"
-              label="Valor Adjudicado"
+              label="Valor adjudicado"
               name="adjudicated_value"
               value={form.adjudicated_value}
               onChange={handleChange}
@@ -250,7 +259,7 @@ export default function AssetAdjudicationModal({
           </Grid>
 
           <Grid item xs={12}>
-            <Typography variant="subtitle2">Aplicación del saldo</Typography>
+            <Typography variant="subtitle2">Aplicación del saldo del crédito</Typography>
           </Grid>
 
           <Grid item xs={12} md={4}>
@@ -286,43 +295,14 @@ export default function AssetAdjudicationModal({
             />
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Comisiones"
-              name="applied_to_fees"
-              value={form.applied_to_fees}
-              onChange={handleChange}
-            />
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Otros Cargos"
-              name="applied_to_other_charges"
-              value={form.applied_to_other_charges}
-              onChange={handleChange}
-            />
-          </Grid>
-
           <Grid item xs={12}>
-            <Box
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                bgcolor: "#f5f7fa",
-              }}
-            >
+            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#f5f7fa" }}>
               <Typography>
-                Total Aplicado: <strong>{totalApplied.toLocaleString()}</strong>
+                Total aplicado: <strong>C$ {totalApplied.toLocaleString()}</strong>
               </Typography>
-
               <Typography>
-                Saldo Restante:{" "}
-                <strong>{remainingBalance.toLocaleString()}</strong>
+                Saldo restante (se sanea automáticamente si aplica):{" "}
+                <strong>C$ {remainingBalance.toLocaleString()}</strong>
               </Typography>
             </Box>
           </Grid>
@@ -342,10 +322,12 @@ export default function AssetAdjudicationModal({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose} disabled={loading}>
+          Cancelar
+        </Button>
 
         <Button variant="contained" onClick={handleSubmit} disabled={loading}>
-          Guardar
+          {loading ? <CircularProgress size={20} /> : "Guardar"}
         </Button>
       </DialogActions>
     </Dialog>
