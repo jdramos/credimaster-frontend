@@ -1,7 +1,7 @@
 // src/pages/LoginPage.js
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Card,
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Link,
 } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
@@ -199,6 +200,12 @@ export default function LoginPage() {
                 ),
               }}
             />
+
+            <Typography variant="body2" sx={{ textAlign: "right", mt: 0.5 }}>
+              <Link component={RouterLink} to="/recuperar-password" underline="hover">
+                ¿Olvidó su contraseña?
+              </Link>
+            </Typography>
 
             <Divider sx={{ my: 2 }} />
 

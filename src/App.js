@@ -43,6 +43,8 @@ import CustomerList from "./components/Customer/CustomerList";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import UserAdd from "./components/UserAdd";
 import AddApproverForm from "./components/ApproverAddForm";
 import ApproverList from "./components/ApproverList";
@@ -748,6 +750,8 @@ function App() {
           <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/recuperar-password" element={<ForgotPasswordPage />} />
+              <Route path="/restablecer-password" element={<ResetPasswordPage />} />
               <Route
                 path="/superadmin/*"
                 element={
