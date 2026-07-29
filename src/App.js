@@ -95,6 +95,11 @@ import BankReconciliation from "./components/banks/BankReconciliation";
 import FinanciadoresList from "./components/obligations/FinanciadoresList";
 import LineasCreditoList from "./components/obligations/LineasCreditoList";
 import ObligacionesList from "./components/obligations/ObligacionesList";
+import BudgetsList from "./components/budget/BudgetsList";
+import BudgetAccountLinesEditor from "./components/budget/BudgetAccountLinesEditor";
+import BudgetPlacementGoalsEditor from "./components/budget/BudgetPlacementGoalsEditor";
+import BudgetTrackingDashboard from "./components/budget/BudgetTrackingDashboard";
+import BudgetAlertsInbox from "./components/budget/BudgetAlertsInbox";
 import CashRegistersList from "./components/caja/CashRegistersList";
 import CashMovementsList from "./components/caja/CashMovementsList";
 import CollectorArqueosList from "./components/caja/CollectorArqueosList";
@@ -598,6 +603,11 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/obligaciones/financiadores" element={<FinanciadoresList />} />
           <Route path="/obligaciones/lineas-credito" element={<LineasCreditoList />} />
           <Route path="/obligaciones" element={<ObligacionesList />} />
+          <Route path="/presupuesto" element={<BudgetsList />} />
+          <Route path="/presupuesto/:id/cuentas" element={<BudgetAccountLinesEditor />} />
+          <Route path="/presupuesto/:id/metas-colocacion" element={<BudgetPlacementGoalsEditor />} />
+          <Route path="/presupuesto/:id/seguimiento" element={<BudgetTrackingDashboard />} />
+          <Route path="/presupuesto/alertas" element={<BudgetAlertsInbox />} />
           <Route path="/bancos/cuentas" element={<BankAccountsList />} />
           <Route path="/bancos/movimientos" element={<BankMovementsList />} />
           <Route path="/bancos/conciliacion" element={<BankReconciliation />} />

@@ -59,6 +59,7 @@ const SECTION_MODULE_KEY = {
   caja: "caja",
   rrhh: "hr",
   obligations: "obligations",
+  budget: "budget",
 };
 
 const emptyPasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
@@ -79,6 +80,7 @@ const sectionLabels = {
   caja: "CAJA",
   rrhh: "RECURSOS HUMANOS",
   obligations: "OBLIGACIONES FINANCIERAS",
+  budget: "PRESUPUESTO",
   reports: "Reportes",
   compliance: "CUMPLIMIENTO LA/FT/FP",
 };
@@ -244,6 +246,11 @@ const menuItems = {
     { label: "Obligaciones", iconName: "FaFileInvoiceDollar", to: "/obligaciones" },
   ],
 
+  budget: [
+    { label: "Presupuestos", iconName: "FaWallet", to: "/presupuesto", permission: "menu.presupuesto" },
+    { label: "Alertas de Presupuesto", iconName: "FaBell", to: "/presupuesto/alertas", permission: "menu.presupuesto" },
+  ],
+
   rrhh: [
     { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados" },
     { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas" },
@@ -354,6 +361,7 @@ export default function AppLayoutMenu({
     banks: false,
     caja: false,
     rrhh: false,
+    budget: false,
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
