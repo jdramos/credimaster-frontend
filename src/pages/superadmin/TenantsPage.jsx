@@ -32,7 +32,6 @@ import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import TuneIcon from "@mui/icons-material/Tune";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
@@ -123,13 +122,8 @@ export default function TenantsPage() {
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTenant, setEditTenant] = useState(null);
-  const [editModules, setEditModules] = useState([]);
+  const [editForm, setEditForm] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
-
-  const [companyDialogOpen, setCompanyDialogOpen] = useState(false);
-  const [companyTenant, setCompanyTenant] = useState(null);
-  const [companyForm, setCompanyForm] = useState(null);
-  const [savingCompany, setSavingCompany] = useState(false);
 
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
   const [billingTenant, setBillingTenant] = useState(null);
@@ -207,41 +201,6 @@ export default function TenantsPage() {
     setDialogOpen(true);
   };
 
-  const handleOpenCompanyEdit = (row) => {
-    setCompanyTenant(row);
-    setCompanyForm({
-      legal_name: row.legal_name || "",
-      commercial_name: row.commercial_name || "",
-      tax_id: row.tax_id || "",
-      phone: row.phone || "",
-      email: row.email || "",
-      address: row.address || "",
-      plan_code: row.plan_code || "",
-      max_users: row.max_users ?? "",
-      max_branches: row.max_branches ?? "",
-    });
-    setCompanyDialogOpen(true);
-  };
-
-  const handleSaveCompany = async () => {
-    if (!companyTenant || !companyForm) return;
-    if (!companyForm.legal_name.trim()) {
-      showAlert("La razón social no puede estar vacía", "error");
-      return;
-    }
-    try {
-      setSavingCompany(true);
-      await API.put(`${TENANTS_URL}/${companyTenant.id}`, companyForm);
-      showAlert(`Empresa "${companyForm.legal_name}" actualizada`);
-      setCompanyDialogOpen(false);
-      await fetchTenants();
-    } catch (error) {
-      showAlert(error.response?.data?.message || error.message || "Error actualizando la empresa", "error");
-    } finally {
-      setSavingCompany(false);
-    }
-  };
-
   const handleFieldChange = (field) => (e) => {
     const value = e.target.value;
     setForm((prev) => {
@@ -276,24 +235,44 @@ export default function TenantsPage() {
 
   const handleOpenEdit = (row) => {
     setEditTenant(row);
-    setEditModules(row.enabled_modules ?? null);
+    setEditForm({
+      legal_name: row.legal_name || "",
+      commercial_name: row.commercial_name || "",
+      tax_id: row.tax_id || "",
+      plan_code: row.plan_code || "",
+      max_users: row.max_users ?? "",
+      max_branches: row.max_branches ?? "",
+      phone: row.phone || "",
+      email: row.email || "",
+      address: row.address || "",
+      enabled_modules: row.enabled_modules ?? null,
+    });
     setEditDialogOpen(true);
   };
 
+  const handleEditFieldChange = (field) => (e) => {
+    const value = e.target.value;
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleToggleEditModule = (key) => {
-    setEditModules((prev) => toggleModule(prev, key));
+    setEditForm((prev) => ({ ...prev, enabled_modules: toggleModule(prev.enabled_modules, key) }));
   };
 
   const handleSubmitEdit = async () => {
-    if (!editTenant) return;
+    if (!editTenant || !editForm) return;
+    if (!editForm.legal_name.trim()) {
+      showAlert("La razón social no puede estar vacía", "error");
+      return;
+    }
     try {
       setSavingEdit(true);
-      await API.put(`${TENANTS_URL}/${editTenant.id}`, { enabled_modules: editModules });
-      showAlert(`Módulos de "${editTenant.legal_name}" actualizados`);
+      await API.put(`${TENANTS_URL}/${editTenant.id}`, editForm);
+      showAlert(`Empresa "${editForm.legal_name}" actualizada`);
       setEditDialogOpen(false);
       await fetchTenants();
     } catch (error) {
-      showAlert(error.response?.data?.message || error.message || "Error actualizando los módulos", "error");
+      showAlert(error.response?.data?.message || error.message || "Error actualizando la empresa", "error");
     } finally {
       setSavingEdit(false);
     }
@@ -481,13 +460,8 @@ export default function TenantsPage() {
       renderCell: (params) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Tooltip title="Editar empresa">
-            <IconButton size="small" onClick={() => handleOpenCompanyEdit(params.row)}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Editar módulos habilitados">
             <IconButton size="small" onClick={() => handleOpenEdit(params.row)}>
-              <TuneIcon fontSize="small" />
+              <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Facturación">
@@ -666,131 +640,65 @@ export default function TenantsPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={companyDialogOpen} onClose={() => !savingCompany && setCompanyDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Editar empresa — {companyTenant?.tenant_code}</DialogTitle>
+      <Dialog open={editDialogOpen} onClose={() => !savingEdit && setEditDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Editar Empresa — {editTenant?.tenant_code}</DialogTitle>
         <DialogContent dividers>
-          {companyForm && (
-            <Grid container spacing={1.5}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Razón social"
-                  fullWidth
-                  size="small"
-                  value={companyForm.legal_name}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, legal_name: e.target.value }))}
-                />
+          {editForm && (
+            <>
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
+                Datos de la empresa
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={6}>
+                  <TextField label="Razón social" fullWidth size="small" value={editForm.legal_name} onChange={handleEditFieldChange("legal_name")} />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField label="Nombre comercial" fullWidth size="small" value={editForm.commercial_name} onChange={handleEditFieldChange("commercial_name")} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="RUC / Tax ID" fullWidth size="small" value={editForm.tax_id} onChange={handleEditFieldChange("tax_id")} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Plan" fullWidth size="small" value={editForm.plan_code} onChange={handleEditFieldChange("plan_code")} />
+                </Grid>
+                <Grid item xs={6} md={2}>
+                  <TextField label="Máx. usuarios" type="number" fullWidth size="small" value={editForm.max_users} onChange={handleEditFieldChange("max_users")} />
+                </Grid>
+                <Grid item xs={6} md={2}>
+                  <TextField label="Máx. sucursales" type="number" fullWidth size="small" value={editForm.max_branches} onChange={handleEditFieldChange("max_branches")} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Teléfono" fullWidth size="small" value={editForm.phone} onChange={handleEditFieldChange("phone")} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Correo" fullWidth size="small" value={editForm.email} onChange={handleEditFieldChange("email")} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField label="Dirección" fullWidth size="small" value={editForm.address} onChange={handleEditFieldChange("address")} />
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Nombre comercial"
-                  fullWidth
-                  size="small"
-                  value={companyForm.commercial_name}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, commercial_name: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="RUC / Tax ID"
-                  fullWidth
-                  size="small"
-                  value={companyForm.tax_id}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, tax_id: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="Plan"
-                  fullWidth
-                  size="small"
-                  value={companyForm.plan_code}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, plan_code: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={6} md={2}>
-                <TextField
-                  label="Máx. usuarios"
-                  type="number"
-                  fullWidth
-                  size="small"
-                  value={companyForm.max_users}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, max_users: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={6} md={2}>
-                <TextField
-                  label="Máx. sucursales"
-                  type="number"
-                  fullWidth
-                  size="small"
-                  value={companyForm.max_branches}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, max_branches: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="Teléfono"
-                  fullWidth
-                  size="small"
-                  value={companyForm.phone}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, phone: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="Correo"
-                  fullWidth
-                  size="small"
-                  value={companyForm.email}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="Dirección"
-                  fullWidth
-                  size="small"
-                  value={companyForm.address}
-                  onChange={(e) => setCompanyForm((f) => ({ ...f, address: e.target.value }))}
-                />
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCompanyDialogOpen(false)} disabled={savingCompany} sx={{ textTransform: "none" }}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveCompany}
-            disabled={savingCompany}
-            startIcon={savingCompany ? <CircularProgress size={16} color="inherit" /> : null}
-            sx={{ textTransform: "none" }}
-          >
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Dialog open={editDialogOpen} onClose={() => !savingEdit && setEditDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Módulos habilitados — {editTenant?.legal_name}</DialogTitle>
-        <DialogContent dividers>
-          <FormGroup>
-            {availableModules.map((mod) => (
-              <FormControlLabel
-                key={mod.key}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={isModuleChecked(editModules, mod.key)}
-                    onChange={() => handleToggleEditModule(mod.key)}
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
+                Módulos habilitados
+              </Typography>
+              <FormGroup row>
+                {availableModules.map((mod) => (
+                  <FormControlLabel
+                    key={mod.key}
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={isModuleChecked(editForm.enabled_modules, mod.key)}
+                        onChange={() => handleToggleEditModule(mod.key)}
+                      />
+                    }
+                    label={mod.label}
                   />
-                }
-                label={mod.label}
-              />
-            ))}
-          </FormGroup>
+                ))}
+              </FormGroup>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)} disabled={savingEdit} sx={{ textTransform: "none" }}>
@@ -803,7 +711,7 @@ export default function TenantsPage() {
             startIcon={savingEdit ? <CircularProgress size={16} color="inherit" /> : null}
             sx={{ textTransform: "none" }}
           >
-            Guardar
+            Guardar cambios
           </Button>
         </DialogActions>
       </Dialog>
