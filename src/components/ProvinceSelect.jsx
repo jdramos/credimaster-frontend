@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import API from "../api";
 
-const url = "/api/provinces";
+const DEFAULT_URL = "/api/provinces";
 
 const ProvinceSelect = ({
   value,
@@ -22,6 +22,7 @@ const ProvinceSelect = ({
   disabled = false,
   size = "small",
   fullWidth = true,
+  endpoint = DEFAULT_URL,
 }) => {
   const [provinces, setProvinces] = useState([]);
   const [fetchError, setFetchError] = useState("");
@@ -35,10 +36,11 @@ const ProvinceSelect = ({
       try {
         setFetchError("");
 
-        const response = await API.get(url);
+        const response = await API.get(endpoint);
 
         const jsonData = await response.data;
-        setProvinces(Array.isArray(jsonData) ? jsonData : []);
+        const list = Array.isArray(jsonData) ? jsonData : jsonData?.data;
+        setProvinces(Array.isArray(list) ? list : []);
       } catch (e) {
         console.error(e);
         setFetchError("No se pudieron cargar los departamentos.");
@@ -47,7 +49,7 @@ const ProvinceSelect = ({
     };
 
     fetchApi();
-  }, []);
+  }, [endpoint]);
 
   const controlledValue = editing ? (selected ?? "") : (value ?? "");
   const finalHelperText = error || fetchError || helperText || " ";

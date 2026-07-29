@@ -35,6 +35,11 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
+import ProvinceSelect from "../../components/ProvinceSelect";
+import MunicipalitySelect from "../../components/MunicipalitySelect";
+
+const PROVINCES_CATALOG_URL = "/api/superadmin/catalogs/provinces";
+const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
 
 const TENANTS_URL = "/api/superadmin/tenants";
 const MODULES_URL = "/api/superadmin/modules";
@@ -575,10 +580,23 @@ export default function TenantsPage() {
               <TextField label="Gerente" fullWidth size="small" value={form.branch_manager} onChange={handleFieldChange("branch_manager")} />
             </Grid>
             <Grid item xs={6} md={4}>
-              <TextField label="ID Provincia" type="number" fullWidth size="small" value={form.branch_province_id} onChange={handleFieldChange("branch_province_id")} />
+              <ProvinceSelect
+                endpoint={PROVINCES_CATALOG_URL}
+                name="branch_province_id"
+                label="Provincia"
+                value={form.branch_province_id}
+                onChange={handleFieldChange("branch_province_id")}
+              />
             </Grid>
             <Grid item xs={6} md={4}>
-              <TextField label="ID Municipio (opcional)" type="number" fullWidth size="small" value={form.branch_municipality_id} onChange={handleFieldChange("branch_municipality_id")} />
+              <MunicipalitySelect
+                endpoint={MUNICIPALITIES_CATALOG_URL}
+                name="branch_municipality_id"
+                label="Municipio (opcional)"
+                provinceId={form.branch_province_id}
+                value={form.branch_municipality_id}
+                onChange={handleFieldChange("branch_municipality_id")}
+              />
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField label="ID Nivel de riesgo" type="number" fullWidth size="small" value={form.branch_risk_id} onChange={handleFieldChange("branch_risk_id")} />

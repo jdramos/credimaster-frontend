@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import API from "../api";
 
-const url = "/api/municipalities";
+const DEFAULT_URL = "/api/municipalities";
 
 const toNumberOrEmpty = (v) => {
   if (v === "" || v === null || v === undefined) return "";
@@ -27,6 +27,7 @@ const MunicipalitySelect = ({
   disabled = false,
   size = "small",
   fullWidth = true,
+  endpoint = DEFAULT_URL,
 }) => {
   const [municipalities, setMunicipalities] = useState([]);
   const [fetchError, setFetchError] = useState("");
@@ -39,10 +40,11 @@ const MunicipalitySelect = ({
     const fetchApi = async () => {
       try {
         setFetchError("");
-        const response = await API.get(url);
+        const response = await API.get(endpoint);
 
         const jsonData = await response.data;
-        setMunicipalities(Array.isArray(jsonData) ? jsonData : []);
+        const list = Array.isArray(jsonData) ? jsonData : jsonData?.data;
+        setMunicipalities(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error(err);
         setFetchError("No se pudieron cargar los municipios.");
@@ -51,7 +53,7 @@ const MunicipalitySelect = ({
     };
 
     fetchApi();
-  }, []);
+  }, [endpoint]);
 
   const hasOptions = municipalities.length > 0;
   const numericProvinceId = toNumberOrEmpty(provinceId);
