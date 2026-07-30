@@ -29,6 +29,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import SendIcon from "@mui/icons-material/Send";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { UserContext } from "../../contexts/UserContext";
+import AccountHistoryButton from "./AccountHistoryButton";
 import {
   getBudgets,
   getBudgetConcepts,
@@ -100,6 +101,7 @@ export default function DepartmentBudgetEditor() {
             concept_id: line.concept_id,
             concept_name: line.concept_name,
             muc_code: line.muc_code,
+            account_id: line.account_id,
             months: Array(12).fill(0),
           });
         }
@@ -129,7 +131,13 @@ export default function DepartmentBudgetEditor() {
     setRows((prev) =>
       [
         ...prev,
-        { concept_id: concept.id, concept_name: concept.name, muc_code: concept.muc_code, months: Array(12).fill(0) },
+        {
+          concept_id: concept.id,
+          concept_name: concept.name,
+          muc_code: concept.muc_code,
+          account_id: concept.account_id,
+          months: Array(12).fill(0),
+        },
       ].sort((a, b) => a.concept_name.localeCompare(b.concept_name)),
     );
   };
@@ -257,6 +265,7 @@ export default function DepartmentBudgetEditor() {
             <TableHead>
               <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
                 <TableCell>Concepto</TableCell>
+                <TableCell align="center">Historial</TableCell>
                 {MONTH_LABELS.map((m) => (
                   <TableCell key={m} align="right">{m}</TableCell>
                 ))}
@@ -269,6 +278,14 @@ export default function DepartmentBudgetEditor() {
                   <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography variant="body2" fontWeight={600}>{row.concept_name}</Typography>
                     {row.muc_code && <Chip size="small" label={row.muc_code} variant="outlined" sx={{ mt: 0.5 }} />}
+                  </TableCell>
+                  <TableCell align="center">
+                    <AccountHistoryButton
+                      accountId={row.account_id}
+                      label={row.concept_name}
+                      mucCode={row.muc_code}
+                      beforeYear={budgets.find((b) => b.id === budgetId)?.year_no}
+                    />
                   </TableCell>
                   {row.months.map((value, idx) => (
                     <TableCell key={idx} align="right" sx={{ p: 0.5 }}>
@@ -296,6 +313,7 @@ export default function DepartmentBudgetEditor() {
               {rows.length > 0 && (
                 <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid #E5E7EB" } }}>
                   <TableCell>Total</TableCell>
+                  <TableCell />
                   {totalsByMonth.map((t, idx) => (
                     <TableCell key={idx} align="right">{formatCurrency(t)}</TableCell>
                   ))}

@@ -25,6 +25,13 @@ export const getBudgetableAccounts = async () => {
   return data;
 };
 
+export const getAccountHistory = async (accountId, { years = 3, beforeYear } = {}) => {
+  const { data } = await API.get(`/api/budget/accounts/${accountId}/history`, {
+    params: { years, ...(beforeYear ? { before_year: beforeYear } : {}) },
+  });
+  return data;
+};
+
 export const getBudgetAccountLines = async (id) => {
   const { data } = await API.get(`/api/budget/${id}/account-lines`);
   return data;

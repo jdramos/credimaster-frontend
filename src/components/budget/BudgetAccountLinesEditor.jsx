@@ -30,6 +30,7 @@ import {
   getBudgetAccountLines,
   saveBudgetAccountLines,
 } from "../../api/budget";
+import AccountHistoryButton from "./AccountHistoryButton";
 
 const MONTH_LABELS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -201,6 +202,7 @@ export default function BudgetAccountLinesEditor() {
               <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
                 <TableCell>Cuenta</TableCell>
                 <TableCell>Tipo</TableCell>
+                <TableCell align="center">Historial</TableCell>
                 {MONTH_LABELS.map((m) => (
                   <TableCell key={m} align="right">{m}</TableCell>
                 ))}
@@ -216,6 +218,14 @@ export default function BudgetAccountLinesEditor() {
                   </TableCell>
                   <TableCell>
                     <Chip size="small" label={row.account_type} color={row.account_type === "GASTO" ? "error" : "success"} variant="outlined" />
+                  </TableCell>
+                  <TableCell align="center">
+                    <AccountHistoryButton
+                      accountId={row.account_id}
+                      label={row.account_name}
+                      mucCode={row.muc_code}
+                      beforeYear={budget?.year_no}
+                    />
                   </TableCell>
                   {row.months.map((value, idx) => (
                     <TableCell key={idx} align="right" sx={{ p: 0.5 }}>
@@ -247,6 +257,7 @@ export default function BudgetAccountLinesEditor() {
               {rows.length > 0 && (
                 <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid #E5E7EB" } }}>
                   <TableCell colSpan={2}>Total</TableCell>
+                  <TableCell />
                   {totalsByMonth.map((t, idx) => (
                     <TableCell key={idx} align="right">{formatCurrency(t)}</TableCell>
                   ))}
