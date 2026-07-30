@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   Box,
   Button,
@@ -352,6 +352,30 @@ const CustomerBalanceViewer = () => {
   // Cargar catálogos
   useEffect(() => {
     API.get(`/api/vendors`).then((res) => setVendors(res.data));
+  }, []);
+
+  // Al abrir la pantalla, "hoy" casi nunca tiene saldo FINAL todavía (el
+  // día operativo se cierra al final del día, así que hoy solo tiene
+  // INITIAL hasta ese cierre) — sin esto la pantalla arranca en una fecha
+  // sin datos y parece que "no salen los saldos" aunque sí existan (p.ej.
+  // los del cierre de ayer). Se ubica una sola vez en la última fecha real
+  // con saldos del tipo seleccionado; después el usuario navega libremente.
+  const didAutoSelectDate = useRef(false);
+  useEffect(() => {
+    if (didAutoSelectDate.current) return;
+    didAutoSelectDate.current = true;
+
+    API.get(`/api/balances/available-balance-dates`, { params: { balance_type: balanceType } })
+      .then((res) => {
+        const dates = res.data || [];
+        if (!dates.length) return;
+
+        const latest = dates[dates.length - 1];
+        const idx = allDates.indexOf(latest);
+        if (idx >= 0) setCurrentIndex(idx);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const calculateTotals = (customers) =>
@@ -888,6 +912,14 @@ const CustomerBalanceViewer = () => {
           bgcolor: "#fff",
         }}
       >
+        {!loading && globalTotals.count === 0 && (
+          <Typography sx={{ p: 2, textAlign: "center", color: BAC.sub, fontSize: 13 }}>
+            No hay saldos generados para el {dayjs(date).format("DD/MM/YYYY")} (Tipo:{" "}
+            {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}). Prueba otra fecha o
+            genera los saldos desde "Crear saldos".
+          </Typography>
+        )}
+
         <TreeTable
           value={nodes}
           tableStyle={{ minWidth: "100%" }}
