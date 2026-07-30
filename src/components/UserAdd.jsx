@@ -8,6 +8,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -22,6 +26,7 @@ import Snackbar from "@mui/material/Snackbar";
 import ConfirmDialog from "./ConfirmDialog";
 import BranchAllSelect from "./BranchAllSelect";
 import API from "../api";
+import { getDepartments } from "../api/budget";
 
 const UserAdd = ({ onClose, userToEdit }) => {
   const navigate = useNavigate();
@@ -35,7 +40,16 @@ const UserAdd = ({ onClose, userToEdit }) => {
     full_name: "",
     email: "",
     role_id: "",
+    department_id: "",
   });
+
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    getDepartments()
+      .then((res) => setDepartments((res?.data || []).filter((d) => d.is_active)))
+      .catch(() => {});
+  }, []);
 
   const [errors, setErrors] = useState({
     user_name: "",
@@ -66,6 +80,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
         full_name: userToEdit.full_name || "",
         email: userToEdit.email || "",
         role_id: userToEdit.rol_id || "",
+        department_id: userToEdit.department_id || "",
       });
     } else {
       setUser({
@@ -75,6 +90,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
         full_name: "",
         email: "",
         role_id: "",
+        department_id: "",
       });
     }
 
@@ -348,6 +364,23 @@ const UserAdd = ({ onClose, userToEdit }) => {
                 error={!!errors.role_id}
                 errorField={errors.role_id}
               ></RoleSelect>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="department-select-label">Departamento (opcional)</InputLabel>
+                <Select
+                  labelId="department-select-label"
+                  label="Departamento (opcional)"
+                  name="department_id"
+                  value={user.department_id}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">Sin departamento</MenuItem>
+                  {departments.map((d) => (
+                    <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             {userToEdit && (
               <Grid item xs={12}>

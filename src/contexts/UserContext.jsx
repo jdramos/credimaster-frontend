@@ -10,6 +10,7 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [fullName, setFullName] = useState(null);
+  const [departmentId, setDepartmentId] = useState(null);
 
   const hasSession = () => {
     const token = localStorage.getItem("token");
@@ -80,6 +81,8 @@ export const UserProvider = ({ children }) => {
         setUser,
         fullName,
         setFullName,
+        departmentId,
+        setDepartmentId,
         favorites,
         loadFavorites,
         addFavorite,

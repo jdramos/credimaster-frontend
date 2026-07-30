@@ -249,6 +249,10 @@ const menuItems = {
   budget: [
     { label: "Presupuestos", iconName: "FaWallet", to: "/presupuesto", permission: "menu.presupuesto" },
     { label: "Alertas de Presupuesto", iconName: "FaBell", to: "/presupuesto/alertas", permission: "menu.presupuesto" },
+    { label: "Mi Presupuesto de Departamento", iconName: "FaEdit", to: "/presupuesto/mi-departamento", permission: "presupuesto.departamento.llenar" },
+    { label: "Aprobar Presupuesto por Departamento", iconName: "FaCheckDouble", to: "/presupuesto/aprobacion-departamentos", permission: "presupuesto.departamento.aprobar" },
+    { label: "Departamentos", iconName: "FaBuilding", to: "/presupuesto/departamentos", permission: "presupuesto.gestionar" },
+    { label: "Conceptos de Presupuesto", iconName: "FaTags", to: "/presupuesto/conceptos", permission: "presupuesto.gestionar" },
   ],
 
   rrhh: [

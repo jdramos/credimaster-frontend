@@ -122,6 +122,7 @@ const UsersList = () => {
         { field: 'full_name', headerName: 'Nombre Completo', width: 200 },
         { field: 'email', headerName: 'Email', width: 200 },
         { field: 'role_name', headerName: 'Rol', width: 150 },
+        { field: 'department_name', headerName: 'Departamento', width: 150 },
         {
             field: 'user_status',
             headerName: 'Estado',

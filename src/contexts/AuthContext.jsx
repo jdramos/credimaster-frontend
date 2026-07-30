@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const { setPermissions, setRole, setUserBranches, setUser, setFullName } =
+  const { setPermissions, setRole, setUserBranches, setUser, setFullName, setDepartmentId } =
     useContext(UserContext);
 
   const hydrateUserContext = (session) => {
@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }) => {
     setUserBranches(session.branches || []);
     setUser(session.user_id || null);
     setFullName(session.full_name || "");
+    setDepartmentId(session.department_id || null);
 
     setTenant(session.tenant || null);
 
@@ -108,6 +109,7 @@ export const AuthProvider = ({ children }) => {
         token,
         permissions,
         role_id,
+        department_id,
         branches,
         user_id,
         user_name,
@@ -126,6 +128,7 @@ export const AuthProvider = ({ children }) => {
         token,
         permissions: permissions || [],
         role_id,
+        department_id,
         branches: branches || [],
         user_id,
         user_name,
@@ -178,6 +181,7 @@ export const AuthProvider = ({ children }) => {
     setUserBranches([]);
     setUser(null);
     setFullName("");
+    setDepartmentId(null);
 
     localStorage.removeItem("token");
     localStorage.removeItem("session");

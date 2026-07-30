@@ -102,6 +102,10 @@ import BudgetAccountLinesEditor from "./components/budget/BudgetAccountLinesEdit
 import BudgetPlacementGoalsEditor from "./components/budget/BudgetPlacementGoalsEditor";
 import BudgetTrackingDashboard from "./components/budget/BudgetTrackingDashboard";
 import BudgetAlertsInbox from "./components/budget/BudgetAlertsInbox";
+import DepartmentsConfig from "./components/budget/DepartmentsConfig";
+import BudgetConceptsConfig from "./components/budget/BudgetConceptsConfig";
+import DepartmentBudgetEditor from "./components/budget/DepartmentBudgetEditor";
+import DepartmentBudgetApprovalInbox from "./components/budget/DepartmentBudgetApprovalInbox";
 import CashRegistersList from "./components/caja/CashRegistersList";
 import CashMovementsList from "./components/caja/CashMovementsList";
 import CollectorArqueosList from "./components/caja/CollectorArqueosList";
@@ -610,6 +614,10 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/presupuesto/:id/metas-colocacion" element={<BudgetPlacementGoalsEditor />} />
           <Route path="/presupuesto/:id/seguimiento" element={<BudgetTrackingDashboard />} />
           <Route path="/presupuesto/alertas" element={<BudgetAlertsInbox />} />
+          <Route path="/presupuesto/departamentos" element={<DepartmentsConfig />} />
+          <Route path="/presupuesto/conceptos" element={<BudgetConceptsConfig />} />
+          <Route path="/presupuesto/mi-departamento" element={<DepartmentBudgetEditor />} />
+          <Route path="/presupuesto/aprobacion-departamentos" element={<DepartmentBudgetApprovalInbox />} />
           <Route path="/bancos/cuentas" element={<BankAccountsList />} />
           <Route path="/bancos/movimientos" element={<BankMovementsList />} />
           <Route path="/bancos/conciliacion" element={<BankReconciliation />} />
