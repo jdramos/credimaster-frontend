@@ -1,5 +1,5 @@
 // Agrupado por sucursal y vendedor usando PrimeReact TreeTable con exportación y colores (BAC)
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   Box,
   IconButton,
@@ -72,6 +72,31 @@ const ProvissionViewer = () => {
   useEffect(() => {
     API.get(`/api/branches`).then((res) => setBranches(res.data));
     API.get(`/api/vendors`).then((res) => setVendors(res.data));
+  }, []);
+
+  // "Hoy" casi nunca tiene saldo FINAL todavía (el día operativo se cierra
+  // al final del día) — sin esto la pantalla arranca en una fecha sin
+  // datos. Se ubica una sola vez en la última fecha real con saldos del
+  // tipo seleccionado.
+  const didAutoSelectDate = useRef(false);
+  useEffect(() => {
+    if (didAutoSelectDate.current) return;
+    didAutoSelectDate.current = true;
+
+    API.get(`/api/balances/available-balance-dates`, { params: { balance_type: balanceType } })
+      .then((res) => {
+        const dates = res.data || [];
+        if (!dates.length) return;
+
+        const latest = dates[dates.length - 1];
+        const idx = allDates.indexOf(latest);
+        if (idx >= 0) {
+          setCurrentIndex(idx);
+          fetchData(latest);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const calculateTotals = (customers) => {
@@ -495,7 +520,7 @@ const ProvissionViewer = () => {
               onChange={(e) => setBalanceType(e.target.value)}
             >
               <MenuItem value="FINAL">FINAL</MenuItem>
-              <MenuItem value="INICIAL">INICIAL</MenuItem>
+              <MenuItem value="INITIAL">INICIAL</MenuItem>
             </Select>
           </FormControl>
 
@@ -552,6 +577,19 @@ const ProvissionViewer = () => {
 
       {/* Table */}
       <Box mt={2}>
+        {!loading && globalTotals.count === 0 && (
+          <Paper
+            elevation={0}
+            sx={{ p: 2, mb: 2, borderRadius: 3, border: `1px solid ${BAC.border}`, textAlign: "center" }}
+          >
+            <Typography sx={{ color: BAC.muted, fontSize: 13 }}>
+              No hay saldos generados para el {dayjs(date).format("DD/MM/YYYY")} (Tipo:{" "}
+              {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}). Prueba otra fecha o
+              genera los saldos desde "Crear saldos".
+            </Typography>
+          </Paper>
+        )}
+
         <TreeTable
           value={nodes}
           tableStyle={{ minWidth: "100%" }}

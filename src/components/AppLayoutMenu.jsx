@@ -973,6 +973,9 @@ export default function AppLayoutMenu({
         {recentScreens.length > 0 && (
           <Box
             sx={{
+              position: "sticky",
+              top: "58px",
+              zIndex: 2,
               display: "flex",
               alignItems: "center",
               gap: 1,
