@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Typography,
@@ -33,7 +33,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import SaveIcon from "@mui/icons-material/Save";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FolderSpecialIcon from "@mui/icons-material/FolderSpecial";
+import AddIcon from "@mui/icons-material/Add";
 import API from "../api";
+import { UserContext } from "../contexts/UserContext";
 
 const AlertMessage = React.forwardRef(function AlertMessage(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -189,6 +191,9 @@ const getModuleStyle = (module) => {
 };
 
 const RolePermissionManager = () => {
+  const { role: userRole, permissions: userPermissions = [] } = useContext(UserContext) || {};
+  const canCreateRole = userRole === 1 || userPermissions.includes("roles.insertar");
+
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
   const [selectedRole, setSelectedRole] = useState("");
@@ -198,6 +203,12 @@ const RolePermissionManager = () => {
   const [successOpen, setSuccessOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+
+  const [newRoleOpen, setNewRoleOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDescription, setNewRoleDescription] = useState("");
+  const [newRoleError, setNewRoleError] = useState("");
+  const [creatingRole, setCreatingRole] = useState(false);
 
   const fetchInitialData = async () => {
     setInitialLoading(true);
@@ -328,6 +339,43 @@ const RolePermissionManager = () => {
     }
   };
 
+  const openNewRoleDialog = () => {
+    setNewRoleName("");
+    setNewRoleDescription("");
+    setNewRoleError("");
+    setNewRoleOpen(true);
+  };
+
+  const handleCreateRole = async () => {
+    if (!newRoleName.trim()) {
+      setNewRoleError("El nombre del rol es requerido");
+      return;
+    }
+
+    setCreatingRole(true);
+    setNewRoleError("");
+
+    try {
+      const res = await API.post("/api/roles", {
+        role_name: newRoleName.trim(),
+        description: newRoleDescription.trim(),
+      });
+
+      setNewRoleOpen(false);
+      await fetchInitialData();
+      setSelectedRole(res.data?.id || "");
+      setSuccessOpen(true);
+    } catch (error) {
+      setNewRoleError(
+        error.response?.data?.errors ||
+          error.response?.data?.message ||
+          "Error al crear el rol",
+      );
+    } finally {
+      setCreatingRole(false);
+    }
+  };
+
   return (
     <Box sx={{ p: 3, backgroundColor: BAC.grey100, minHeight: "100%" }}>
       <Paper
@@ -357,27 +405,52 @@ const RolePermissionManager = () => {
             </Typography>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<RefreshIcon />}
-            onClick={fetchInitialData}
-            sx={{
-              backgroundColor: alpha(BAC.white, 0.14),
-              color: BAC.white,
-              fontWeight: 700,
-              borderRadius: 2,
-              px: 2.5,
-              py: 1,
-              boxShadow: "none",
-              border: "1px solid rgba(255,255,255,0.18)",
-              "&:hover": {
-                backgroundColor: alpha(BAC.white, 0.22),
+          <Stack direction="row" spacing={1.5}>
+            {canCreateRole && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openNewRoleDialog}
+                sx={{
+                  backgroundColor: BAC.white,
+                  color: BAC.primary,
+                  fontWeight: 700,
+                  borderRadius: 2,
+                  px: 2.5,
+                  py: 1,
+                  boxShadow: "none",
+                  "&:hover": {
+                    backgroundColor: alpha(BAC.white, 0.88),
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Nuevo rol
+              </Button>
+            )}
+
+            <Button
+              variant="contained"
+              startIcon={<RefreshIcon />}
+              onClick={fetchInitialData}
+              sx={{
+                backgroundColor: alpha(BAC.white, 0.14),
+                color: BAC.white,
+                fontWeight: 700,
+                borderRadius: 2,
+                px: 2.5,
+                py: 1,
                 boxShadow: "none",
-              },
-            }}
-          >
-            Actualizar
-          </Button>
+                border: "1px solid rgba(255,255,255,0.18)",
+                "&:hover": {
+                  backgroundColor: alpha(BAC.white, 0.22),
+                  boxShadow: "none",
+                },
+              }}
+            >
+              Actualizar
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 
@@ -859,6 +932,74 @@ const RolePermissionManager = () => {
           Permisos actualizados correctamente.
         </AlertMessage>
       </Snackbar>
+
+      <Dialog
+        open={newRoleOpen}
+        onClose={() => (creatingRole ? null : setNewRoleOpen(false))}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            minWidth: { xs: "90%", sm: 460 },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: BAC.secondary }}>
+          Nuevo rol
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {newRoleError && <Alert severity="error">{newRoleError}</Alert>}
+
+            <TextField
+              label="Nombre del rol"
+              fullWidth
+              autoFocus
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+            />
+
+            <TextField
+              label="Descripción (opcional)"
+              fullWidth
+              multiline
+              minRows={2}
+              value={newRoleDescription}
+              onChange={(e) => setNewRoleDescription(e.target.value)}
+            />
+
+            <Typography variant="caption" sx={{ color: BAC.textSoft }}>
+              Después de crear el rol podrás asignarle permisos desde esta misma pantalla.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setNewRoleOpen(false)}
+            disabled={creatingRole}
+            sx={{ color: BAC.primary, fontWeight: 700 }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleCreateRole}
+            variant="contained"
+            disabled={creatingRole}
+            sx={{
+              backgroundColor: BAC.primary,
+              color: BAC.white,
+              fontWeight: 700,
+              borderRadius: 2,
+              boxShadow: "none",
+              "&:hover": {
+                backgroundColor: BAC.primaryDark,
+                boxShadow: "none",
+              },
+            }}
+          >
+            {creatingRole ? "Creando..." : "Crear rol"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
