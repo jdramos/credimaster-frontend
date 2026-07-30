@@ -1,9 +1,10 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   AppBar,
   Avatar,
   Box,
+  Chip,
   Collapse,
   Divider,
   Drawer,
@@ -41,6 +42,7 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
@@ -301,6 +303,39 @@ function MenuIcon({ iconName, size = 17 }) {
   return <Icon size={size} />;
 }
 
+// Mapa plano to -> {label, iconName} para resolver el nombre amigable de la
+// pantalla al registrar el historial de "recientes" (no depende de en qué
+// sección del menú viva el item, ni de si esa sección está habilitada por
+// módulo para el tenant actual).
+const flatMenuByPath = Object.values(menuItems)
+  .flat()
+  .reduce((acc, item) => {
+    acc[item.to] = { label: item.label, iconName: item.iconName };
+    return acc;
+  }, {});
+
+const RECENT_SCREENS_MAX = 6;
+const recentScreensKey = (userId) => `recentScreens:${userId || "anon"}`;
+
+function loadRecentScreens(userId) {
+  try {
+    const raw = localStorage.getItem(recentScreensKey(userId));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentScreens(userId, list) {
+  try {
+    localStorage.setItem(recentScreensKey(userId), JSON.stringify(list));
+  } catch {
+    // localStorage no disponible (modo privado, cuota llena, etc.) — el
+    // historial de recientes es solo una comodidad de UX, no algo crítico.
+  }
+}
+
 export default function AppLayoutMenu({
   children,
   appName = "CrediMaster",
@@ -369,6 +404,28 @@ export default function AppLayoutMenu({
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+
+  const [recentScreens, setRecentScreens] = useState(() => loadRecentScreens(user));
+
+  // Registra la pantalla actual en el historial de "recientes" cada vez que
+  // cambia la ruta. Solo se registran rutas que coinciden con un item real
+  // del menú (evita ensuciar el historial con rutas dinámicas tipo
+  // /presupuesto/123/lineas que no tienen una entrada de menú propia).
+  useEffect(() => {
+    const match = flatMenuByPath[location.pathname];
+    if (!match) return;
+
+    setRecentScreens((prev) => {
+      const next = [
+        { to: location.pathname, label: match.label, iconName: match.iconName },
+        ...prev.filter((s) => s.to !== location.pathname),
+      ].slice(0, RECENT_SCREENS_MAX);
+
+      saveRecentScreens(user, next);
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, user]);
 
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState(emptyPasswordForm);
@@ -913,6 +970,47 @@ export default function AppLayoutMenu({
           transition: "all .2s ease",
         }}
       >
+        {recentScreens.length > 0 && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: { xs: 1.5, md: 2 },
+              py: 1,
+              overflowX: "auto",
+              bgcolor: "#fff",
+              borderBottom: "1px solid rgba(15,23,42,.08)",
+            }}
+          >
+            <Stack direction="row" spacing={0.6} alignItems="center" sx={{ flexShrink: 0, color: "text.secondary" }}>
+              <HistoryRoundedIcon sx={{ fontSize: 16 }} />
+              <Typography fontSize={12} fontWeight={800} noWrap>
+                Recientes
+              </Typography>
+            </Stack>
+
+            {recentScreens.map((screen) => (
+              <Chip
+                key={screen.to}
+                component={NavLink}
+                to={screen.to}
+                clickable
+                size="small"
+                icon={<MenuIcon iconName={screen.iconName} size={12} />}
+                label={screen.label}
+                sx={{
+                  flexShrink: 0,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  bgcolor: "#F1F5F9",
+                  "&:hover": { bgcolor: "#E2E8F0" },
+                }}
+              />
+            ))}
+          </Box>
+        )}
+
         <Box sx={{ p: { xs: 1.5, md: 2 } }}>{children}</Box>
       </Box>
 
