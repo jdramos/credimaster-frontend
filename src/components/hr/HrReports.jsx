@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Paper,
@@ -15,6 +15,10 @@ import {
   TableRow,
   TableCell,
   Grid,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  MenuItem,
 } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import PrintIcon from "@mui/icons-material/Print";
@@ -22,6 +26,7 @@ import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { printRentasDelTrabajoReport } from "../../reports/printRentasDelTrabajoReport";
 import { printPrestacionesSocialesReport } from "../../reports/printPrestacionesSocialesReport";
+import { printDeduccionesIngresosReport } from "../../reports/printDeduccionesIngresosReport";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -92,6 +97,60 @@ export default function HrReports() {
     });
   };
 
+  // Deducciones e ingresos de planilla
+  const [diType, setDiType] = useState("DEDUCCION");
+  const [allConcepts, setAllConcepts] = useState([]);
+  const [diConceptId, setDiConceptId] = useState("");
+  const [diStartDate, setDiStartDate] = useState("");
+  const [diEndDate, setDiEndDate] = useState("");
+  const [diData, setDiData] = useState(null);
+  const [loadingDi, setLoadingDi] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 2 || allConcepts.length > 0) return;
+    API.get("/api/hr/concepts")
+      .then((res) => setAllConcepts(res.data?.data || []))
+      .catch(() => setAllConcepts([]));
+  }, [tab, allConcepts.length]);
+
+  const diConcepts = allConcepts.filter((c) => c.type === diType);
+
+  const handleDiTypeChange = (value) => {
+    setDiType(value);
+    setDiConceptId("");
+    setDiData(null);
+  };
+
+  const fetchDi = async () => {
+    try {
+      setLoadingDi(true);
+      const res = await API.get("/api/hr/reports/deducciones-ingresos", {
+        params: {
+          type: diType,
+          concept_id: diConceptId || undefined,
+          start_date: diStartDate || undefined,
+          end_date: diEndDate || undefined,
+        },
+      });
+      setDiData(res.data?.data || null);
+    } catch (error) {
+      showAlert(error.response?.data?.message || "Error al generar el reporte", "error");
+    } finally {
+      setLoadingDi(false);
+    }
+  };
+
+  const handlePrintDi = () => {
+    if (!diData) return;
+    const conceptName = diConceptId ? diConcepts.find((c) => String(c.id) === String(diConceptId))?.name : null;
+    printDeduccionesIngresosReport({
+      company: tenant, user: currentUser,
+      type: diData.type, conceptName,
+      startDate: diData.start_date, endDate: diData.end_date,
+      lines: diData.lines, total: diData.total,
+    });
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -108,6 +167,7 @@ export default function HrReports() {
         <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
           <Tab label="Rentas del Trabajo" />
           <Tab label="Prestaciones Sociales Acumuladas" />
+          <Tab label="Deducciones e Ingresos" />
         </Tabs>
 
         {tab === 0 && (
@@ -246,6 +306,97 @@ export default function HrReports() {
                       <TableCell align="right"><strong>C$ {money(prestacionesData.totals.aguinaldo_monto)}</strong></TableCell>
                       <TableCell align="right"><strong>C$ {money(prestacionesData.totals.indemnizacion_monto)}</strong></TableCell>
                       <TableCell align="right"><strong>C$ {money(prestacionesData.totals.total_acumulado)}</strong></TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </Box>
+        )}
+
+        {tab === 2 && (
+          <Box>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Listado de todas las líneas de deducciones o de ingresos aplicadas en planillas aprobadas. Ambos filtros son opcionales e independientes: puede usar solo fecha, solo tipo, ambos, o ninguno para ver el historial completo.
+            </Alert>
+            <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
+              <Grid item xs={12} sm={3}>
+                <RadioGroup row value={diType} onChange={(e) => handleDiTypeChange(e.target.value)}>
+                  <FormControlLabel value="DEDUCCION" control={<Radio size="small" />} label="Deducciones" />
+                  <FormControlLabel value="INGRESO" control={<Radio size="small" />} label="Ingresos" />
+                </RadioGroup>
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  select fullWidth size="small" label="Tipo específico (opcional)"
+                  value={diConceptId} onChange={(e) => setDiConceptId(e.target.value)}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  {diConcepts.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth size="small" type="date" label="Desde (opcional)" InputLabelProps={{ shrink: true }}
+                  value={diStartDate} onChange={(e) => setDiStartDate(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth size="small" type="date" label="Hasta (opcional)" InputLabelProps={{ shrink: true }}
+                  value={diEndDate} onChange={(e) => setDiEndDate(e.target.value)}
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} sm={3}>
+                <Button variant="outlined" sx={{ textTransform: "none", height: "100%" }} disabled={loadingDi} onClick={fetchDi}>
+                  {loadingDi ? "Generando..." : "Generar reporte"}
+                </Button>
+              </Grid>
+              {diData && (
+                <Grid item xs={12} sm={3}>
+                  <Button variant="contained" startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintDi}>
+                    Imprimir
+                  </Button>
+                </Grid>
+              )}
+            </Grid>
+
+            {diData && (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Fecha de pago</TableCell>
+                    <TableCell>Comprobante</TableCell>
+                    <TableCell>Empleado</TableCell>
+                    <TableCell>Cédula</TableCell>
+                    <TableCell>Concepto</TableCell>
+                    <TableCell>Detalle</TableCell>
+                    <TableCell align="right">Monto</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {diData.lines.length === 0 && (
+                    <TableRow><TableCell colSpan={7}><Typography variant="body2" color="text.secondary">Sin registros con estos filtros.</Typography></TableCell></TableRow>
+                  )}
+                  {diData.lines.map((l, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{l.pay_date ? new Date(l.pay_date).toLocaleDateString("es-NI") : "-"}</TableCell>
+                      <TableCell>{l.entry_no || "-"}</TableCell>
+                      <TableCell>{l.employee_name}</TableCell>
+                      <TableCell>{l.id_card || "-"}</TableCell>
+                      <TableCell>{l.concept_name}</TableCell>
+                      <TableCell>{l.detail || ""}</TableCell>
+                      <TableCell align="right">C$ {money(l.amount)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {diData.lines.length > 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6}><strong>Total</strong></TableCell>
+                      <TableCell align="right"><strong>C$ {money(diData.total)}</strong></TableCell>
                     </TableRow>
                   )}
                 </TableBody>

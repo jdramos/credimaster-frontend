@@ -66,7 +66,14 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // El propio POST /api/login responde 401 cuando la contraseña es
+    // incorrecta — eso es un resultado normal del formulario, no una sesión
+    // caducada. Sin esta exclusión, el interceptor lo confundía con un
+    // logout forzado y tapaba el mensaje real ("Contraseña incorrecta") con
+    // el modal de "Sesión Expirada".
+    const isLoginAttempt = error.config?.url === "/api/login";
+
+    if (error.response?.status === 401 && !isLoginAttempt) {
       console.warn("Sesión expirada");
       const isSessionReplaced = error.response?.data?.code === "SESSION_REPLACED";
       logoutExpiredSession(

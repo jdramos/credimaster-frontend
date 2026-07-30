@@ -111,7 +111,7 @@ import CashMovementsList from "./components/caja/CashMovementsList";
 import CollectorArqueosList from "./components/caja/CollectorArqueosList";
 import EmployeesList from "./components/hr/EmployeesList";
 import HrConfigPanel from "./components/hr/HrConfigPanel";
-import EmployeeLoansList from "./components/hr/EmployeeLoansList";
+import EmployeeRecurringItemsList from "./components/hr/EmployeeRecurringItemsList";
 import PayrollRunsList from "./components/hr/PayrollRunsList";
 import MyVacations from "./components/hr/MyVacations";
 import VacationApprovalInbox from "./components/hr/VacationApprovalInbox";
@@ -626,7 +626,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
           <Route path="/rrhh/empleados" element={<EmployeesList />} />
           <Route path="/rrhh/planillas" element={<PayrollRunsList />} />
-          <Route path="/rrhh/prestamos" element={<EmployeeLoansList />} />
+          <Route path="/rrhh/deducciones" element={<EmployeeRecurringItemsList kind="DEDUCCION" />} />
+          <Route path="/rrhh/ingresos" element={<EmployeeRecurringItemsList kind="INGRESO" />} />
           <Route path="/rrhh/configuracion" element={<HrConfigPanel />} />
           <Route path="/rrhh/mis-vacaciones" element={<MyVacations />} />
           <Route path="/rrhh/aprobar-vacaciones" element={<VacationApprovalInbox />} />

@@ -260,7 +260,8 @@ const menuItems = {
   rrhh: [
     { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados" },
     { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas" },
-    { label: "Préstamos de Empleados", iconName: "FaHandHoldingUsd", to: "/rrhh/prestamos" },
+    { label: "Deducciones", iconName: "FaMinusCircle", to: "/rrhh/deducciones" },
+    { label: "Ingresos", iconName: "FaPlusCircle", to: "/rrhh/ingresos" },
     { label: "Configuración de RRHH", iconName: "FaCogs", to: "/rrhh/configuracion" },
     { label: "Incidencias", iconName: "FaCalendarTimes", to: "/rrhh/incidencias" },
     { label: "Liquidaciones", iconName: "FaUserSlash", to: "/rrhh/liquidaciones" },

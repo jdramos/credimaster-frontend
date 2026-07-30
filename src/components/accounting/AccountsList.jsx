@@ -21,6 +21,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import API from "../../api";
 import BAC from "../../styles/bac";
+import AccountInstructionsButton from "./AccountInstructionsButton";
 
 const API_URL = `/api/accounting/accounts`;
 
@@ -179,6 +180,12 @@ export default function AccountsList() {
                 </IconButton>
               </Tooltip>
             )}
+
+            <AccountInstructionsButton
+              mucCode={params.row.muc_code}
+              accountName={params.row.account_name}
+              instructions={params.row.instructions}
+            />
 
             <Tooltip title="Consultar movimientos">
               <IconButton size="small">

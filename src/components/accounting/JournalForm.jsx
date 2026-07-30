@@ -17,6 +17,7 @@ import {
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/Add";
 import API from "../../api";
+import AccountInstructionsButton from "./AccountInstructionsButton";
 
 const emptyLine = {
   account_id: null,
@@ -52,9 +53,9 @@ export default function JournalForm({ open, onClose, onSaved }) {
     try {
       const res = await API.get(`/api/accounting/accounts?is_active=1`);
 
-      const json = await res.data;
+      const rows = res.data?.data || [];
 
-      const movementAccounts = (json || []).filter(
+      const movementAccounts = rows.filter(
         (x) => Number(x.is_movement) === 1,
       );
 
@@ -187,23 +188,22 @@ export default function JournalForm({ open, onClose, onSaved }) {
         })),
       };
 
-      const res = await API.post(`/api/accounting/journal`, {
-        body: JSON.stringify(payload),
-      });
+      const res = await API.post(`/api/accounting/journal`, payload);
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
-        throw new Error(json.message || "Error guardando comprobante");
+      if (!res.data?.ok) {
+        throw new Error(res.data?.message || "Error guardando comprobante");
       }
 
-      showAlert(json.message || "Comprobante guardado correctamente");
+      showAlert(res.data?.message || "Comprobante guardado correctamente");
 
       if (onSaved) onSaved();
 
       onClose();
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message || error.message || "Error guardando comprobante",
+        "error",
+      );
     } finally {
       setSaving(false);
     }
@@ -272,7 +272,7 @@ export default function JournalForm({ open, onClose, onSaved }) {
                   display: "grid",
                   gridTemplateColumns: {
                     xs: "1fr",
-                    md: "2fr 2fr 140px 140px 48px",
+                    md: "2fr 40px 2fr 140px 140px 48px",
                   },
                   gap: 1,
                   mb: 1,
@@ -292,6 +292,12 @@ export default function JournalForm({ open, onClose, onSaved }) {
                   renderInput={(params) => (
                     <TextField {...params} label="Cuenta contable" />
                   )}
+                />
+
+                <AccountInstructionsButton
+                  mucCode={selectedAccount?.muc_code}
+                  accountName={selectedAccount?.account_name}
+                  instructions={selectedAccount?.instructions}
                 />
 
                 <TextField

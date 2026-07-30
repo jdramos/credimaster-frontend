@@ -487,7 +487,7 @@ export default function PayrollRunsList() {
       </Dialog>
 
       {/* Diálogo: detalle de una planilla */}
-      <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="xl" fullWidth>
         <DialogTitle>
           Planilla #{detail?.run?.id} — {detail?.run?.status}
         </DialogTitle>
@@ -497,38 +497,48 @@ export default function PayrollRunsList() {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {String(detail.run.period_start).slice(0, 10)} al {String(detail.run.period_end).slice(0, 10)} · Comprobante: {detail.run.entry_no || "-"}
               </Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Empleado</TableCell>
-                    <TableCell align="right">Salario mensual</TableCell>
-                    <TableCell align="right">Salario quincenal</TableCell>
-                    <TableCell align="right">INSS</TableCell>
-                    <TableCell align="right">IR</TableCell>
-                    <TableCell align="right">Otras deducciones</TableCell>
-                    <TableCell align="right">Salario neto</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {detail.items.map((i) => (
-                    <TableRow key={i.id}>
-                      <TableCell>{i.employee_name}</TableCell>
-                      <TableCell align="right">C$ {money(i.salario_mensual)}</TableCell>
-                      <TableCell align="right">C$ {money(i.salario_quincenal)}</TableCell>
-                      <TableCell align="right">C$ {money(i.inss_monto)}</TableCell>
-                      <TableCell align="right">C$ {money(i.ir_monto)}</TableCell>
-                      <TableCell align="right">C$ {money(i.otras_deducciones_monto)}</TableCell>
-                      <TableCell align="right">C$ {money(i.net_pay)}</TableCell>
-                      <TableCell>
-                        <Button size="small" startIcon={<PrintIcon />} sx={{ textTransform: "none" }} onClick={() => handlePrintColilla(detail.run.id, i.employee_id)}>
-                          Colilla
-                        </Button>
-                      </TableCell>
+              <Box sx={{ overflowX: "auto" }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Empleado</TableCell>
+                      <TableCell>Cédula</TableCell>
+                      <TableCell>N° INSS</TableCell>
+                      <TableCell>Banco</TableCell>
+                      <TableCell>Cuenta bancaria</TableCell>
+                      <TableCell align="right">Salario mensual</TableCell>
+                      <TableCell align="right">Salario quincenal</TableCell>
+                      <TableCell align="right">INSS (retención)</TableCell>
+                      <TableCell align="right">IR</TableCell>
+                      <TableCell align="right">Otras deducciones</TableCell>
+                      <TableCell align="right">Salario neto</TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHead>
+                  <TableBody>
+                    {detail.items.map((i) => (
+                      <TableRow key={i.id}>
+                        <TableCell>{i.employee_name}</TableCell>
+                        <TableCell>{i.id_card || "-"}</TableCell>
+                        <TableCell>{i.inss_number || "-"}</TableCell>
+                        <TableCell>{i.bank_name || "-"}</TableCell>
+                        <TableCell>{i.bank_account_number || "-"}</TableCell>
+                        <TableCell align="right">C$ {money(i.salario_mensual)}</TableCell>
+                        <TableCell align="right">C$ {money(i.salario_quincenal)}</TableCell>
+                        <TableCell align="right">C$ {money(i.inss_monto)}</TableCell>
+                        <TableCell align="right">C$ {money(i.ir_monto)}</TableCell>
+                        <TableCell align="right">C$ {money(i.otras_deducciones_monto)}</TableCell>
+                        <TableCell align="right">C$ {money(i.net_pay)}</TableCell>
+                        <TableCell>
+                          <Button size="small" startIcon={<PrintIcon />} sx={{ textTransform: "none" }} onClick={() => handlePrintColilla(detail.run.id, i.employee_id)}>
+                            Colilla
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
             </>
           )}
         </DialogContent>
