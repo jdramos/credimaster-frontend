@@ -856,6 +856,7 @@ const LoanAdd = () => {
         }
         confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
         cancelText="No"
+        loading={loading}
       />
 
       <Dialog

@@ -837,6 +837,7 @@ const LoanAddWizard = () => {
         }
         confirmText={cancelDialog ? "Sí, cancelar" : "Sí, guardar"}
         cancelText="No"
+        loading={loading}
       />
 
       <Dialog open={evaluationModalOpen} onClose={() => setEvaluationModalOpen(false)} maxWidth="md" fullWidth>
