@@ -876,7 +876,12 @@ export default function useLoanForm() {
         navigate("/creditos");
       }, 1200);
     } catch (error) {
-      showSnackbar(`Error de red: ${error.message}`, "error");
+      const backendMessage =
+        error.response?.data?.message || error.response?.data?.error;
+      showSnackbar(
+        backendMessage || `Error de red: ${error.message}`,
+        "error",
+      );
     } finally {
       setLoading(false);
     }
