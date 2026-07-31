@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -19,10 +19,14 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import JournalForm from "./JournalForm";
 import JournalDetailDialog from "./JournalDetailDialog";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = `/api/accounting/journal`;
 
 export default function JournalList() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canCreateEntry = role === 1 || permissions.includes("contabilidad.asientos.crear");
+  const canVoidEntry = role === 1 || permissions.includes("contabilidad.asientos.anular");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -188,18 +192,20 @@ export default function JournalList() {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Anular comprobante">
-              <span>
-                <IconButton
-                  size="small"
-                  color="error"
-                  disabled={params.row.status === "VOID"}
-                  onClick={() => handleVoid(params.row.id)}
-                >
-                  <CancelIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
+            {canVoidEntry && (
+              <Tooltip title="Anular comprobante">
+                <span>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    disabled={params.row.status === "VOID"}
+                    onClick={() => handleVoid(params.row.id)}
+                  >
+                    <CancelIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
           </Box>
         ),
       },
@@ -241,19 +247,21 @@ export default function JournalList() {
             </Box>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setFormOpen(true)}
-            sx={{
-              borderRadius: 2,
-              textTransform: "none",
-              background: "#0057B8",
-              "&:hover": { background: "#003E8A" },
-            }}
-          >
-            Nuevo comprobante
-          </Button>
+          {canCreateEntry && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setFormOpen(true)}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                background: "#0057B8",
+                "&:hover": { background: "#003E8A" },
+              }}
+            >
+              Nuevo comprobante
+            </Button>
+          )}
         </Box>
 
         <Box

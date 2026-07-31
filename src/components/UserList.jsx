@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import API from '../api';
+import { UserContext } from '../contexts/UserContext';
 import {
     Box, Typography, IconButton, Tooltip, TextField
 } from '@mui/material';
@@ -18,6 +19,9 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 const UsersList = () => {
+    const { permissions = [], role } = useContext(UserContext) || {};
+    const canCreateUser = role === 1 || permissions.includes('usuarios.insertar');
+    const canEditUser = role === 1 || permissions.includes('usuarios.editar');
     const [rows, setRows] = useState([]);
     const [filteredRows, setFilteredRows] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -173,20 +177,24 @@ const UsersList = () => {
                         </IconButton>
 
                     </Tooltip>
-                    <Tooltip title="Editar">
-                        <IconButton onClick={() => {
-                            setEditUser(params.row); // 👉 pasa los datos al estado
-                            setOpenAddModal(true);   // 👉 abre el modal
-                        }} color="success">
-                            <EditIcon />
-                        </IconButton>
+                    {canEditUser && (
+                        <Tooltip title="Editar">
+                            <IconButton onClick={() => {
+                                setEditUser(params.row); // 👉 pasa los datos al estado
+                                setOpenAddModal(true);   // 👉 abre el modal
+                            }} color="success">
+                                <EditIcon />
+                            </IconButton>
 
-                    </Tooltip>
-                    <Tooltip title="Desactivar">
-                        <IconButton onClick={() => handleDisable(params.row)} color="error">
-                            <BlockIcon />
-                        </IconButton>
-                    </Tooltip>
+                        </Tooltip>
+                    )}
+                    {canEditUser && (
+                        <Tooltip title="Desactivar">
+                            <IconButton onClick={() => handleDisable(params.row)} color="error">
+                                <BlockIcon />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                 </>
             )
         }
@@ -197,13 +205,15 @@ const UsersList = () => {
             <Box p={3} sx={{ height: '100vh', overflowY: 'auto', width: '100%' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="h5">Lista de Usuarios</Typography>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setOpenAddModal(true)}
-                    >
-                        Agregar Usuario
-                    </Button>
+                    {canCreateUser && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setOpenAddModal(true)}
+                        >
+                            Agregar Usuario
+                        </Button>
+                    )}
                     <Button
                         variant="outlined"
                         color="success"

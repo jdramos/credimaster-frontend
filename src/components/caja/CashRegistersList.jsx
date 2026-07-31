@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -25,6 +25,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import LockIcon from "@mui/icons-material/Lock";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/caja/registers";
 const DEFAULT_GL_MUC_CODE = "1101.01";
@@ -45,6 +46,8 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function CashRegistersList() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canManageRegisters = role === 1 || permissions.includes("caja.registros.gestionar");
   const [rows, setRows] = useState([]);
   const [branches, setBranches] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -179,12 +182,14 @@ export default function CashRegistersList() {
       filterable: false,
       renderCell: (params) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
-          <Tooltip title="Editar">
-            <IconButton size="small" onClick={() => handleOpenEdit(params.row)}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {params.row.status === "ACTIVA" && (
+          {canManageRegisters && (
+            <Tooltip title="Editar">
+              <IconButton size="small" onClick={() => handleOpenEdit(params.row)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {params.row.status === "ACTIVA" && canManageRegisters && (
             <Tooltip title="Cerrar caja">
               <IconButton size="small" color="warning" onClick={() => closeRegister(params.row)}>
                 <LockIcon fontSize="small" />
@@ -213,9 +218,11 @@ export default function CashRegistersList() {
           </Box>
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenCreate}>
-              Nueva caja
-            </Button>
+            {canManageRegisters && (
+              <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenCreate}>
+                Nueva caja
+              </Button>
+            )}
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchRegisters}>
               Actualizar
             </Button>

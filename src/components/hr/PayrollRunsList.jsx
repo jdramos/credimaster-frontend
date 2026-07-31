@@ -156,8 +156,8 @@ export default function PayrollRunsList() {
   const handleConfirm = async () => {
     try {
       setConfirming(true);
-      await API.post(API_URL, buildPayload());
-      showAlert("Planilla generada correctamente");
+      const res = await API.post(API_URL, buildPayload());
+      showAlert(res.data?.message || "Planilla generada correctamente");
       setGenDialogOpen(false);
       fetchRuns();
     } catch (error) {
@@ -239,11 +239,26 @@ export default function PayrollRunsList() {
     {
       field: "status",
       headerName: "Estado",
-      width: 120,
+      width: 190,
       renderCell: (p) => {
-        const color = p.value === "APROBADA" ? "success" : p.value === "ANULADA" ? "default" : "warning";
-        const label = p.value === "APROBADA" ? "Aprobada" : p.value === "ANULADA" ? "Anulada" : "Borrador";
-        return <Chip size="small" color={color} label={label} />;
+        const STATUS_META = {
+          APROBADA: { color: "success", label: "Aprobada" },
+          ANULADA: { color: "default", label: "Anulada" },
+          RECHAZADA: { color: "error", label: "Rechazada" },
+          PENDIENTE_APROBACION: { color: "warning", label: "Pendiente de aprobación" },
+          BORRADOR: { color: "warning", label: "Borrador" },
+        };
+        const meta = STATUS_META[p.value] || { color: "default", label: p.value };
+        return (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Chip size="small" color={meta.color} label={meta.label} />
+            {p.value === "PENDIENTE_APROBACION" && Number(p.row.approvers_total) > 0 && (
+              <Typography variant="caption" color="text.secondary">
+                {p.row.approvers_approved}/{p.row.approvers_total}
+              </Typography>
+            )}
+          </Box>
+        );
       },
     },
     {

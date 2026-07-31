@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   Alert, Box, Button, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Divider,
 } from "@mui/material";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -11,6 +12,8 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function YearEndClosing() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canCloseYear = role === 1 || permissions.includes("contabilidad.periodos.cerrar");
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear - 1);
   const [entityType, setEntityType] = useState("LUCRO");
@@ -123,14 +126,16 @@ export default function YearEndClosing() {
               />
             </Stack>
 
-            <Button
-              variant="contained"
-              color="error"
-              disabled={closing || preview.already_closed || (preview.total_income === 0 && preview.total_expense === 0)}
-              onClick={doClose}
-            >
-              {closing ? "Cerrando..." : `Cerrar ejercicio ${preview.year}`}
-            </Button>
+            {canCloseYear && (
+              <Button
+                variant="contained"
+                color="error"
+                disabled={closing || preview.already_closed || (preview.total_income === 0 && preview.total_expense === 0)}
+                onClick={doClose}
+              >
+                {closing ? "Cerrando..." : `Cerrar ejercicio ${preview.year}`}
+              </Button>
+            )}
           </>
         )}
       </Paper>

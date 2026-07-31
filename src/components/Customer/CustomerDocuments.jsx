@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   Box,
   Paper,
@@ -30,6 +30,7 @@ import ImageIcon from "@mui/icons-material/Image";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import BAC from "../../styles/bac";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const DOC_TYPES = [
   { value: "ID", label: "Identificación" },
@@ -114,6 +115,9 @@ const getChecklistStatus = (item) => {
 };
 
 export default function CustomerDocuments({ customerId }) {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canUploadDocument = role === 1 || permissions.includes("clientes.documentos.subir");
+  const canDeleteDocument = role === 1 || permissions.includes("clientes.documentos.eliminar");
   const inputRef = useRef(null);
 
   const [file, setFile] = useState(null);
@@ -686,18 +690,20 @@ export default function CustomerDocuments({ customerId }) {
                           </IconButton>
                         </Tooltip>
 
-                        <Tooltip title="Eliminar documento">
-                          <IconButton
-                            onClick={() => handleDelete(doc.id)}
-                            sx={{
-                              border: `1px solid ${BAC.border}`,
-                              borderRadius: 2,
-                              color: "#B42318",
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        {canDeleteDocument && (
+                          <Tooltip title="Eliminar documento">
+                            <IconButton
+                              onClick={() => handleDelete(doc.id)}
+                              sx={{
+                                border: `1px solid ${BAC.border}`,
+                                borderRadius: 2,
+                                color: "#B42318",
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -798,20 +804,22 @@ export default function CustomerDocuments({ customerId }) {
                 )}
               </Box>
 
-              <Button
-                variant="contained"
-                onClick={handleUpload}
-                disabled={uploading || !file || !customerId || !docType}
-                sx={{
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 800,
-                  px: 3,
-                  backgroundColor: BAC.primary,
-                }}
-              >
-                Subir documento
-              </Button>
+              {canUploadDocument && (
+                <Button
+                  variant="contained"
+                  onClick={handleUpload}
+                  disabled={uploading || !file || !customerId || !docType}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 800,
+                    px: 3,
+                    backgroundColor: BAC.primary,
+                  }}
+                >
+                  Subir documento
+                </Button>
+              )}
             </Stack>
 
             {uploading && <LinearProgress sx={{ borderRadius: 999 }} />}

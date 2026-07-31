@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -22,6 +22,7 @@ import dayjs from "dayjs";
 import PrintIcon from "@mui/icons-material/Print";
 import { printPaymentsReceivedReport } from "../reports/printPaymentsReceivedReport";
 import { useAuth } from "../contexts/AuthContext";
+import { UserContext } from "../contexts/UserContext";
 
 import PaymentForm from "./PaymentForm";
 import API from "../api";
@@ -66,6 +67,8 @@ const PaymentList = () => {
 
   const [summary, setSummary] = useState(null);
   const { tenant, user } = useAuth();
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canAddPayment = role === 1 || permissions.includes("pagos.insertar");
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -290,14 +293,16 @@ const PaymentList = () => {
             Actualizar
           </Button>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpen}
-            className="bac-btn-primary"
-          >
-            Agregar Pago
-          </Button>
+          {canAddPayment && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpen}
+              className="bac-btn-primary"
+            >
+              Agregar Pago
+            </Button>
+          )}
         </Stack>
       </Box>
 

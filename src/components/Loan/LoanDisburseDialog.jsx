@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,6 +8,7 @@ import {
   TextField,
   Alert,
 } from "@mui/material";
+import { UserContext } from "../../contexts/UserContext";
 
 export default function LoanDisburseDialog({
   open,
@@ -17,6 +18,8 @@ export default function LoanDisburseDialog({
   loading = false,
   currentUserId = null,
 }) {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canDisburse = role === 1 || permissions.includes("especial.creditos.desembolsar");
   const [disbursedBy, setDisbursedBy] = useState("");
 
   useEffect(() => {
@@ -48,9 +51,11 @@ export default function LoanDisburseDialog({
         <Button onClick={onClose} color="inherit">
           Cerrar
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={loading}>
-          Confirmar desembolso
-        </Button>
+        {canDisburse && (
+          <Button onClick={handleSubmit} variant="contained" disabled={loading}>
+            Confirmar desembolso
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

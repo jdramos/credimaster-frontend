@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -20,6 +20,7 @@ import FmdGoodIcon from "@mui/icons-material/FmdGood";
 import API from "../api";
 import DataTable from "./DataTable";
 import EmptyNotice from "./EmptyNotice";
+import { UserContext } from "../contexts/UserContext";
 
 const bacHeaderSx = {
   background: "linear-gradient(135deg, #0d47a1 0%, #1565c0 45%, #42a5f5 100%)",
@@ -47,6 +48,8 @@ const actionButtonSx = {
 
 const BranchesList = () => {
   const navigate = useNavigate();
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canCreateBranch = role === 1 || permissions.includes("sucursales.insertar");
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -163,22 +166,24 @@ const BranchesList = () => {
               </Typography>
             </Box>
 
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate("/sucursales/agregar")}
-              sx={{
-                ...actionButtonSx,
-                bgcolor: "#fff",
-                color: "primary.main",
-                "&:hover": {
-                  bgcolor: "rgba(255,255,255,0.92)",
-                  boxShadow: "none",
-                },
-              }}
-            >
-              Nueva sucursal
-            </Button>
+            {canCreateBranch && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate("/sucursales/agregar")}
+                sx={{
+                  ...actionButtonSx,
+                  bgcolor: "#fff",
+                  color: "primary.main",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.92)",
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Nueva sucursal
+              </Button>
+            )}
           </Stack>
 
           <Stack

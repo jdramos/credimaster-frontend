@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -36,6 +36,7 @@ import {
   approveDepartmentSubmission,
   rejectDepartmentSubmission,
 } from "../../api/budget";
+import { UserContext } from "../../contexts/UserContext";
 
 const MONTH_LABELS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -50,6 +51,11 @@ const STATUS_CHIP = {
 };
 
 export default function DepartmentBudgetApprovalInbox() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canApproveDeptBudget =
+    role === 1 ||
+    permissions.includes("presupuesto.departamento.aprobar") ||
+    permissions.includes("presupuesto.gestionar");
   const [budgets, setBudgets] = useState([]);
   const [budgetId, setBudgetId] = useState("");
   const [rows, setRows] = useState([]);
@@ -212,7 +218,7 @@ export default function DepartmentBudgetApprovalInbox() {
                       <VisibilityIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  {row.status === "SUBMITTED" && (
+                  {row.status === "SUBMITTED" && canApproveDeptBudget && (
                     <>
                       <Tooltip title="Aprobar">
                         <IconButton size="small" color="success" disabled={acting} onClick={() => handleApprove(row)}>

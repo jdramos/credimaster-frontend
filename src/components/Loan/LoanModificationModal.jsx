@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -24,6 +24,7 @@ import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const MODIFICATION_TYPES = [
   { value: "PRORROGA", label: "Prórroga" },
@@ -86,6 +87,9 @@ export default function LoanModificationModal({
   mode = "create", // create | review
   onSaved,
 }) {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canRequestModification = role === 1 || permissions.includes("creditos.modificaciones.solicitar");
+  const canApproveModification = role === 1 || permissions.includes("creditos.modificaciones.aprobar");
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
   const [loadingApprovals, setLoadingApprovals] = useState(false);
@@ -723,7 +727,7 @@ export default function LoanModificationModal({
       <DialogActions>
         <Button onClick={onClose}>Cerrar</Button>
 
-        {isCreate && (
+        {isCreate && canRequestModification && (
           <Button
             variant="contained"
             startIcon={<SaveOutlinedIcon />}
@@ -734,7 +738,7 @@ export default function LoanModificationModal({
           </Button>
         )}
 
-        {isReview && canApprove && (
+        {isReview && canApprove && canApproveModification && (
           <>
             <Button
               color="error"

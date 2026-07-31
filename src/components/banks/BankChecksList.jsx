@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -33,6 +33,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import LockIcon from "@mui/icons-material/Lock";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import { UserContext } from "../../contexts/UserContext";
 import { numberToWords } from "./numberToWords";
 
 const API_URL = "/api/banks/checks";
@@ -62,6 +63,9 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 
 export default function BankChecksList() {
   const { tenant } = useAuth();
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canIssueCheck = role === 1 || permissions.includes("bancos.cheques.emitir");
+  const canVoidCheck = role === 1 || permissions.includes("bancos.cheques.anular");
   const [rows, setRows] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -240,7 +244,7 @@ export default function BankChecksList() {
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          {params.row.status === "EMITIDO" && (
+          {params.row.status === "EMITIDO" && canVoidCheck && (
             <Tooltip title="Anular cheque">
               <IconButton size="small" color="error" onClick={() => { setVoidTarget(params.row); setVoidReason(""); }}>
                 <CancelIcon fontSize="small" />
@@ -266,9 +270,11 @@ export default function BankChecksList() {
           </Box>
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenDialog}>
-              Emitir cheque
-            </Button>
+            {canIssueCheck && (
+              <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenDialog}>
+                Emitir cheque
+              </Button>
+            )}
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchChecks}>
               Actualizar
             </Button>

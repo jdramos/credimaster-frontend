@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -24,6 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/caja/arqueos";
 
@@ -48,6 +49,9 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function CollectorArqueosList() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canRegisterArqueo = role === 1 || permissions.includes("caja.arqueos.registrar");
+  const canVoidArqueo = role === 1 || permissions.includes("caja.arqueos.anular");
   const [rows, setRows] = useState([]);
   const [collectors, setCollectors] = useState([]);
   const [cashRegisters, setCashRegisters] = useState([]);
@@ -246,7 +250,7 @@ export default function CollectorArqueosList() {
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        params.row.status === "REGISTRADO" && (
+        params.row.status === "REGISTRADO" && canVoidArqueo && (
           <Tooltip title="Anular arqueo">
             <IconButton size="small" color="error" onClick={() => { setVoidTarget(params.row); setVoidReason(""); }}>
               <CancelIcon fontSize="small" />
@@ -273,9 +277,11 @@ export default function CollectorArqueosList() {
           </Box>
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenDialog}>
-              Nueva liquidación
-            </Button>
+            {canRegisterArqueo && (
+              <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenDialog}>
+                Nueva liquidación
+              </Button>
+            )}
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchArqueos}>
               Actualizar
             </Button>

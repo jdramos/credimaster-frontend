@@ -92,9 +92,9 @@ export default function CustomerList() {
 
   const debounceRef = useRef(null);
 
-  const canCreate = role === 1 || permissions.includes("clientes.crear");
+  const canCreate = role === 1 || permissions.includes("clientes.insertar");
   const canEdit = role === 1 || permissions.includes("clientes.editar");
-  const canView = role === 1 || permissions.includes("clientes.mostrar");
+  const canView = role === 1 || permissions.includes("clientes.ver");
   const canPrintPic = role === 1 || permissions.includes("cumplimiento.matriz_riesgo.ver");
 
   const showSnack = useCallback((type, msg) => {

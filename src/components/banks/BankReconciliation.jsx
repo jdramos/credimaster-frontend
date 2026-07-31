@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Alert, Box, Button, Checkbox, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Divider,
   Table, TableHead, TableRow, TableCell, TableBody,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -12,6 +13,8 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function BankReconciliation() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canSaveReconciliation = role === 1 || permissions.includes("bancos.conciliacion.gestionar");
   const [bankAccounts, setBankAccounts] = useState([]);
   const [bankAccountId, setBankAccountId] = useState("");
   const [statementDate, setStatementDate] = useState(new Date().toISOString().slice(0, 10));
@@ -287,9 +290,11 @@ export default function BankReconciliation() {
               </TableBody>
             </Table>
 
-            <Button variant="contained" color="primary" disabled={saving} onClick={doSave} sx={{ textTransform: "none" }}>
-              {saving ? "Guardando..." : "Guardar conciliación"}
-            </Button>
+            {canSaveReconciliation && (
+              <Button variant="contained" color="primary" disabled={saving} onClick={doSave} sx={{ textTransform: "none" }}>
+                {saving ? "Guardando..." : "Guardar conciliación"}
+              </Button>
+            )}
           </>
         )}
       </Paper>

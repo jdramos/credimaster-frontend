@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Alert, Box, Button, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Divider,
   Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -9,6 +9,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 import JournalDetailDialog from "./JournalDetailDialog";
+import { UserContext } from "../../contexts/UserContext";
 
 const CATEGORY_LABELS = {
   EDIFICIO: "Edificio",
@@ -35,6 +36,8 @@ const lastDayOfMonth = (year, month) => {
 };
 
 export default function FixedAssetDepreciation() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canRunDepreciation = role === 1 || permissions.includes("activo_fijo.depreciacion.generar");
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -257,14 +260,16 @@ export default function FixedAssetDepreciation() {
               <Chip color="primary" label={`Total: C$ ${money(preview.total_depreciation_amount)}`} />
             </Stack>
 
-            <Button
-              variant="contained"
-              color="error"
-              disabled={running || preview.already_run || preview.total_assets_included === 0}
-              onClick={doRun}
-            >
-              {running ? "Generando..." : `Generar depreciación de ${MONTH_NAMES[month - 1]} ${year}`}
-            </Button>
+            {canRunDepreciation && (
+              <Button
+                variant="contained"
+                color="error"
+                disabled={running || preview.already_run || preview.total_assets_included === 0}
+                onClick={doRun}
+              >
+                {running ? "Generando..." : `Generar depreciación de ${MONTH_NAMES[month - 1]} ${year}`}
+              </Button>
+            )}
           </>
         )}
       </Paper>

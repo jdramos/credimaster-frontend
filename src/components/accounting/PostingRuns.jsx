@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -13,8 +13,11 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 export default function PostingRuns() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canPost = role === 1 || permissions.includes("contabilidad.asientos.crear");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -290,21 +293,23 @@ export default function PostingRuns() {
             <MenuItem value="DETAILED">Detallado</MenuItem>
           </TextField>
 
-          <Button
-            variant="contained"
-            disabled={posting}
-            onClick={handlePost}
-            sx={{
-              borderRadius: 2,
-              textTransform: "none",
-              background: "#0057B8",
-              "&:hover": {
-                background: "#003E8A",
-              },
-            }}
-          >
-            Contabilizar
-          </Button>
+          {canPost && (
+            <Button
+              variant="contained"
+              disabled={posting}
+              onClick={handlePost}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                background: "#0057B8",
+                "&:hover": {
+                  background: "#003E8A",
+                },
+              }}
+            >
+              Contabilizar
+            </Button>
+          )}
         </Box>
 
         <Box sx={{ height: 620 }}>

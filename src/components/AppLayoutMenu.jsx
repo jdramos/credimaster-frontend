@@ -92,27 +92,28 @@ const menuItems = {
     { label: "Dashboard de Saldos", iconName: "FaChartPie", to: "/dashboard/saldos", permission: "menu.dashboard" },
   ],
   main: [
-    { label: "Clientes", iconName: "FaPeopleArrows", to: "/clientes" },
-    { label: "Sucursales", iconName: "FaRegBuilding", to: "/sucursales" },
-    { label: "Riesgos", iconName: "FaPeopleCarry", to: "/riesgos" },
+    { label: "Clientes", iconName: "FaPeopleArrows", to: "/clientes", permission: "menu.clientes" },
+    { label: "Sucursales", iconName: "FaRegBuilding", to: "/sucursales", permission: "menu.sucursales" },
+    { label: "Riesgos", iconName: "FaPeopleCarry", to: "/riesgos", permission: "menu.tipos_riesgo" },
     { label: "Departamentos", iconName: "FaBuilding", to: "/departamentos" },
     { label: "Colectores", iconName: "FaRegMoneyBillAlt", to: "/colectores" },
     { label: "Promotores", iconName: "FaPersonBooth", to: "/promotores" },
   ],
   management: [
-    { label: "Créditos", iconName: "FaMoneyBillWaveAlt", to: "/creditos" },
+    { label: "Créditos", iconName: "FaMoneyBillWaveAlt", to: "/creditos", permission: "menu.creditos" },
     {
       label: "Bandeja aprobación",
       iconName: "FaInbox",
       to: "/bandeja-de-aprobacion",
     },
-    { label: "Pagos", iconName: "FaCashRegister", to: "/pagos" },
+    { label: "Pagos", iconName: "FaCashRegister", to: "/pagos", permission: "menu.pagos" },
     { label: "Crear saldos", iconName: "FaCalculator", to: "/crear-saldos" },
     { label: "Cierre del día", iconName: "FaLock", to: "/cierre-del-dia" },
     {
       label: "Políticas crédito",
       iconName: "FaFileSignature",
       to: "/creditos/politicas",
+      permission: "menu.politicas_credito",
     },
     {
       label: "Documentos crédito",
@@ -124,26 +125,26 @@ const menuItems = {
   ],
   users: [
     { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
-    { label: "Usuarios", iconName: "FaUser", to: "/usuarios" },
-    { label: "Roles", iconName: "FaUserShield", to: "/roles" },
+    { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },
+    { label: "Roles", iconName: "FaUserShield", to: "/roles", permission: "menu.roles" },
     { label: "Permisos", iconName: "FaKey", to: "/permisos" },
     { label: "Aprobadores", iconName: "FaUserCheck", to: "/aprobadores" },
   ],
   queries: [
-    { label: "Saldos", iconName: "FaChartBar", to: "/saldos" },
+    { label: "Saldos", iconName: "FaChartBar", to: "/saldos", permission: "menu.balances" },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
     { label: "Cartera saneada", iconName: "FaFileInvoiceDollar", to: "/cartera-saneada" },
-    { label: "Reporte de Garantías", iconName: "FaLock", to: "/garantias/reporte" },
+    { label: "Reporte de Garantías", iconName: "FaLock", to: "/garantias/reporte", permission: "menu.garantias" },
   ],
   compliance: [
-    { label: "Matriz de Riesgo LA/FT/FP", iconName: "FaBalanceScale", to: "/cumplimiento/matriz-riesgo" },
-    { label: "Recordatorio PIC", iconName: "FaClipboardList", to: "/cumplimiento/pic" },
-    { label: "Listas de Riesgo", iconName: "FaListUl", to: "/cumplimiento/listas" },
-    { label: "Alertas de Operaciones Inusuales", iconName: "FaExclamationTriangle", to: "/cumplimiento/alertas" },
-    { label: "Casos ROS", iconName: "FaGavel", to: "/cumplimiento/ros" },
-    { label: "Informe Mensual PLA/FT/FP", iconName: "FaChartBar", to: "/cumplimiento/informe-mensual" },
-    { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento" },
+    { label: "Matriz de Riesgo LA/FT/FP", iconName: "FaBalanceScale", to: "/cumplimiento/matriz-riesgo", permission: "menu.cumplimiento" },
+    { label: "Recordatorio PIC", iconName: "FaClipboardList", to: "/cumplimiento/pic", permission: "menu.cumplimiento" },
+    { label: "Listas de Riesgo", iconName: "FaListUl", to: "/cumplimiento/listas", permission: "menu.cumplimiento" },
+    { label: "Alertas de Operaciones Inusuales", iconName: "FaExclamationTriangle", to: "/cumplimiento/alertas", permission: "menu.cumplimiento" },
+    { label: "Casos ROS", iconName: "FaGavel", to: "/cumplimiento/ros", permission: "menu.cumplimiento" },
+    { label: "Informe Mensual PLA/FT/FP", iconName: "FaChartBar", to: "/cumplimiento/informe-mensual", permission: "menu.cumplimiento" },
+    { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento", permission: "menu.cumplimiento" },
   ],
   conami_tables: [
     {
@@ -157,95 +158,110 @@ const menuItems = {
       label: "Catálogo de cuentas",
       iconName: "FaUniversity",
       to: "/contabilidad/cuentas",
+      permission: "menu.contabilidad",
     },
     {
       label: "Libro Diario",
       iconName: "FaBook",
       to: "/contabilidad/libro-diario",
+      permission: "menu.contabilidad",
     },
     {
       label: "Mayor General",
       iconName: "FaBalanceScale",
       to: "/contabilidad/mayor",
+      permission: "menu.contabilidad",
     },
     {
       label: "Balance comprobación",
       iconName: "FaClipboardCheck",
       to: "/contabilidad/balance-comprobacion",
+      permission: "menu.contabilidad",
     },
     {
       label: "Estado resultados",
       iconName: "FaChartPie",
       to: "/contabilidad/estado-resultados",
+      permission: "menu.contabilidad",
     },
     {
       label: "Balance general",
       iconName: "FaLandmark",
       to: "/contabilidad/balance-general",
+      permission: "menu.contabilidad",
     },
     {
       label: "Cambios patrimonio",
       iconName: "FaChartLine",
       to: "/contabilidad/cambios-patrimonio",
+      permission: "menu.contabilidad",
     },
     {
       label: "Flujo de efectivo",
       iconName: "FaWater",
       to: "/contabilidad/flujo-efectivo",
+      permission: "menu.contabilidad",
     },
     {
       label: "Notas a los EEFF",
       iconName: "FaStickyNote",
       to: "/contabilidad/notas-eeff",
+      permission: "menu.contabilidad",
     },
     {
       label: "Cierre de ejercicio",
       iconName: "FaCalendarCheck",
       to: "/contabilidad/cierre-ejercicio",
+      permission: "menu.contabilidad",
     },
     {
       label: "Activo Fijo",
       iconName: "FaWarehouse",
       to: "/contabilidad/activo-fijo",
+      permission: "menu.activo_fijo",
     },
     {
       label: "Depreciación de Activos",
       iconName: "FaChartArea",
       to: "/contabilidad/activo-fijo/depreciacion",
+      permission: "menu.activo_fijo",
     },
     {
       label: "Contabilizar",
       iconName: "FaMagic",
       to: "/contabilidad/contabilizar",
+      permission: "menu.contabilidad",
     },
     {
       label: "Cuentas por operación",
       iconName: "FaSitemap",
       to: "/contabilidad/mapeos",
+      permission: "menu.contabilidad",
     },
     {
       label: "Partidas pendientes",
       iconName: "FaHourglassHalf",
       to: "/contabilidad/partidas-pendientes",
+      permission: "menu.contabilidad",
     },
   ],
 
   banks: [
-    { label: "Cuentas Bancarias", iconName: "FaUniversity", to: "/bancos/cuentas" },
-    { label: "Movimientos", iconName: "FaExchangeAlt", to: "/bancos/movimientos" },
-    { label: "Conciliación Bancaria", iconName: "FaBalanceScaleRight", to: "/bancos/conciliacion" },
+    { label: "Cuentas Bancarias", iconName: "FaUniversity", to: "/bancos/cuentas", permission: "menu.bancos" },
+    { label: "Movimientos", iconName: "FaExchangeAlt", to: "/bancos/movimientos", permission: "menu.bancos" },
+    { label: "Conciliación Bancaria", iconName: "FaBalanceScaleRight", to: "/bancos/conciliacion", permission: "menu.bancos" },
   ],
 
   caja: [
-    { label: "Cajas", iconName: "FaCashRegister", to: "/caja/cajas" },
-    { label: "Movimientos", iconName: "FaExchangeAlt", to: "/caja/movimientos" },
-    { label: "Arqueo de Cobradores", iconName: "FaClipboardCheck", to: "/caja/arqueos" },
+    { label: "Cajas", iconName: "FaCashRegister", to: "/caja/cajas", permission: "menu.caja" },
+    { label: "Movimientos", iconName: "FaExchangeAlt", to: "/caja/movimientos", permission: "menu.caja" },
+    { label: "Arqueo de Cobradores", iconName: "FaClipboardCheck", to: "/caja/arqueos", permission: "menu.caja" },
   ],
 
   obligations: [
-    { label: "Financiadores", iconName: "FaLandmark", to: "/obligaciones/financiadores" },
-    { label: "Líneas de Crédito", iconName: "FaLink", to: "/obligaciones/lineas-credito" },
-    { label: "Obligaciones", iconName: "FaFileInvoiceDollar", to: "/obligaciones" },
+    { label: "Financiadores", iconName: "FaLandmark", to: "/obligaciones/financiadores", permission: "menu.obligaciones" },
+    { label: "Líneas de Crédito", iconName: "FaLink", to: "/obligaciones/lineas-credito", permission: "menu.obligaciones" },
+    { label: "Obligaciones", iconName: "FaFileInvoiceDollar", to: "/obligaciones", permission: "menu.obligaciones" },
   ],
 
   budget: [
@@ -258,15 +274,25 @@ const menuItems = {
   ],
 
   rrhh: [
-    { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados" },
-    { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas" },
-    { label: "Deducciones", iconName: "FaMinusCircle", to: "/rrhh/deducciones" },
-    { label: "Ingresos", iconName: "FaPlusCircle", to: "/rrhh/ingresos" },
-    { label: "Configuración de RRHH", iconName: "FaCogs", to: "/rrhh/configuracion" },
-    { label: "Incidencias", iconName: "FaCalendarTimes", to: "/rrhh/incidencias" },
-    { label: "Liquidaciones", iconName: "FaUserSlash", to: "/rrhh/liquidaciones" },
-    { label: "Reportes RRHH", iconName: "FaChartBar", to: "/rrhh/reportes" },
+    { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados", permission: "menu.rrhh" },
+    { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas", permission: "menu.rrhh" },
+    { label: "Aprobadores de Planilla", iconName: "FaUserShield", to: "/rrhh/aprobadores-planilla", permission: "rrhh.configuracion.gestionar" },
+    { label: "Aprobar Planillas", iconName: "FaClipboardCheck", to: "/rrhh/aprobar-planillas", permission: "rrhh.planillas.aprobar" },
+    { label: "Deducciones", iconName: "FaMinusCircle", to: "/rrhh/deducciones", permission: "menu.rrhh" },
+    { label: "Ingresos", iconName: "FaPlusCircle", to: "/rrhh/ingresos", permission: "menu.rrhh" },
+    { label: "Configuración de RRHH", iconName: "FaCogs", to: "/rrhh/configuracion", permission: "menu.rrhh" },
+    { label: "Incidencias", iconName: "FaCalendarTimes", to: "/rrhh/incidencias", permission: "menu.rrhh" },
+    { label: "Liquidaciones", iconName: "FaUserSlash", to: "/rrhh/liquidaciones", permission: "menu.rrhh" },
+    { label: "Reportes RRHH", iconName: "FaChartBar", to: "/rrhh/reportes", permission: "menu.rrhh" },
+    // Autoservicio: sin "permission" a propósito — el rol "Empleado" no
+    // tiene (ni debe tener) menu.rrhh, pero sí debe ver su propia pantalla
+    // de vacaciones (mismo criterio que el backend, que tampoco exige
+    // permiso ahí, ver hrRoutes.js).
     { label: "Mis Vacaciones", iconName: "FaUmbrellaBeach", to: "/rrhh/mis-vacaciones" },
+    // Bandeja de respaldo: cualquier jefe inmediato (sin permiso especial)
+    // o alguien con rrhh.vacaciones.aprobar — tampoco tiene permiso único
+    // que la represente correctamente, se deja sin gating (igual que el
+    // backend, que tampoco exige requirePermission en esta ruta).
     { label: "Aprobar Vacaciones", iconName: "FaClipboardCheck", to: "/rrhh/aprobar-vacaciones" },
   ],
 
@@ -275,26 +301,31 @@ const menuItems = {
       label: "Auditoría",
       iconName: "FaHistory",
       to: "/auditoria",
+      permission: "menu.auditoria",
     },
     {
       label: "ICC - CONAMI",
       iconName: "FaFileInvoiceDollar",
       to: "/reports/conami/icc",
+      permission: "menu.reportes",
     },
     {
       label: "ICC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/icc",
+      permission: "menu.reportes",
     },
     {
       label: "ISC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/isc",
+      permission: "menu.reportes",
     },
     {
       label: "CrediMaster Studio",
       to: "/reports/studio",
       iconName: "",
+      permission: "menu.reportes",
     },
   ],
 };

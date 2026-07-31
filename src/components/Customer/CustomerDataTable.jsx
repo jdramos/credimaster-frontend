@@ -65,7 +65,7 @@ function CustomerDataTable({ columns, data, route, loading, globalFilter, onGlob
 												</Link>
 											</Tooltip>
 										)}
-										{(role === 1 || permissions.includes('clientes.mostrar')) && (
+										{(role === 1 || permissions.includes('clientes.ver')) && (
 											<Tooltip title="Mostrar">
 												<Link to={`/${memoizedRoute}/editar/${row.id}`} state={{ record: row, edit: false }}>
 													<IconButton size="small">

@@ -113,6 +113,8 @@ import EmployeesList from "./components/hr/EmployeesList";
 import HrConfigPanel from "./components/hr/HrConfigPanel";
 import EmployeeRecurringItemsList from "./components/hr/EmployeeRecurringItemsList";
 import PayrollRunsList from "./components/hr/PayrollRunsList";
+import PayrollApproversConfig from "./components/hr/PayrollApproversConfig";
+import PayrollApprovalInbox from "./components/hr/PayrollApprovalInbox";
 import MyVacations from "./components/hr/MyVacations";
 import VacationApprovalInbox from "./components/hr/VacationApprovalInbox";
 import IncidentsList from "./components/hr/IncidentsList";
@@ -626,6 +628,8 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
           <Route path="/rrhh/empleados" element={<EmployeesList />} />
           <Route path="/rrhh/planillas" element={<PayrollRunsList />} />
+          <Route path="/rrhh/aprobadores-planilla" element={<PayrollApproversConfig />} />
+          <Route path="/rrhh/aprobar-planillas" element={<PayrollApprovalInbox />} />
           <Route path="/rrhh/deducciones" element={<EmployeeRecurringItemsList kind="DEDUCCION" />} />
           <Route path="/rrhh/ingresos" element={<EmployeeRecurringItemsList kind="INGRESO" />} />
           <Route path="/rrhh/configuracion" element={<HrConfigPanel />} />

@@ -133,7 +133,7 @@ const CreditPolicyManager = () => {
             </Typography>
 
 
-            {(role === 1 || permissions.includes('creditos.crear'))
+            {(role === 1 || permissions.includes('politicas_credito.insertar'))
                 && (<Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
                     Nueva política
                 </Button>
@@ -160,7 +160,7 @@ const CreditPolicyManager = () => {
                             <TableCell>{p.description}</TableCell>
                             <TableCell>
                                 <Tooltip title="Editar">
-                                    {(role === 1 || permissions.includes('politicas.editar'))
+                                    {(role === 1 || permissions.includes('politicas_credito.editar'))
                                         && (<IconButton onClick={() => handleEdit(p)}><EditIcon /></IconButton>
                                         )}
 

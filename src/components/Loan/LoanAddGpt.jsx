@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import Button from "@mui/material/Button";
@@ -43,6 +43,7 @@ import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import LoanExtraFields from "./LoanExtraFields";
 import ApprovalSummaryCard from "./ApprovalConfirmationDialog";
+import { UserContext } from "../../contexts/UserContext";
 
 const url = `/api/loans`;
 const urlGuarantee = `/api/guarantees`;
@@ -61,6 +62,8 @@ const fieldSx = {
 
 const LoanAdd = () => {
   const navigate = useNavigate();
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canCreateLoan = role === 1 || permissions.includes("creditos.insertar");
 
   const currentUser = useMemo(() => {
     try {
@@ -1560,20 +1563,22 @@ const LoanAdd = () => {
         </Paper>
 
         <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          <Button
-            type="submit"
-            variant="contained"
-            startIcon={<Save />}
-            sx={{
-              borderRadius: 2,
-              fontWeight: 900,
-              px: 4,
-              bgcolor: BAC.primary,
-              "&:hover": { bgcolor: BAC.primaryDark },
-            }}
-          >
-            Guardar
-          </Button>
+          {canCreateLoan && (
+            <Button
+              type="submit"
+              variant="contained"
+              startIcon={<Save />}
+              sx={{
+                borderRadius: 2,
+                fontWeight: 900,
+                px: 4,
+                bgcolor: BAC.primary,
+                "&:hover": { bgcolor: BAC.primaryDark },
+              }}
+            >
+              Guardar
+            </Button>
+          )}
 
           <Button
             onClick={handleCancel}

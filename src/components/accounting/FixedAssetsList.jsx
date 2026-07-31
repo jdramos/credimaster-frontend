@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -24,6 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import RemoveShoppingCartIcon from "@mui/icons-material/RemoveShoppingCart";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/fixed-assets";
 
@@ -53,6 +54,9 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function FixedAssetsList() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canCreateAsset = role === 1 || permissions.includes("activo_fijo.crear");
+  const canDisposeAsset = role === 1 || permissions.includes("activo_fijo.baja");
   const [rows, setRows] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -218,7 +222,7 @@ export default function FixedAssetsList() {
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        params.row.status === "ACTIVE" && (
+        params.row.status === "ACTIVE" && canDisposeAsset && (
           <Tooltip title="Dar de baja (venta o retiro)">
             <IconButton size="small" color="error" onClick={() => openDisposal(params.row)}>
               <RemoveShoppingCartIcon fontSize="small" />
@@ -245,9 +249,11 @@ export default function FixedAssetsList() {
           </Box>
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenDialog}>
-              Nuevo activo
-            </Button>
+            {canCreateAsset && (
+              <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenDialog}>
+                Nuevo activo
+              </Button>
+            )}
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchAssets}>
               Actualizar
             </Button>

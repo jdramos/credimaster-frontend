@@ -445,37 +445,31 @@ function LoanListDataTable({
     onPageChange?.(0);
   };
 
-  const canShow = role === 1 || permissions.includes("creditos.mostrar");
+  const canShow = role === 1 || permissions.includes("creditos.detalle.ver");
   const canPay =
     role === 1 ||
-    permissions.includes("pagos.crear") ||
-    permissions.includes("creditos.pagar");
+    permissions.includes("pagos.insertar") ||
+    permissions.includes("pagos.aplicar");
   const canStatement =
     role === 1 ||
-    permissions.includes("creditos.estado_cuenta") ||
-    permissions.includes("creditos.mostrar");
+    permissions.includes("creditos.estado_cuenta.ver") ||
+    permissions.includes("creditos.detalle.ver");
 
   const canApprove =
     role === 1 ||
-    permissions.includes("creditos.aprobar") ||
-    permissions.includes("approvals.update") ||
-    permissions.includes("creditos.gestion_aprobacion");
+    permissions.includes("aprobaciones.creditos.aprobar");
 
   const canReject =
     role === 1 ||
-    permissions.includes("creditos.rechazar") ||
-    permissions.includes("approvals.update") ||
-    permissions.includes("creditos.gestion_aprobacion");
+    permissions.includes("aprobaciones.creditos.rechazar");
 
   const canDisburse =
     role === 1 ||
-    permissions.includes("creditos.desembolsar") ||
-    permissions.includes("loans.disburse");
+    permissions.includes("especial.creditos.desembolsar");
 
   const canModifyNormative =
     role === 1 ||
-    permissions.includes("creditos.modificar_normativo") ||
-    permissions.includes("loans.modify_normative");
+    permissions.includes("creditos.modificaciones.solicitar");
 
   return (
     <TableContainer component={Paper}>

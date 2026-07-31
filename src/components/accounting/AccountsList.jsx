@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -22,10 +22,14 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import API from "../../api";
 import BAC from "../../styles/bac";
 import AccountInstructionsButton from "./AccountInstructionsButton";
+import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = `/api/accounting/accounts`;
 
 export default function AccountsList() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canManageAccounts = role === 1 || permissions.includes("contabilidad.cuentas.gestionar");
+  const canApproveAccounts = role === 1 || permissions.includes("contabilidad.cuentas.aprobar");
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -173,7 +177,7 @@ export default function AccountsList() {
         filterable: false,
         renderCell: (params) => (
           <Box sx={{ display: "flex", gap: 1 }}>
-            {params.row.approval_status === "PENDING" && (
+            {params.row.approval_status === "PENDING" && canApproveAccounts && (
               <Tooltip title="Aprobar cuenta">
                 <IconButton size="small" color="success" onClick={() => approveAccount(params.row)}>
                   <CheckCircleIcon fontSize="small" />
@@ -239,18 +243,20 @@ export default function AccountsList() {
             </Box>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{
-              borderRadius: 2,
-              textTransform: "none",
-              background: "#0057B8",
-              "&:hover": { background: "#003E8A" },
-            }}
-          >
-            Nueva cuenta
-          </Button>
+          {canManageAccounts && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              sx={{
+                borderRadius: 2,
+                textTransform: "none",
+                background: "#0057B8",
+                "&:hover": { background: "#003E8A" },
+              }}
+            >
+              Nueva cuenta
+            </Button>
+          )}
 
           <Button
             variant="outlined"

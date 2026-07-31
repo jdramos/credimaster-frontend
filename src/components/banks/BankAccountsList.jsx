@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Paper,
@@ -29,6 +29,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import ImageIcon from "@mui/icons-material/Image";
 import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/banks/accounts";
 const DEFAULT_GL_MUC_CODE = "1102.01.01";
@@ -53,6 +54,8 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function BankAccountsList() {
+  const { permissions = [], role } = useContext(UserContext) || {};
+  const canManageBankAccounts = role === 1 || permissions.includes("bancos.cuentas.gestionar");
   const [rows, setRows] = useState([]);
   const [branches, setBranches] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -272,12 +275,14 @@ export default function BankAccountsList() {
       filterable: false,
       renderCell: (params) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
-          <Tooltip title="Editar">
-            <IconButton size="small" onClick={() => handleOpenEdit(params.row)}>
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {params.row.status === "ACTIVA" && (
+          {canManageBankAccounts && (
+            <Tooltip title="Editar">
+              <IconButton size="small" onClick={() => handleOpenEdit(params.row)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {params.row.status === "ACTIVA" && canManageBankAccounts && (
             <Tooltip title="Cerrar cuenta">
               <IconButton size="small" color="warning" onClick={() => closeAccount(params.row)}>
                 <LockIcon fontSize="small" />
@@ -306,9 +311,11 @@ export default function BankAccountsList() {
           </Box>
 
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenCreate}>
-              Nueva cuenta
-            </Button>
+            {canManageBankAccounts && (
+              <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenCreate}>
+                Nueva cuenta
+              </Button>
+            )}
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchAccounts}>
               Actualizar
             </Button>
