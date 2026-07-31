@@ -1515,6 +1515,7 @@ const LoanDetailsModal = ({
           }
           loading={actionLoading}
           loan={loan?.data || loan}
+          compliance={compliance}
           financialEvaluation={financialEvaluation}
           guaranteesTotal={guaranteesTotal}
           editableAmount={editableAmount}

@@ -32,6 +32,7 @@ export default function ApprovalConfirmationDialog({
   loading = false,
   approvalId,
   loan,
+  compliance,
   financialEvaluation,
   guaranteesTotal = 0,
 
@@ -155,8 +156,8 @@ export default function ApprovalConfirmationDialog({
             <Grid item xs={12} md={6}>
               <Typography variant="body2">
                 <b>Actividad/negocio:</b>{" "}
-                {financialEvaluation?.business_location ||
-                  loan?.business_name ||
+                {compliance?.customer_business_activity ||
+                  financialEvaluation?.business_location ||
                   "N/D"}
               </Typography>
             </Grid>
@@ -208,7 +209,7 @@ export default function ApprovalConfirmationDialog({
 
             <Grid item xs={12} md={6}>
               <Typography variant="body2">
-                <b>Destino:</b> {loan?.loan_purpose || "N/D"}
+                <b>Destino:</b> {compliance?.loan_purpose_label || "N/D"}
               </Typography>
             </Grid>
           </Grid>
