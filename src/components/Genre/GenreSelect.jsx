@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import {
   Autocomplete,
   TextField,
   CircularProgress,
   FormControl,
 } from "@mui/material";
-import API from "../../api";
+import useCachedFetch from "../../hooks/useCachedFetch";
 
 export default function GenreSelect({
   name = "id_genero",
@@ -19,32 +19,12 @@ export default function GenreSelect({
   helperText = "",
   fullWidth = true,
 }) {
-  const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { data: rawData, loading } = useCachedFetch("/api/genres");
 
-  useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        setLoading(true);
-        const res = await API.get("api/genres");
-
-        const rows = Array.isArray(res.data) ? res.data : res.data?.rows || [];
-
-        setOptions(
-          rows.map((r) => ({
-            id: Number(r.id),
-            name: r.name,
-          })),
-        );
-      } catch (e) {
-        console.error("Error cargando géneros:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGenres();
-  }, []);
+  const options = useMemo(() => {
+    const rows = Array.isArray(rawData) ? rawData : rawData?.rows || [];
+    return rows.map((r) => ({ id: Number(r.id), name: r.name }));
+  }, [rawData]);
 
   const normalizedValue =
     value === null || value === undefined || value === "" ? "" : Number(value);

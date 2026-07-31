@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   FormControl,
   InputLabel,
@@ -6,7 +6,7 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const toNumberOrEmpty = (v) => {
   if (v === "" || v === null || v === undefined) return "";
@@ -27,29 +27,15 @@ export default function CountrySelect({
   helperText = "",
   fullWidth = true,
 }) {
-  const [countries, setCountries] = useState([]);
-  const [fetchError, setFetchError] = useState("");
-
   const currentValue = value ?? selected ?? "";
 
-  useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        setFetchError("");
+  const { data: rawData, error: fetchApiError } = useCachedFetch("/api/countries");
+  const fetchError = fetchApiError ? "No se pudieron cargar los países." : "";
 
-        const response = await API.get("/api/countries");
-
-        const jsonData = response.data;
-        setCountries(Array.isArray(jsonData) ? jsonData : []);
-      } catch (e) {
-        console.error(e);
-        setFetchError("No se pudieron cargar los países.");
-        setCountries([]);
-      }
-    };
-
-    fetchApi();
-  }, []);
+  const countries = useMemo(
+    () => (Array.isArray(rawData) ? rawData : []),
+    [rawData],
+  );
 
   const hasOptions = countries.length > 0;
 

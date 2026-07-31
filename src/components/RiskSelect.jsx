@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import {
   FormControl,
   MenuItem,
@@ -6,34 +6,20 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const url = "/api/risks";
 
 const CollectorSelect = (props) => {
-  const [risk, setRisk] = useState([]); // State to store fetched data
-  const [error, setError] = useState(null); // State for error handling
+  const { data: rawData, error: fetchApiError } = useCachedFetch(url);
 
-  useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        const response = await API.get(url);
-        const jsonData = await response.data;
+  const risk = useMemo(() => {
+    if (!rawData || rawData.error) return [];
+    return Array.isArray(rawData) ? rawData : [];
+  }, [rawData]);
 
-        if (jsonData.error) {
-          setError(jsonData.error);
-          setRisk([]);
-        } else {
-          setError(null);
-          setRisk(jsonData || []);
-        }
-      } catch (error) {
-        setError("Failed to retrieve data. Please try again later.");
-      }
-    };
-
-    fetchApi(); // Call the fetchApi function when the component mounts
-  }, []); // Empty dependency array ensures this runs once on mount
+  const error =
+    rawData?.error || (fetchApiError ? "Failed to retrieve data. Please try again later." : null);
 
   return (
     <FormControl sx={{ mt: 0, mr: 1, minWidth: 300 }}>

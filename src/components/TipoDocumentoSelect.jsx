@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   FormControl,
   InputLabel,
@@ -6,7 +6,7 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const toNumberOrEmpty = (v) => {
   if (v === "" || v === null || v === undefined) return "";
@@ -28,9 +28,6 @@ export default function TipoDocumentoSelect({
   helperText = "",
   fullWidth = true,
 }) {
-  const [options, setOptions] = useState([]);
-  const [fetchError, setFetchError] = useState("");
-
   const currentValue = value ?? selected ?? "";
 
   const numericValue = useMemo(
@@ -38,48 +35,20 @@ export default function TipoDocumentoSelect({
     [currentValue],
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setFetchError("");
+  const { data: rawData, error: fetchApiError } = useCachedFetch(
+    "/api/conami/tipo-documento",
+  );
+  const fetchError = fetchApiError
+    ? "No se pudieron cargar los tipos de documento"
+    : "";
 
-        const response = await API.get("/api/conami/tipo-documento");
+  const options = useMemo(() => {
+    if (Array.isArray(rawData)) return rawData;
+    if (Array.isArray(rawData?.data)) return rawData.data;
+    return [];
+  }, [rawData]);
 
-        const json = response.data;
-
-        const rows = Array.isArray(json)
-          ? json
-          : Array.isArray(json?.data)
-            ? json.data
-            : [];
-
-        setOptions(rows);
-
-        // ✅ Seleccionar default automáticamente
-        if (numericValue === "") {
-          const defaultOption =
-            rows.find((r) => Number(r.is_default) === 1) ?? rows[0];
-
-          if (defaultOption?.id != null) {
-            onChange?.({
-              target: {
-                name,
-                value: Number(defaultOption.id),
-              },
-            });
-          }
-        }
-      } catch (err) {
-        console.error(err);
-
-        setFetchError("No se pudieron cargar los tipos de documento");
-        setOptions([]);
-      }
-    };
-
-    fetchData();
-  }, []);
-
+  // Seleccionar default automáticamente
   useEffect(() => {
     if (numericValue === "" && options.length > 0) {
       const defaultOption =

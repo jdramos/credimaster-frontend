@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useMemo } from "react";
 import { UserContext } from "../contexts/UserContext";
 import {
   Autocomplete,
@@ -7,7 +7,7 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const url = "/api/branches";
 
@@ -23,36 +23,21 @@ const BranchSelect = ({
   helperText = "",
   fullWidth = true,
 }) => {
-  const [data, setData] = useState([]);
-  const [fetchError, setFetchError] = useState("");
   const { userBranches = [], role } = useContext(UserContext);
+  const { data: allBranches, error: fetchApiError } = useCachedFetch(url);
+  const fetchError = fetchApiError ? "No se pudieron cargar las sucursales." : "";
 
   const currentValue = value ?? selected ?? "";
 
-  useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        setFetchError("");
+  const data = useMemo(() => {
+    if (!allBranches) return [];
 
-        const response = await API.get(url);
+    const allowedBranches = userBranches.map((id) => Number(id));
 
-        const jsonData = await response.data;
-
-        const allowedBranches = userBranches.map((id) => Number(id));
-
-        const filteredData = jsonData.filter((branch) =>
-          allowedBranches.includes(Number(branch.id)),
-        );
-
-        setData(filteredData);
-      } catch (err) {
-        console.error(err);
-        setFetchError("No se pudieron cargar las sucursales.");
-      }
-    };
-
-    fetchApi();
-  }, [userBranches]);
+    return allBranches.filter((branch) =>
+      allowedBranches.includes(Number(branch.id)),
+    );
+  }, [allBranches, userBranches]);
 
   const selectedOption = useMemo(() => {
     return (

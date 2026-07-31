@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from "react";
+import React, { useId, useMemo } from "react";
 import {
   FormControl,
   InputLabel,
@@ -6,7 +6,7 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const DEFAULT_URL = "/api/provinces";
 
@@ -24,32 +24,17 @@ const ProvinceSelect = ({
   fullWidth = true,
   endpoint = DEFAULT_URL,
 }) => {
-  const [provinces, setProvinces] = useState([]);
-  const [fetchError, setFetchError] = useState("");
-
   const inputId = useId();
   const labelId = `${inputId}-${name}-label`;
   const selectId = `${inputId}-${name}`;
 
-  useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        setFetchError("");
+  const { data: rawData, error: fetchApiError } = useCachedFetch(endpoint);
+  const fetchError = fetchApiError ? "No se pudieron cargar los departamentos." : "";
 
-        const response = await API.get(endpoint);
-
-        const jsonData = await response.data;
-        const list = Array.isArray(jsonData) ? jsonData : jsonData?.data;
-        setProvinces(Array.isArray(list) ? list : []);
-      } catch (e) {
-        console.error(e);
-        setFetchError("No se pudieron cargar los departamentos.");
-        setProvinces([]);
-      }
-    };
-
-    fetchApi();
-  }, [endpoint]);
+  const provinces = useMemo(() => {
+    const list = Array.isArray(rawData) ? rawData : rawData?.data;
+    return Array.isArray(list) ? list : [];
+  }, [rawData]);
 
   const controlledValue = editing ? (selected ?? "") : (value ?? "");
   const finalHelperText = error || fetchError || helperText || " ";

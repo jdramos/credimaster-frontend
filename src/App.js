@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import {
   Box,
+  CircularProgress,
   CssBaseline,
   ThemeProvider,
   createTheme,
@@ -21,120 +22,145 @@ import "./App.scss";
 import "bootstrap/scss/bootstrap.scss";
 import "react-toastify/dist/ReactToastify.css";
 
-import Home from "./pages/Home";
-import Loans from "./pages/Loans";
-import LoanList from "./components/LoanList";
-import Branches from "./pages/Branches";
-import Risks from "./pages/Risks";
-import ProvincesList from "./components/ProvincesList";
-import RiskAdd from "./components/RiskAdd";
-import RiskEdit from "./components/RiskEdit";
-import ProvinceAdd from "./components/ProvinceAdd";
-import ProvinceEdit from "./components/ProvinceEdit";
-import BranchAdd from "./components/BranchAdd";
-import BranchEdit from "./components/BranchEdit";
-import CollectorList from "./components/CollectorList";
-import CollectorAdd from "./components/CollectorAdd";
-import CollectorEdit from "./components/CollectorEdit";
-import PromoterList from "./components/PromoterList";
-import PromoterAdd from "./components/PromoterAdd";
-import PromoterEdit from "./components/PromoterEdit";
-import CustomerList from "./components/Customer/CustomerList";
+// Layout/auth chrome se necesita en cada render sin importar la ruta, así
+// que se queda como import normal (lazy-cargarlo solo agregaría un
+// parpadeo de carga sin ahorrar nada, porque siempre se monta de todas
+// formas). Login/Forgot/Reset también se dejan eager: son livianas y es
+// literalmente la primera pantalla que ve cualquier visita sin sesión.
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import UserAdd from "./components/UserAdd";
-import AddApproverForm from "./components/ApproverAddForm";
-import ApproverList from "./components/ApproverList";
-import UsersList from "./components/UserList";
-import RolePermissionManager from "./components/RolePermissionManager";
-import PermissionList from "./components/PermissionList";
-import PaymentList from "./components/PaymentList";
-import GenerateBalances from "./components/GenerateBalances";
-import BusinessDayPanel from "./components/BusinessDayPanel";
-import CreditPolicyManager from "./components/CreditPolicyManager";
-import BalanceSummary from "./components/Balances";
-import ProvissionViewer from "./components/ProvissionViewer";
-import SinRiesgoReport from "./components/Sinriesgo";
-import WrittenOffLoansList from "./components/WrittenOffLoansList";
-import EconomicActivitiesPage from "./pages/EconomicActivitiesPage";
-import GenrePage from "./pages/GenrePage";
-import MaritalStatusPage from "./pages/MaritalStatusPage";
-import CustomerAddGpt from "./components/Customer/CustomerForm";
-import LoanAdd from "./components/Loan/LoanAddGpt";
-import ApprovalInbox from "./components/ApprovalInbox";
-import CustomerClaimsList from "./components/Claims/CustomerClaimsList";
-import BalancesDashboard from "./components/dashboard/BalancesDashboard";
-import CreditFileTemplatePage from "./components/credit-files/CreditFileTemplatePage";
-import ConamiDefaultsManager from "./components/conami/ConamiDefaultsManager";
 import AppLayoutMenu from "./components/AppLayoutMenu";
-import AccountsList from "./components/accounting/AccountsList";
-import JournalList from "./components/accounting/JournalList";
-import LedgerList from "./components/accounting/LedgerList";
-import TrialBalance from "./components/accounting/TrialBalance";
-import IncomeStatement from "./components/accounting/IncomeStatement";
-import BalanceSheet from "./components/accounting/BalanceSheet";
-import EquityChanges from "./components/accounting/EquityChanges";
-import CashFlowStatement from "./components/accounting/CashFlowStatement";
-import GuaranteesReport from "./components/GuaranteesReport";
-import AmlRiskCriteriaConfig from "./components/Compliance/AmlRiskCriteriaConfig";
-import PicReviewReminders from "./components/Compliance/PicReviewReminders";
-import WatchlistManagement from "./components/Compliance/WatchlistManagement";
-import AmlAlertsInbox from "./components/Compliance/AmlAlertsInbox";
-import RosCasesList from "./components/Compliance/RosCasesList";
-import AmlMonthlyReport from "./components/Compliance/AmlMonthlyReport";
-import ComplianceOfficerHistory from "./components/Compliance/ComplianceOfficerHistory";
-import AssetAdjudicationsList from "./components/AssetAdjudicationsList";
-import FinancialStatementNotes from "./components/accounting/FinancialStatementNotes";
-import YearEndClosing from "./components/accounting/YearEndClosing";
-import FixedAssetsList from "./components/accounting/FixedAssetsList";
-import FixedAssetDepreciation from "./components/accounting/FixedAssetDepreciation";
-import BankAccountsList from "./components/banks/BankAccountsList";
-import BankMovementsList from "./components/banks/BankMovementsList";
-import BankReconciliation from "./components/banks/BankReconciliation";
-import FinanciadoresList from "./components/obligations/FinanciadoresList";
-import LineasCreditoList from "./components/obligations/LineasCreditoList";
-import ObligacionesList from "./components/obligations/ObligacionesList";
-import BudgetsList from "./components/budget/BudgetsList";
-import BudgetAccountLinesEditor from "./components/budget/BudgetAccountLinesEditor";
-import BudgetPlacementGoalsEditor from "./components/budget/BudgetPlacementGoalsEditor";
-import BudgetTrackingDashboard from "./components/budget/BudgetTrackingDashboard";
-import BudgetAlertsInbox from "./components/budget/BudgetAlertsInbox";
-import DepartmentsConfig from "./components/budget/DepartmentsConfig";
-import BudgetConceptsConfig from "./components/budget/BudgetConceptsConfig";
-import DepartmentBudgetEditor from "./components/budget/DepartmentBudgetEditor";
-import DepartmentBudgetApprovalInbox from "./components/budget/DepartmentBudgetApprovalInbox";
-import CashRegistersList from "./components/caja/CashRegistersList";
-import CashMovementsList from "./components/caja/CashMovementsList";
-import CollectorArqueosList from "./components/caja/CollectorArqueosList";
-import EmployeesList from "./components/hr/EmployeesList";
-import HrConfigPanel from "./components/hr/HrConfigPanel";
-import EmployeeRecurringItemsList from "./components/hr/EmployeeRecurringItemsList";
-import PayrollRunsList from "./components/hr/PayrollRunsList";
-import PayrollApproversConfig from "./components/hr/PayrollApproversConfig";
-import PayrollApprovalInbox from "./components/hr/PayrollApprovalInbox";
-import MyVacations from "./components/hr/MyVacations";
-import VacationApprovalInbox from "./components/hr/VacationApprovalInbox";
-import IncidentsList from "./components/hr/IncidentsList";
-import LiquidationsList from "./components/hr/LiquidationsList";
-import HrReports from "./components/hr/HrReports";
-import PostingRuns from "./components/accounting/PostingRuns";
-import AccountMappingsManager from "./components/accounting/AccountMappingsManager";
-import PendingItemsAging from "./components/accounting/PendingItemsAging";
-import IccReportPage from "./pages/reports/conami/IccReportPage";
-import IccGenerator from "./pages/reports/conami/icc/IccGenerator";
-import IscGenerator from "./pages/reports/conami/isc/IscGenerator";
 import IdleSessionHandler from "./components/IdleSessionHandler";
-import CustomReportsPage from "./pages/customReports/CustomReportsPage";
-import CustomReportDesigner from "./reports/custom/CustomReportDesigner";
-import Studio from "./reports/studio/Studio";
-import AuditLog from "./components/AuditLog";
-import BranchCalendarManager from "./components/BranchCalendarManager";
 import SuperAdminLayout from "./components/SuperAdminLayout";
-import TenantsPage from "./pages/superadmin/TenantsPage";
-import TenantMigrationPanel from "./pages/superadmin/TenantMigrationPanel";
+
+// Todo lo demás es contenido de una sola ruta -- se carga bajo demanda
+// (React.lazy) para que el bundle inicial no incluya los ~90 módulos de
+// contabilidad/RRHH/bancos/caja/cumplimiento/presupuesto/superadmin que la
+// mayoría de una sesión nunca visita.
+const Home = lazy(() => import("./pages/Home"));
+const LoanList = lazy(() => import("./components/LoanList"));
+const Branches = lazy(() => import("./pages/Branches"));
+const Risks = lazy(() => import("./pages/Risks"));
+const ProvincesList = lazy(() => import("./components/ProvincesList"));
+const RiskAdd = lazy(() => import("./components/RiskAdd"));
+const RiskEdit = lazy(() => import("./components/RiskEdit"));
+const ProvinceAdd = lazy(() => import("./components/ProvinceAdd"));
+const ProvinceEdit = lazy(() => import("./components/ProvinceEdit"));
+const BranchAdd = lazy(() => import("./components/BranchAdd"));
+const BranchEdit = lazy(() => import("./components/BranchEdit"));
+const CollectorList = lazy(() => import("./components/CollectorList"));
+const CollectorAdd = lazy(() => import("./components/CollectorAdd"));
+const CollectorEdit = lazy(() => import("./components/CollectorEdit"));
+const PromoterList = lazy(() => import("./components/PromoterList"));
+const PromoterAdd = lazy(() => import("./components/PromoterAdd"));
+const PromoterEdit = lazy(() => import("./components/PromoterEdit"));
+const CustomerList = lazy(() => import("./components/Customer/CustomerList"));
+const UserAdd = lazy(() => import("./components/UserAdd"));
+const AddApproverForm = lazy(() => import("./components/ApproverAddForm"));
+const ApproverList = lazy(() => import("./components/ApproverList"));
+const UsersList = lazy(() => import("./components/UserList"));
+const RolePermissionManager = lazy(() => import("./components/RolePermissionManager"));
+const PermissionList = lazy(() => import("./components/PermissionList"));
+const PaymentList = lazy(() => import("./components/PaymentList"));
+const GenerateBalances = lazy(() => import("./components/GenerateBalances"));
+const BusinessDayPanel = lazy(() => import("./components/BusinessDayPanel"));
+const CreditPolicyManager = lazy(() => import("./components/CreditPolicyManager"));
+const BalanceSummary = lazy(() => import("./components/Balances"));
+const ProvissionViewer = lazy(() => import("./components/ProvissionViewer"));
+const SinRiesgoReport = lazy(() => import("./components/Sinriesgo"));
+const WrittenOffLoansList = lazy(() => import("./components/WrittenOffLoansList"));
+const EconomicActivitiesPage = lazy(() => import("./pages/EconomicActivitiesPage"));
+const GenrePage = lazy(() => import("./pages/GenrePage"));
+const MaritalStatusPage = lazy(() => import("./pages/MaritalStatusPage"));
+const CustomerAddGpt = lazy(() => import("./components/Customer/CustomerForm"));
+const LoanAdd = lazy(() => import("./components/Loan/LoanAddGpt"));
+const LoanAddWizard = lazy(() => import("./components/Loan/LoanAddWizard"));
+const ApprovalInbox = lazy(() => import("./components/ApprovalInbox"));
+const CustomerClaimsList = lazy(() => import("./components/Claims/CustomerClaimsList"));
+const BalancesDashboard = lazy(() => import("./components/dashboard/BalancesDashboard"));
+const CreditFileTemplatePage = lazy(() => import("./components/credit-files/CreditFileTemplatePage"));
+const ConamiDefaultsManager = lazy(() => import("./components/conami/ConamiDefaultsManager"));
+const AccountsList = lazy(() => import("./components/accounting/AccountsList"));
+const JournalList = lazy(() => import("./components/accounting/JournalList"));
+const LedgerList = lazy(() => import("./components/accounting/LedgerList"));
+const TrialBalance = lazy(() => import("./components/accounting/TrialBalance"));
+const IncomeStatement = lazy(() => import("./components/accounting/IncomeStatement"));
+const BalanceSheet = lazy(() => import("./components/accounting/BalanceSheet"));
+const EquityChanges = lazy(() => import("./components/accounting/EquityChanges"));
+const CashFlowStatement = lazy(() => import("./components/accounting/CashFlowStatement"));
+const GuaranteesReport = lazy(() => import("./components/GuaranteesReport"));
+const AmlRiskCriteriaConfig = lazy(() => import("./components/Compliance/AmlRiskCriteriaConfig"));
+const PicReviewReminders = lazy(() => import("./components/Compliance/PicReviewReminders"));
+const WatchlistManagement = lazy(() => import("./components/Compliance/WatchlistManagement"));
+const AmlAlertsInbox = lazy(() => import("./components/Compliance/AmlAlertsInbox"));
+const RosCasesList = lazy(() => import("./components/Compliance/RosCasesList"));
+const AmlMonthlyReport = lazy(() => import("./components/Compliance/AmlMonthlyReport"));
+const ComplianceOfficerHistory = lazy(() => import("./components/Compliance/ComplianceOfficerHistory"));
+const AssetAdjudicationsList = lazy(() => import("./components/AssetAdjudicationsList"));
+const FinancialStatementNotes = lazy(() => import("./components/accounting/FinancialStatementNotes"));
+const YearEndClosing = lazy(() => import("./components/accounting/YearEndClosing"));
+const FixedAssetsList = lazy(() => import("./components/accounting/FixedAssetsList"));
+const FixedAssetDepreciation = lazy(() => import("./components/accounting/FixedAssetDepreciation"));
+const BankAccountsList = lazy(() => import("./components/banks/BankAccountsList"));
+const BankMovementsList = lazy(() => import("./components/banks/BankMovementsList"));
+const BankReconciliation = lazy(() => import("./components/banks/BankReconciliation"));
+const FinanciadoresList = lazy(() => import("./components/obligations/FinanciadoresList"));
+const LineasCreditoList = lazy(() => import("./components/obligations/LineasCreditoList"));
+const ObligacionesList = lazy(() => import("./components/obligations/ObligacionesList"));
+const BudgetsList = lazy(() => import("./components/budget/BudgetsList"));
+const BudgetAccountLinesEditor = lazy(() => import("./components/budget/BudgetAccountLinesEditor"));
+const BudgetPlacementGoalsEditor = lazy(() => import("./components/budget/BudgetPlacementGoalsEditor"));
+const BudgetTrackingDashboard = lazy(() => import("./components/budget/BudgetTrackingDashboard"));
+const BudgetAlertsInbox = lazy(() => import("./components/budget/BudgetAlertsInbox"));
+const DepartmentsConfig = lazy(() => import("./components/budget/DepartmentsConfig"));
+const BudgetConceptsConfig = lazy(() => import("./components/budget/BudgetConceptsConfig"));
+const DepartmentBudgetEditor = lazy(() => import("./components/budget/DepartmentBudgetEditor"));
+const DepartmentBudgetApprovalInbox = lazy(() => import("./components/budget/DepartmentBudgetApprovalInbox"));
+const CashRegistersList = lazy(() => import("./components/caja/CashRegistersList"));
+const CashMovementsList = lazy(() => import("./components/caja/CashMovementsList"));
+const CollectorArqueosList = lazy(() => import("./components/caja/CollectorArqueosList"));
+const EmployeesList = lazy(() => import("./components/hr/EmployeesList"));
+const HrConfigPanel = lazy(() => import("./components/hr/HrConfigPanel"));
+const EmployeeRecurringItemsList = lazy(() => import("./components/hr/EmployeeRecurringItemsList"));
+const PayrollRunsList = lazy(() => import("./components/hr/PayrollRunsList"));
+const PayrollApproversConfig = lazy(() => import("./components/hr/PayrollApproversConfig"));
+const PayrollApprovalInbox = lazy(() => import("./components/hr/PayrollApprovalInbox"));
+const MyVacations = lazy(() => import("./components/hr/MyVacations"));
+const VacationApprovalInbox = lazy(() => import("./components/hr/VacationApprovalInbox"));
+const IncidentsList = lazy(() => import("./components/hr/IncidentsList"));
+const LiquidationsList = lazy(() => import("./components/hr/LiquidationsList"));
+const HrReports = lazy(() => import("./components/hr/HrReports"));
+const PostingRuns = lazy(() => import("./components/accounting/PostingRuns"));
+const AccountMappingsManager = lazy(() => import("./components/accounting/AccountMappingsManager"));
+const PendingItemsAging = lazy(() => import("./components/accounting/PendingItemsAging"));
+const AccountReconciliation = lazy(() => import("./components/accounting/AccountReconciliation"));
+const IccReportPage = lazy(() => import("./pages/reports/conami/IccReportPage"));
+const IccGenerator = lazy(() => import("./pages/reports/conami/icc/IccGenerator"));
+const IscGenerator = lazy(() => import("./pages/reports/conami/isc/IscGenerator"));
+const CustomReportsPage = lazy(() => import("./pages/customReports/CustomReportsPage"));
+const Studio = lazy(() => import("./reports/studio/Studio"));
+const AuditLog = lazy(() => import("./components/AuditLog"));
+const BranchCalendarManager = lazy(() => import("./components/BranchCalendarManager"));
+const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
+const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
+
+function RouteLoadingFallback() {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "50vh",
+      }}
+    >
+      <CircularProgress />
+    </Box>
+  );
+}
 
 function PageContainer({ children }) {
   return (
@@ -186,10 +212,12 @@ function SuperAdminRoutes() {
 
   return (
     <SuperAdminLayout onLogout={handleLogout}>
-      <Routes>
-        <Route path="/" element={<TenantsPage />} />
-        <Route path="/tenants/:id/migration" element={<TenantMigrationPanel />} />
-      </Routes>
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<TenantsPage />} />
+          <Route path="/tenants/:id/migration" element={<TenantMigrationPanel />} />
+        </Routes>
+      </Suspense>
     </SuperAdminLayout>
   );
 }
@@ -231,6 +259,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
         appName="CrediMaster"
         tenantName={tenant?.commercial_name || tenant?.legal_name}
       >
+        <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           <Route
             path="/"
@@ -373,6 +402,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <LoanAdd />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/creditos/agregar-v2"
+            element={
+              <PageContainer>
+                <LoanAddWizard />
               </PageContainer>
             }
           />
@@ -641,6 +678,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/contabilidad/contabilizar" element={<PostingRuns />} />
           <Route path="/contabilidad/mapeos" element={<AccountMappingsManager />} />
           <Route path="/contabilidad/partidas-pendientes" element={<PendingItemsAging />} />
+          <Route path="/contabilidad/conciliacion" element={<AccountReconciliation />} />
           <Route path="/conami/icc" element={<IccGenerator />} />
           <Route path="/conami/isc" element={<IscGenerator />} />
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
@@ -662,6 +700,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
             }
           />
         </Routes>
+        </Suspense>
       </AppLayoutMenu>
     </Box>
   );

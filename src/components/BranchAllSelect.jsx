@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import {
   Autocomplete,
   Checkbox,
@@ -7,7 +7,7 @@ import {
   FormHelperText,
   TextField,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const url = "/api/branches";
 
@@ -19,51 +19,15 @@ const BranchAllSelect = ({
   error = false,
   errorField = "",
 }) => {
-  const [data, setData] = useState([]);
-  const [fetchError, setFetchError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { data: rawData, loading, error: fetchApiError } = useCachedFetch(url);
+  const fetchError = fetchApiError ? "No se pudieron cargar las sucursales." : "";
 
-  useEffect(() => {
-    let alive = true;
-
-    const fetchApi = async () => {
-      try {
-        setLoading(true);
-        setFetchError("");
-
-        const response = await API.get(url);
-
-        const jsonData = await response.data;
-
-        // Soporta respuesta directa [] o respuesta { data: [] }
-        const rows = Array.isArray(jsonData)
-          ? jsonData
-          : Array.isArray(jsonData.data)
-            ? jsonData.data
-            : [];
-
-        if (alive) {
-          setData(rows);
-        }
-      } catch (err) {
-        console.error(err);
-        if (alive) {
-          setFetchError("No se pudieron cargar las sucursales.");
-          setData([]);
-        }
-      } finally {
-        if (alive) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchApi();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
+  // Soporta respuesta directa [] o respuesta { data: [] }
+  const data = useMemo(() => {
+    if (Array.isArray(rawData)) return rawData;
+    if (Array.isArray(rawData?.data)) return rawData.data;
+    return [];
+  }, [rawData]);
 
   const selectedIds = useMemo(() => {
     return Array.isArray(value) ? value.map(Number) : [];

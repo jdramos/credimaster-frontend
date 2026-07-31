@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { CircularProgress, MenuItem, TextField } from "@mui/material";
-import API from "../../api";
+import useCachedFetch from "../../hooks/useCachedFetch";
 
 export default function FormaPagoSelect({
   name = "payment_method_id",
@@ -13,41 +13,29 @@ export default function FormaPagoSelect({
   helperText = "",
   disabled = false,
 }) {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { data: rawData, loading } = useCachedFetch("/api/payments/formas-pago");
 
-  const loadFormasPago = async () => {
-    try {
-      setLoading(true);
-
-      const { data } = await API.get("/api/payments/formas-pago");
-
-      const items = Array.isArray(data?.data) ? data.data : [];
-      setRows(items);
-
-      if (!value) {
-        const defaultItem =
-          items.find((item) => Number(item.is_default) === 1) || items[0];
-
-        if (defaultItem) {
-          onChange?.({
-            target: {
-              name,
-              value: defaultItem.id,
-            },
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error cargando formas de pago:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const rows = useMemo(
+    () => (Array.isArray(rawData?.data) ? rawData.data : []),
+    [rawData],
+  );
 
   useEffect(() => {
-    loadFormasPago();
-  }, []);
+    if (value || rows.length === 0) return;
+
+    const defaultItem =
+      rows.find((item) => Number(item.is_default) === 1) || rows[0];
+
+    if (defaultItem) {
+      onChange?.({
+        target: {
+          name,
+          value: defaultItem.id,
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, value]);
 
   return (
     <TextField

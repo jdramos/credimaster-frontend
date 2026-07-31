@@ -9,6 +9,7 @@ import axios from 'axios';
 import { useContext } from 'react';
 import { UserContext } from '../contexts/UserContext'; // ajusta la ruta
 import API from '../api'; // ajusta la ruta
+import { fetchWithCache, invalidateCache } from '../hooks/useCachedFetch';
 import { NumericFormat } from 'react-number-format';
 
 
@@ -29,12 +30,12 @@ const CreditPolicyManager = () => {
     const isAdmin = user?.user === 1 || user?.permissions?.includes('manejar_politicas_credito');
     const { permissions, role } = useContext(UserContext);
 
-    const URL = process.env.REACT_APP_API_BASE_URL + '/api/credit-policies';
+    const URL = '/api/credit-policies';
 
-    const fetchPolicies = async () => {
+    const fetchPolicies = async (force = false) => {
         try {
-            const res = await API.get(URL);
-            setPolicies(res.data);
+            const data = await fetchWithCache(URL, { force });
+            setPolicies(data);
         } catch (err) {
             console.error('Error al obtener políticas:', err);
         }
@@ -101,9 +102,10 @@ const CreditPolicyManager = () => {
             }
 
             setOpenDialog(false);
-            fetchPolicies();
+            invalidateCache(URL);
+            fetchPolicies(true);
         } catch (error) {
-            alert("Error al guardar: " + error.message);
+            alert("Error al guardar: " + (error.response?.data?.error || error.message));
         }
     };
 
@@ -197,11 +199,14 @@ const CreditPolicyManager = () => {
                         decimalSeparator="."
                         decimalScale={2}
 
-                        prefix="C$ "
+                        prefix={newPolicy.policy_type === 'percentage' ? '' : 'C$ '}
+                        suffix={newPolicy.policy_type === 'percentage' ? '%' : ''}
                         label="Valor"
                         name="policy_value"
                         value={newPolicy.policy_value}
-                        onChange={handleChange}
+                        onValueChange={({ value }) =>
+                            setNewPolicy((prev) => ({ ...prev, policy_value: value }))
+                        }
                         fullWidth
                         margin="dense"
 

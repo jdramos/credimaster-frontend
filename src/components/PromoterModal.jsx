@@ -280,7 +280,9 @@ export default function PromoterModal({
               label="Género"
               name="id_genero"
               value={promoter.id_genero}
-              onChange={handleInputChange}
+              onChange={(val) =>
+                handleInputChange({ target: { name: "id_genero", value: val } })
+              }
               size="small"
               fullWidth
               required

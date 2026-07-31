@@ -20,7 +20,6 @@ import {
   ListItemText,
   Divider,
 } from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import API from "../../api";
 
@@ -57,7 +56,7 @@ const ConamiDefaultsManager = () => {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [rowsByTable, setRowsByTable] = useState({});
   const [loadingTable, setLoadingTable] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [savingRowId, setSavingRowId] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -103,45 +102,41 @@ const ConamiDefaultsManager = () => {
     setSelectedIndex(index);
   };
 
-  const handleToggleDefault = (tableName, rowId) => {
-    setRowsByTable((prev) => {
-      const currentRows = prev[tableName] || [];
+  const handleToggleDefault = async (tableName, rowId) => {
+    const currentRows = rowsByTable[tableName] || [];
+    const wasDefault = currentRows.some(
+      (row) => row.id === rowId && Number(row.is_default) === 1,
+    );
+    // Clic en el switch ya-por-defecto lo apaga (sin valor por defecto);
+    // clic en cualquier otro lo convierte en el nuevo por defecto (y apaga
+    // el resto, ya que solo puede haber uno).
+    const newDefaultId = wasDefault ? null : rowId;
 
-      return {
-        ...prev,
-        [tableName]: currentRows.map((row) => ({
-          ...row,
-          is_default: row.id === rowId ? 1 : 0,
-        })),
-      };
-    });
-  };
+    setRowsByTable((prev) => ({
+      ...prev,
+      [tableName]: (prev[tableName] || []).map((row) => ({
+        ...row,
+        is_default: row.id === newDefaultId ? 1 : 0,
+      })),
+    }));
 
-  const handleSave = async () => {
-    if (!currentTable) return;
-
-    setSaving(true);
+    setSavingRowId(rowId);
     setError("");
     setSuccess("");
 
     try {
-      const selected = rows.find((r) => Number(r.is_default) === 1);
-
       await API.put("/api/conami/defaults", {
-        defaults: [
-          {
-            table: currentTable,
-            default_id: selected ? selected.id : null,
-          },
-        ],
+        defaults: [{ table: tableName, default_id: newDefaultId }],
       });
 
       setSuccess("Valor por defecto actualizado correctamente.");
     } catch (err) {
       console.error(err);
       setError("No se pudo guardar el valor por defecto.");
+      // Revertir al estado real del servidor si el guardado falló.
+      loadTable(tableName, true);
     } finally {
-      setSaving(false);
+      setSavingRowId(null);
     }
   };
 
@@ -169,7 +164,8 @@ const ConamiDefaultsManager = () => {
               Valores por defecto CONAMI
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Selecciona un catálogo para cargar sus registros.
+              Selecciona un catálogo y activa el switch de la fila que quieres
+              como valor por defecto — se guarda al instante.
             </Typography>
           </Box>
 
@@ -178,18 +174,9 @@ const ConamiDefaultsManager = () => {
               variant="outlined"
               startIcon={<RefreshIcon />}
               onClick={() => loadTable(currentTable, true)}
-              disabled={!currentTable || isLoadingCurrent || saving}
+              disabled={!currentTable || isLoadingCurrent || savingRowId !== null}
             >
               Recargar
-            </Button>
-
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
-              onClick={handleSave}
-              disabled={!currentTable || isLoadingCurrent || saving}
-            >
-              Guardar
             </Button>
           </Stack>
         </Stack>
@@ -311,7 +298,10 @@ const ConamiDefaultsManager = () => {
                             onChange={() =>
                               handleToggleDefault(currentTable, row.id)
                             }
-                            disabled={Number(row.active ?? row.is_active) !== 1}
+                            disabled={
+                              Number(row.active ?? row.is_active) !== 1 ||
+                              savingRowId !== null
+                            }
                           />
                         </TableCell>
                       </TableRow>
@@ -329,7 +319,7 @@ const ConamiDefaultsManager = () => {
               </TableContainer>
             )}
 
-            {saving && (
+            {savingRowId !== null && (
               <Box
                 sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}
               >

@@ -127,7 +127,7 @@ const CustomerSelect = (props) => {
   }, [inputValue, debouncedFetch, selectedCustomer]);
 
   return (
-    <FormControl sx={{ mt: 0, mr: 1, minWidth: 500 }}>
+    <FormControl sx={{ mt: 0, width: "100%", minWidth: 0 }}>
       <Autocomplete
         size={props.size}
         options={customers}

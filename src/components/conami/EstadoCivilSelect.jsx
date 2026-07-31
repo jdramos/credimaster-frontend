@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   MenuItem,
   Select,
@@ -6,7 +6,7 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
-import API from "../../api";
+import useCachedFetch from "../../hooks/useCachedFetch";
 
 export default function EstadoCivilSelect({
   value, // id seleccionado (controlado por el padre)
@@ -20,31 +20,16 @@ export default function EstadoCivilSelect({
   error = false,
   helperText = "",
 }) {
-  const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { data: rawData, loading } = useCachedFetch("/api/conami/estado-civil");
 
-  useEffect(() => {
-    const fetchEstadoCivil = async () => {
-      try {
-        setLoading(true);
-        const res = await API.get("api/conami/estado-civil");
-        const rows = res.data?.rows ?? [];
-        setOptions(
-          rows.map((r) => ({
-            id: Number(r.id),
-            name: r.name,
-            isDefault: Number(r.isDefault || 0),
-          })),
-        );
-      } catch (e) {
-        console.error("Error cargando estado civil:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEstadoCivil();
-  }, []);
+  const options = useMemo(() => {
+    const rows = rawData?.rows ?? [];
+    return rows.map((r) => ({
+      id: Number(r.id),
+      name: r.name,
+      isDefault: Number(r.isDefault || 0),
+    }));
+  }, [rawData]);
 
   const defaultId = useMemo(() => {
     if (options.length === 0) return "";

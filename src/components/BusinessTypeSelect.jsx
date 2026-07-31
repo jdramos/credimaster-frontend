@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import {
   FormControl,
   InputLabel,
@@ -7,28 +7,14 @@ import {
   Autocomplete,
   TextField,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const url = "/api/businesstypes";
 
 const BusinessTypeSelect = (props) => {
-  const [business, setBusiness] = useState([]); // State to store fetched data
-  const [error, setError] = useState(null); // State for error handling
-
-  useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        const response = await API.get(url);
-
-        const jsonData = await response.data;
-        setBusiness(jsonData);
-      } catch (error) {
-        setError("Failed to retrieve data. Please try again later.");
-      }
-    };
-
-    fetchApi(); // Call the fetchApi function when the component mounts
-  }, []); // Empty dependency array ensures this runs once on mount
+  const { data: rawData, error: fetchApiError } = useCachedFetch(url);
+  const business = useMemo(() => (Array.isArray(rawData) ? rawData : []), [rawData]);
+  const error = fetchApiError ? "Failed to retrieve data. Please try again later." : null;
 
   return (
     <FormControl sx={{ mt: 0, ml: 0, minWidth: 300 }} size="small">

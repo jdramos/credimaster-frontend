@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useId } from "react";
+import React, { useEffect, useMemo, useId } from "react";
 import {
   FormControl,
   MenuItem,
@@ -6,7 +6,7 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const DEFAULT_URL = "/api/municipalities";
 
@@ -29,31 +29,17 @@ const MunicipalitySelect = ({
   fullWidth = true,
   endpoint = DEFAULT_URL,
 }) => {
-  const [municipalities, setMunicipalities] = useState([]);
-  const [fetchError, setFetchError] = useState("");
-
   const inputId = useId();
   const labelId = `${inputId}-${name}-label`;
   const selectId = `${inputId}-${name}`;
 
-  useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        setFetchError("");
-        const response = await API.get(endpoint);
+  const { data: rawData, error: fetchApiError } = useCachedFetch(endpoint);
+  const fetchError = fetchApiError ? "No se pudieron cargar los municipios." : "";
 
-        const jsonData = await response.data;
-        const list = Array.isArray(jsonData) ? jsonData : jsonData?.data;
-        setMunicipalities(Array.isArray(list) ? list : []);
-      } catch (err) {
-        console.error(err);
-        setFetchError("No se pudieron cargar los municipios.");
-        setMunicipalities([]);
-      }
-    };
-
-    fetchApi();
-  }, [endpoint]);
+  const municipalities = useMemo(() => {
+    const list = Array.isArray(rawData) ? rawData : rawData?.data;
+    return Array.isArray(list) ? list : [];
+  }, [rawData]);
 
   const hasOptions = municipalities.length > 0;
   const numericProvinceId = toNumberOrEmpty(provinceId);

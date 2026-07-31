@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
@@ -6,31 +6,14 @@ import MenuItem from '@mui/material/MenuItem';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 import { FormHelperText } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const RoleSelect = (props) => {
-  const [roles, setRoles] = useState([]); // State to store fetched data
-  const [error, setError] = useState(null); // State for error handling
-
-  useEffect(() => {
-    const fetchRoles = async () => {
-
-      try {
-
-        const response = await API.get('/api/roles');
-        const jsonData = response.data;
-        setRoles(jsonData); // Update the state with fetched data
-
-      } catch (error) {
-
-        console.error(error);
-        setError('Error al recuperar roles. Por favor, inténtelo de nuevo más tarde.');
-      }
-
-    };
-
-    fetchRoles(); // Call the fetchRoles function when the component mounts
-  }, []);
+  const { data: rawData, error: fetchApiError } = useCachedFetch('/api/roles');
+  const roles = useMemo(() => (Array.isArray(rawData) ? rawData : []), [rawData]);
+  const error = fetchApiError
+    ? 'Error al recuperar roles. Por favor, inténtelo de nuevo más tarde.'
+    : null;
 
 
   return (

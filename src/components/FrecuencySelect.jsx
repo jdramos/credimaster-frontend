@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   FormControl,
   MenuItem,
@@ -6,48 +6,37 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import API from "../api";
+import useCachedFetch from "../hooks/useCachedFetch";
 
 const url = "/api/frecuencies";
 
 const FrecuencySelect = (props) => {
-  const [frecuency, setFrecuency] = useState([]);
-  const [loadError, setLoadError] = useState(null);
+  const { data: rawData, error: fetchApiError } = useCachedFetch(url);
+  const loadError = fetchApiError ? "Hubo un error al cargar los datos" : null;
+
+  const frecuency = useMemo(() => (Array.isArray(rawData) ? rawData : []), [rawData]);
 
   const defaultOption = frecuency.find((f) => f.default === "Y");
   const selectedOption =
     frecuency.find((f) => f.tag === props.value) || defaultOption || null;
 
   useEffect(() => {
-    const fetchApi = async () => {
-      try {
-        const response = await API.get(url);
-
-        const jsonData = await response.data;
-        setFrecuency(jsonData);
-
-        const defaultItem = jsonData.find((f) => f.default === "Y");
-        if (!props.value && defaultItem) {
-          // Simular selección por defecto si no hay valor ya definido
-          const syntheticEvent = {
-            target: {
-              name: props.name,
-              value: defaultItem.tag,
-              frecuency_id: defaultItem.id,
-            },
-          };
-          props.onChange(syntheticEvent, defaultItem);
-        }
-      } catch (error) {
-        setLoadError("Hubo un error al cargar los datos");
-      }
-    };
-
-    fetchApi();
-  }, []);
+    if (!props.value && defaultOption) {
+      // Simular selección por defecto si no hay valor ya definido
+      const syntheticEvent = {
+        target: {
+          name: props.name,
+          value: defaultOption.tag,
+          frecuency_id: defaultOption.id,
+        },
+      };
+      props.onChange(syntheticEvent, defaultOption);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultOption]);
 
   return (
-    <FormControl sx={{ mt: 0, mr: 1, minWidth: 300 }}>
+    <FormControl sx={{ mt: 0, width: "100%", minWidth: 0 }}>
       <Autocomplete
         size="small"
         fullWidth

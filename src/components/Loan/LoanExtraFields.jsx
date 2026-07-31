@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  Grid,
+  Box,
   TextField,
   MenuItem,
   Typography,
@@ -10,7 +10,6 @@ import {
   Paper,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import EconomicActivitySelect from "../conami/actividadEconomicaSelect";
 
 const toStr = (value) =>
   value === null || value === undefined || value === "" ? "" : String(value);
@@ -25,7 +24,6 @@ const LoanExtraFields = ({
     tiposCredito = [],
     lineas = [],
     modalidadesCredito = [],
-    destinosCredito = [],
     monedas = [],
     origenesRecursos = [],
     sindicados = [],
@@ -111,95 +109,103 @@ const LoanExtraFields = ({
         </AccordionSummary>
 
         <AccordionDetails sx={{ pt: 1 }}>
-          <Grid container spacing={1.5}>
-            <Grid item xs={12} sm={6} md={4}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 1.5,
+              width: "100%",
+              maxWidth: "100%",
+            }}
+          >
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_tipo_credito",
                 label: "Tipo crédito",
                 options: tiposCredito,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_linea",
                 label: "Línea",
                 options: lineas,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_modalidad_credito",
                 label: "Modalidad crédito",
                 options: modalidadesCredito,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_moneda",
                 label: "Moneda",
                 options: monedas,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_origen_recursos",
                 label: "Origen recursos",
                 options: origenesRecursos,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_sindicado",
                 label: "Sindicado",
                 options: sindicados,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_tipo_agrupacion_credito",
                 label: "Tipo agrupación crédito",
                 options: tiposAgrupacionCredito,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_sector_economico",
                 label: "Sector económico",
                 options: sectoresEconomicos,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_met_atencion",
                 label: "Método atención",
                 options: metodosAtencion,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_tipo_zona",
                 label: "Tipo zona",
                 options: tiposZona,
               })}
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ minWidth: 0 }}>
               {renderSelect({
                 name: "id_garantia",
                 label: "Garantía",
                 options: garantias,
               })}
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </AccordionDetails>
       </Accordion>
     </Paper>

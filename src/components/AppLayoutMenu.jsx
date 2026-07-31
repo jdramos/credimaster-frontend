@@ -244,6 +244,12 @@ const menuItems = {
       to: "/contabilidad/partidas-pendientes",
       permission: "menu.contabilidad",
     },
+    {
+      label: "Conciliación de Cuentas",
+      iconName: "FaBalanceScaleRight",
+      to: "/contabilidad/conciliacion",
+      permission: "menu.contabilidad",
+    },
   ],
 
   banks: [
