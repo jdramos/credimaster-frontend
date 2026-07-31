@@ -59,6 +59,7 @@ export default function useLoanForm() {
     created_by:
       currentUser?.user_name || currentUser?.username || currentUser?.id || "",
     id_tipo_credito: "",
+    id_destino_credito: "",
     id_garantia: "",
     id_linea: "",
     id_modalidad_credito: "",
@@ -80,6 +81,7 @@ export default function useLoanForm() {
 
   const [catalogs, setCatalogs] = useState({
     tiposCredito: [],
+    destinosCredito: [],
     lineas: [],
     modalidadesCredito: [],
     monedas: [],
@@ -669,6 +671,9 @@ export default function useLoanForm() {
         id_tipo_credito:
           prev.id_tipo_credito || getDefaultId(data.tiposCredito),
 
+        id_destino_credito:
+          prev.id_destino_credito || getDefaultId(data.destinosCredito),
+
         id_garantia: prev.id_garantia || getDefaultId(data.garantias),
 
         id_linea: prev.id_linea || getDefaultId(data.lineas),
@@ -819,6 +824,9 @@ export default function useLoanForm() {
       conami_id_actividad_economica: loan.conami_id_actividad_economica,
       id_tipo_credito: loan.id_tipo_credito
         ? Number(loan.id_tipo_credito)
+        : null,
+      id_destino_credito: loan.id_destino_credito
+        ? Number(loan.id_destino_credito)
         : null,
       id_garantia: loan.id_garantia ? Number(loan.id_garantia) : null,
       id_linea: loan.id_linea ? Number(loan.id_linea) : null,

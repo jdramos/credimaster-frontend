@@ -22,6 +22,7 @@ const LoanExtraFields = ({
 }) => {
   const {
     tiposCredito = [],
+    destinosCredito = [],
     lineas = [],
     modalidadesCredito = [],
     monedas = [],
@@ -123,6 +124,14 @@ const LoanExtraFields = ({
                 name: "id_tipo_credito",
                 label: "Tipo crédito",
                 options: tiposCredito,
+              })}
+            </Box>
+
+            <Box sx={{ minWidth: 0 }}>
+              {renderSelect({
+                name: "id_destino_credito",
+                label: "Destino del crédito",
+                options: destinosCredito,
               })}
             </Box>
 
