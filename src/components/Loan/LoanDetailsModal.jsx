@@ -68,6 +68,7 @@ import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluat
 import LoanModificationSection from "../Loan/LoanModificationSection";
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import RiskBureauQueryPanel from "./RiskBureauQueryPanel";
+import DebtorMinInfoPanel from "./DebtorMinInfoPanel";
 import BAC from "../../styles/bac";
 import GuaranteesTable from "../GuranteeTable";
 import AssetAdjudicationModal from "../AssetAdjudicationModal";
@@ -1282,6 +1283,11 @@ const LoanDetailsModal = ({
                         <RiskBureauQueryPanel
                           customerId={clientId}
                           loanId={loanId}
+                          readOnly={false}
+                        />
+
+                        <DebtorMinInfoPanel
+                          customerId={clientId}
                           readOnly={false}
                         />
                       </>
