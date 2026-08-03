@@ -4,17 +4,30 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
+  IconButton,
   MenuItem,
   Paper,
   Snackbar,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
   Typography,
   TextField,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 
@@ -29,6 +42,11 @@ export default function PostingRuns() {
   const [posting, setPosting] = useState(false);
   const [pending, setPending] = useState([]);
   const [loadingPending, setLoadingPending] = useState(false);
+
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailLabel, setDetailLabel] = useState("");
+  const [detailRows, setDetailRows] = useState([]);
 
   const [form, setForm] = useState({
     from_date: "",
@@ -83,6 +101,25 @@ export default function PostingRuns() {
     fetchRuns();
     fetchPending();
   }, []);
+
+  const openDetail = async (operationType, label) => {
+    setDetailOpen(true);
+    setDetailLabel(label);
+    setDetailLoading(true);
+    setDetailRows([]);
+
+    try {
+      const res = await API.get(`/api/accounting/pending-operations/${operationType}`);
+      setDetailRows(res.data?.data || []);
+    } catch (error) {
+      showAlert(
+        error.response?.data?.message || "No se pudo cargar el detalle",
+        "error",
+      );
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   const handlePost = async () => {
     try {
@@ -260,9 +297,27 @@ export default function PostingRuns() {
                     "&:hover": { borderColor: "#D97706" },
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" noWrap>
-                    {p.label}
-                  </Typography>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {p.label}
+                    </Typography>
+
+                    {p.count > 0 && (
+                      <Tooltip title="Ver detalle">
+                        <IconButton
+                          size="small"
+                          sx={{ p: 0.25, mt: -0.5, mr: -0.5 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDetail(p.operation_type, p.label);
+                          }}
+                        >
+                          <VisibilityIcon fontSize="inherit" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Stack>
+
                   <Typography variant="h6" fontWeight={900}>
                     {p.count}
                   </Typography>
@@ -437,6 +492,55 @@ export default function PostingRuns() {
           {alert.message}
         </Alert>
       </Snackbar>
+
+      <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Pendientes — {detailLabel}</DialogTitle>
+
+        <DialogContent dividers>
+          {detailLoading && (
+            <Typography variant="body2" color="text.secondary">
+              Cargando...
+            </Typography>
+          )}
+
+          {!detailLoading && !detailRows.length && (
+            <Typography variant="body2" color="text.secondary">
+              No hay operaciones pendientes de este tipo.
+            </Typography>
+          )}
+
+          {!detailLoading && !!detailRows.length && (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Fecha</TableCell>
+                    <TableCell>Cliente</TableCell>
+                    <TableCell>Crédito</TableCell>
+                    <TableCell>Sucursal</TableCell>
+                    <TableCell align="right">Monto</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {detailRows.map((r) => (
+                    <TableRow key={r.id} hover>
+                      <TableCell>{r.date ? String(r.date).substring(0, 10) : "-"}</TableCell>
+                      <TableCell>{r.customer_name || "-"}</TableCell>
+                      <TableCell>{r.credit_code || "-"}</TableCell>
+                      <TableCell>{r.branch_name || "-"}</TableCell>
+                      <TableCell align="right">C$ {formatMoney(r.amount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setDetailOpen(false)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
