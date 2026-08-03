@@ -168,10 +168,10 @@ const CustomerEdit = (props) => {
         setCustomer(formattedCustomer);
         setIsEmployee(formattedCustomer.economic_activity !== 2);
 
-        // ✅ Solo después de tener identificación válida
-        if (record.identification) {
+        // ✅ Solo después de tener el id numérico del cliente
+        if (record.id) {
           const gResponse = await API.get(
-            `/api/guarantees/${record.identification}`,
+            `/api/guarantees/${record.id}`,
           );
           const guarantees = gResponse.data;
           setGuarantees(guarantees);

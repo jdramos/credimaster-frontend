@@ -4,14 +4,18 @@ import {
   Autocomplete,
   Box,
   Chip,
+  IconButton,
   Paper,
   Snackbar,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import SecurityIcon from "@mui/icons-material/Security";
+import PhotoCameraBackIcon from "@mui/icons-material/PhotoCameraBack";
 import API from "../api";
+import GuaranteePhotosDialog from "./GuaranteePhotosDialog";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", {
@@ -28,6 +32,8 @@ export default function GuaranteesReport() {
 
   const [alert, setAlert] = useState({ open: false, severity: "error", message: "" });
   const showAlert = (message, severity = "error") => setAlert({ open: true, severity, message });
+
+  const [photosDialog, setPhotosDialog] = useState({ open: false, guaranteeId: null, label: "" });
 
   const fetchReport = async (customerId) => {
     try {
@@ -113,6 +119,31 @@ export default function GuaranteesReport() {
       width: 140,
       valueFormatter: (params) => (params.value ? String(params.value).slice(0, 10) : ""),
     },
+    {
+      field: "photos",
+      headerName: "Fotos",
+      width: 80,
+      sortable: false,
+      filterable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <Tooltip title="Ver fotos de la garantía">
+          <IconButton
+            size="small"
+            onClick={() =>
+              setPhotosDialog({
+                open: true,
+                guaranteeId: params.row.id,
+                label: [params.row.article, params.row.series].filter(Boolean).join(" - "),
+              })
+            }
+          >
+            <PhotoCameraBackIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
   ];
 
   return (
@@ -176,6 +207,14 @@ export default function GuaranteesReport() {
           {alert.message}
         </Alert>
       </Snackbar>
+
+      <GuaranteePhotosDialog
+        open={photosDialog.open}
+        onClose={() => setPhotosDialog({ open: false, guaranteeId: null, label: "" })}
+        guaranteeId={photosDialog.guaranteeId}
+        guaranteeLabel={photosDialog.label}
+        readOnly
+      />
     </Box>
   );
 }

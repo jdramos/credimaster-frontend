@@ -18,8 +18,10 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import PhotoCameraBackIcon from "@mui/icons-material/PhotoCameraBack";
 import { NumericFormat } from "react-number-format";
 import API from "../api"; // ajusta la ruta si tu archivo está en otra carpeta
+import GuaranteePhotosDialog from "./GuaranteePhotosDialog";
 
 const GuaranteesTable = ({
   customerId,
@@ -31,6 +33,7 @@ const GuaranteesTable = ({
   const [guarantees, setGuarantees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [photosDialog, setPhotosDialog] = useState({ open: false, guaranteeId: null, label: "" });
 
   const rows = externalGuarantees || guarantees;
   const updateRows = setExternalGuarantees || setGuarantees;
@@ -46,6 +49,7 @@ const GuaranteesTable = ({
       const data = Array.isArray(res.data) ? res.data : [];
 
       const normalized = data.map((g) => ({
+        id: g.id,
         customer_identification: g.customer_identification || "",
         customer_name: g.customer_name || "",
         article: g.article || "",
@@ -140,6 +144,9 @@ const GuaranteesTable = ({
               <TableCell align="right" sx={{ fontWeight: 800 }}>
                 Valor
               </TableCell>
+              <TableCell align="center" sx={{ fontWeight: 800 }}>
+                Fotos
+              </TableCell>
               {!readOnly && (
                 <TableCell align="center" sx={{ fontWeight: 800 }}>
                   Acciones
@@ -209,6 +216,32 @@ const GuaranteesTable = ({
                   />
                 </TableCell>
 
+                <TableCell align="center">
+                  <Tooltip
+                    title={
+                      row.id
+                        ? "Ver/subir fotos"
+                        : "Guarde la garantía para poder adjuntar fotos"
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={!row.id}
+                        onClick={() =>
+                          setPhotosDialog({
+                            open: true,
+                            guaranteeId: row.id,
+                            label: [row.article, row.series].filter(Boolean).join(" - "),
+                          })
+                        }
+                      >
+                        <PhotoCameraBackIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </TableCell>
+
                 {!readOnly && (
                   <TableCell align="center">
                     <Stack
@@ -256,11 +289,20 @@ const GuaranteesTable = ({
                 />
               </TableCell>
 
+              <TableCell />
               {!readOnly && <TableCell />}
             </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
+
+      <GuaranteePhotosDialog
+        open={photosDialog.open}
+        onClose={() => setPhotosDialog({ open: false, guaranteeId: null, label: "" })}
+        guaranteeId={photosDialog.guaranteeId}
+        guaranteeLabel={photosDialog.label}
+        readOnly={readOnly}
+      />
     </Box>
   );
 };
