@@ -36,6 +36,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PaidIcon from "@mui/icons-material/Paid";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { UserContext } from "../contexts/UserContext";
 import LoanDetailsModal from "./Loan/LoanDetailsModal";
 import PaymentForm from "./PaymentForm";
@@ -272,7 +273,7 @@ function LoanListDataTable({
     try {
       setDisburseLoading(true);
 
-      await API.post(`/api/loans/disburse/${selectedDisburseLoan.id}`, {
+      await API.post(`/api/loans/${selectedDisburseLoan.id}/disburse`, {
         disbursed_by: currentUserId,
       });
 
@@ -607,6 +608,21 @@ function LoanListDataTable({
                               onClick={() => handleOpenStatement(row)}
                             >
                               <ReceiptLongIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {/* =========================================
+                              DESEMBOLSO
+                          ========================================= */}
+                        {canDisburse && canDisburseRow && (
+                          <Tooltip title="Desembolsar crédito">
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={() => handleOpenDisburseDialog(row)}
+                            >
+                              <AccountBalanceWalletIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}

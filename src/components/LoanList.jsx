@@ -437,6 +437,9 @@ const LoanList = () => {
                 <MenuItem value="">Todos</MenuItem>
                 <MenuItem value="DRAFT">Borrador</MenuItem>
                 <MenuItem value="APROBADO">Aprobado</MenuItem>
+                <MenuItem value="APROBADO_SIN_DESEMBOLSAR">
+                  Aprobado sin desembolsar
+                </MenuItem>
                 <MenuItem value="RECHAZADO">Rechazado</MenuItem>
                 <MenuItem value="PENDIENTE">Pendiente</MenuItem>
               </TextField>

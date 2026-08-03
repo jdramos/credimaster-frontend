@@ -44,7 +44,7 @@ export const loanApi = {
   },
 
   disburse: async (loanId, payload) => {
-    const { data } = await API.post(`${BASE}/disburse/${loanId}`, payload);
+    const { data } = await API.post(`${BASE}/${loanId}/disburse`, payload);
     return data;
   },
 };
