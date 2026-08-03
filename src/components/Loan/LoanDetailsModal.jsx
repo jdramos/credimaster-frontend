@@ -992,7 +992,7 @@ const LoanDetailsModal = ({
                               loanData?.identification,
                           },
                           guarantees,
-                          evaluation: financialEvaluationForm,
+                          evaluation: financialEvaluation || {},
                         })
                       }
                     >

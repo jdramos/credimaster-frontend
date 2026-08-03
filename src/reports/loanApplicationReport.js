@@ -91,10 +91,10 @@ export const printLoanApplicationReport = ({
         <table class="report-table">
           <thead>
             <tr>
-              <th>Tipo</th>
-              <th>Descripción</th>
+              <th>Artículo</th>
+              <th>N° de serie</th>
               <th>Valor estimado</th>
-              <th>Observación</th>
+              <th>Marca/Modelo</th>
             </tr>
           </thead>
           <tbody>
@@ -104,10 +104,10 @@ export const printLoanApplicationReport = ({
                     .map(
                       (g) => `
                       <tr>
-                        <td>${text(g.guarantee_type_name || g.type)}</td>
-                        <td>${text(g.description)}</td>
-                        <td>C$ ${money(g.estimated_value || g.amount)}</td>
-                        <td>${text(g.observation)}</td>
+                        <td>${text(g.article)}</td>
+                        <td>${text(g.series)}</td>
+                        <td>C$ ${money(g.value)}</td>
+                        <td>${text(g.brand)}</td>
                       </tr>`,
                     )
                     .join("")
@@ -120,10 +120,10 @@ export const printLoanApplicationReport = ({
       <div class="section">
         <div class="section-title">V. Evaluación Crediticia</div>
         <div class="report-fields" style="grid-template-columns: repeat(4, 1fr);">
-          ${field("Capacidad de pago", `C$ ${money(evaluation.payment_capacity)}`)}
-          ${field("Cuota estimada", `C$ ${money(evaluation.estimated_payment)}`)}
-          ${field("Nivel de endeudamiento", `${money(evaluation.debt_ratio)}%`)}
-          ${field("Resultado", evaluation.result || evaluation.status)}
+          ${field("Flujo disponible", `C$ ${money(evaluation.available_cash_flow)}`)}
+          ${field("Cuota estimada", `C$ ${money(evaluation.proposed_installment)}`)}
+          ${field("Nivel de endeudamiento", `${money(Number(evaluation.indebtedness_ratio || 0) * 100)}%`)}
+          ${field("Resultado", evaluation.recommendation || evaluation.risk_level)}
         </div>
 
         <div class="note">
