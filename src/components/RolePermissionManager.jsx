@@ -82,112 +82,215 @@ const BAC = {
   white: "#FFFFFF",
 };
 
-const getModuleFromTag = (tag = "") => {
-  if (!tag) return "general";
-  return tag.split(".")[0] || "general";
+// Orden y agrupación calcados de AppLayoutMenu.jsx (menuItems + sectionLabels),
+// para que "Asignación de permisos" liste los módulos en el mismo orden y con
+// los mismos nombres que ve el usuario en el menú lateral. Los permission_tag
+// no tienen columna de módulo en la BD (solo permission_tag/permission_name),
+// así que el mapeo se arma a mano a partir de dónde aparece cada permiso
+// realmente referenciado (prop "permission") dentro de menuItems.
+const MENU_TAG_TO_SECTION = {
+  "menu.dashboard": "dashboard",
+  "menu.clientes": "main",
+  "menu.sucursales": "main",
+  "menu.tipos_riesgo": "main",
+  "menu.tipos_negocio": "main",
+  "menu.creditos": "management",
+  "menu.pagos": "management",
+  "menu.cobros": "management",
+  "menu.politicas_credito": "management",
+  "menu.usuarios": "users",
+  "menu.roles": "users",
+  "menu.configuracion": "users",
+  "menu.balances": "queries",
+  "menu.garantias": "queries",
+  "menu.cumplimiento": "compliance",
+  "menu.contabilidad": "accounting",
+  "menu.activo_fijo": "accounting",
+  "menu.bancos": "banks",
+  "menu.caja": "caja",
+  "menu.obligaciones": "obligations",
+  "menu.presupuesto": "budget",
+  "menu.rrhh": "rrhh",
+  "menu.auditoria": "reports",
+  "menu.reportes": "reports",
+};
+
+// especial.<accion>.<detalle> se agrupa por la acción (2do token), ya que
+// son permisos transversales sin una entrada "menu.*" propia.
+const ESPECIAL_TAG_TO_SECTION = {
+  sucursal: "main",
+  reportes: "reports",
+  auditoria: "reports",
+  permisos: "users",
+  creditos: "management",
+  balances: "queries",
+  pagos: "management",
+};
+
+const PREFIX_TO_SECTION = {
+  clientes: "main",
+  sucursales: "main",
+  promotores: "main",
+  cobradores: "main",
+  tipos_riesgo: "main",
+  tipos_negocio: "main",
+  vendors: "main",
+  catalogos: "main",
+  creditos: "management",
+  pagos: "management",
+  cobros: "management",
+  politicas_credito: "management",
+  aprobaciones: "management",
+  claims: "management",
+  contratos: "management",
+  adjudicaciones: "management",
+  dia: "management",
+  garantias: "queries",
+  balances: "queries",
+  reportes: "reports",
+  auditoria: "reports",
+  usuarios: "users",
+  roles: "users",
+  configuracion: "users",
+  aprobadores: "users",
+  permisos: "users",
+  cumplimiento: "compliance",
+  contabilidad: "accounting",
+  activo_fijo: "accounting",
+  bancos: "banks",
+  caja: "caja",
+  obligaciones: "obligations",
+  presupuesto: "budget",
+  rrhh: "rrhh",
+};
+
+const SECTION_ORDER = [
+  "dashboard",
+  "main",
+  "management",
+  "users",
+  "queries",
+  "compliance",
+  "conami_tables",
+  "accounting",
+  "banks",
+  "caja",
+  "obligations",
+  "budget",
+  "rrhh",
+  "reports",
+  "otros",
+];
+
+const SECTION_LABELS = {
+  dashboard: "Dashboard",
+  main: "Catálogos",
+  management: "Operaciones",
+  users: "Usuarios y permisos",
+  queries: "Consultas",
+  compliance: "CUMPLIMIENTO LA/FT/FP",
+  conami_tables: "Tablas CONAMI",
+  accounting: "CONTABILIDAD",
+  banks: "BANCOS",
+  caja: "CAJA",
+  obligations: "OBLIGACIONES FINANCIERAS",
+  budget: "PRESUPUESTO",
+  rrhh: "RECURSOS HUMANOS",
+  reports: "Reportes",
+  otros: "Otros",
+};
+
+const getMenuSectionForTag = (tag = "") => {
+  if (!tag) return "otros";
+  if (MENU_TAG_TO_SECTION[tag]) return MENU_TAG_TO_SECTION[tag];
+
+  const [prefix, second] = tag.split(".");
+  if (prefix === "menu") return "otros";
+  if (prefix === "especial") return ESPECIAL_TAG_TO_SECTION[second] || "otros";
+
+  return PREFIX_TO_SECTION[prefix] || "otros";
 };
 
 const getModuleStyle = (module) => {
   const styles = {
-    clientes: {
-      color: BAC.primary,
-      backgroundColor: BAC.soft,
-      border: `1px solid ${alpha(BAC.primary, 0.18)}`,
-    },
-    creditos: {
-      color: BAC.secondary,
-      backgroundColor: alpha(BAC.secondary, 0.08),
-      border: `1px solid ${alpha(BAC.secondary, 0.16)}`,
-    },
-    pagos: {
-      color: BAC.info,
-      backgroundColor: BAC.infoSoft,
-      border: `1px solid ${alpha(BAC.info, 0.18)}`,
-    },
-    cobros: {
-      color: BAC.warning,
-      backgroundColor: BAC.warningSoft,
-      border: `1px solid ${alpha(BAC.warning, 0.18)}`,
-    },
-    balances: {
-      color: BAC.purple,
-      backgroundColor: BAC.purpleSoft,
-      border: `1px solid ${alpha(BAC.purple, 0.18)}`,
-    },
-    reportes: {
-      color: BAC.secondaryLight,
-      backgroundColor: alpha(BAC.secondaryLight, 0.08),
-      border: `1px solid ${alpha(BAC.secondaryLight, 0.16)}`,
-    },
-    usuarios: {
-      color: BAC.primaryDark,
-      backgroundColor: alpha(BAC.primary, 0.08),
-      border: `1px solid ${alpha(BAC.primaryDark, 0.16)}`,
-    },
-    roles: {
-      color: BAC.warning,
-      backgroundColor: BAC.warningSoft,
-      border: `1px solid ${alpha(BAC.warning, 0.18)}`,
-    },
-    sucursales: {
-      color: BAC.success,
-      backgroundColor: BAC.successSoft,
-      border: `1px solid ${alpha(BAC.success, 0.18)}`,
-    },
-    auditoria: {
-      color: BAC.secondary,
-      backgroundColor: alpha(BAC.secondary, 0.08),
-      border: `1px solid ${alpha(BAC.secondary, 0.16)}`,
-    },
-    configuracion: {
-      color: BAC.grey700,
-      backgroundColor: BAC.grey100,
-      border: `1px solid ${BAC.grey300}`,
-    },
-    garantias: {
-      color: BAC.success,
-      backgroundColor: BAC.successSoft,
-      border: `1px solid ${alpha(BAC.success, 0.18)}`,
-    },
-    especial: {
-      color: BAC.accent,
-      backgroundColor: BAC.accentSoft,
-      border: `1px solid ${alpha(BAC.accent, 0.18)}`,
-    },
     dashboard: {
       color: BAC.info,
       backgroundColor: BAC.infoSoft,
       border: `1px solid ${alpha(BAC.info, 0.18)}`,
     },
-    mora: {
-      color: BAC.warning,
-      backgroundColor: BAC.warningSoft,
-      border: `1px solid ${alpha(BAC.warning, 0.18)}`,
+    main: {
+      color: BAC.primary,
+      backgroundColor: BAC.soft,
+      border: `1px solid ${alpha(BAC.primary, 0.18)}`,
     },
-    politicas_credito: {
+    management: {
+      color: BAC.secondary,
+      backgroundColor: alpha(BAC.secondary, 0.08),
+      border: `1px solid ${alpha(BAC.secondary, 0.16)}`,
+    },
+    users: {
+      color: BAC.primaryDark,
+      backgroundColor: alpha(BAC.primary, 0.08),
+      border: `1px solid ${alpha(BAC.primaryDark, 0.16)}`,
+    },
+    queries: {
       color: BAC.purple,
       backgroundColor: BAC.purpleSoft,
       border: `1px solid ${alpha(BAC.purple, 0.18)}`,
     },
-    tipos_riesgo: {
+    compliance: {
       color: BAC.accent,
       backgroundColor: BAC.accentSoft,
       border: `1px solid ${alpha(BAC.accent, 0.18)}`,
     },
-    tipos_negocio: {
+    conami_tables: {
+      color: BAC.warning,
+      backgroundColor: BAC.warningSoft,
+      border: `1px solid ${alpha(BAC.warning, 0.18)}`,
+    },
+    accounting: {
       color: BAC.success,
       backgroundColor: BAC.successSoft,
       border: `1px solid ${alpha(BAC.success, 0.18)}`,
     },
-  };
-
-  return (
-    styles[module] || {
+    banks: {
+      color: BAC.info,
+      backgroundColor: BAC.infoSoft,
+      border: `1px solid ${alpha(BAC.info, 0.18)}`,
+    },
+    caja: {
+      color: BAC.warning,
+      backgroundColor: BAC.warningSoft,
+      border: `1px solid ${alpha(BAC.warning, 0.18)}`,
+    },
+    obligations: {
+      color: BAC.purple,
+      backgroundColor: BAC.purpleSoft,
+      border: `1px solid ${alpha(BAC.purple, 0.18)}`,
+    },
+    budget: {
+      color: BAC.success,
+      backgroundColor: BAC.successSoft,
+      border: `1px solid ${alpha(BAC.success, 0.18)}`,
+    },
+    rrhh: {
+      color: BAC.secondaryLight,
+      backgroundColor: alpha(BAC.secondaryLight, 0.08),
+      border: `1px solid ${alpha(BAC.secondaryLight, 0.16)}`,
+    },
+    reports: {
+      color: BAC.secondaryLight,
+      backgroundColor: alpha(BAC.secondaryLight, 0.08),
+      border: `1px solid ${alpha(BAC.secondaryLight, 0.16)}`,
+    },
+    otros: {
       color: BAC.grey700,
       backgroundColor: BAC.grey100,
       border: `1px solid ${BAC.grey300}`,
-    }
-  );
+    },
+  };
+
+  return styles[module] || styles.otros;
 };
 
 const RolePermissionManager = () => {
@@ -282,7 +385,7 @@ const RolePermissionManager = () => {
 
   const groupedPermissions = useMemo(() => {
     return filteredPermissions.reduce((acc, perm) => {
-      const module = getModuleFromTag(perm.permission_tag);
+      const module = getMenuSectionForTag(perm.permission_tag);
       if (!acc[module]) acc[module] = [];
       acc[module].push(perm);
       return acc;
@@ -290,9 +393,7 @@ const RolePermissionManager = () => {
   }, [filteredPermissions]);
 
   const moduleNames = useMemo(() => {
-    return Object.keys(groupedPermissions).sort((a, b) =>
-      a.localeCompare(b, "es"),
-    );
+    return SECTION_ORDER.filter((section) => groupedPermissions[section]);
   }, [groupedPermissions]);
 
   const totalAssignedVisible = useMemo(() => {
@@ -737,11 +838,10 @@ const RolePermissionManager = () => {
                       >
                         <Stack direction="row" spacing={1} alignItems="center">
                           <Chip
-                            label={module}
+                            label={SECTION_LABELS[module] || module}
                             size="small"
                             sx={{
                               fontWeight: 700,
-                              textTransform: "capitalize",
                               borderRadius: "10px",
                               ...getModuleStyle(module),
                             }}
