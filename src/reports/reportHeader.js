@@ -4,7 +4,7 @@ export const buildHeader = ({
   company = {},
   title = "",
   subtitle = "",
-  user = user,
+  user = {},
 } = {}) => `
 
 
