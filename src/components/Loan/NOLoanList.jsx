@@ -25,10 +25,13 @@ import CalculateIcon from "@mui/icons-material/Calculate";
 import PaidIcon from "@mui/icons-material/Paid";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import UndoIcon from "@mui/icons-material/Undo";
 import LoanStatusChip from "./LoanStatusChip";
 import ApprovalStatusChip from "./ApprovalStatusChip";
 import LoanAmortizationModal from "./LoanAmortizationModal";
 import LoanDisburseDialog from "./LoanDisburseDialog";
+import LoanDisbursementRemittanceDialog from "./LoanDisbursementRemittanceDialog";
 import LoanApprovalDialog from "./LoanApprovalDialog";
 import { loanApi } from "../../api/loanApi";
 import { approvalApi } from "../../api/approvalApi";
@@ -68,6 +71,8 @@ export default function LoanList({ currentUserId = null }) {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [openDisburse, setOpenDisburse] = useState(false);
   const [loadingDisburse, setLoadingDisburse] = useState(false);
+  const [openRemittance, setOpenRemittance] = useState(false);
+  const [loadingReturnRemittance, setLoadingReturnRemittance] = useState(false);
 
   const [openApprovalDialog, setOpenApprovalDialog] = useState(false);
   const [approvalMode, setApprovalMode] = useState(null);
@@ -160,6 +165,37 @@ export default function LoanList({ currentUserId = null }) {
       );
     } finally {
       setLoadingDisburse(false);
+    }
+  };
+
+  const handleOpenRemittance = async (loanId) => {
+    try {
+      const loan = await loanApi.getOne(loanId);
+      setSelectedLoan(loan);
+      setOpenRemittance(true);
+    } catch (err) {
+      setError(
+        err?.response?.data?.error || err.message || "Error al cargar crédito.",
+      );
+    }
+  };
+
+  const handleReturnRemittance = async (loanId) => {
+    const return_reason = window.prompt(
+      "Motivo de la devolución (el crédito no pudo desembolsarse):",
+    );
+    if (return_reason === null) return;
+
+    try {
+      setLoadingReturnRemittance(true);
+      await loanApi.returnRemittance(loanId, { return_reason });
+      loadData();
+    } catch (err) {
+      setError(
+        err?.response?.data?.message || err.message || "Error al devolver la remesa.",
+      );
+    } finally {
+      setLoadingReturnRemittance(false);
     }
   };
 
@@ -450,13 +486,42 @@ export default function LoanList({ currentUserId = null }) {
                             </span>
                           </Tooltip>
 
+                          {row.status === "APPROVED" && !row.disbursement_method ? (
+                            <Tooltip title="Elegir forma de desembolso (cheque, transferencia o efectivo)">
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="secondary"
+                                  onClick={() => handleOpenRemittance(row.id)}
+                                >
+                                  <AccountBalanceIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+
+                          {row.status === "APPROVED" && row.disbursement_method ? (
+                            <Tooltip title={`Devolver remesa (${row.disbursement_method})`}>
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  color="warning"
+                                  onClick={() => handleReturnRemittance(row.id)}
+                                  disabled={loadingReturnRemittance}
+                                >
+                                  <UndoIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          ) : null}
+
                           <Tooltip title="Desembolsar">
                             <span>
                               <IconButton
                                 size="small"
                                 color="info"
                                 onClick={() => handleOpenDisburse(row.id)}
-                                disabled={row.status !== "APPROVED"}
+                                disabled={row.status !== "APPROVED" || !row.disbursement_method}
                               >
                                 <PaidIcon />
                               </IconButton>
@@ -508,6 +573,16 @@ export default function LoanList({ currentUserId = null }) {
         onSubmit={handleDisburse}
         loading={loadingDisburse}
         currentUserId={currentUserId}
+      />
+
+      <LoanDisbursementRemittanceDialog
+        open={openRemittance}
+        onClose={() => {
+          setOpenRemittance(false);
+          setSelectedLoan(null);
+        }}
+        loan={selectedLoan}
+        onSuccess={loadData}
       />
 
       <LoanApprovalDialog

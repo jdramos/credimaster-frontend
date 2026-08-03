@@ -122,6 +122,11 @@ const menuItems = {
       iconName: "FaFileAlt",
       to: "/creditos/archivos",
     },
+    {
+      label: "Remesas de desembolso",
+      iconName: "FaUniversity",
+      to: "/creditos/remesas",
+    },
     { label: "Reclamos", iconName: "FaExclamationCircle", to: "/reclamos" },
     { label: "Adjudicaciones de Bienes", iconName: "FaGavel", to: "/adjudicaciones" },
   ],

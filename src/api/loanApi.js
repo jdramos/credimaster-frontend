@@ -47,4 +47,24 @@ export const loanApi = {
     const { data } = await API.post(`${BASE}/${loanId}/disburse`, payload);
     return data;
   },
+
+  createRemittance: async (loanId, payload) => {
+    const { data } = await API.post(`${BASE}/${loanId}/remittance`, payload);
+    return data;
+  },
+
+  returnRemittance: async (loanId, payload) => {
+    const { data } = await API.put(`${BASE}/${loanId}/remittance/return`, payload);
+    return data;
+  },
+
+  getRemittance: async (loanId) => {
+    const { data } = await API.get(`${BASE}/${loanId}/remittance`);
+    return data;
+  },
+
+  listRemittances: async (params) => {
+    const { data } = await API.get(`${BASE}/remittances`, { params });
+    return data;
+  },
 };

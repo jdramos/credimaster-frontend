@@ -42,6 +42,9 @@ import SuperAdminLayout from "./components/SuperAdminLayout";
 // mayoría de una sesión nunca visita.
 const Home = lazy(() => import("./pages/Home"));
 const LoanList = lazy(() => import("./components/LoanList"));
+const LoanDisbursementRemittancesList = lazy(() =>
+  import("./components/Loan/LoanDisbursementRemittancesList"),
+);
 const Branches = lazy(() => import("./pages/Branches"));
 const Risks = lazy(() => import("./pages/Risks"));
 const ProvincesList = lazy(() => import("./components/ProvincesList"));
@@ -389,6 +392,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <LoanList />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/creditos/remesas"
+            element={
+              <PageContainer>
+                <LoanDisbursementRemittancesList />
               </PageContainer>
             }
           />
