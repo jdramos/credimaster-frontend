@@ -110,8 +110,9 @@ function LoanListDataTable({
   };
 
   const normalizeLoanResponse = (resp) => {
-    if (Array.isArray(resp?.data)) return resp.data[0] || null;
-    return resp?.data || null;
+    const body = resp?.data;
+    if (Array.isArray(body)) return body[0] || null;
+    return body?.data || body || null;
   };
 
   const handleShowDetails = async (
