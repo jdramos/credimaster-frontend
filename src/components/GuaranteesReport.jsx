@@ -213,7 +213,6 @@ export default function GuaranteesReport() {
         onClose={() => setPhotosDialog({ open: false, guaranteeId: null, label: "" })}
         guaranteeId={photosDialog.guaranteeId}
         guaranteeLabel={photosDialog.label}
-        readOnly
       />
     </Box>
   );
