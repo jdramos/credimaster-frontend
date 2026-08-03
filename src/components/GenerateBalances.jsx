@@ -14,10 +14,8 @@ import API from '../api'; // tu archivo de instancia de axios
 
 const GenerateBalances = () => {
     const [loading, setLoading] = useState(false);
-    const [progress, setProgress] = useState(0);
     const [success, setSuccess] = useState(null);
     const [error, setError] = useState(null);
-    const [processedLoans, setProcessedLoans] = useState(0);
     const [logs, setLogs] = useState([]);
     const [openConfirm, setOpenConfirm] = useState(false);
     const [balanceType, setBalanceType] = useState('INITIAL');
@@ -79,11 +77,9 @@ const GenerateBalances = () => {
 
     const clearLogs = () => {
 
-        setProgress(0);
         setSuccess(null);
         setError(null);
         setLogs([]);
-        setProcessedLoans(0);
         setOpenConfirm(false);
     }
 
@@ -95,18 +91,7 @@ const GenerateBalances = () => {
         }
 
         setLoading(true);
-        addLog('✅ Conectado al servidor');
-        addLog(`🏢 Sucursal: ${branchName}`);
-        addLog(`🔄 Iniciando generación de saldo tipo: ${balanceType === 'INITIAL' ? 'Inicial' : 'Final'}`);
-
-        const progressInterval = setInterval(() => {
-            setProgress(prev => (prev >= 90 ? prev : prev + 5));
-            setProcessedLoans(prev => {
-                const newCount = prev + 1;
-                addLog(`🔄 Procesando préstamo #${newCount}...`);
-                return newCount;
-            });
-        }, 700);
+        addLog(`🔄 Generando saldo ${balanceType === 'INITIAL' ? 'Inicial' : 'Final'} — Sucursal: ${branchName}...`);
 
         try {
             const response = await API.post(
@@ -118,9 +103,6 @@ const GenerateBalances = () => {
                 }
             );
 
-            clearInterval(progressInterval);
-            setProgress(100);
-
             if (response.data.generated_dates) {
                 response.data.generated_dates.forEach(date => {
                     addLog(`📅 Saldo generado para ${dayjs(date).format('DD/MM/YYYY')}`);
@@ -131,13 +113,10 @@ const GenerateBalances = () => {
                 addLog(`⚠️ ${response.data.warning}`);
                 setError(response.data.warning); // <-- aquí lo ponemos como error tipo "warning" visualmente
             } else {
-                addLog('✅ Balances generados exitosamente');
-                addLog(`📊 Total préstamos procesados: ${processedLoans}`);
+                addLog(`✅ Balances generados exitosamente — ${response.data.loans_processed || 0} créditos procesados`);
                 setSuccess('✅ Balances generados exitosamente.');
             }
         } catch (err) {
-            clearInterval(progressInterval);
-
             if (err.code === 'ECONNABORTED') {
                 addLog('⚡ Tiempo de espera excedido. El servidor no respondió.');
                 setError('⚡ Tiempo de espera excedido. El servidor no respondió.');
@@ -154,9 +133,8 @@ const GenerateBalances = () => {
     };
 
     const handleBranchChange = (e) => {
-        const selected = e?.target?.value || e;
-        setBranchId(selected.id || selected);
-        setBranchName(selected.name || 'Sucursal seleccionada');
+        setBranchId(e.target.value);
+        setBranchName(e.target.branch_name || '');
         clearLogs(); // Limpiar logs al cambiar sucursal
     };
 
@@ -235,9 +213,9 @@ const GenerateBalances = () => {
             {/* Barra de progreso */}
             {loading && (
                 <Box sx={{ mt: 3 }}>
-                    <LinearProgress variant="determinate" value={progress} />
+                    <LinearProgress variant="indeterminate" />
                     <Typography variant="body2" sx={{ mt: 1 }}>
-                        🔄 Procesados: {processedLoans} préstamos...
+                        🔄 Generando saldo, un momento...
                     </Typography>
                 </Box>
             )}
@@ -278,10 +256,9 @@ const GenerateBalances = () => {
                             : '¿Está seguro que desea generar el saldo INICIAL?'}
                     </DialogContentText>
 
-                    {/* Contador en vivo */}
                     {loading && (
                         <Typography variant="body2" sx={{ mt: 2 }}>
-                            🔄 Procesados: {processedLoans} préstamos...
+                            🔄 Generando saldo, un momento...
                         </Typography>
                     )}
                 </DialogContent>

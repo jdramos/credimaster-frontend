@@ -63,6 +63,7 @@ const BranchSelect = ({
               name,
               value: newValue ? newValue.id : "",
               municipality_id: newValue ? newValue.municipality_id : "",
+              branch_name: newValue ? newValue.name : "",
             },
           });
         }}
