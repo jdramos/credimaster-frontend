@@ -131,7 +131,7 @@ function LoanListDataTable({
     try {
       const loanResponse = await API.get(`/api/loans/${loanId}`);
       const guaranteeResponse = await API.get(
-        `${urlGuarantee}/${customerIdentification}`,
+        `${urlGuarantee}/${customerId}`,
       );
 
       const loanData = normalizeLoanResponse(loanResponse);
