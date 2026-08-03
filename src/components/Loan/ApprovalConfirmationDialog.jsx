@@ -30,6 +30,7 @@ export default function ApprovalConfirmationDialog({
   onApprove,
   onReject,
   loading = false,
+  error = "",
   approvalId,
   loan,
   compliance,
@@ -109,6 +110,12 @@ export default function ApprovalConfirmationDialog({
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
+            {error}
+          </Alert>
+        )}
+
         {!isComplianceValid && (
           <Alert severity="error" sx={{ mb: 2 }}>
             No puedes aprobar este crédito porque faltan requisitos

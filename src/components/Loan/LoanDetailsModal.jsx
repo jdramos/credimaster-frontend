@@ -251,6 +251,7 @@ const LoanDetailsModal = ({
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedApprovalId, setSelectedApprovalId] = useState(null);
+  const [approveError, setApproveError] = useState("");
 
   const [amortizationTable, setAmortizationTable] = useState([]);
   const [totalPaymentAmount, setTotalPaymentAmount] = useState(0);
@@ -566,6 +567,7 @@ const LoanDetailsModal = ({
     if (!approvalId) return;
 
     setActionLoading(true);
+    setApproveError("");
 
     try {
       await API.put(`/api/approvals/${approvalId}`, {
@@ -586,12 +588,15 @@ const LoanDetailsModal = ({
     } catch (error) {
       console.error(error);
 
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Error al aprobar.";
+
+      setApproveError(message);
       setSnackbar({
         open: true,
-        message:
-          error.response?.data?.error ||
-          error.response?.data?.message ||
-          "Error al aprobar.",
+        message,
         severity: "error",
       });
     } finally {
@@ -1423,6 +1428,7 @@ const LoanDetailsModal = ({
                                             <IconButton
                                               onClick={() => {
                                                 setSelectedApprovalId(a.id);
+                                                setApproveError("");
                                                 setConfirmOpen(true);
                                               }}
                                               color="primary"
@@ -1513,13 +1519,17 @@ const LoanDetailsModal = ({
 
         <ApprovalConfirmationDialog
           open={confirmOpen}
-          onClose={() => setConfirmOpen(false)}
+          onClose={() => {
+            setApproveError("");
+            setConfirmOpen(false);
+          }}
           approvalId={selectedApprovalId}
           onApprove={handleApprove}
           onReject={(approvalComment) =>
             handleReject(selectedApprovalId, approvalComment)
           }
           loading={actionLoading}
+          error={approveError}
           loan={loan?.data || loan}
           compliance={compliance}
           financialEvaluation={financialEvaluation}
