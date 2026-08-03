@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useMemo } from "react";
+import React, { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import {
   Box,
   TextField,
@@ -8,13 +8,22 @@ import {
   Divider,
   TableRow,
   TableCell,
+  Tooltip,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PhotoCameraBackIcon from "@mui/icons-material/PhotoCameraBack";
 import { NumericFormat } from "react-number-format";
 import { Label } from "reactstrap";
+import GuaranteePhotosDialog from "../GuaranteePhotosDialog";
 
 const CustomerGuaranteesTab = forwardRef(
   ({ guarantees, setGuarantees, mode }, ref) => {
+    const [photosDialog, setPhotosDialog] = useState({
+      open: false,
+      guaranteeId: null,
+      label: "",
+    });
+
     const cleanedGuarantees = guarantees.map((g) => ({
       ...g,
       value:
@@ -131,8 +140,33 @@ const CustomerGuaranteesTab = forwardRef(
               />
             </Grid>
 
+            <Grid item xs={1}>
+              <Tooltip
+                title={
+                  g.id
+                    ? "Ver/subir fotos"
+                    : "Guarde el cliente para poder adjuntar fotos"
+                }
+              >
+                <span>
+                  <IconButton
+                    disabled={!g.id}
+                    onClick={() =>
+                      setPhotosDialog({
+                        open: true,
+                        guaranteeId: g.id,
+                        label: [g.article, g.series].filter(Boolean).join(" - "),
+                      })
+                    }
+                  >
+                    <PhotoCameraBackIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Grid>
+
             {!isReadOnly && (
-              <Grid item xs={2}>
+              <Grid item xs={1}>
                 <IconButton onClick={() => handleDelete(index)} color="error">
                   <DeleteIcon />
                 </IconButton>
@@ -168,6 +202,16 @@ const CustomerGuaranteesTab = forwardRef(
             )}
           />
         </Box>
+
+        <GuaranteePhotosDialog
+          open={photosDialog.open}
+          onClose={() =>
+            setPhotosDialog({ open: false, guaranteeId: null, label: "" })
+          }
+          guaranteeId={photosDialog.guaranteeId}
+          guaranteeLabel={photosDialog.label}
+          readOnly={isReadOnly}
+        />
       </Box>
     );
   },
