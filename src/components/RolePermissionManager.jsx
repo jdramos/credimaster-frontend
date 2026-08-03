@@ -420,6 +420,20 @@ const RolePermissionManager = () => {
     }
   };
 
+  const allVisibleSelected =
+    filteredPermissions.length > 0 &&
+    totalAssignedVisible === filteredPermissions.length;
+
+  const handleToggleAll = () => {
+    const visibleIds = filteredPermissions.map((p) => p.id);
+
+    if (allVisibleSelected) {
+      setAssigned((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      setAssigned((prev) => [...new Set([...prev, ...visibleIds])]);
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedRole) return;
 
@@ -776,16 +790,44 @@ const RolePermissionManager = () => {
           }}
         >
           <Box sx={{ p: 2.5 }}>
-            <Typography
-              variant="h6"
-              fontWeight={700}
-              sx={{ color: BAC.secondary }}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              justifyContent="space-between"
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              spacing={1.5}
             >
-              Permisos disponibles
-            </Typography>
-            <Typography variant="body2" sx={{ color: BAC.textSoft, mt: 0.5 }}>
-              Activa o desactiva los permisos que tendrá el rol seleccionado.
-            </Typography>
+              <Box>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{ color: BAC.secondary }}
+                >
+                  Permisos disponibles
+                </Typography>
+                <Typography variant="body2" sx={{ color: BAC.textSoft, mt: 0.5 }}>
+                  Activa o desactiva los permisos que tendrá el rol seleccionado.
+                </Typography>
+              </Box>
+
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleToggleAll}
+                disabled={filteredPermissions.length === 0}
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 700,
+                  borderColor: BAC.grey300,
+                  color: BAC.secondary,
+                  backgroundColor: BAC.white,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {allVisibleSelected
+                  ? "Quitar todos los permisos"
+                  : "Seleccionar todos los permisos"}
+              </Button>
+            </Stack>
           </Box>
 
           <Divider sx={{ borderColor: BAC.grey200 }} />
