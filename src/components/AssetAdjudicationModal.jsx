@@ -8,18 +8,18 @@ import {
   Button,
   Grid,
   TextField,
-  MenuItem,
   Typography,
   Box,
   Chip,
   Divider,
   Alert,
   CircularProgress,
+  Autocomplete,
 } from "@mui/material";
 import API from "../api";
 
 const emptyForm = {
-  guarantee_id: "",
+  guarantee_ids: [],
   adjudication_date: new Date().toISOString().substring(0, 10),
   adjudication_reason: "",
   asset_description: "",
@@ -90,18 +90,19 @@ export default function AssetAdjudicationModal({ open, onClose, loan, onSuccess 
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleGuaranteeChange = (e) => {
-    const guaranteeId = e.target.value;
-    const guarantee = availableGuarantees.find((g) => Number(g.id) === Number(guaranteeId));
+  const handleGuaranteesChange = (_e, selectedGuarantees) => {
+    const totalValue = selectedGuarantees.reduce((sum, g) => sum + Number(g.value || 0), 0);
 
     setForm({
       ...form,
-      guarantee_id: guaranteeId,
-      asset_description: guarantee
-        ? [guarantee.article, guarantee.brand].filter(Boolean).join(" - ")
+      guarantee_ids: selectedGuarantees.map((g) => g.id),
+      asset_description: selectedGuarantees.length
+        ? selectedGuarantees
+            .map((g) => [g.article, g.brand].filter(Boolean).join(" - "))
+            .join(", ")
         : form.asset_description,
-      appraisal_value: guarantee ? guarantee.value : form.appraisal_value,
-      adjudicated_value: guarantee ? guarantee.value : form.adjudicated_value,
+      appraisal_value: selectedGuarantees.length ? totalValue : form.appraisal_value,
+      adjudicated_value: selectedGuarantees.length ? totalValue : form.adjudicated_value,
     });
   };
 
@@ -118,7 +119,7 @@ export default function AssetAdjudicationModal({ open, onClose, loan, onSuccess 
       const { data } = await API.post("/api/asset-adjudications", {
         loan_id: loan.id,
         customer_id: loan.customer_id,
-        guarantee_id: form.guarantee_id || null,
+        guarantee_ids: form.guarantee_ids,
         adjudication_date: form.adjudication_date,
         adjudication_reason: form.adjudication_reason,
         asset_description: form.asset_description,
@@ -168,30 +169,38 @@ export default function AssetAdjudicationModal({ open, onClose, loan, onSuccess 
         )}
 
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <TextField
-              select
-              fullWidth
-              label="Garantía registrada (opcional)"
-              name="guarantee_id"
-              value={form.guarantee_id}
-              onChange={handleGuaranteeChange}
+          <Grid item xs={12}>
+            <Autocomplete
+              multiple
+              options={availableGuarantees}
+              value={availableGuarantees.filter((g) => form.guarantee_ids.includes(g.id))}
+              onChange={handleGuaranteesChange}
               disabled={loadingGuarantees}
-              helperText={
-                loadingGuarantees
-                  ? "Cargando garantías..."
-                  : "Solo se muestran garantías del cliente aún no adjudicadas"
+              getOptionLabel={(g) =>
+                `${[g.article, g.brand].filter(Boolean).join(" - ")}${g.series ? ` (#${g.series})` : ""} — C$ ${Number(g.value).toLocaleString()}`
               }
-            >
-              <MenuItem value="">Sin garantía específica</MenuItem>
-
-              {availableGuarantees.map((g) => (
-                <MenuItem key={g.id} value={g.id}>
-                  {[g.article, g.brand].filter(Boolean).join(" - ")}
-                  {g.series ? ` (#${g.series})` : ""} — C$ {Number(g.value).toLocaleString()}
-                </MenuItem>
-              ))}
-            </TextField>
+              isOptionEqualToValue={(a, b) => Number(a.id) === Number(b.id)}
+              renderTags={(value, getTagProps) =>
+                value.map((g, index) => (
+                  <Chip
+                    label={[g.article, g.brand].filter(Boolean).join(" - ")}
+                    size="small"
+                    {...getTagProps({ index })}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Garantías registradas (opcional, una o varias)"
+                  helperText={
+                    loadingGuarantees
+                      ? "Cargando garantías..."
+                      : "Solo se muestran garantías del cliente aún no adjudicadas"
+                  }
+                />
+              )}
+            />
           </Grid>
 
           <Grid item xs={12} md={6}>
