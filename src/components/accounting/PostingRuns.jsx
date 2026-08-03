@@ -4,16 +4,22 @@ import {
   Box,
   Button,
   Chip,
+  Grid,
   MenuItem,
   Paper,
   Snackbar,
-  TextField,
+  Stack,
   Typography,
+  TextField,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+
+const formatMoney = (value) =>
+  Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function PostingRuns() {
   const { permissions = [], role } = useContext(UserContext) || {};
@@ -21,6 +27,8 @@ export default function PostingRuns() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [pending, setPending] = useState([]);
+  const [loadingPending, setLoadingPending] = useState(false);
 
   const [form, setForm] = useState({
     from_date: "",
@@ -58,8 +66,22 @@ export default function PostingRuns() {
     }
   };
 
+  const fetchPending = async () => {
+    try {
+      setLoadingPending(true);
+
+      const res = await API.get(`/api/accounting/pending-operations`);
+      setPending(res.data?.data || []);
+    } catch (error) {
+      console.error("Error cargando operaciones pendientes:", error);
+    } finally {
+      setLoadingPending(false);
+    }
+  };
+
   useEffect(() => {
     fetchRuns();
+    fetchPending();
   }, []);
 
   const handlePost = async () => {
@@ -71,21 +93,22 @@ export default function PostingRuns() {
 
       setPosting(true);
 
-      const res = await API.handlePost(`/api/accounting/post-operations`, {
-        body: JSON.stringify(form),
-      });
+      const res = await API.post(`/api/accounting/post-operations`, form);
+      const json = res.data;
 
-      const json = await res.json();
-
-      if (!res.ok || !json.ok) {
+      if (!json.ok) {
         throw new Error(json.message || "Error contabilizando");
       }
 
       showAlert(json.message || "Contabilización realizada");
 
       fetchRuns();
+      fetchPending();
     } catch (error) {
-      showAlert(error.message, "error");
+      showAlert(
+        error.response?.data?.message || error.message,
+        "error",
+      );
     } finally {
       setPosting(false);
     }
@@ -210,6 +233,54 @@ export default function PostingRuns() {
               Generación automática de comprobantes
             </Typography>
           </Box>
+        </Box>
+
+        <Box sx={{ mb: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <PendingActionsIcon fontSize="small" sx={{ color: "#D97706" }} />
+            <Typography variant="subtitle2" fontWeight={700}>
+              Operaciones pendientes de contabilizar
+            </Typography>
+          </Stack>
+
+          <Grid container spacing={1}>
+            {pending.map((p) => (
+              <Grid item xs={6} sm={4} md={2} key={p.operation_type}>
+                <Paper
+                  variant="outlined"
+                  onClick={() =>
+                    setForm((prev) => ({ ...prev, operation_type: p.operation_type }))
+                  }
+                  sx={{
+                    p: 1.2,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    borderColor: p.count > 0 ? "#F59E0B" : "#E5E7EB",
+                    bgcolor: p.count > 0 ? "#FFFBEB" : "#fff",
+                    "&:hover": { borderColor: "#D97706" },
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" noWrap>
+                    {p.label}
+                  </Typography>
+                  <Typography variant="h6" fontWeight={900}>
+                    {p.count}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    C$ {formatMoney(p.total_amount)}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+
+            {!loadingPending && !pending.length && (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  No hay operaciones pendientes de contabilizar.
+                </Typography>
+              </Grid>
+            )}
+          </Grid>
         </Box>
 
         <Box
