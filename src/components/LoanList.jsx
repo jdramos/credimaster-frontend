@@ -378,7 +378,7 @@ const LoanList = () => {
                 }}
               />
 
-              {(role === 1 || permissions.includes("creditos.crear")) && (
+              {(role === 1 || permissions.includes("creditos.insertar")) && (
                 <AddCircle goTo="/creditos/agregar" />
               )}
             </Stack>
