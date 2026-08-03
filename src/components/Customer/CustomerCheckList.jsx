@@ -362,6 +362,32 @@ export default function CustomerChecklist({
     setPreviewLoading(false);
   };
 
+  if (!customerId) {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          borderRadius: 3,
+          border: `1px solid ${BAC.border}`,
+          background: "#fff",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 900, color: BAC.accent, lineHeight: 1.2, mb: 2 }}
+        >
+          {title}
+        </Typography>
+
+        <Alert severity="info" sx={{ borderRadius: 2 }}>
+          Primero debe guardar el cliente. Una vez guardado, podrá subir los
+          documentos del checklist desde esta pestaña.
+        </Alert>
+      </Paper>
+    );
+  }
+
   return (
     <Paper
       elevation={0}
