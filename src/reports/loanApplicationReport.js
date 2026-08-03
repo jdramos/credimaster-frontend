@@ -11,6 +11,13 @@ const money = (value) =>
 
 const text = (value) => value || "—";
 
+const field = (label, value, { span } = {}) => `
+  <div class="report-field"${span ? ` style="grid-column: span ${span};"` : ""}>
+    <div class="report-field-label">${label}</div>
+    <div class="report-field-value">${text(value)}</div>
+  </div>
+`;
+
 export const printLoanApplicationReport = ({
   company = {},
   user = {},
@@ -37,124 +44,51 @@ export const printLoanApplicationReport = ({
 
       <div class="section">
         <div class="section-title">I. Datos del Cliente</div>
-        <div class="grid">
-          <div class="field">
-            <div class="label">Código / ID</div>
-            <div class="value">${text(customer.id)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Nombre completo</div>
-            <div class="value">${text(customer.full_name || customer.name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Identificación</div>
-            <div class="value">${text(customer.identification || customer.identidad)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Teléfono</div>
-            <div class="value">${text(customer.phone || customer.mobile)}</div>
-          </div>
-
-          <div class="field">
-            <div class="label">Dirección</div>
-            <div class="value">${text(customer.address)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Municipio</div>
-            <div class="value">${text(customer.municipality_name || customer.municipio)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Departamento</div>
-            <div class="value">${text(customer.province_name || customer.departamento)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Estado civil</div>
-            <div class="value">${text(customer.marital_status_name || customer.estado_civil)}</div>
-          </div>
+        <div class="report-fields" style="grid-template-columns: repeat(3, 1fr);">
+          ${field("Código / ID", customer.id)}
+          ${field("Nombre completo", customer.full_name || customer.name, { span: 2 })}
+          ${field("Identificación", customer.identification || customer.identidad)}
+          ${field("Teléfono", customer.phone || customer.mobile)}
+          ${field("Dirección", customer.address, { span: 2 })}
+          ${field("Municipio", customer.municipality_name || customer.municipio)}
+          ${field("Departamento", customer.province_name || customer.departamento)}
+          ${field("Estado civil", customer.marital_status_name || customer.estado_civil)}
         </div>
       </div>
 
       <div class="section">
         <div class="section-title">II. Información Económica</div>
-        <div class="grid">
-          <div class="field">
-            <div class="label">Actividad económica</div>
-            <div class="value">${text(customer.economic_activity_name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Tipo de negocio</div>
-            <div class="value">${text(customer.business_type_name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Ingresos mensuales</div>
-            <div class="value">C$ ${money(customer.monthly_income)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Egresos mensuales</div>
-            <div class="value">C$ ${money(customer.monthly_expenses)}</div>
-          </div>
+        <div class="report-fields" style="grid-template-columns: repeat(4, 1fr);">
+          ${field("Actividad económica", customer.economic_activity_name)}
+          ${field("Tipo de negocio", customer.business_type_name)}
+          ${field("Ingresos mensuales", `C$ ${money(customer.monthly_income)}`)}
+          ${field("Egresos mensuales", `C$ ${money(customer.monthly_expenses)}`)}
         </div>
       </div>
 
       <div class="section">
         <div class="section-title">III. Datos del Crédito Solicitado</div>
-        <div class="grid">
-          <div class="field">
-            <div class="label">No. Solicitud / Crédito</div>
-            <div class="value">${text(loan.id)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Fecha solicitud</div>
-            <div class="value">${loan.date ? dayjs(loan.date).format("DD/MM/YYYY") : "—"}</div>
-          </div>
-          <div class="field">
-            <div class="label">Monto solicitado</div>
-            <div class="value">C$ ${money(loan.amount)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Plazo</div>
-            <div class="value">${text(loan.term)} meses</div>
-          </div>
+        <div class="report-fields" style="grid-template-columns: repeat(4, 1fr);">
+          ${field("No. Solicitud / Crédito", loan.id)}
+          ${field("Fecha solicitud", loan.date ? dayjs(loan.date).format("DD/MM/YYYY") : "")}
+          ${field("Monto solicitado", `C$ ${money(loan.amount)}`)}
+          ${field("Plazo", loan.term ? `${loan.term} meses` : "")}
 
-          <div class="field">
-            <div class="label">Tasa interés</div>
-            <div class="value">${money(loan.interest_rate)}%</div>
-          </div>
-          <div class="field">
-            <div class="label">Tasa moratoria</div>
-            <div class="value">${money(loan.defaulted_rate)}%</div>
-          </div>
-          <div class="field">
-            <div class="label">Frecuencia</div>
-            <div class="value">${text(loan.frequency_name || loan.frequency)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Destino</div>
-            <div class="value">${text(loan.destination_name || loan.destino_credito)}</div>
-          </div>
+          ${field("Tasa interés", `${money(loan.interest_rate)}%`)}
+          ${field("Tasa moratoria", `${money(loan.defaulted_rate)}%`)}
+          ${field("Frecuencia", loan.frequency_name || loan.frequency)}
+          ${field("Destino", loan.destination_name || loan.destino_credito)}
 
-          <div class="field">
-            <div class="label">Sucursal</div>
-            <div class="value">${text(loan.branch_name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Promotor</div>
-            <div class="value">${text(loan.promoter_name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Gestor / Cobrador</div>
-            <div class="value">${text(loan.collector_name)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Estado</div>
-            <div class="value">${text(loan.status)}</div>
-          </div>
+          ${field("Sucursal", loan.branch_name)}
+          ${field("Promotor", loan.promoter_name)}
+          ${field("Gestor / Cobrador", loan.collector_name)}
+          ${field("Estado", loan.status)}
         </div>
       </div>
 
       <div class="section">
         <div class="section-title">IV. Garantías Presentadas</div>
-        <table>
+        <table class="report-table">
           <thead>
             <tr>
               <th>Tipo</th>
@@ -185,23 +119,11 @@ export const printLoanApplicationReport = ({
 
       <div class="section">
         <div class="section-title">V. Evaluación Crediticia</div>
-        <div class="grid">
-          <div class="field">
-            <div class="label">Capacidad de pago</div>
-            <div class="value">C$ ${money(evaluation.payment_capacity)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Cuota estimada</div>
-            <div class="value">C$ ${money(evaluation.estimated_payment)}</div>
-          </div>
-          <div class="field">
-            <div class="label">Nivel de endeudamiento</div>
-            <div class="value">${money(evaluation.debt_ratio)}%</div>
-          </div>
-          <div class="field">
-            <div class="label">Resultado</div>
-            <div class="value">${text(evaluation.result || evaluation.status)}</div>
-          </div>
+        <div class="report-fields" style="grid-template-columns: repeat(4, 1fr);">
+          ${field("Capacidad de pago", `C$ ${money(evaluation.payment_capacity)}`)}
+          ${field("Cuota estimada", `C$ ${money(evaluation.estimated_payment)}`)}
+          ${field("Nivel de endeudamiento", `${money(evaluation.debt_ratio)}%`)}
+          ${field("Resultado", evaluation.result || evaluation.status)}
         </div>
 
         <div class="note">
