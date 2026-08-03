@@ -269,6 +269,9 @@ const LoanDetailsModal = ({
 
   const [compliance, setCompliance] = useState(null);
   const [loadingCompliance, setLoadingCompliance] = useState(false);
+
+  const [disclosures, setDisclosures] = useState([]);
+  const [acceptingDisclosure, setAcceptingDisclosure] = useState("");
   const [showDocuments, setShowDocuments] = useState(false);
   const [guaranteesTotal, setGuaranteesTotal] = useState(0);
   const [paymentOpen, setPaymentOpen] = useState(false);
@@ -324,6 +327,64 @@ const LoanDetailsModal = ({
         message: "No se pudo abrir el documento CONAMI",
         severity: "error",
       });
+    }
+  };
+
+  const disclosureLabels = {
+    SUMMARY_SHEET: "Hoja Resumen",
+    CONTRACT: "Contrato",
+    AMORTIZATION_TABLE: "Tabla de Amortización",
+  };
+
+  const loadDisclosures = async () => {
+    const loanId = getLoanId();
+    if (!loanId) {
+      setDisclosures([]);
+      return;
+    }
+
+    try {
+      const res = await API.get(
+        `/api/conami-transparency/loans/${loanId}/disclosures`,
+      );
+      setDisclosures(res.data?.data || []);
+    } catch (error) {
+      console.error("Error cargando evidencias CONAMI:", error);
+    }
+  };
+
+  const isDisclosureAccepted = (type) =>
+    disclosures.some((d) => d.disclosure_type === type);
+
+  const handleAcceptDisclosure = async (type) => {
+    const loanId = getLoanId();
+    if (!loanId) return;
+
+    try {
+      setAcceptingDisclosure(type);
+
+      await API.post(`/api/conami-transparency/loans/${loanId}/accept`, {
+        disclosure_type: type,
+      });
+
+      await loadDisclosures();
+
+      setSnackbar({
+        open: true,
+        message: `${disclosureLabels[type]}: evidencia registrada.`,
+        severity: "success",
+      });
+    } catch (error) {
+      console.error(error);
+      setSnackbar({
+        open: true,
+        message:
+          error.response?.data?.error ||
+          `No se pudo registrar la evidencia de "${disclosureLabels[type]}".`,
+        severity: "error",
+      });
+    } finally {
+      setAcceptingDisclosure("");
     }
   };
 
@@ -490,6 +551,7 @@ const LoanDetailsModal = ({
     loadApprovals();
     fetchAmortizationTable();
     loadCompliance();
+    loadDisclosures();
 
     setEditableAmount(
       Number(currentLoan.approved_amount || currentLoan.amount) || 0,
@@ -864,26 +926,48 @@ const LoanDetailsModal = ({
                         Agregar pago
                       </Button>
                     )}
-                    <Button
-                      variant="outlined"
-                      onClick={() => openConamiDocument("summary")}
-                    >
-                      Hoja Resumen
-                    </Button>
+                    {[
+                      { type: "SUMMARY_SHEET", doc: "summary", label: "Hoja Resumen" },
+                      { type: "CONTRACT", doc: "contract", label: "Contrato" },
+                      {
+                        type: "AMORTIZATION_TABLE",
+                        doc: "amortization",
+                        label: "Tabla de Amortización",
+                      },
+                    ].map(({ type, doc, label }) => (
+                      <Stack
+                        key={type}
+                        direction="row"
+                        spacing={0.5}
+                        alignItems="center"
+                      >
+                        <Button
+                          variant="outlined"
+                          onClick={() => openConamiDocument(doc)}
+                        >
+                          {label}
+                        </Button>
 
-                    <Button
-                      variant="outlined"
-                      onClick={() => openConamiDocument("contract")}
-                    >
-                      Contrato
-                    </Button>
-
-                    <Button
-                      variant="outlined"
-                      onClick={() => openConamiDocument("amortization")}
-                    >
-                      Tabla de Amortización
-                    </Button>
+                        {isDisclosureAccepted(type) ? (
+                          <Tooltip title="Evidencia CONAMI registrada">
+                            <CheckCircleIcon color="success" fontSize="small" />
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title={`Registrar aceptación de "${label}" (requerido para desembolsar)`}>
+                            <span>
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                disabled={acceptingDisclosure === type}
+                                onClick={() => handleAcceptDisclosure(type)}
+                              >
+                                <AssignmentTurnedInIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    ))}
 
                     <Button
                       variant="outlined"
