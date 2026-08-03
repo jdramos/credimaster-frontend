@@ -1168,7 +1168,7 @@ const LoanDetailsModal = ({
                   </CompactAccordion>
                 </Grid>
 
-                {loanId && (
+                {loanId && loanData?.status === "DISBURSED" && (
                   <Grid item xs={12}>
                     <CompactAccordion title="Adjudicación de Bienes">
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
