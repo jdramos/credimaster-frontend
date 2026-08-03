@@ -62,6 +62,7 @@ const SECTION_MODULE_KEY = {
   rrhh: "hr",
   obligations: "obligations",
   budget: "budget",
+  insurance: "insurance",
 };
 
 const emptyPasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
@@ -83,6 +84,7 @@ const sectionLabels = {
   rrhh: "RECURSOS HUMANOS",
   obligations: "OBLIGACIONES FINANCIERAS",
   budget: "PRESUPUESTO",
+  insurance: "SEGUROS",
   reports: "Reportes",
   compliance: "CUMPLIMIENTO LA/FT/FP",
 };
@@ -277,6 +279,12 @@ const menuItems = {
     { label: "Aprobar Presupuesto por Departamento", iconName: "FaCheckDouble", to: "/presupuesto/aprobacion-departamentos", permission: "presupuesto.departamento.aprobar" },
     { label: "Departamentos", iconName: "FaBuilding", to: "/presupuesto/departamentos", permission: "presupuesto.gestionar" },
     { label: "Conceptos de Presupuesto", iconName: "FaTags", to: "/presupuesto/conceptos", permission: "presupuesto.gestionar" },
+  ],
+
+  insurance: [
+    { label: "Seguros Contratados", iconName: "FaShieldAlt", to: "/seguros", permission: "menu.seguros" },
+    { label: "Tipos de Seguro", iconName: "FaFileContract", to: "/seguros/tipos", permission: "menu.seguros" },
+    { label: "Aseguradoras", iconName: "FaBuilding", to: "/seguros/aseguradoras", permission: "menu.seguros" },
   ],
 
   rrhh: [

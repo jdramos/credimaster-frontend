@@ -110,6 +110,7 @@ const MENU_TAG_TO_SECTION = {
   "menu.caja": "caja",
   "menu.obligaciones": "obligations",
   "menu.presupuesto": "budget",
+  "menu.seguros": "insurance",
   "menu.rrhh": "rrhh",
   "menu.auditoria": "reports",
   "menu.reportes": "reports",
@@ -161,6 +162,7 @@ const PREFIX_TO_SECTION = {
   caja: "caja",
   obligaciones: "obligations",
   presupuesto: "budget",
+  seguros: "insurance",
   rrhh: "rrhh",
 };
 
@@ -177,6 +179,7 @@ const SECTION_ORDER = [
   "caja",
   "obligations",
   "budget",
+  "insurance",
   "rrhh",
   "reports",
   "otros",
@@ -195,6 +198,7 @@ const SECTION_LABELS = {
   caja: "CAJA",
   obligations: "OBLIGACIONES FINANCIERAS",
   budget: "PRESUPUESTO",
+  insurance: "SEGUROS",
   rrhh: "RECURSOS HUMANOS",
   reports: "Reportes",
   otros: "Otros",
@@ -272,6 +276,11 @@ const getModuleStyle = (module) => {
       color: BAC.success,
       backgroundColor: BAC.successSoft,
       border: `1px solid ${alpha(BAC.success, 0.18)}`,
+    },
+    insurance: {
+      color: BAC.info,
+      backgroundColor: BAC.infoSoft,
+      border: `1px solid ${alpha(BAC.info, 0.18)}`,
     },
     rrhh: {
       color: BAC.secondaryLight,

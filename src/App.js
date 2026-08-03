@@ -110,6 +110,9 @@ const BankReconciliation = lazy(() => import("./components/banks/BankReconciliat
 const FinanciadoresList = lazy(() => import("./components/obligations/FinanciadoresList"));
 const LineasCreditoList = lazy(() => import("./components/obligations/LineasCreditoList"));
 const ObligacionesList = lazy(() => import("./components/obligations/ObligacionesList"));
+const InsuranceProvidersList = lazy(() => import("./components/insurance/InsuranceProvidersList"));
+const InsuranceProductsList = lazy(() => import("./components/insurance/InsuranceProductsList"));
+const CustomerInsurancesList = lazy(() => import("./components/insurance/CustomerInsurancesList"));
 const BudgetsList = lazy(() => import("./components/budget/BudgetsList"));
 const BudgetAccountLinesEditor = lazy(() => import("./components/budget/BudgetAccountLinesEditor"));
 const BudgetPlacementGoalsEditor = lazy(() => import("./components/budget/BudgetPlacementGoalsEditor"));
@@ -648,6 +651,9 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/obligaciones/financiadores" element={<FinanciadoresList />} />
           <Route path="/obligaciones/lineas-credito" element={<LineasCreditoList />} />
           <Route path="/obligaciones" element={<ObligacionesList />} />
+          <Route path="/seguros/aseguradoras" element={<InsuranceProvidersList />} />
+          <Route path="/seguros/tipos" element={<InsuranceProductsList />} />
+          <Route path="/seguros" element={<CustomerInsurancesList />} />
           <Route path="/presupuesto" element={<BudgetsList />} />
           <Route path="/presupuesto/:id/cuentas" element={<BudgetAccountLinesEditor />} />
           <Route path="/presupuesto/:id/metas-colocacion" element={<BudgetPlacementGoalsEditor />} />
