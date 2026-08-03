@@ -19,9 +19,11 @@ import PrintIcon from "@mui/icons-material/Print";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
 import BAC from "../../styles/bac";
 import AccountInstructionsButton from "./AccountInstructionsButton";
+import AccountEditDialog from "./AccountEditDialog";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = `/api/accounting/accounts`;
@@ -33,6 +35,8 @@ export default function AccountsList() {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editAccount, setEditAccount] = useState(null);
   const [alert, setAlert] = useState({
     open: false,
     severity: "success",
@@ -185,6 +189,21 @@ export default function AccountsList() {
               </Tooltip>
             )}
 
+            {canManageAccounts && (
+              <Tooltip title="Editar cuenta">
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    setEditAccount(params.row);
+                    setEditOpen(true);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
             <AccountInstructionsButton
               mucCode={params.row.muc_code}
               accountName={params.row.account_name}
@@ -312,6 +331,19 @@ export default function AccountsList() {
           />
         </Box>
       </Paper>
+
+      <AccountEditDialog
+        open={editOpen}
+        onClose={() => {
+          setEditOpen(false);
+          setEditAccount(null);
+        }}
+        account={editAccount}
+        onSuccess={() => {
+          showAlert("Cuenta actualizada correctamente", "success");
+          fetchAccounts();
+        }}
+      />
 
       <Snackbar
         open={alert.open}
