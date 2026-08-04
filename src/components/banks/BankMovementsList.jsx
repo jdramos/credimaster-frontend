@@ -40,6 +40,8 @@ import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { numberToWords } from "./numberToWords";
 import { printBankAccountStatementReport } from "../../reports/bankAccountStatementReport";
+import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 
 const CHECKS_URL = "/api/banks/checks";
 const DEPOSITS_URL = "/api/banks/deposits";
@@ -107,6 +109,7 @@ export default function BankMovementsList() {
   const [alert, setAlert] = useState({ open: false, severity: "error", message: "" });
 
   const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [batchDisbursementOpen, setBatchDisbursementOpen] = useState(false);
   const [checkDialogOpen, setCheckDialogOpen] = useState(false);
   const [checkForm, setCheckForm] = useState(emptyCheckForm);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
@@ -461,6 +464,9 @@ export default function BankMovementsList() {
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setTypePickerOpen(true)} sx={{ textTransform: "none" }}>
             Nuevo movimiento
           </Button>
+          <Button variant="outlined" startIcon={<AccountBalanceIcon />} onClick={() => setBatchDisbursementOpen(true)} sx={{ textTransform: "none" }}>
+            Desembolsar créditos
+          </Button>
           <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchStatement} sx={{ textTransform: "none" }}>
             Actualizar
           </Button>
@@ -573,6 +579,15 @@ export default function BankMovementsList() {
           <Button onClick={() => setTypePickerOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
         </DialogActions>
       </Dialog>
+
+      <LoanBatchDisbursementDialog
+        open={batchDisbursementOpen}
+        onClose={() => setBatchDisbursementOpen(false)}
+        onSuccess={() => {
+          showAlert("Créditos desembolsados registrados correctamente.", "success");
+          fetchStatement();
+        }}
+      />
 
       {/* ========== Diálogo CHEQUE — vista visual sin cambios ========== */}
       <Dialog open={checkDialogOpen} onClose={() => setCheckDialogOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>

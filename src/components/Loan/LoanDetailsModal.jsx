@@ -33,6 +33,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -75,6 +76,8 @@ import AssetAdjudicationModal from "../AssetAdjudicationModal";
 import ApprovalConfirmationDialog from "./ApprovalConfirmationDialog";
 import { printLoanApplicationReport } from "../../reports/loanApplicationReport";
 import { printCommitteeMinutesReport } from "../../reports/committeeMinutesReport";
+
+dayjs.extend(utc);
 
 const HeaderBar = styled("div")(({ theme }) => ({
   background: theme.palette.primary.main,
@@ -1098,6 +1101,42 @@ const LoanDetailsModal = ({
                           {loanData.promoter_name ?? "No asignado"}
                         </Muted>
                       </Grid>
+
+                      <Grid item xs={6} md={1.5}>
+                        <Muted variant="caption" sx={{ fontSize: 11 }}>
+                          Comisión
+                        </Muted>
+                        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                          C$ {formatMoney(loanData.fee || 0)}
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={6} md={1.5}>
+                        <Muted variant="caption" sx={{ fontSize: 11 }}>
+                          Seguro
+                        </Muted>
+                        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                          C$ {formatMoney(loanData.insurance || 0)}
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={6} md={1.5}>
+                        <Muted variant="caption" sx={{ fontSize: 11 }}>
+                          Otros cargos
+                        </Muted>
+                        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                          C$ {formatMoney(loanData.other_charges || 0)}
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={6} md={1.5}>
+                        <Muted variant="caption" sx={{ fontSize: 11 }}>
+                          Deducción
+                        </Muted>
+                        <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                          C$ {formatMoney(loanData.deduction || 0)}
+                        </Typography>
+                      </Grid>
                     </Grid>
 
                     <Divider sx={{ my: 1.25 }} />
@@ -1494,9 +1533,10 @@ const LoanDetailsModal = ({
 
                                   <TableCell>
                                     {a.updated_at
-                                      ? dayjs(a.updated_at).format(
-                                          "DD/MM/YYYY HH:mm",
-                                        )
+                                      ? dayjs
+                                          .utc(a.updated_at)
+                                          .local()
+                                          .format("DD/MM/YYYY HH:mm")
                                       : "—"}
                                   </TableCell>
 

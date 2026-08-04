@@ -139,6 +139,12 @@ const menuItems = {
   ],
   queries: [
     { label: "Saldos", iconName: "FaChartBar", to: "/saldos", permission: "menu.balances" },
+    {
+      label: "Proyección de Recuperación",
+      iconName: "FaCalculator",
+      to: "/creditos/proyeccion-recuperacion",
+      permission: "creditos.proyeccion_recuperacion.ver",
+    },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
     { label: "Cartera saneada", iconName: "FaFileInvoiceDollar", to: "/cartera-saneada" },

@@ -44,6 +44,7 @@ import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import LoanExtraFields from "./LoanExtraFields";
 import useLoanForm from "./useLoanForm";
+import AmountOrPercentageField from "./AmountOrPercentageField";
 
 const fieldSx = {
   minWidth: 0,
@@ -138,6 +139,7 @@ const LoanAddWizard = () => {
     selectedEvaluation,
     evaluationCustomer,
     handleInputChange,
+    handleChargeModeChange,
     handleSubmit,
     handleDialogConfirmation,
     handleCancel,
@@ -299,6 +301,8 @@ const LoanAddWizard = () => {
                     id="customer_code"
                     name="customer_id"
                     value={loan.customer_id}
+                    customer_name={loan.customer_name}
+                    customer_identification={loan.customer_identification}
                     onChange={handleInputChange}
                     size="small"
                     label="Nombre del cliente"
@@ -484,23 +488,14 @@ const LoanAddWizard = () => {
                   InputProps={{ endAdornment: <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>%</InputAdornment> }}
                 />
 
-                <NumericFormat
-                  customInput={TextField}
+                <AmountOrPercentageField
                   label="Comisión por desembolso"
-                  variant="outlined"
-                  name="fee"
-                  value={loan.fee}
-                  onValueChange={({ value }) => handleInputChange({ target: { name: "fee", value } })}
-                  thousandSeparator
-                  decimalSeparator="."
-                  decimalScale={2}
-                  fixedDecimalScale
-                  error={!!errors.fee}
-                  helperText={errors.fee}
-                  size="small"
-                  fullWidth
+                  field="fee"
+                  loan={loan}
+                  errors={errors}
+                  handleInputChange={handleInputChange}
+                  handleChargeModeChange={handleChargeModeChange}
                   sx={fieldSx}
-                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
 
                 <NumericFormat
@@ -522,42 +517,24 @@ const LoanAddWizard = () => {
                   InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
 
-                <NumericFormat
-                  customInput={TextField}
+                <AmountOrPercentageField
                   label="Cargos administrativos"
-                  variant="outlined"
-                  name="other_charges"
-                  value={loan.other_charges}
-                  onValueChange={({ value }) => handleInputChange({ target: { name: "other_charges", value } })}
-                  thousandSeparator
-                  decimalSeparator="."
-                  decimalScale={2}
-                  fixedDecimalScale
-                  error={!!errors.other_charges}
-                  helperText={errors.other_charges}
-                  size="small"
-                  fullWidth
+                  field="other_charges"
+                  loan={loan}
+                  errors={errors}
+                  handleInputChange={handleInputChange}
+                  handleChargeModeChange={handleChargeModeChange}
                   sx={fieldSx}
-                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
 
-                <NumericFormat
-                  customInput={TextField}
+                <AmountOrPercentageField
                   label="Deducción"
-                  variant="outlined"
-                  name="deduction"
-                  value={loan.deduction}
-                  onValueChange={({ value }) => handleInputChange({ target: { name: "deduction", value } })}
-                  thousandSeparator
-                  decimalSeparator="."
-                  decimalScale={2}
-                  fixedDecimalScale
-                  error={!!errors.deduction}
-                  helperText={errors.deduction}
-                  size="small"
-                  fullWidth
+                  field="deduction"
+                  loan={loan}
+                  errors={errors}
+                  handleInputChange={handleInputChange}
+                  handleChargeModeChange={handleChargeModeChange}
                   sx={fieldSx}
-                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
 
                 <NumericFormat

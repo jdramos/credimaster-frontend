@@ -37,11 +37,9 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import PaidIcon from "@mui/icons-material/Paid";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import UndoIcon from "@mui/icons-material/Undo";
 import { UserContext } from "../contexts/UserContext";
 import LoanDetailsModal from "./Loan/LoanDetailsModal";
-import LoanDisbursementRemittanceDialog from "./Loan/LoanDisbursementRemittanceDialog";
 import PaymentForm from "./PaymentForm";
 import AccountStatementModal from "./AccountStatementModal";
 import axios from "axios";
@@ -98,8 +96,6 @@ function LoanListDataTable({
   const [selectedDisburseLoan, setSelectedDisburseLoan] = useState(null);
   const [disburseLoading, setDisburseLoading] = useState(false);
 
-  const [remittanceDialogOpen, setRemittanceDialogOpen] = useState(false);
-  const [selectedRemittanceLoan, setSelectedRemittanceLoan] = useState(null);
   const [returnRemittanceLoading, setReturnRemittanceLoading] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -270,29 +266,6 @@ function LoanListDataTable({
   const handleCloseDisburseDialog = () => {
     setDisburseDialogOpen(false);
     setSelectedDisburseLoan(null);
-  };
-
-  const handleOpenRemittanceDialog = async (row) => {
-    try {
-      const loanResp = await API.get(`/api/loans/${row.id}`);
-      const loanData = normalizeLoanResponse(loanResp);
-
-      if (!loanData) {
-        openSnack("No se pudo cargar el crédito.", "warning");
-        return;
-      }
-
-      setSelectedRemittanceLoan(loanData);
-      setRemittanceDialogOpen(true);
-    } catch (error) {
-      console.error("Error al abrir forma de desembolso:", error);
-      openSnack("No se pudo cargar el crédito.", "error");
-    }
-  };
-
-  const handleCloseRemittanceDialog = () => {
-    setRemittanceDialogOpen(false);
-    setSelectedRemittanceLoan(null);
   };
 
   const handleReturnRemittance = async (row) => {
@@ -521,15 +494,14 @@ function LoanListDataTable({
     role === 1 ||
     permissions.includes("especial.creditos.desembolsar");
 
-  const canRegisterRemittance =
-    role === 1 || permissions.includes("especial.creditos.remesa.registrar");
-
   const canReturnRemittance =
     role === 1 || permissions.includes("especial.creditos.remesa.devolver");
 
   const canModifyNormative =
     role === 1 ||
     permissions.includes("creditos.modificaciones.solicitar");
+
+  const canEditPending = role === 1 || permissions.includes("creditos.editar");
 
   return (
     <TableContainer component={Paper}>
@@ -613,6 +585,23 @@ function LoanListDataTable({
                     ) : (
                       <>
                         {/* =========================================
+            EDITAR (solo mientras el crédito está pendiente de aprobación)
+        ========================================= */}
+                        {canEditPending && rowStatus === "PENDING" && (
+                          <Tooltip title="Editar crédito (aún no aprobado)">
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() =>
+                                navigate(`/creditos/agregar?loanId=${row.id}`)
+                              }
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {/* =========================================
             VER DETALLE
         ========================================= */}
                         {canShow && (
@@ -672,20 +661,12 @@ function LoanListDataTable({
                         )}
 
                         {/* =========================================
-                              FORMA DE DESEMBOLSO (remesa)
+                              REMESA DE DESEMBOLSO — elegir forma de
+                              desembolso ya NO se hace desde aquí; se elige
+                              en Bancos/Caja > "Desembolsar créditos", que
+                              permite agrupar varios créditos en un solo
+                              cheque/movimiento (ver LoanBatchDisbursementDialog).
                           ========================================= */}
-                        {canRegisterRemittance && canDisburseRow && !row.disbursement_method && (
-                          <Tooltip title="Elegir forma de desembolso (cheque, transferencia o efectivo)">
-                            <IconButton
-                              size="small"
-                              color="secondary"
-                              onClick={() => handleOpenRemittanceDialog(row)}
-                            >
-                              <AccountBalanceIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-
                         {canReturnRemittance && canDisburseRow && row.disbursement_method && (
                           <Tooltip title={`Devolver remesa (${row.disbursement_method})`}>
                             <span>
@@ -1005,16 +986,6 @@ function LoanListDataTable({
           </Button>
         </DialogActions>
       </Dialog>
-
-      <LoanDisbursementRemittanceDialog
-        open={remittanceDialogOpen}
-        onClose={handleCloseRemittanceDialog}
-        loan={selectedRemittanceLoan}
-        onSuccess={() => {
-          openSnack("Forma de desembolso registrada correctamente.", "success");
-          onUpdate?.();
-        }}
-      />
 
       <Snackbar
         open={snackbarOpen}

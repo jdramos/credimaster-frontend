@@ -1,5 +1,5 @@
-import { useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import API from "../../api";
@@ -16,9 +16,22 @@ const urlGuarantee = `/api/guarantees`;
 // validaciones y llamadas al backend sin duplicar ~800 líneas de lógica.
 export default function useLoanForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Modo edición: la misma pantalla "Agregar crédito" se reutiliza para
+  // corregir un crédito PENDING (aún no aprobado) navegando a
+  // /creditos/agregar?loanId=X -- ver LoanListDataTable.jsx, que ya usaba
+  // esta convención de URL para el flujo de borradores.
+  const loanId = searchParams.get("loanId");
+  const isEditMode = Boolean(loanId);
+  // Guarda las garantías ya vinculadas al crédito mientras se carga, para
+  // aplicarlas dentro del efecto de abajo (fetchGuaranteesByCustomer) en vez
+  // de dejar que su reset normal (nuevo cliente = sin garantías previas) las
+  // borre apenas se hidrata customer_id.
+  const editGuaranteeIdsRef = useRef(null);
   const { permissions = [], role, userBranches = [] } =
     useContext(UserContext) || {};
   const canCreateLoan = role === 1 || permissions.includes("creditos.insertar");
+  const canEditLoan = role === 1 || permissions.includes("creditos.editar");
 
   const currentUser = useMemo(() => {
     try {
@@ -41,9 +54,15 @@ export default function useLoanForm() {
     promoter_id: "",
     amount: "1.00",
     fee: "0.00",
+    fee_mode: "amount",
+    fee_percentage: "0.00",
     deduction: "0.00",
+    deduction_mode: "amount",
+    deduction_percentage: "0.00",
     insurance: "0.00",
     other_charges: "0.00",
+    other_charges_mode: "amount",
+    other_charges_percentage: "0.00",
     term: 0,
     due_date: today(),
     interest_type_id: 1,
@@ -237,8 +256,12 @@ export default function useLoanForm() {
       }
 
       try {
+        // No confundir con /api/customer-credit-evaluations -- esa es la
+        // evaluación financiera, no el expediente documental. El resumen
+        // real (Requeridos/Cargados/Verificados/Faltantes) vive en
+        // customerDocumentsRoutes.js.
         const { data } = await API.get(
-          `/api/customer-credit-evaluations/${loan.customer_id}/current`,
+          `/api/customer-files/${loan.customer_id}/checklist-summary`,
         );
 
         setDocSummary(data);
@@ -262,7 +285,12 @@ export default function useLoanForm() {
 
       setLoading(true);
       try {
-        const response = await API.get(`${urlGuarantee}/${loan.customer_id}`);
+        // En modo edición, las garantías que ya están vinculadas a ESTE
+        // crédito no deben mostrarse como "comprometidas con otro crédito"
+        // -- son las mismas garantías de este crédito.
+        const response = await API.get(`${urlGuarantee}/${loan.customer_id}`, {
+          params: isEditMode ? { excludeLoanId: loanId } : undefined,
+        });
 
         const data = await response.data;
 
@@ -272,15 +300,21 @@ export default function useLoanForm() {
         );
         setGuaranteeValue(totalValue);
         setGuarantees(data);
-        setSelectedGuaranteeIds([]);
-        setLoan((prev) => {
-          if (prev.credit_evaluation_id === "") return prev;
 
-          return {
-            ...prev,
-            credit_evaluation_id: "",
-          };
-        });
+        if (editGuaranteeIdsRef.current) {
+          setSelectedGuaranteeIds(editGuaranteeIdsRef.current);
+          editGuaranteeIdsRef.current = null;
+        } else {
+          setSelectedGuaranteeIds([]);
+          setLoan((prev) => {
+            if (prev.credit_evaluation_id === "") return prev;
+
+            return {
+              ...prev,
+              credit_evaluation_id: "",
+            };
+          });
+        }
       } catch (error) {
         toast.error(error.message || "Error al obtener garantías");
       } finally {
@@ -289,6 +323,7 @@ export default function useLoanForm() {
     };
 
     fetchGuaranteesByCustomer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loan.customer_id]);
 
   useEffect(() => {
@@ -455,6 +490,47 @@ export default function useLoanForm() {
     loan.interest_type_name,
   ]);
 
+  // Cuando comisión, cargos administrativos o deducción se capturan como
+  // porcentaje (fee_mode/other_charges_mode/deduction_mode), el monto en
+  // córdobas que realmente viaja al backend (loan.fee/other_charges/
+  // deduction) se deriva aquí a partir del monto del crédito -- el resto del
+  // formulario (tabla de amortización, validateForm, buildPayload) sigue
+  // leyendo esos mismos campos sin enterarse de que hay un modo distinto.
+  useEffect(() => {
+    setLoan((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      [
+        ["fee_mode", "fee_percentage", "fee"],
+        ["other_charges_mode", "other_charges_percentage", "other_charges"],
+        ["deduction_mode", "deduction_percentage", "deduction"],
+      ].forEach(([modeKey, percentageKey, amountKey]) => {
+        if (prev[modeKey] !== "percentage") return;
+
+        const computed = (
+          (Number(prev.amount || 0) * Number(prev[percentageKey] || 0)) /
+          100
+        ).toFixed(2);
+
+        if (prev[amountKey] !== computed) {
+          next[amountKey] = computed;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [
+    loan.amount,
+    loan.fee_mode,
+    loan.fee_percentage,
+    loan.other_charges_mode,
+    loan.other_charges_percentage,
+    loan.deduction_mode,
+    loan.deduction_percentage,
+  ]);
+
   useEffect(() => {
     if (!selectedEvaluation) {
       setEvaluationViewForm({});
@@ -500,6 +576,33 @@ export default function useLoanForm() {
   }, [selectedEvaluation]);
 
   const getPolicy = (key) => policies[key]?.policy_value;
+
+  // Alterna comisión/cargos administrativos/deducción entre monto fijo y
+  // porcentaje del crédito. Al pasar a porcentaje por primera vez (el campo
+  // sigue en su valor inicial "0.00"), se precarga con el porcentaje
+  // configurado en políticas de crédito (fee_percentage/
+  // other_charges_percentage/deduction_percentage) -- el usuario puede
+  // seguir editándolo libremente después, la política solo aporta el punto
+  // de partida.
+  const handleChargeModeChange = (field, mode) => {
+    setLoan((prev) => {
+      const modeKey = `${field}_mode`;
+      const percentageKey = `${field}_percentage`;
+
+      const shouldPrefill =
+        mode === "percentage" &&
+        prev[modeKey] !== "percentage" &&
+        Number(prev[percentageKey] || 0) === 0;
+
+      return {
+        ...prev,
+        [modeKey]: mode,
+        [percentageKey]: shouldPrefill
+          ? getPolicy(`${field}_percentage`) || prev[percentageKey]
+          : prev[percentageKey],
+      };
+    });
+  };
 
   // Valida solo los campos del paso 1 del wizard (datos básicos del crédito),
   // reutilizando las mismas claves/mensajes de validateForm para que el
@@ -751,6 +854,114 @@ export default function useLoanForm() {
     loadDefaultBranch();
   }, [userBranches]);
 
+  // Modo edición: carga el crédito PENDING indicado en ?loanId= e hidrata
+  // el mismo estado `loan` que usa "Agregar crédito" -- el backend
+  // (LoanController.update) es quien realmente exige status === 'PENDING';
+  // esta verificación aquí es solo para no dejar al usuario editando una
+  // pantalla que de todas formas el submit va a rechazar.
+  useEffect(() => {
+    if (!loanId) return;
+
+    const loadLoanForEdit = async () => {
+      setLoading(true);
+
+      try {
+        const [loanRes, guaranteesRes] = await Promise.all([
+          API.get(`${url}/${loanId}`),
+          API.get(`${url}/${loanId}/guarantees`),
+        ]);
+
+        const row = loanRes.data?.data;
+
+        if (!row) {
+          toast.error("No se encontró el crédito a editar");
+          navigate("/creditos");
+          return;
+        }
+
+        if (row.status !== "PENDING") {
+          toast.error(
+            `Este crédito ya no se puede modificar (estado: ${row.status}).`,
+          );
+          navigate("/creditos");
+          return;
+        }
+
+        editGuaranteeIdsRef.current = (guaranteesRes.data || []).map(
+          (g) => g.guarantee_id,
+        );
+
+        setLoan((prev) => ({
+          ...prev,
+          customer_id: row.customer_id || "",
+          customer_identification: row.customer_identification || "",
+          customer_name: row.customer_name || "",
+          requestDate: row.date ? dayjs(row.date).format("YYYY-MM-DD") : today(),
+          branch_id: row.branch_id || "",
+          vendor_id: row.vendor_id || "",
+          promoter_id: row.promoter_id || "",
+          amount: String(row.amount ?? "0.00"),
+          fee: String(row.fee ?? "0.00"),
+          fee_mode: "amount",
+          fee_percentage: "0.00",
+          deduction: String(row.deduction ?? "0.00"),
+          deduction_mode: "amount",
+          deduction_percentage: "0.00",
+          insurance: String(row.insurance ?? "0.00"),
+          other_charges: String(row.other_charges ?? "0.00"),
+          other_charges_mode: "amount",
+          other_charges_percentage: "0.00",
+          term: row.term || 0,
+          due_date: row.due_date ? dayjs(row.due_date).format("YYYY-MM-DD") : today(),
+          interest_type_id: row.interest_type_id || 1,
+          interest_rate: String(row.interest_rate ?? "0.00"),
+          defaulted_rate: String(row.defaulted_rate ?? "0.00"),
+          frequency_id: row.frequency || "",
+          frequency_name: row.frecuency_name || "",
+          status: row.status,
+          credit_evaluation_id: row.credit_evaluation_id || "",
+          id_tipo_credito: row.id_tipo_credito || "",
+          // Destino del crédito comparte catálogo con la actividad
+          // económica registrada del cliente: si el crédito ya tenía un
+          // destino guardado se respeta, si no, se usa la actividad
+          // económica actual del cliente como valor por defecto.
+          id_destino_credito:
+            row.id_destino_credito || row.customer_economic_activity || "",
+          conami_id_actividad_economica:
+            row.customer_economic_activity || "",
+          id_garantia: row.id_garantia || "",
+          id_linea: row.id_linea || "",
+          id_modalidad_credito: row.id_modalidad_credito || "",
+          id_moneda: row.id_moneda || "",
+          id_municipio: row.id_municipio || "",
+          id_oficina: row.id_oficina || row.branch_id || "",
+          id_origen_recursos: row.id_origen_recursos || "",
+          id_sindicado: row.id_sindicado || "",
+          id_periodo_cobro_interes: row.id_periodo_cobro_interes || "",
+          id_periodo_cobro_principal: row.id_periodo_cobro_principal || "",
+          id_situacion_credito: row.id_situacion_credito || "",
+          id_tipo_agrupacion_credito: row.id_tipo_agrupacion_credito || "",
+          id_sector_economico: row.id_sector_economico || "",
+          id_met_atencion: row.id_met_atencion || "",
+          id_tipo_zona: row.id_tipo_zona || "",
+          id_estado_credito: row.id_estado_credito || "",
+          id_analista: row.id_analista || "",
+        }));
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message ||
+            "Error al cargar el crédito para edición",
+        );
+        navigate("/creditos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLoanForEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loanId]);
+
   const handleInputChange = (e, selectedOption = null) => {
     const {
       name,
@@ -779,6 +990,15 @@ export default function useLoanForm() {
         conami_id_actividad_economica !== undefined
           ? conami_id_actividad_economica
           : prev.conami_id_actividad_economica,
+      // El destino del crédito comparte catálogo con la actividad económica
+      // registrada del cliente (economic_activities) -- al seleccionar
+      // cliente se precarga con lo que el cliente ya tiene registrado, sin
+      // quitarle al usuario la opción de cambiarlo si este crédito en
+      // particular tiene un destino distinto.
+      id_destino_credito:
+        conami_id_actividad_economica !== undefined
+          ? conami_id_actividad_economica
+          : prev.id_destino_credito,
       id_municipio:
         municipality_id !== undefined ? municipality_id : prev.id_municipio,
       id_oficina: name === "branch_id" ? value : prev.id_oficina,
@@ -873,11 +1093,18 @@ export default function useLoanForm() {
     try {
       const payload = buildPayload();
 
-      const response = await API.post(url, payload);
+      const response = isEditMode
+        ? await API.put(`${url}/${loanId}`, payload)
+        : await API.post(url, payload);
 
       await response.data;
 
-      showSnackbar("Solicitud guardada exitosamente.", "success");
+      showSnackbar(
+        isEditMode
+          ? "Crédito actualizado exitosamente."
+          : "Solicitud guardada exitosamente.",
+        "success",
+      );
 
       setTimeout(() => {
         setOpenDialog(false);
@@ -956,6 +1183,8 @@ export default function useLoanForm() {
 
   return {
     canCreateLoan,
+    canEditLoan,
+    isEditMode,
     errors,
     loading,
     loan,
@@ -969,6 +1198,7 @@ export default function useLoanForm() {
     selectAllGuarantees,
     clearGuaranteeSelection,
     getPolicy,
+    handleChargeModeChange,
     amortizationTable,
     installment,
     snackbarOpen,

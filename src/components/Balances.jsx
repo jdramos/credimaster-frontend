@@ -817,7 +817,7 @@ const CustomerBalanceViewer = () => {
           />
 
           <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel>Sucursal</InputLabel>
+            <InputLabel></InputLabel>
             <BranchSelect
               size="small"
               value={selectedBranch}

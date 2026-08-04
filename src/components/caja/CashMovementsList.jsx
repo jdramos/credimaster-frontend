@@ -35,6 +35,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { printCashRegisterStatementReport } from "../../reports/cashRegisterStatementReport";
+import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 
 const SOURCE_LABELS = {
   CAJA: "Caja",
@@ -72,6 +74,7 @@ export default function CashMovementsList() {
   const [alert, setAlert] = useState({ open: false, severity: "error", message: "" });
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [batchDisbursementOpen, setBatchDisbursementOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -276,6 +279,9 @@ export default function CashMovementsList() {
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenDialog} sx={{ textTransform: "none" }}>
             Nuevo movimiento
           </Button>
+          <Button variant="outlined" startIcon={<AccountBalanceIcon />} onClick={() => setBatchDisbursementOpen(true)} sx={{ textTransform: "none" }}>
+            Desembolsar créditos
+          </Button>
           <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchStatement} sx={{ textTransform: "none" }}>
             Actualizar
           </Button>
@@ -360,6 +366,16 @@ export default function CashMovementsList() {
           </Table>
         </Paper>
       )}
+
+      <LoanBatchDisbursementDialog
+        open={batchDisbursementOpen}
+        onClose={() => setBatchDisbursementOpen(false)}
+        defaultMethod="EFECTIVO"
+        onSuccess={() => {
+          showAlert("Créditos desembolsados registrados correctamente.", "success");
+          fetchStatement();
+        }}
+      />
 
       {/* ========== NUEVO MOVIMIENTO ========== */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>

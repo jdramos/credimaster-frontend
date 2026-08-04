@@ -72,6 +72,7 @@ const GenerateBalances = lazy(() => import("./components/GenerateBalances"));
 const BusinessDayPanel = lazy(() => import("./components/BusinessDayPanel"));
 const CreditPolicyManager = lazy(() => import("./components/CreditPolicyManager"));
 const BalanceSummary = lazy(() => import("./components/Balances"));
+const RecoveryProjection = lazy(() => import("./components/RecoveryProjection"));
 const ProvissionViewer = lazy(() => import("./components/ProvissionViewer"));
 const SinRiesgoReport = lazy(() => import("./components/Sinriesgo"));
 const WrittenOffLoansList = lazy(() => import("./components/WrittenOffLoansList"));
@@ -296,6 +297,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <BalanceSummary />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/creditos/proyeccion-recuperacion"
+            element={
+              <PageContainer>
+                <RecoveryProjection />
               </PageContainer>
             }
           />
