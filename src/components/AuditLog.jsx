@@ -10,7 +10,7 @@ import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import API from "../api";
 
 const initialFilters = { search: "", action: "", entity: "", date_from: "", date_to: "" };
-const formatDate = (value) => value ? new Intl.DateTimeFormat("es-NI", { dateStyle: "medium", timeStyle: "medium" }).format(new Date(String(value).replace(" ", "T"))) : "—";
+const formatDate = (value) => value ? new Intl.DateTimeFormat("es-NI", { dateStyle: "medium", timeStyle: "medium" }).format(new Date(`${String(value).replace(" ", "T")}Z`)) : "—";
 const detailAfter = (details, key) => details?.[key]?.after ?? details?.after?.[key] ?? details?.[key];
 const formatMoney = (value) => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value)) ? `C$ ${Number(value).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : null;
 const describeEvent = (row) => {

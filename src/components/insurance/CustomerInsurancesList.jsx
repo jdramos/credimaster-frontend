@@ -297,13 +297,13 @@ export default function CustomerInsurancesList() {
               label="Contratados desde"
               value={periodStart}
               onChange={setPeriodStart}
-              slotProps={{ textField: { size: "small" } }}
+              renderInput={(params) => <TextField {...params} size="small" />}
             />
             <DatePicker
               label="Contratados hasta"
               value={periodEnd}
               onChange={setPeriodEnd}
-              slotProps={{ textField: { size: "small" } }}
+              renderInput={(params) => <TextField {...params} size="small" />}
             />
           </Box>
 
@@ -406,7 +406,7 @@ export default function CustomerInsurancesList() {
                   label="Inicio de vigencia"
                   value={form.start_date}
                   onChange={(v) => setForm((f) => ({ ...f, start_date: v }))}
-                  slotProps={{ textField: { size: "small", fullWidth: true } }}
+                  renderInput={(params) => <TextField {...params} size="small" fullWidth />}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -414,7 +414,7 @@ export default function CustomerInsurancesList() {
                   label="Fin de vigencia (opcional)"
                   value={form.end_date}
                   onChange={(v) => setForm((f) => ({ ...f, end_date: v }))}
-                  slotProps={{ textField: { size: "small", fullWidth: true } }}
+                  renderInput={(params) => <TextField {...params} size="small" fullWidth />}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

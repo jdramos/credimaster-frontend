@@ -252,8 +252,8 @@ const GenerateBalances = () => {
                 <DialogContent>
                     <DialogContentText>
                         {balanceType === 'FINAL'
-                            ? '⚠️ Está generando un saldo FINAL. ¿Está completamente seguro? Este proceso impacta reportes de cierre.'
-                            : '¿Está seguro que desea generar el saldo INICIAL?'}
+                            ? `⚠️ Generar el saldo FINAL también CIERRA el día operativo de "${branchName}" de forma DEFINITIVA e IRREVERSIBLE — no hay forma de reabrirlo desde el sistema. A partir de ese momento no se podrán registrar más pagos, créditos, aprobaciones ni desembolsos de esa sucursal para ese día. Verifique antes de confirmar que ya se registró todo lo pendiente (pagos cobrados, créditos a desembolsar, etc.). ¿Confirma el cierre?`
+                            : `Generar el saldo INICIAL también APERTURA el día operativo de "${branchName}". A partir de ese momento se podrán registrar pagos, créditos y aprobaciones en esa sucursal para ese día. ¿Confirma la apertura?`}
                     </DialogContentText>
 
                     {loading && (

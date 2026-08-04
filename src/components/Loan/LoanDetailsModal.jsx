@@ -61,7 +61,7 @@ import CommentIcon from "@mui/icons-material/Comment";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import LoanAmortization from "../LoanAmortization";
-import PaymentForm from "../PaymentForm";
+import QuickPaymentModal from "./QuickPaymentModal";
 import today from "../../functions/today";
 import LoanInfo from "../LoanInfo";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
@@ -1694,11 +1694,10 @@ const LoanDetailsModal = ({
         </Dialog>
       </Dialog>
 
-      <PaymentForm
+      <QuickPaymentModal
         open={paymentOpen}
         onClose={() => setPaymentOpen(false)}
-        initialLoan={loan}
-        readOnlyLoan={true}
+        loan={loan}
         onSuccess={async () => {
           setPaymentOpen(false);
 

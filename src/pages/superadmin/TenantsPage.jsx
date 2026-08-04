@@ -746,7 +746,7 @@ export default function TenantsPage() {
               {billingData.status === "SUSPENDED" ? (
                 <Alert severity="error">
                   Suspendida — {billingData.suspended_reason || "sin motivo especificado"}
-                  {billingData.suspended_at ? ` (${new Date(billingData.suspended_at).toLocaleString("es-NI")})` : ""}
+                  {billingData.suspended_at ? ` (${new Date(`${String(billingData.suspended_at).replace(" ", "T")}Z`).toLocaleString("es-NI")})` : ""}
                 </Alert>
               ) : billingData.days_overdue != null ? (
                 <Alert severity="warning">
@@ -909,7 +909,7 @@ export default function TenantsPage() {
               </Stack>
               {billingData.last_reminder_sent_at && (
                 <Typography variant="caption" color="text.secondary">
-                  Último recordatorio enviado: {new Date(billingData.last_reminder_sent_at).toLocaleString("es-NI")}
+                  Último recordatorio enviado: {new Date(`${String(billingData.last_reminder_sent_at).replace(" ", "T")}Z`).toLocaleString("es-NI")}
                 </Typography>
               )}
 

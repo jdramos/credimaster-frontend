@@ -97,7 +97,7 @@ export default function LoanDisbursementRemittancesList() {
       field: "created_at",
       headerName: "Fecha",
       width: 160,
-      valueGetter: (params) => (params.row.created_at ? new Date(params.row.created_at).toLocaleString("es-NI") : ""),
+      valueGetter: (params) => (params.row.created_at ? new Date(`${String(params.row.created_at).replace(" ", "T")}Z`).toLocaleString("es-NI") : ""),
     },
     {
       field: "return_reason",
