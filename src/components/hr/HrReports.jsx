@@ -19,14 +19,27 @@ import {
   FormControlLabel,
   Radio,
   MenuItem,
+  Autocomplete,
 } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import PrintIcon from "@mui/icons-material/Print";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { printRentasDelTrabajoReport } from "../../reports/printRentasDelTrabajoReport";
 import { printPrestacionesSocialesReport } from "../../reports/printPrestacionesSocialesReport";
 import { printDeduccionesIngresosReport } from "../../reports/printDeduccionesIngresosReport";
+
+const exportToExcel = (rows, sheetName, fileName) => {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
+  saveAs(blob, fileName);
+};
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -44,16 +57,28 @@ export default function HrReports() {
   const [alert, setAlert] = useState({ open: false, severity: "success", message: "" });
   const showAlert = (message, severity = "success") => setAlert({ open: true, severity, message });
 
+  // Catálogo de empleados compartido por los 3 selectores (sin filtrar por
+  // estado: un reporte histórico puede necesitar un empleado ya inactivo).
+  const [employees, setEmployees] = useState([]);
+  useEffect(() => {
+    API.get("/api/hr/employees")
+      .then((res) => setEmployees(res.data?.data || []))
+      .catch(() => setEmployees([]));
+  }, []);
+
   // Rentas del trabajo
   const [startDate, setStartDate] = useState(firstDayOfYear());
   const [endDate, setEndDate] = useState(today());
+  const [rentasEmployee, setRentasEmployee] = useState(null);
   const [rentasData, setRentasData] = useState(null);
   const [loadingRentas, setLoadingRentas] = useState(false);
 
   const fetchRentas = async () => {
     try {
       setLoadingRentas(true);
-      const res = await API.get("/api/hr/reports/rentas-trabajo", { params: { start_date: startDate, end_date: endDate } });
+      const res = await API.get("/api/hr/reports/rentas-trabajo", {
+        params: { start_date: startDate, end_date: endDate, employee_id: rentasEmployee?.id || undefined },
+      });
       setRentasData(res.data?.data || null);
     } catch (error) {
       showAlert(error.response?.data?.message || "Error al generar el reporte", "error");
@@ -71,15 +96,31 @@ export default function HrReports() {
     });
   };
 
+  const handleExportRentas = () => {
+    if (!rentasData) return;
+    exportToExcel(
+      rentasData.employees.map((e) => ({
+        Empleado: e.full_name, Cédula: e.id_card, Puesto: e.position,
+        "Ingresos gravables": Number(e.total_ingresos), "IR retenido": Number(e.total_ir),
+        "INSS laboral": Number(e.total_inss_laboral), "Neto pagado": Number(e.total_neto),
+      })),
+      "Rentas del trabajo",
+      `RentasDelTrabajo_${rentasData.start_date}_${rentasData.end_date}.xlsx`,
+    );
+  };
+
   // Prestaciones sociales acumuladas
   const [asOfDate, setAsOfDate] = useState(today());
+  const [prestacionesEmployee, setPrestacionesEmployee] = useState(null);
   const [prestacionesData, setPrestacionesData] = useState(null);
   const [loadingPrestaciones, setLoadingPrestaciones] = useState(false);
 
   const fetchPrestaciones = async () => {
     try {
       setLoadingPrestaciones(true);
-      const res = await API.get("/api/hr/reports/prestaciones-sociales", { params: { as_of_date: asOfDate } });
+      const res = await API.get("/api/hr/reports/prestaciones-sociales", {
+        params: { as_of_date: asOfDate, employee_id: prestacionesEmployee?.id || undefined },
+      });
       setPrestacionesData(res.data?.data || null);
     } catch (error) {
       showAlert(error.response?.data?.message || "Error al generar el reporte", "error");
@@ -97,10 +138,24 @@ export default function HrReports() {
     });
   };
 
+  const handleExportPrestaciones = () => {
+    if (!prestacionesData) return;
+    exportToExcel(
+      prestacionesData.employees.map((e) => ({
+        Empleado: e.full_name, Puesto: e.position, "Años servicio": Number(e.years_of_service),
+        Vacaciones: Number(e.vacaciones_monto), Aguinaldo: Number(e.aguinaldo_monto),
+        Indemnización: Number(e.indemnizacion_monto), Total: Number(e.total_acumulado),
+      })),
+      "Prestaciones sociales",
+      `PrestacionesSociales_${prestacionesData.as_of_date}.xlsx`,
+    );
+  };
+
   // Deducciones e ingresos de planilla
   const [diType, setDiType] = useState("DEDUCCION");
   const [allConcepts, setAllConcepts] = useState([]);
   const [diConceptId, setDiConceptId] = useState("");
+  const [diEmployee, setDiEmployee] = useState(null);
   const [diStartDate, setDiStartDate] = useState("");
   const [diEndDate, setDiEndDate] = useState("");
   const [diData, setDiData] = useState(null);
@@ -128,6 +183,7 @@ export default function HrReports() {
         params: {
           type: diType,
           concept_id: diConceptId || undefined,
+          employee_id: diEmployee?.id || undefined,
           start_date: diStartDate || undefined,
           end_date: diEndDate || undefined,
         },
@@ -149,6 +205,22 @@ export default function HrReports() {
       startDate: diData.start_date, endDate: diData.end_date,
       lines: diData.lines, total: diData.total,
     });
+  };
+
+  const handleExportDi = () => {
+    if (!diData) return;
+    const label = diData.type === "INGRESO" ? "Ingresos" : "Deducciones";
+    exportToExcel(
+      diData.lines.map((l) => ({
+        "Fecha de pago": l.pay_date ? new Date(l.pay_date).toLocaleDateString("es-NI") : "",
+        Comprobante: l.entry_no || "",
+        Empleado: l.employee_name, Cédula: l.id_card || "",
+        Concepto: l.concept_name, Detalle: l.detail || "",
+        Monto: Number(l.amount),
+      })),
+      label,
+      `${label}Planilla_${diData.start_date || "historico"}_${diData.end_date || "hoy"}.xlsx`,
+    );
   };
 
   return (
@@ -189,16 +261,34 @@ export default function HrReports() {
                 />
               </Grid>
               <Grid item xs={12} sm={3}>
-                <Button variant="outlined" sx={{ textTransform: "none", height: "100%" }} disabled={loadingRentas} onClick={fetchRentas}>
+                <Autocomplete
+                  size="small"
+                  options={employees}
+                  getOptionLabel={(o) => o.full_name || ""}
+                  isOptionEqualToValue={(o, v) => o.id === v.id}
+                  value={rentasEmployee}
+                  onChange={(_, v) => setRentasEmployee(v)}
+                  renderInput={(params) => <TextField {...params} label="Empleado (todos si vacío)" />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <Button variant="outlined" fullWidth sx={{ textTransform: "none", height: "100%" }} disabled={loadingRentas} onClick={fetchRentas}>
                   {loadingRentas ? "Generando..." : "Generar reporte"}
                 </Button>
               </Grid>
               {rentasData && (
-                <Grid item xs={12} sm={3}>
-                  <Button variant="contained" startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintRentas}>
-                    Imprimir
-                  </Button>
-                </Grid>
+                <>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="contained" fullWidth startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintRentas}>
+                      Imprimir
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="outlined" fullWidth startIcon={<FileDownloadIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handleExportRentas}>
+                      Exportar a Excel
+                    </Button>
+                  </Grid>
+                </>
               )}
             </Grid>
 
@@ -258,16 +348,34 @@ export default function HrReports() {
                 />
               </Grid>
               <Grid item xs={12} sm={3}>
-                <Button variant="outlined" sx={{ textTransform: "none", height: "100%" }} disabled={loadingPrestaciones} onClick={fetchPrestaciones}>
+                <Autocomplete
+                  size="small"
+                  options={employees}
+                  getOptionLabel={(o) => o.full_name || ""}
+                  isOptionEqualToValue={(o, v) => o.id === v.id}
+                  value={prestacionesEmployee}
+                  onChange={(_, v) => setPrestacionesEmployee(v)}
+                  renderInput={(params) => <TextField {...params} label="Empleado (todos si vacío)" />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <Button variant="outlined" fullWidth sx={{ textTransform: "none", height: "100%" }} disabled={loadingPrestaciones} onClick={fetchPrestaciones}>
                   {loadingPrestaciones ? "Generando..." : "Generar reporte"}
                 </Button>
               </Grid>
               {prestacionesData && (
-                <Grid item xs={12} sm={3}>
-                  <Button variant="contained" startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintPrestaciones}>
-                    Imprimir
-                  </Button>
-                </Grid>
+                <>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="contained" fullWidth startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintPrestaciones}>
+                      Imprimir
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="outlined" fullWidth startIcon={<FileDownloadIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handleExportPrestaciones}>
+                      Exportar a Excel
+                    </Button>
+                  </Grid>
+                </>
               )}
             </Grid>
 
@@ -338,6 +446,17 @@ export default function HrReports() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={3}>
+                <Autocomplete
+                  size="small"
+                  options={employees}
+                  getOptionLabel={(o) => o.full_name || ""}
+                  isOptionEqualToValue={(o, v) => o.id === v.id}
+                  value={diEmployee}
+                  onChange={(_, v) => setDiEmployee(v)}
+                  renderInput={(params) => <TextField {...params} label="Empleado (todos si vacío)" />}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
                 <TextField
                   fullWidth size="small" type="date" label="Desde (opcional)" InputLabelProps={{ shrink: true }}
                   value={diStartDate} onChange={(e) => setDiStartDate(e.target.value)}
@@ -352,16 +471,23 @@ export default function HrReports() {
             </Grid>
             <Grid container spacing={2} sx={{ mb: 2 }}>
               <Grid item xs={12} sm={3}>
-                <Button variant="outlined" sx={{ textTransform: "none", height: "100%" }} disabled={loadingDi} onClick={fetchDi}>
+                <Button variant="outlined" fullWidth sx={{ textTransform: "none", height: "100%" }} disabled={loadingDi} onClick={fetchDi}>
                   {loadingDi ? "Generando..." : "Generar reporte"}
                 </Button>
               </Grid>
               {diData && (
-                <Grid item xs={12} sm={3}>
-                  <Button variant="contained" startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintDi}>
-                    Imprimir
-                  </Button>
-                </Grid>
+                <>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="contained" fullWidth startIcon={<PrintIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handlePrintDi}>
+                      Imprimir
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <Button variant="outlined" fullWidth startIcon={<FileDownloadIcon />} sx={{ textTransform: "none", height: "100%" }} onClick={handleExportDi}>
+                      Exportar a Excel
+                    </Button>
+                  </Grid>
+                </>
               )}
             </Grid>
 
