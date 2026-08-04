@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import BuildIcon from "@mui/icons-material/Build";
 import { NumericFormat } from "react-number-format";
 import dayjs from "dayjs";
 import PrintIcon from "@mui/icons-material/Print";
@@ -25,6 +26,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { UserContext } from "../contexts/UserContext";
 
 import PaymentForm from "./PaymentForm";
+import PaymentCorrectionDialog from "./PaymentCorrectionDialog";
 import API from "../api";
 
 const API_URL = "/api/payments";
@@ -69,6 +71,9 @@ const PaymentList = () => {
   const { tenant, user } = useAuth();
   const { permissions = [], role } = useContext(UserContext) || {};
   const canAddPayment = role === 1 || permissions.includes("pagos.insertar");
+  const canCorrectPayment = role === 1 || permissions.includes("pagos.correccion");
+
+  const [correctionPayment, setCorrectionPayment] = useState(null);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -422,13 +427,14 @@ const PaymentList = () => {
                 <TableCell align="right">Interés</TableCell>
                 <TableCell>Sucursal</TableCell>
                 <TableCell>Colector</TableCell>
+                {canCorrectPayment && <TableCell align="center">Acciones</TableCell>}
               </TableRow>
             </TableHead>
 
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} sx={{ py: 4 }}>
+                  <TableCell colSpan={10} sx={{ py: 4 }}>
                     <Box sx={{ display: "flex", justifyContent: "center" }}>
                       <CircularProgress />
                     </Box>
@@ -437,7 +443,7 @@ const PaymentList = () => {
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     sx={{ color: "var(--bac-muted)", py: 3 }}
                   >
                     No hay pagos para mostrar con esos filtros.
@@ -472,6 +478,19 @@ const PaymentList = () => {
                     <TableCell>
                       {p.collector_name ?? p.collector ?? "—"}
                     </TableCell>
+                    {canCorrectPayment && (
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="warning"
+                          startIcon={<BuildIcon fontSize="small" />}
+                          onClick={() => setCorrectionPayment(p)}
+                        >
+                          Corregir
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
@@ -500,6 +519,16 @@ const PaymentList = () => {
         open={open}
         onClose={handleClose}
         onSuccess={handlePaymentSaved}
+      />
+
+      <PaymentCorrectionDialog
+        open={!!correctionPayment}
+        payment={correctionPayment}
+        onClose={() => setCorrectionPayment(null)}
+        onSuccess={() => {
+          setCorrectionPayment(null);
+          fetchPayments();
+        }}
       />
     </Box>
   );
