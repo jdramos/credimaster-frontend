@@ -23,6 +23,7 @@ export default function LoanDisbursementRemittanceDialog({ open, onClose, loan, 
   const [method, setMethod] = useState("CHEQUE");
   const [bankAccountId, setBankAccountId] = useState("");
   const [checkNumber, setCheckNumber] = useState("");
+  const [beneficiaryName, setBeneficiaryName] = useState("");
   const [cashRegisterId, setCashRegisterId] = useState("");
   const [bankAccounts, setBankAccounts] = useState([]);
   const [cashRegisters, setCashRegisters] = useState([]);
@@ -35,6 +36,7 @@ export default function LoanDisbursementRemittanceDialog({ open, onClose, loan, 
     setMethod("CHEQUE");
     setBankAccountId("");
     setCheckNumber("");
+    setBeneficiaryName("");
     setCashRegisterId("");
     setError("");
 
@@ -76,6 +78,7 @@ export default function LoanDisbursementRemittanceDialog({ open, onClose, loan, 
         disbursement_method: method,
         bank_account_id: method !== "EFECTIVO" ? bankAccountId : null,
         check_number: method === "CHEQUE" ? checkNumber : null,
+        beneficiary_name: method === "CHEQUE" ? beneficiaryName : null,
         cash_register_id: method === "EFECTIVO" ? cashRegisterId : null,
       });
 
@@ -143,6 +146,17 @@ export default function LoanDisbursementRemittanceDialog({ open, onClose, loan, 
               label="Número de cheque"
               value={checkNumber}
               onChange={(e) => setCheckNumber(e.target.value)}
+            />
+          )}
+
+          {method === "CHEQUE" && (
+            <TextField
+              fullWidth
+              label="Beneficiario del cheque"
+              placeholder="A nombre de quién se emite el cheque"
+              value={beneficiaryName}
+              onChange={(e) => setBeneficiaryName(e.target.value)}
+              helperText="Si se deja vacío, se usa el nombre del cliente."
             />
           )}
 

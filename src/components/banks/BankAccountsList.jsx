@@ -29,6 +29,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import ImageIcon from "@mui/icons-material/Image";
 import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
+import { fetchWithCache } from "../../hooks/useCachedFetch";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/banks/accounts";
@@ -86,8 +87,10 @@ export default function BankAccountsList() {
 
   const fetchGlAccounts = async () => {
     try {
-      const res = await API.get(`/api/accounting/accounts?is_active=1`);
-      const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      // Catálogo contable: se sirve desde caché (5 min) y se deduplican las
+      // llamadas en vuelo — se pide en varias pantallas y cambia poco.
+      const data = await fetchWithCache(`/api/accounting/accounts?is_active=1`);
+      const list = Array.isArray(data) ? data : data?.data || [];
       setAccounts(list.filter((a) => Number(a.is_movement) === 1));
     } catch {
       // El diálogo simplemente queda sin opciones si falla; no bloquea el listado.
@@ -97,7 +100,11 @@ export default function BankAccountsList() {
   useEffect(() => {
     fetchAccounts();
     fetchGlAccounts();
-    API.get("/api/branches").then(({ data }) => setBranches(Array.isArray(data) ? data : [])).catch(() => {});
+    // Sucursales vía caché compartida (evita re-pedir /api/branches en cada
+    // montaje / navegación entre pantallas).
+    fetchWithCache("/api/branches")
+      .then((data) => setBranches(Array.isArray(data) ? data : []))
+      .catch(() => {});
   }, []);
 
   const handleOpenCreate = () => {

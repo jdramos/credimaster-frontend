@@ -80,7 +80,7 @@ export const printBankAccountStatementReport = ({
             { title: "Fecha", field: "entry_date", format: "date", width: "75px" },
             { title: "Comprobante", field: (row) => row.entry_no || "", width: "95px" },
             { title: "Origen", field: (row) => (row.source_module ? SOURCE_LABELS[row.source_module] || row.source_module : ""), width: "85px" },
-            { title: "Descripción", field: "description" },
+            { title: "Descripción", field: (row) => `${row.description || ""}${row.source_status === "ANULADO" ? " (Anulado)" : ""}` },
             {
               title: "Débito",
               field: "debit",

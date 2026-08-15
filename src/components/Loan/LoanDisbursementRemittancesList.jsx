@@ -10,10 +10,17 @@ import {
   Button,
   Alert,
   Chip,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import PrintIcon from "@mui/icons-material/Print";
+import ImageIcon from "@mui/icons-material/Image";
 import { loanApi } from "../../api/loanApi";
+import API from "../../api";
+import { useAuth } from "../../contexts/AuthContext";
+import { printCheckDisbursementDetail } from "../../reports/checkDisbursementDetailReport";
 
 const money = (n) =>
   new Intl.NumberFormat("es-NI", { style: "currency", currency: "NIO", minimumFractionDigits: 2 }).format(
@@ -38,6 +45,40 @@ export default function LoanDisbursementRemittancesList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("EN_TRANSITO");
+  const { user, tenant } = useAuth();
+
+  const handleViewDeliveryImage = async (row) => {
+    try {
+      const res = await loanApi.getDeliveryImageUrl(row.id);
+      if (res?.url) window.open(res.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err?.response?.data?.message || "No se pudo abrir la imagen de entrega.");
+    }
+  };
+
+  const handlePrintCheck = async (row) => {
+    if (!row?.bank_check_id) return;
+    try {
+      const res = await API.get(`/api/loans/remittances/check/${row.bank_check_id}/supporting`);
+      const data = res.data?.data || {};
+      printCheckDisbursementDetail({
+        company: {
+          commercial_name: tenant?.commercial_name || tenant?.name,
+          legal_name: tenant?.legal_name || tenant?.company_name,
+          logo_url: tenant?.logo_url,
+          tax_id: tenant?.tax_id,
+          address: tenant?.address,
+          phone: tenant?.phone,
+        },
+        user: { full_name: user?.full_name },
+        check: data.check || {},
+        loans: data.loans || [],
+        total: data.total || 0,
+      });
+    } catch (err) {
+      setError(err?.response?.data?.message || "No se pudo generar el detalle del cheque.");
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -84,14 +125,34 @@ export default function LoanDisbursementRemittancesList() {
     {
       field: "status",
       headerName: "Estado",
-      width: 140,
-      renderCell: (params) => (
-        <Chip
-          size="small"
-          label={params.value === "EN_TRANSITO" ? "En tránsito" : params.value === "DESEMBOLSADO" ? "Desembolsado" : "Devuelto"}
-          color={STATUS_COLOR[params.value] || "default"}
-        />
-      ),
+      width: 150,
+      renderCell: (params) => {
+        if (params.value === "DESEMBOLSADO" && params.row.delivered_at) {
+          return <Chip size="small" label="Entregado" color="success" />;
+        }
+        if (params.value === "DESEMBOLSADO") {
+          return <Chip size="small" label="Pendiente de entrega" color="info" />;
+        }
+        return (
+          <Chip
+            size="small"
+            label={params.value === "EN_TRANSITO" ? "En tránsito" : "Devuelto"}
+            color={STATUS_COLOR[params.value] || "default"}
+          />
+        );
+      },
+    },
+    {
+      field: "delivery_agent_name",
+      headerName: "Responsable de entrega",
+      width: 170,
+    },
+    {
+      field: "delivered_at",
+      headerName: "Entregado",
+      width: 160,
+      valueGetter: (params) =>
+        params.row.delivered_at ? new Date(`${String(params.row.delivered_at).replace(" ", "T")}Z`).toLocaleString("es-NI") : "",
     },
     {
       field: "created_at",
@@ -104,6 +165,31 @@ export default function LoanDisbursementRemittancesList() {
       headerName: "Motivo devolución",
       flex: 1,
       minWidth: 160,
+    },
+    {
+      field: "acciones",
+      headerName: "Acciones",
+      width: 140,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={0.5}>
+          {params.row.bank_check_id && (
+            <Tooltip title={`Imprimir detalle del cheque${params.row.check_number ? ` ${params.row.check_number}` : ""}`}>
+              <IconButton size="small" color="primary" onClick={() => handlePrintCheck(params.row)}>
+                <PrintIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {params.row.delivery_image_path && (
+            <Tooltip title="Ver imagen de entrega">
+              <IconButton size="small" color="secondary" onClick={() => handleViewDeliveryImage(params.row)}>
+                <ImageIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
+      ),
     },
   ];
 

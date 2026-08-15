@@ -202,8 +202,6 @@ export default function BankDepositsList() {
 
   const confirmVoid = async () => {
     if (!voidTarget) return;
-    const confirmed = window.confirm(`¿Confirma anular el depósito por C$ ${money(voidTarget.amount)}?\n\nEsta acción anula el comprobante contable asociado.`);
-    if (!confirmed) return;
 
     try {
       setVoiding(true);
@@ -436,8 +434,11 @@ export default function BankDepositsList() {
       <Dialog open={Boolean(voidTarget)} onClose={() => setVoidTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Anular depósito</DialogTitle>
         <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>
+            Esta acción anula el comprobante contable asociado y no se puede deshacer.
+          </Alert>
           <TextField
-            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2} sx={{ mt: 1 }}
+            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2}
             value={voidReason}
             onChange={(e) => setVoidReason(e.target.value)}
           />
@@ -469,7 +470,22 @@ export default function BankDepositsList() {
               </Stack>
             </Box>
 
-            <DialogContent sx={{ p: 3 }}>
+            <DialogContent sx={{ p: 3, position: "relative" }}>
+              {detail.deposit.status === "ANULADO" && (
+                <Box sx={{
+                  position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Typography sx={{
+                    transform: "rotate(-18deg)", color: "rgba(211,47,47,0.28)", fontWeight: 900,
+                    fontSize: { xs: 42, md: 88 }, letterSpacing: { xs: 4, md: 10 },
+                    border: "6px solid rgba(211,47,47,0.28)", borderRadius: 2,
+                    px: { xs: 2, md: 4 }, py: 1, textTransform: "uppercase",
+                  }}>
+                    Anulado
+                  </Typography>
+                </Box>
+              )}
               <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="caption" color="text.secondary">Fecha del depósito</Typography>
@@ -529,8 +545,11 @@ export default function BankDepositsList() {
               </Box>
 
               {detail.deposit.status === "ANULADO" && (
-                <Alert severity="warning" sx={{ mt: 2 }}>
-                  Depósito anulado{detail.deposit.void_reason ? `: ${detail.deposit.void_reason}` : ""}
+                <Alert severity="error" sx={{ mt: 2, fontWeight: 700 }}>
+                  Depósito ANULADO
+                  {detail.deposit.void_date ? ` el ${String(detail.deposit.void_date).slice(0, 10)}` : ""}
+                  {detail.deposit.void_entry_no ? ` · Comprobante ${detail.deposit.void_entry_no}` : ""}.
+                  {detail.deposit.void_reason ? ` Motivo: ${detail.deposit.void_reason}` : ""}
                 </Alert>
               )}
               {detail.deposit.status === "ACREDITADO" && detail.deposit.cleared_date && (

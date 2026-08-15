@@ -203,8 +203,6 @@ export default function CollectorArqueosList() {
 
   const confirmVoid = async () => {
     if (!voidTarget) return;
-    const confirmed = window.confirm(`¿Confirma anular el arqueo de "${voidTarget.collector_name}" (esperado C$ ${money(voidTarget.expected_amount)}, contado C$ ${money(voidTarget.counted_amount)})?\n\nEsta acción anula el comprobante contable asociado y vuelve a dejar ese efectivo pendiente de liquidar. Si esta liquidación también incluyó un depósito al banco, ese depósito debe anularse por separado desde Bancos → Movimientos.`);
-    if (!confirmed) return;
 
     try {
       setVoiding(true);
@@ -456,8 +454,13 @@ export default function CollectorArqueosList() {
       <Dialog open={Boolean(voidTarget)} onClose={() => setVoidTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Anular arqueo</DialogTitle>
         <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>
+            Esto anula el comprobante contable y deja ese efectivo pendiente de liquidar de
+            nuevo. Si la liquidación también incluyó un depósito al banco, ese depósito debe
+            anularse por separado desde Bancos → Movimientos.
+          </Alert>
           <TextField
-            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2} sx={{ mt: 1 }}
+            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2}
             value={voidReason}
             onChange={(e) => setVoidReason(e.target.value)}
           />

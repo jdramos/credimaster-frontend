@@ -24,6 +24,7 @@ import {
   TextField,
   Typography,
   Stack,
+  Autocomplete,
 } from "@mui/material";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import EditIcon from "@mui/icons-material/Edit";
@@ -38,6 +39,7 @@ import PaidIcon from "@mui/icons-material/Paid";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import UndoIcon from "@mui/icons-material/Undo";
+import BlockIcon from "@mui/icons-material/Block";
 import { UserContext } from "../contexts/UserContext";
 import LoanDetailsModal from "./Loan/LoanDetailsModal";
 import PaymentForm from "./PaymentForm";
@@ -95,8 +97,15 @@ function LoanListDataTable({
   const [disburseDialogOpen, setDisburseDialogOpen] = useState(false);
   const [selectedDisburseLoan, setSelectedDisburseLoan] = useState(null);
   const [disburseLoading, setDisburseLoading] = useState(false);
+  const [deliveryAgents, setDeliveryAgents] = useState([]);
+  const [deliveryAgentId, setDeliveryAgentId] = useState(null);
 
   const [returnRemittanceLoading, setReturnRemittanceLoading] = useState(false);
+
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedCancelLoan, setSelectedCancelLoan] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -110,6 +119,47 @@ function LoanListDataTable({
 
   const handleLoanUpdated = (updatedLoan) => {
     onUpdate?.(updatedLoan);
+  };
+
+  // Anulación de una solicitud (solo DRAFT/PENDING sin aprobaciones; el backend
+  // valida la regla). El motivo es obligatorio.
+  const handleOpenCancel = (row) => {
+    setSelectedCancelLoan(row);
+    setCancelReason("");
+    setCancelDialogOpen(true);
+  };
+
+  const handleCloseCancel = () => {
+    if (cancelLoading) return;
+    setCancelDialogOpen(false);
+    setSelectedCancelLoan(null);
+    setCancelReason("");
+  };
+
+  const handleSubmitCancel = async () => {
+    if (!selectedCancelLoan) return;
+    if (!cancelReason.trim()) {
+      openSnack("El motivo de la anulación es obligatorio.", "warning");
+      return;
+    }
+    setCancelLoading(true);
+    try {
+      await API.put(`/api/loans/${selectedCancelLoan.id}/cancel`, {
+        reason: cancelReason.trim(),
+      });
+      openSnack("Solicitud de crédito anulada.", "success");
+      setCancelDialogOpen(false);
+      setSelectedCancelLoan(null);
+      setCancelReason("");
+      onUpdate?.();
+    } catch (error) {
+      openSnack(
+        error?.response?.data?.message || "No se pudo anular la solicitud.",
+        "error",
+      );
+    } finally {
+      setCancelLoading(false);
+    }
   };
 
   const normalizeLoanResponse = (resp) => {
@@ -256,7 +306,19 @@ function LoanListDataTable({
       }
 
       setSelectedDisburseLoan(loanData);
+      setDeliveryAgentId(currentUserId);
       setDisburseDialogOpen(true);
+
+      try {
+        const usersResp = await API.get("/api/users");
+        const active = (usersResp.data || []).filter(
+          (u) => u.user_status === 1 || u.user_status === undefined,
+        );
+        setDeliveryAgents(active);
+      } catch (usersError) {
+        console.error("Error al cargar usuarios:", usersError);
+        setDeliveryAgents([]);
+      }
     } catch (error) {
       console.error("Error al abrir desembolso:", error);
       openSnack("No se pudo cargar el crédito para desembolsar.", "error");
@@ -266,6 +328,7 @@ function LoanListDataTable({
   const handleCloseDisburseDialog = () => {
     setDisburseDialogOpen(false);
     setSelectedDisburseLoan(null);
+    setDeliveryAgentId(null);
   };
 
   const handleReturnRemittance = async (row) => {
@@ -295,12 +358,17 @@ function LoanListDataTable({
       openSnack("No se encontró el crédito a desembolsar.", "warning");
       return;
     }
+    if (!deliveryAgentId) {
+      openSnack("Debe indicar quién va a entregarle el cheque/efectivo al cliente.", "warning");
+      return;
+    }
 
     try {
       setDisburseLoading(true);
 
       await API.post(`/api/loans/${selectedDisburseLoan.id}/disburse`, {
         disbursed_by: currentUserId,
+        delivery_agent_id: deliveryAgentId,
       });
 
       openSnack("Crédito desembolsado correctamente.", "success");
@@ -347,6 +415,41 @@ function LoanListDataTable({
     if (col.accessorKey === "approval_status") {
       const raw = String(value || "").toUpperCase();
       const pending = Number(row.pending_approvals || 0);
+
+      // El estado REAL del crédito (loans_data.status) manda sobre el derivado
+      // de las aprobaciones: un crédito anulado/rechazado/desembolsado debe
+      // mostrarse como tal aunque sus aprobaciones quedaran en otro estado.
+      const loanStatus = String(row.status || "").toUpperCase();
+      if (loanStatus === "CANCELLED") {
+        return (
+          <Chip
+            size="small"
+            label="Anulado"
+            color="secondary"
+            icon={<BlockIcon fontSize="small" />}
+          />
+        );
+      }
+      if (loanStatus === "REJECTED") {
+        return (
+          <Chip
+            size="small"
+            label="Rechazado"
+            color="error"
+            icon={<CancelIcon fontSize="small" />}
+          />
+        );
+      }
+      if (loanStatus === "DISBURSED") {
+        return (
+          <Chip
+            size="small"
+            label="Desembolsado"
+            color="info"
+            icon={<PaidIcon fontSize="small" />}
+          />
+        );
+      }
 
       const normalized =
         raw === "APPROVED" || raw === "APROBADO"
@@ -551,6 +654,11 @@ function LoanListDataTable({
 
             const isDraft = rowStatus === "DRAFT";
 
+            // Anular solicitud: solo en borrador o pendiente. El backend
+            // revalida que no tenga aprobaciones otorgadas. Reusa creditos.editar.
+            const canCancelRow =
+              canEditPending && ["DRAFT", "PENDING"].includes(rowStatus);
+
             const canModifyNormativeRow =
               !!onModifyLoan &&
               (rowStatus === "DISBURSED" ||
@@ -571,17 +679,30 @@ function LoanListDataTable({
         BORRADOR
     ========================================= */}
                     {isDraft ? (
-                      <Tooltip title="Abrir borrador">
-                        <IconButton
-                          size="small"
-                          color="warning"
-                          onClick={() =>
-                            navigate(`/creditos/agregar?loanId=${row.id}`)
-                          }
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <>
+                        <Tooltip title="Abrir borrador">
+                          <IconButton
+                            size="small"
+                            color="warning"
+                            onClick={() =>
+                              navigate(`/creditos/agregar?loanId=${row.id}`)
+                            }
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        {canCancelRow && (
+                          <Tooltip title="Anular solicitud">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleOpenCancel(row)}
+                            >
+                              <BlockIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </>
                     ) : (
                       <>
                         {/* =========================================
@@ -597,6 +718,21 @@ function LoanListDataTable({
                               }
                             >
                               <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {/* =========================================
+            ANULAR SOLICITUD (solo pendiente, sin aprobaciones)
+        ========================================= */}
+                        {canCancelRow && rowStatus === "PENDING" && (
+                          <Tooltip title="Anular solicitud">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleOpenCancel(row)}
+                            >
+                              <BlockIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}
@@ -968,10 +1104,25 @@ function LoanListDataTable({
             </Alert>
           )}
 
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ mb: 2 }}>
             Esta acción marcará el crédito como desembolsado y generará su plan
             final según las condiciones aprobadas.
           </Typography>
+
+          <Autocomplete
+            options={deliveryAgents}
+            getOptionLabel={(o) => o.full_name || ""}
+            isOptionEqualToValue={(o, v) => o.id === v.id}
+            value={deliveryAgents.find((u) => u.id === deliveryAgentId) || null}
+            onChange={(_, newValue) => setDeliveryAgentId(newValue?.id || null)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="¿Quién le va a entregar el cheque/efectivo al cliente?"
+                helperText="Puede ser usted mismo, o un gestor que lo entregará después"
+              />
+            )}
+          />
         </DialogContent>
 
         <DialogActions>
@@ -980,9 +1131,49 @@ function LoanListDataTable({
             variant="contained"
             color="info"
             onClick={handleSubmitDisburse}
-            disabled={disburseLoading}
+            disabled={disburseLoading || !deliveryAgentId}
           >
             Desembolsar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ANULAR SOLICITUD DE CRÉDITO */}
+      <Dialog open={cancelDialogOpen} onClose={handleCloseCancel} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 800 }}>Anular solicitud de crédito</DialogTitle>
+        <DialogContent dividers>
+          {selectedCancelLoan && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Vas a anular la solicitud de crédito #{selectedCancelLoan.id}
+              {selectedCancelLoan.customer_name
+                ? ` de ${selectedCancelLoan.customer_name}`
+                : ""}
+              . Esta acción no se puede deshacer y liberará las garantías vinculadas.
+            </Alert>
+          )}
+          <TextField
+            label="Motivo de la anulación"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            fullWidth
+            required
+            multiline
+            minRows={3}
+            autoFocus
+            inputProps={{ maxLength: 255 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancel} disabled={cancelLoading}>
+            Cerrar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleSubmitCancel}
+            disabled={cancelLoading || !cancelReason.trim()}
+          >
+            {cancelLoading ? "Anulando..." : "Anular solicitud"}
           </Button>
         </DialogActions>
       </Dialog>

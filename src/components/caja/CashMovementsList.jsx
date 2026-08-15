@@ -31,6 +31,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import PrintIcon from "@mui/icons-material/Print";
 import CancelIcon from "@mui/icons-material/Cancel";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -81,6 +82,23 @@ export default function CashMovementsList() {
   const [voidTarget, setVoidTarget] = useState(null);
   const [voidReason, setVoidReason] = useState("");
   const [voiding, setVoiding] = useState(false);
+  const [detail, setDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  const openMovementDetail = async (m) => {
+    try {
+      setDetailLoading(true);
+      setDetail({ movement: m, lines: [] });
+      const res = await API.get(`/api/caja/movements/${m.source_id}`);
+      const data = res.data?.data || {};
+      setDetail({ movement: { ...m, ...data }, lines: data.lines || [] });
+    } catch (error) {
+      showAlert(error.response?.data?.message || "No se pudo cargar el detalle del movimiento");
+      setDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   const showAlert = (message, severity = "error") => setAlert({ open: true, severity, message });
 
@@ -217,8 +235,6 @@ export default function CashMovementsList() {
   // ==========================================
   const confirmVoid = async () => {
     if (!voidTarget) return;
-    const confirmed = window.confirm(`¿Confirma anular este movimiento de ${currencySymbol} ${money(Math.abs(voidTarget.debit - voidTarget.credit))}?\n\nEsta acción anula el comprobante contable asociado.`);
-    if (!confirmed) return;
 
     try {
       setVoiding(true);
@@ -343,11 +359,18 @@ export default function CashMovementsList() {
                   <TableCell align="right">{money(m.balance)}</TableCell>
                   <TableCell align="center">
                     {m.source_type === "CASH_MOVEMENT" && (
-                      <Tooltip title="Anular movimiento">
-                        <IconButton size="small" color="error" onClick={() => { setVoidTarget(m); setVoidReason(""); }}>
-                          <CancelIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Tooltip title="Ver detalle">
+                          <IconButton size="small" onClick={() => openMovementDetail(m)}>
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Anular movimiento">
+                          <IconButton size="small" color="error" onClick={() => { setVoidTarget(m); setVoidReason(""); }}>
+                            <CancelIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     )}
                   </TableCell>
                 </TableRow>
@@ -467,8 +490,11 @@ export default function CashMovementsList() {
       <Dialog open={Boolean(voidTarget)} onClose={() => setVoidTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Anular movimiento</DialogTitle>
         <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>
+            Esta acción anula el comprobante contable asociado y no se puede deshacer.
+          </Alert>
           <TextField
-            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2} sx={{ mt: 1 }}
+            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2}
             value={voidReason}
             onChange={(e) => setVoidReason(e.target.value)}
           />
@@ -478,6 +504,113 @@ export default function CashMovementsList() {
           <Button variant="contained" color="error" onClick={confirmVoid} disabled={voiding} sx={{ textTransform: "none" }}>
             {voiding ? "Anulando..." : "Anular"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ========== DETALLE ========== */}
+      <Dialog open={Boolean(detail)} onClose={() => setDetail(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}>
+        {detail && (
+          <>
+            <Box sx={{ bgcolor: detail.movement.movement_type === "EGRESO" ? "#C62828" : "#0057B8", color: "#fff", p: 3 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <PaymentsIcon sx={{ fontSize: 32, opacity: 0.9 }} />
+                  <Box>
+                    <Typography variant="overline" sx={{ opacity: 0.85, lineHeight: 1 }}>
+                      Comprobante de {detail.movement.movement_type === "EGRESO" ? "Egreso de Caja" : "Ingreso de Caja"}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={800}>#{detail.movement.source_id}</Typography>
+                  </Box>
+                </Stack>
+                <Chip
+                  label={detail.movement.status || "REGISTRADO"}
+                  sx={{ bgcolor: "rgba(255,255,255,.22)", color: "#fff", fontWeight: 700 }}
+                />
+              </Stack>
+            </Box>
+
+            <DialogContent sx={{ p: 3, position: "relative" }}>
+              {detail.movement.status === "ANULADO" && (
+                <>
+                  <Box sx={{
+                    position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Typography sx={{
+                      transform: "rotate(-18deg)", color: "rgba(211,47,47,0.28)", fontWeight: 900,
+                      fontSize: { xs: 42, md: 84 }, letterSpacing: { xs: 4, md: 10 },
+                      border: "6px solid rgba(211,47,47,0.28)", borderRadius: 2,
+                      px: { xs: 2, md: 4 }, py: 1, textTransform: "uppercase",
+                    }}>
+                      Anulado
+                    </Typography>
+                  </Box>
+                  <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
+                    Movimiento ANULADO
+                    {detail.movement.void_date ? ` el ${String(detail.movement.void_date).slice(0, 10)}` : ""}
+                    {detail.movement.void_entry_no ? ` · Comprobante ${detail.movement.void_entry_no}` : ""}.
+                    {detail.movement.void_reason ? ` Motivo: ${detail.movement.void_reason}` : ""}
+                  </Alert>
+                </>
+              )}
+
+              <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary">Fecha</Typography>
+                  <Typography variant="body1" fontWeight={700}>{String(detail.movement.movement_date || detail.movement.entry_date).slice(0, 10)}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" color="text.secondary">Caja</Typography>
+                  <Typography variant="body1" fontWeight={700}>{detail.movement.cash_register_name || "—"}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Descripción</Typography>
+                  <Typography variant="body2">{detail.movement.description}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Comprobante contable</Typography>
+                  <Typography variant="body2">{detail.movement.entry_no}</Typography>
+                </Grid>
+              </Grid>
+
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Partidas contables</Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Cuenta</TableCell>
+                    <TableCell>Detalle</TableCell>
+                    <TableCell align="right">Débito</TableCell>
+                    <TableCell align="right">Crédito</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {detail.lines.map((l) => (
+                    <TableRow key={l.id}>
+                      <TableCell>{l.muc_code} - {l.account_name}</TableCell>
+                      <TableCell>{l.description}</TableCell>
+                      <TableCell align="right">{Number(l.debit) > 0 ? money(l.debit) : ""}</TableCell>
+                      <TableCell align="right">{Number(l.credit) > 0 ? money(l.credit) : ""}</TableCell>
+                    </TableRow>
+                  ))}
+                  {!detailLoading && detail.lines.length === 0 && (
+                    <TableRow><TableCell colSpan={4} align="center">Sin líneas</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, pt: 2, borderTop: "2px solid #0057B8" }}>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="caption" color="text.secondary">Monto del movimiento</Typography>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: "#0057B8" }}>
+                    {currencySymbol} {money(Math.abs(Number(detail.movement.debit || 0) - Number(detail.movement.credit || 0)))}
+                  </Typography>
+                </Box>
+              </Box>
+            </DialogContent>
+          </>
+        )}
+        <DialogActions>
+          <Button onClick={() => setDetail(null)} sx={{ textTransform: "none" }}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 

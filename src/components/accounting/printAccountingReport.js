@@ -37,7 +37,13 @@ export const printAccountingReport = async ({ title, subtitle, period, columns, 
   const emittedBy = user.full_name || session.full_name || user.user_name || session.user_name || "";
   const emittedAt = new Intl.DateTimeFormat("es-NI", { dateStyle: "short", timeStyle: "short" }).format(new Date());
 
-  const body = rows.map((row) => `<tr class="${row.section ? "section-row" : row.total ? "total-row" : ""}">${columns.map((column) => {
+  // Cuentas que NO son de detalle (is_movement falso) se resaltan en negrita.
+  // Guarda: solo aplica si la fila trae is_movement (p. ej. balance de
+  // comprobación); otros reportes sin ese campo no se ven afectados.
+  const isNonDetail = (row) =>
+    row.is_movement !== undefined && !row.is_movement && !row.section && !row.total;
+
+  const body = rows.map((row) => `<tr class="${row.section ? "section-row" : row.total ? "total-row" : isNonDetail(row) ? "non-detail-row" : ""}">${columns.map((column) => {
     const raw = typeof column.value === "function" ? column.value(row) : row[column.field];
     const value = column.format ? column.format(raw) : raw;
     return `<td class="${column.numeric ? "number" : ""}">${escapeHtml(value)}</td>`;
@@ -52,7 +58,7 @@ export const printAccountingReport = async ({ title, subtitle, period, columns, 
       .report-info{text-align:right;color:#263b59;line-height:1.2}.report-name{font-size:16px;font-weight:900;color:#0b1b35;text-transform:uppercase}.report-form{font-size:9px;font-weight:bold}.report-meta{font-size:9px}
       table{width:100%;border-collapse:collapse;margin-top:6px;page-break-inside:auto}th,td{border:1px solid #777;padding:4px}
       thead{display:table-header-group}tfoot{display:table-row-group}tr{page-break-inside:avoid}
-      th{background:#e8eef7;text-align:left}.number{text-align:right}tfoot td,.total-row td{font-weight:bold;background:#f4f4f4}.section-row td{font-weight:900;background:#dbe8f7}.section-row td:not(:first-child){color:transparent}
+      th{background:#e8eef7;text-align:left}.number{text-align:right}tfoot td,.total-row td{font-weight:bold;background:#f4f4f4}.section-row td{font-weight:900;background:#dbe8f7}.section-row td:not(:first-child){color:transparent}.non-detail-row td{font-weight:bold}
       .actions{text-align:right;margin-bottom:8px}@media print{.actions{display:none}}
       .signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:60px;page-break-inside:avoid}
       .signature{text-align:center}.signature .line{border-top:1px solid #111;margin-top:35px;margin-bottom:4px}

@@ -23,6 +23,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import FlagIcon from "@mui/icons-material/Flag";
+import PersonPinIcon from "@mui/icons-material/PersonPin";
 import InsightsIcon from "@mui/icons-material/Insights";
 import { UserContext } from "../../contexts/UserContext";
 import { getBudgets, createBudget, updateBudgetStatus } from "../../api/budget";
@@ -109,7 +110,7 @@ export default function BudgetsList() {
       {
         field: "actions",
         headerName: "Acciones",
-        width: 260,
+        width: 320,
         sortable: false,
         filterable: false,
         renderCell: (params) => (
@@ -129,6 +130,11 @@ export default function BudgetsList() {
                 <Tooltip title="Metas de colocación">
                   <IconButton size="small" onClick={() => navigate(`/presupuesto/${params.row.id}/metas-colocacion`)}>
                     <FlagIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Metas por promotor">
+                  <IconButton size="small" onClick={() => navigate(`/presupuesto/${params.row.id}/metas-promotores`)}>
+                    <PersonPinIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
                 {params.row.status === "DRAFT" && (

@@ -15,6 +15,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportBranchFilter from "./ReportBranchFilter";
 import JournalDetailDialog from "./JournalDetailDialog";
 
 const money = (value) =>
@@ -30,7 +31,9 @@ export default function LedgerList() {
   const [filters, setFilters] = useState({
     from_date: "",
     to_date: "",
+    branch_id: "",
   });
+  const [branchName, setBranchName] = useState("Todas");
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedJournalId, setSelectedJournalId] = useState(null);
@@ -90,6 +93,7 @@ export default function LedgerList() {
 
       if (filters.from_date) params.start_date = filters.from_date;
       if (filters.to_date) params.end_date = filters.to_date;
+      if (filters.branch_id) params.branch_id = filters.branch_id;
 
       const res = await API.get("/api/accounting/ledger", { params });
 
@@ -221,7 +225,7 @@ export default function LedgerList() {
 
     printAccountingReport({
       title: "Mayor General",
-      subtitle: `${selectedAccount.muc_code} - ${selectedAccount.account_name}`,
+      subtitle: `${selectedAccount.muc_code} - ${selectedAccount.account_name} · Sucursal: ${branchName || "Todas"}`,
       period: filters.from_date || filters.to_date
         ? `${filters.from_date || "..."} a ${filters.to_date || "..."}`
         : "",
@@ -274,7 +278,7 @@ export default function LedgerList() {
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              md: "2fr 180px 180px 120px 120px",
+              md: "2fr 180px 180px 200px 120px 120px",
             },
             gap: 1,
           }}
@@ -312,6 +316,14 @@ export default function LedgerList() {
               setFilters((prev) => ({ ...prev, to_date: e.target.value }))
             }
             InputLabelProps={{ shrink: true }}
+          />
+
+          <ReportBranchFilter
+            value={filters.branch_id}
+            onChange={(id, name) => {
+              setFilters((prev) => ({ ...prev, branch_id: id }));
+              setBranchName(name);
+            }}
           />
 
           <Button

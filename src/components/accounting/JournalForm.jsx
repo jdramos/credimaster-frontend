@@ -26,18 +26,21 @@ const emptyLine = {
   credit: "",
 };
 
-export default function JournalForm({ open, onClose, onSaved }) {
+const newFormState = () => ({
+  entry_date: new Date().toISOString().substring(0, 10),
+  description: "",
+  source_module: "MANUAL",
+  reference_type: "",
+  reference_id: "",
+  lines: [{ ...emptyLine }, { ...emptyLine }],
+});
+
+export default function JournalForm({ open, onClose, onSaved, editId = null }) {
   const [accounts, setAccounts] = useState([]);
   const [saving, setSaving] = useState(false);
+  const isEdit = Boolean(editId);
 
-  const [form, setForm] = useState({
-    entry_date: new Date().toISOString().substring(0, 10),
-    description: "",
-    source_module: "MANUAL",
-    reference_type: "",
-    reference_id: "",
-    lines: [{ ...emptyLine }, { ...emptyLine }],
-  });
+  const [form, setForm] = useState(newFormState());
 
   const [alert, setAlert] = useState({
     open: false,
@@ -66,8 +69,34 @@ export default function JournalForm({ open, onClose, onSaved }) {
   };
 
   useEffect(() => {
-    if (open) fetchAccounts();
-  }, [open]);
+    if (!open) return;
+    fetchAccounts();
+    if (editId) {
+      // Modo edición: cargar el comprobante y prellenar el formulario.
+      API.get(`/api/accounting/journal/${editId}`)
+        .then((res) => {
+          const d = res.data?.data;
+          if (!d?.entry) return;
+          setForm({
+            entry_date: String(d.entry.entry_date).slice(0, 10),
+            description: d.entry.description || "",
+            source_module: d.entry.source_module || "MANUAL",
+            reference_type: d.entry.source_type || "",
+            reference_id: d.entry.source_id || "",
+            lines: (d.lines || []).map((l) => ({
+              account_id: l.account_id,
+              description: l.description || "",
+              debit: Number(l.debit) > 0 ? String(l.debit) : "",
+              credit: Number(l.credit) > 0 ? String(l.credit) : "",
+            })),
+          });
+        })
+        .catch((err) => showAlert(err.response?.data?.message || "No se pudo cargar el comprobante", "error"));
+    } else {
+      setForm(newFormState());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editId]);
 
   const totals = useMemo(() => {
     const debit = form.lines.reduce(
@@ -188,7 +217,9 @@ export default function JournalForm({ open, onClose, onSaved }) {
         })),
       };
 
-      const res = await API.post(`/api/accounting/journal`, payload);
+      const res = isEdit
+        ? await API.put(`/api/accounting/journal/${editId}`, payload)
+        : await API.post(`/api/accounting/journal`, payload);
 
       if (!res.data?.ok) {
         throw new Error(res.data?.message || "Error guardando comprobante");
@@ -213,7 +244,7 @@ export default function JournalForm({ open, onClose, onSaved }) {
     <>
       <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
         <DialogTitle sx={{ fontWeight: 900 }}>
-          Nuevo comprobante contable
+          {isEdit ? "Editar comprobante contable" : "Nuevo comprobante contable"}
         </DialogTitle>
 
         <DialogContent dividers>
@@ -248,6 +279,7 @@ export default function JournalForm({ open, onClose, onSaved }) {
               select
               value={form.source_module}
               onChange={(e) => updateForm("source_module", e.target.value)}
+              disabled={isEdit}
             >
               <MenuItem value="MANUAL">Manual</MenuItem>
               <MenuItem value="LOANS">Créditos</MenuItem>
@@ -397,7 +429,7 @@ export default function JournalForm({ open, onClose, onSaved }) {
               "&:hover": { background: "#003E8A" },
             }}
           >
-            Guardar comprobante
+            {isEdit ? "Guardar cambios" : "Guardar comprobante"}
           </Button>
         </DialogActions>
       </Dialog>

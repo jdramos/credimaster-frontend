@@ -87,6 +87,7 @@ const sectionLabels = {
   insurance: "SEGUROS",
   reports: "Reportes",
   compliance: "CUMPLIMIENTO LA/FT/FP",
+  support: "Soporte",
 };
 
 const menuItems = {
@@ -109,6 +110,11 @@ const menuItems = {
       to: "/bandeja-de-aprobacion",
     },
     { label: "Pagos", iconName: "FaCashRegister", to: "/pagos", permission: "menu.pagos" },
+    { label: "Cobranza", iconName: "FaHandshake", to: "/cobranza", permission: "cobranza.ver" },
+    { label: "Retenciones (DGI)", iconName: "FaFileInvoiceDollar", to: "/retenciones", permission: "retenciones.ver" },
+    { label: "Proveedores", iconName: "FaStore", to: "/proveedores", permission: "proveedores.ver" },
+    { label: "Cuentas por Pagar", iconName: "FaFileInvoice", to: "/cuentas-por-pagar", permission: "cxp.ver" },
+    { label: "Flujo de Caja", iconName: "FaChartLine", to: "/flujo-caja", permission: "cxp.ver" },
     { label: "Crear saldos", iconName: "FaCalculator", to: "/crear-saldos" },
     { label: "Cierre del día", iconName: "FaLock", to: "/cierre-del-dia" },
     {
@@ -116,6 +122,12 @@ const menuItems = {
       iconName: "FaFileSignature",
       to: "/creditos/politicas",
       permission: "menu.politicas_credito",
+    },
+    {
+      label: "Notificaciones",
+      iconName: "FaBell",
+      to: "/notificaciones",
+      permission: "configuracion.ver",
     },
     {
       label: "Documentos crédito",
@@ -126,6 +138,11 @@ const menuItems = {
       label: "Remesas de desembolso",
       iconName: "FaUniversity",
       to: "/creditos/remesas",
+    },
+    {
+      label: "Mis entregas pendientes",
+      iconName: "FaHandHoldingUsd",
+      to: "/creditos/entregas-pendientes",
     },
     { label: "Reclamos", iconName: "FaExclamationCircle", to: "/reclamos" },
     { label: "Adjudicaciones de Bienes", iconName: "FaGavel", to: "/adjudicaciones" },
@@ -144,6 +161,12 @@ const menuItems = {
       iconName: "FaCalculator",
       to: "/creditos/proyeccion-recuperacion",
       permission: "creditos.proyeccion_recuperacion.ver",
+    },
+    {
+      label: "Productividad de Promotores y Cobradores",
+      iconName: "FaChartLine",
+      to: "/creditos/productividad",
+      permission: "creditos.productividad.ver",
     },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
@@ -352,6 +375,13 @@ const menuItems = {
       iconName: "",
       permission: "menu.reportes",
     },
+  ],
+
+  // Sin "permission" a propósito: cualquier usuario autenticado puede abrir
+  // tickets de soporte y ver los de su empresa (mismo criterio que el backend
+  // en api/support, que no exige permiso).
+  support: [
+    { label: "Soporte", iconName: "FaHeadset", to: "/soporte" },
   ],
 };
 

@@ -4,6 +4,10 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   IconButton,
   Paper,
   Snackbar,
@@ -14,10 +18,10 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import CancelIcon from "@mui/icons-material/Cancel";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import JournalForm from "./JournalForm";
 import JournalDetailDialog from "./JournalDetailDialog";
+import ReportBranchFilter from "./ReportBranchFilter";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 
@@ -30,12 +34,17 @@ export default function JournalList() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedJournalId, setSelectedJournalId] = useState(null);
+  const [voidTarget, setVoidTarget] = useState(null);
+  const [voidDate, setVoidDate] = useState("");
+  const [voiding, setVoiding] = useState(false);
   const [filters, setFilters] = useState({
     from_date: "",
     to_date: "",
     search: "",
+    branch_id: "",
   });
 
   const [alert, setAlert] = useState({
@@ -56,6 +65,7 @@ export default function JournalList() {
       if (filters.from_date) params.from_date = filters.from_date;
       if (filters.to_date) params.to_date = filters.to_date;
       if (filters.search.trim()) params.search = filters.search.trim();
+      if (filters.branch_id) params.branch_id = filters.branch_id;
 
       const res = await API.get(API_URL, { params });
 
@@ -86,14 +96,29 @@ export default function JournalList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleVoid = async (id) => {
-    const ok = window.confirm("¿Seguro que deseas anular este comprobante?");
-    if (!ok) return;
+  const openVoid = (entry) => {
+    setVoidTarget(entry);
+    setVoidDate(String(entry.entry_date || "").slice(0, 10) || new Date().toISOString().slice(0, 10));
+  };
 
+  const openEdit = (entry) => {
+    setDetailOpen(false);
+    setEditId(entry.id);
+    setFormOpen(true);
+  };
+
+  const confirmVoid = async () => {
+    if (!voidTarget) return;
+    if (voidDate && voidDate < String(voidTarget.entry_date || "").slice(0, 10)) {
+      showAlert("La fecha de anulación no puede ser anterior a la del comprobante.", "warning");
+      return;
+    }
     try {
-      await API.put(`{API_URL}/${id}/void`);
-
+      setVoiding(true);
+      await API.put(`${API_URL}/${voidTarget.id}/void`, { annulment_date: voidDate || null });
       showAlert("Comprobante anulado correctamente", "success");
+      setVoidTarget(null);
+      setDetailOpen(false);
       fetchJournal();
     } catch (error) {
       showAlert(
@@ -103,13 +128,15 @@ export default function JournalList() {
           "Error anulando comprobante",
         "error",
       );
+    } finally {
+      setVoiding(false);
     }
   };
 
   const columns = useMemo(
     () => [
       {
-        field: "entry_number",
+        field: "entry_no",
         headerName: "Comprobante",
         width: 160,
       },
@@ -131,10 +158,31 @@ export default function JournalList() {
       {
         field: "source_module",
         headerName: "Origen",
-        width: 140,
-        renderCell: (params) => (
-          <Chip size="small" label={params.value || "MANUAL"} />
-        ),
+        width: 150,
+        renderCell: (params) => {
+          const sm = params.value;
+          const manual = !sm || ["MANUAL", "ACCOUNTING"].includes(sm);
+          const LABELS = {
+            BANKS: "Bancos",
+            LOANS: "Créditos",
+            CAJA: "Caja",
+            HR: "Rec. Humanos",
+            PAYMENTS: "Pagos",
+            FIXED_ASSETS: "Activo Fijo",
+            BUSINESS_DAY: "Cierre del día",
+            PROVISIONS: "Provisiones",
+            ADJUSTMENTS: "Ajustes",
+          };
+          return manual ? (
+            <Tooltip title="Comprobante manual — se puede editar o anular desde aquí">
+              <Chip size="small" color="success" variant="outlined" label="Manual" />
+            </Tooltip>
+          ) : (
+            <Tooltip title={`Generado por ${LABELS[sm] || sm} — se edita/anula desde ese módulo`}>
+              <Chip size="small" label={LABELS[sm] || sm} />
+            </Tooltip>
+          );
+        },
       },
       {
         field: "total_debit",
@@ -191,21 +239,6 @@ export default function JournalList() {
                 <VisibilityIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-
-            {canVoidEntry && (
-              <Tooltip title="Anular comprobante">
-                <span>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    disabled={params.row.status === "VOID"}
-                    onClick={() => handleVoid(params.row.id)}
-                  >
-                    <CancelIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            )}
           </Box>
         ),
       },
@@ -251,7 +284,7 @@ export default function JournalList() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setFormOpen(true)}
+              onClick={() => { setEditId(null); setFormOpen(true); }}
               sx={{
                 borderRadius: 2,
                 textTransform: "none",
@@ -270,7 +303,7 @@ export default function JournalList() {
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              md: "180px 180px 1fr 120px",
+              md: "180px 180px 200px 1fr 120px",
             },
             gap: 1,
           }}
@@ -295,6 +328,11 @@ export default function JournalList() {
               setFilters((prev) => ({ ...prev, to_date: e.target.value }))
             }
             InputLabelProps={{ shrink: true }}
+          />
+
+          <ReportBranchFilter
+            value={filters.branch_id}
+            onChange={(id) => setFilters((prev) => ({ ...prev, branch_id: id }))}
           />
 
           <TextField
@@ -345,15 +383,48 @@ export default function JournalList() {
 
       <JournalForm
         open={formOpen}
-        onClose={() => setFormOpen(false)}
+        onClose={() => { setFormOpen(false); setEditId(null); }}
         onSaved={fetchJournal}
+        editId={editId}
       />
 
       <JournalDetailDialog
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
         journalId={selectedJournalId}
+        canVoid={canVoidEntry}
+        onRequestVoid={openVoid}
+        canEdit={canCreateEntry}
+        onRequestEdit={openEdit}
       />
+
+      <Dialog open={Boolean(voidTarget)} onClose={() => !voiding && setVoidTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Anular comprobante {voidTarget?.entry_no || ""}</DialogTitle>
+        <DialogContent dividers>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Esta acción revierte el efecto contable del comprobante y no se puede deshacer.
+          </Alert>
+          <TextField
+            fullWidth
+            size="small"
+            type="date"
+            label="Fecha de anulación"
+            InputLabelProps={{ shrink: true }}
+            value={voidDate}
+            onChange={(e) => setVoidDate(e.target.value)}
+            inputProps={{ min: String(voidTarget?.entry_date || "").slice(0, 10) }}
+            helperText="Puede ser igual o posterior a la fecha del comprobante, nunca anterior."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVoidTarget(null)} disabled={voiding} sx={{ textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button variant="contained" color="error" onClick={confirmVoid} disabled={voiding} sx={{ textTransform: "none" }}>
+            {voiding ? "Anulando..." : "Anular comprobante"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={alert.open}

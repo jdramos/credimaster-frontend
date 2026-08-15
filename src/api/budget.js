@@ -52,6 +52,16 @@ export const saveBudgetPortfolioGoals = async (id, goals) => {
   return data;
 };
 
+export const getBudgetPromoterGoals = async (id) => {
+  const { data } = await API.get(`/api/budget/${id}/promoter-goals`);
+  return data;
+};
+
+export const saveBudgetPromoterGoals = async (id, goals) => {
+  const { data } = await API.post(`/api/budget/${id}/promoter-goals`, { goals });
+  return data;
+};
+
 export const getBudgetTracking = async (id, params) => {
   const { data } = await API.get(`/api/budget/${id}/tracking`, { params });
   return data;

@@ -14,6 +14,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormB } from "./mucReportModels";
 
@@ -22,7 +23,8 @@ export default function IncomeStatement() {
   const [allRows, setAllRows] = useState([]);
   const [previousRows, setPreviousRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ from_date: "", to_date: "" });
+  const [filters, setFilters] = useState({ from_date: "", to_date: "", branch_id: "" });
+  const [branchName, setBranchName] = useState("Todas");
   const [alert, setAlert] = useState({
     open: false,
     severity: "success",
@@ -39,10 +41,12 @@ export default function IncomeStatement() {
       const params = {};
       if (filters.from_date) params.start_date = filters.from_date;
       if (filters.to_date) params.end_date = filters.to_date;
+      if (filters.branch_id) params.branch_id = filters.branch_id;
 
       const previousParams = {};
       if (filters.from_date) previousParams.start_date = `${Number(filters.from_date.slice(0, 4)) - 1}${filters.from_date.slice(4)}`;
       if (filters.to_date) previousParams.end_date = `${Number(filters.to_date.slice(0, 4)) - 1}${filters.to_date.slice(4)}`;
+      if (filters.branch_id) previousParams.branch_id = filters.branch_id;
       const [res, previousRes] = await Promise.all([
         API.get("/api/accounting/trial-balance", { params }),
         API.get("/api/accounting/trial-balance", { params: previousParams }),
@@ -146,7 +150,7 @@ export default function IncomeStatement() {
 
   const printReport = () => printAccountingReport({
     title: "Estado de Resultados",
-    subtitle: "Forma B - Manual Único de Cuentas CONAMI",
+    subtitle: `Forma B - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.from_date || "inicio"} al ${filters.to_date || "corte"}`,
     columns: [
       { field: "label", label: "Concepto" },
@@ -177,7 +181,7 @@ export default function IncomeStatement() {
           sx={{
             mb: 2,
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "180px 180px 130px 130px" },
+            gridTemplateColumns: { xs: "1fr", md: "180px 180px 200px 130px 130px" },
             gap: 1,
           }}
         >
@@ -190,6 +194,14 @@ export default function IncomeStatement() {
               setFilters((p) => ({ ...p, from_date: e.target.value }))
             }
             InputLabelProps={{ shrink: true }}
+          />
+
+          <ReportBranchFilter
+            value={filters.branch_id}
+            onChange={(id, name) => {
+              setFilters((p) => ({ ...p, branch_id: id }));
+              setBranchName(name);
+            }}
           />
 
           <TextField

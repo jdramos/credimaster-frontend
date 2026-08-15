@@ -1097,7 +1097,37 @@ export default function useLoanForm() {
         ? await API.put(`${url}/${loanId}`, payload)
         : await API.post(url, payload);
 
-      await response.data;
+      const data = response.data || {};
+
+      // Excepción de garantía (política collateral_requirement_mode): el
+      // backend puede grabar el crédito pero marcarlo como excepción (modo
+      // 'warn' o 'approval'). Se muestra el desglose garantía/monto para que el
+      // promotor vea la relación. El modo 'block' llega como error 400 (catch).
+      const collateral = data.collateral_exception;
+      if (collateral) {
+        const fmt = (n) =>
+          Number(n || 0).toLocaleString("es-NI", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+        const encabezado =
+          collateral.mode === "approval"
+            ? "⚠ Crédito enviado a APROBACIÓN ESPECIAL por garantía insuficiente."
+            : "⚠ Crédito grabado con advertencia de garantía insuficiente.";
+        const desglose = [
+          encabezado,
+          `Monto del crédito:  C$ ${fmt(collateral.amount)}`,
+          `Cobertura requerida:  ${collateral.min_coverage_pct}%  (C$ ${fmt(collateral.required_value)})`,
+          `Garantía del crédito:  C$ ${fmt(collateral.available_guarantee_value)}  (${Number(collateral.coverage_pct || 0).toFixed(1)}%)`,
+          `Faltante:  C$ ${fmt(collateral.shortfall)}`,
+        ].join("\n");
+        toast.warn(desglose, {
+          autoClose: 12000,
+          style: { whiteSpace: "pre-line" },
+        });
+      } else if (Array.isArray(data.warnings) && data.warnings.length > 0) {
+        toast.warn(`Advertencia: ${data.warnings.join(" — ")}`, { autoClose: 8000 });
+      }
 
       showSnackbar(
         isEditMode
@@ -1109,7 +1139,7 @@ export default function useLoanForm() {
       setTimeout(() => {
         setOpenDialog(false);
         navigate("/creditos");
-      }, 1200);
+      }, collateral ? 2500 : 1200);
     } catch (error) {
       const backendMessage =
         error.response?.data?.message || error.response?.data?.error;

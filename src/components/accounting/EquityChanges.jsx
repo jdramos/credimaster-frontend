@@ -5,6 +5,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import API from "../../api";
 import PrintIcon from "@mui/icons-material/Print";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormC } from "./mucReportModels";
 
@@ -15,7 +16,8 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 
 export default function EquityChanges() {
   const year = new Date().getFullYear();
-  const [filters, setFilters] = useState({ start_date: `${year}-01-01`, end_date: `${year}-12-31` });
+  const [filters, setFilters] = useState({ start_date: `${year}-01-01`, end_date: `${year}-12-31`, branch_id: "" });
+  const [branchName, setBranchName] = useState("Todas");
   const [rows, setRows] = useState([]);
   const [previousRows, setPreviousRows] = useState([]);
   const [totals, setTotals] = useState({});
@@ -29,6 +31,7 @@ export default function EquityChanges() {
       const previousFilters = {
         start_date: `${Number(filters.start_date.slice(0, 4)) - 1}${filters.start_date.slice(4)}`,
         end_date: `${Number(filters.end_date.slice(0, 4)) - 1}${filters.end_date.slice(4)}`,
+        ...(filters.branch_id ? { branch_id: filters.branch_id } : {}),
       };
       const [response, previousResponse] = await Promise.all([
         API.get("/api/accounting/reports/equity-changes", { params: filters }),
@@ -55,7 +58,7 @@ export default function EquityChanges() {
 
   const printReport = () => printAccountingReport({
     title: "Estado de Cambios en el Patrimonio",
-    subtitle: "Forma C - Manual Único de Cuentas CONAMI",
+    subtitle: `Forma C - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.start_date} al ${filters.end_date}`,
     columns: [
       { field: "label", label: "(*)" },
@@ -82,6 +85,7 @@ export default function EquityChanges() {
         <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ mb: 2 }}>
           <TextField size="small" type="date" label="Desde" value={filters.start_date} InputLabelProps={{ shrink: true }} onChange={(e) => setFilters((p) => ({ ...p, start_date: e.target.value }))} />
           <TextField size="small" type="date" label="Hasta" value={filters.end_date} InputLabelProps={{ shrink: true }} onChange={(e) => setFilters((p) => ({ ...p, end_date: e.target.value }))} />
+          <ReportBranchFilter value={filters.branch_id} onChange={(id, name) => { setFilters((p) => ({ ...p, branch_id: id })); setBranchName(name); }} />
           <Button variant="contained" onClick={generate} disabled={loading}>Generar</Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
           <ReportSignaturesDialog />

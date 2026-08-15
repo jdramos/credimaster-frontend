@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogTitle,
   Button,
+  TextField,
   Typography,
   Grid,
   CircularProgress,
@@ -42,6 +43,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import CancelIcon from "@mui/icons-material/Cancel";
+import BlockIcon from "@mui/icons-material/Block";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import EventIcon from "@mui/icons-material/Event";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
@@ -227,7 +229,7 @@ const LoanDetailsModal = ({
   clientIdentification,
   onLoanUpdated,
 }) => {
-  const { user } = useContext(UserContext);
+  const { user, permissions = [], role } = useContext(UserContext);
   const { tenant } = useAuth();
   const loanData = loan?.data || loan;
   const loanId = loanData?.id || loanData?.loan_id || loanData?.credit_id;
@@ -255,6 +257,10 @@ const LoanDetailsModal = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedApprovalId, setSelectedApprovalId] = useState(null);
   const [approveError, setApproveError] = useState("");
+
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const [amortizationTable, setAmortizationTable] = useState([]);
   const [totalPaymentAmount, setTotalPaymentAmount] = useState(0);
@@ -751,6 +757,40 @@ const LoanDetailsModal = ({
     approvals.length > 0 &&
     approvals.every((a) => String(a.status).toUpperCase() === "APPROVED");
 
+  // Anular solicitud: solo DRAFT/PENDING sin ninguna aprobación otorgada. El
+  // backend revalida la regla; aquí se controla la visibilidad del botón.
+  const anyApprovedUI = approvals.some(
+    (a) => String(a.status).toUpperCase() === "APPROVED",
+  );
+  const canCancelLoan =
+    (role === 1 || permissions.includes("creditos.editar")) &&
+    ["DRAFT", "PENDING"].includes(String(loanData?.status).toUpperCase()) &&
+    !anyApprovedUI;
+
+  const handleSubmitCancel = async () => {
+    if (!cancelReason.trim()) {
+      setSnackbar({ open: true, message: "El motivo de la anulación es obligatorio.", severity: "warning" });
+      return;
+    }
+    setCancelLoading(true);
+    try {
+      await API.put(`/api/loans/${loanId}/cancel`, { reason: cancelReason.trim() });
+      setCancelOpen(false);
+      setCancelReason("");
+      onLoanUpdated?.({ ...loanData, status: "CANCELLED" });
+      setSnackbar({ open: true, message: "Solicitud de crédito anulada.", severity: "success" });
+      setTimeout(() => onClose?.(), 600);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error?.response?.data?.message || "No se pudo anular la solicitud.",
+        severity: "error",
+      });
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   const globalStatusUI = anyRejectedUI
     ? "RECHAZADO"
     : allApprovedUI
@@ -827,6 +867,23 @@ const LoanDetailsModal = ({
         {actionLoading && <LinearProgress />}
 
         <DialogContent sx={{ bgcolor: (t) => t.palette.grey[50], p: 1.5 }}>
+          {String(loanData?.status || "").toUpperCase() === "CANCELLED" && (
+            <Alert
+              severity="error"
+              icon={<BlockIcon />}
+              sx={{ mb: 1.5, fontWeight: 700 }}
+            >
+              Solicitud ANULADA
+              {loanData?.cancelled_by ? ` por ${loanData.cancelled_by}` : ""}
+              {loanData?.cancelled_at
+                ? ` el ${dayjs(loanData.cancelled_at).format("DD/MM/YYYY HH:mm")}`
+                : ""}
+              .
+              {loanData?.cancellation_reason
+                ? ` Motivo: ${loanData.cancellation_reason}`
+                : ""}
+            </Alert>
+          )}
           {loading ? (
             <Box
               display="flex"
@@ -1621,10 +1678,66 @@ const LoanDetailsModal = ({
         </DialogContent>
 
         <DialogActions sx={{ bgcolor: "white", py: 1, px: 2 }}>
+          {canCancelLoan && (
+            <Button
+              onClick={() => {
+                setCancelReason("");
+                setCancelOpen(true);
+              }}
+              variant="outlined"
+              color="error"
+              size="small"
+              startIcon={<BlockIcon />}
+              sx={{ mr: "auto" }}
+            >
+              Anular solicitud
+            </Button>
+          )}
           <Button onClick={onClose} variant="outlined" size="small">
             Cerrar
           </Button>
         </DialogActions>
+
+        {/* ANULAR SOLICITUD DE CRÉDITO */}
+        <Dialog
+          open={cancelOpen}
+          onClose={() => !cancelLoading && setCancelOpen(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle sx={{ fontWeight: 800 }}>Anular solicitud de crédito</DialogTitle>
+          <DialogContent dividers>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Vas a anular la solicitud de crédito #{loanId}
+              {loanData?.customer_name ? ` de ${loanData.customer_name}` : ""}. Esta
+              acción no se puede deshacer y liberará las garantías vinculadas.
+            </Alert>
+            <TextField
+              label="Motivo de la anulación"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              fullWidth
+              required
+              multiline
+              minRows={3}
+              autoFocus
+              inputProps={{ maxLength: 255 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCancelOpen(false)} disabled={cancelLoading}>
+              Cerrar
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleSubmitCancel}
+              disabled={cancelLoading || !cancelReason.trim()}
+            >
+              {cancelLoading ? "Anulando..." : "Anular solicitud"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={snackbar.open}

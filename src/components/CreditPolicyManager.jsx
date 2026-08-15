@@ -193,24 +193,55 @@ const CreditPolicyManager = () => {
                         fullWidth
                         margin="dense"
                     />
-                    <NumericFormat
-                        customInput={TextField}
-                        thousandSeparator=","
-                        decimalSeparator="."
-                        decimalScale={2}
+                    {newPolicy.policy_key === 'collateral_requirement_mode' ? (
+                        <TextField
+                            label="Valor (modo de exigencia de garantía)"
+                            name="policy_value"
+                            value={newPolicy.policy_value}
+                            onChange={handleChange}
+                            select
+                            fullWidth
+                            margin="dense"
+                            helperText="off = permitir · warn = advertir · block = bloquear · approval = requiere aprobación especial"
+                        >
+                            <MenuItem value="off">off — permitir sin restricción</MenuItem>
+                            <MenuItem value="warn">warn — permitir y advertir</MenuItem>
+                            <MenuItem value="block">block — bloquear el crédito</MenuItem>
+                            <MenuItem value="approval">approval — requiere aprobación especial</MenuItem>
+                        </TextField>
+                    ) : newPolicy.policy_type === 'boolean' ? (
+                        <TextField
+                            label="Valor"
+                            name="policy_value"
+                            value={['true', '1', 'si', 'sí'].includes(String(newPolicy.policy_value).toLowerCase()) ? 'true' : 'false'}
+                            onChange={handleChange}
+                            select
+                            fullWidth
+                            margin="dense"
+                        >
+                            <MenuItem value="true">Sí (activo)</MenuItem>
+                            <MenuItem value="false">No (inactivo)</MenuItem>
+                        </TextField>
+                    ) : (
+                        <NumericFormat
+                            customInput={TextField}
+                            thousandSeparator=","
+                            decimalSeparator="."
+                            decimalScale={2}
 
-                        prefix={newPolicy.policy_type === 'percentage' ? '' : 'C$ '}
-                        suffix={newPolicy.policy_type === 'percentage' ? '%' : ''}
-                        label="Valor"
-                        name="policy_value"
-                        value={newPolicy.policy_value}
-                        onValueChange={({ value }) =>
-                            setNewPolicy((prev) => ({ ...prev, policy_value: value }))
-                        }
-                        fullWidth
-                        margin="dense"
+                            prefix={newPolicy.policy_type === 'percentage' ? '' : 'C$ '}
+                            suffix={newPolicy.policy_type === 'percentage' ? '%' : ''}
+                            label="Valor"
+                            name="policy_value"
+                            value={newPolicy.policy_value}
+                            onValueChange={({ value }) =>
+                                setNewPolicy((prev) => ({ ...prev, policy_value: value }))
+                            }
+                            fullWidth
+                            margin="dense"
 
-                    />
+                        />
+                    )}
 
                     <TextField
                         label="Tipo"

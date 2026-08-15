@@ -77,4 +77,31 @@ export const loanApi = {
     const { data } = await API.post(`${BASE}/remittances/batch`, payload);
     return data;
   },
+
+  listPendingDeliveries: async () => {
+    const { data } = await API.get(`${BASE}/remittances/pending-delivery`);
+    return data;
+  },
+
+  markDelivered: async (loanId, { delivery_notes, image } = {}) => {
+    // Si viene imagen se envía multipart; si no, JSON normal.
+    if (image) {
+      const fd = new FormData();
+      if (delivery_notes) fd.append("delivery_notes", delivery_notes);
+      fd.append("image", image);
+      const { data } = await API.put(`${BASE}/${loanId}/remittance/deliver`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return data;
+    }
+    const { data } = await API.put(`${BASE}/${loanId}/remittance/deliver`, {
+      delivery_notes: delivery_notes || null,
+    });
+    return data;
+  },
+
+  getDeliveryImageUrl: async (remittanceId) => {
+    const { data } = await API.get(`${BASE}/remittances/${remittanceId}/delivery-image-url`);
+    return data;
+  },
 };

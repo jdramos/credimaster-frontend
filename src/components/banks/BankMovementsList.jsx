@@ -369,7 +369,10 @@ export default function BankMovementsList() {
   // DETALLE / ANULAR (dirigidos al endpoint correcto según source_type)
   // ==========================================
   const openDetail = async (row) => {
-    if (row.source_type === "BANK_CHECK") {
+    // CHECK_VOID = reversión contable de la anulación de un cheque de
+    // desembolso (source_id = el cheque, ahora ANULADO). Se muestra el mismo
+    // detalle del cheque para ver el motivo/estado de la anulación.
+    if (row.source_type === "BANK_CHECK" || row.source_type === "CHECK_VOID") {
       try {
         setDetailLoading(true);
         setCheckDetail({ check: null, lines: [] });
@@ -399,8 +402,6 @@ export default function BankMovementsList() {
   const confirmVoid = async () => {
     if (!voidTarget) return;
     const isCheque = voidTarget.source_type === "BANK_CHECK";
-    const confirmed = window.confirm(`¿Confirma anular el comprobante ${voidTarget.entry_no}?\n\nEsta acción anula el comprobante contable asociado.`);
-    if (!confirmed) return;
 
     try {
       setVoiding(true);
@@ -522,23 +523,32 @@ export default function BankMovementsList() {
                   <TableCell>{String(m.entry_date).slice(0, 10)}</TableCell>
                   <TableCell>{m.entry_no}</TableCell>
                   <TableCell>{SOURCE_LABELS[m.source_module] || m.source_module}</TableCell>
-                  <TableCell>{m.description}</TableCell>
+                  <TableCell>
+                    {m.description}
+                    {m.source_status === "ANULADO" && (
+                      <Typography component="span" sx={{ color: "error.main", fontWeight: 700, ml: 0.5 }}>
+                        (Anulado)
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell align="right">{Number(m.debit) > 0 ? money(m.debit) : ""}</TableCell>
                   <TableCell align="right">{Number(m.credit) > 0 ? money(m.credit) : ""}</TableCell>
                   <TableCell align="right">{money(m.balance)}</TableCell>
                   <TableCell align="center">
-                    {(m.source_type === "BANK_CHECK" || m.source_type === "BANK_DEPOSIT") && (
+                    {(m.source_type === "BANK_CHECK" || m.source_type === "BANK_DEPOSIT" || m.source_type === "CHECK_VOID") && (
                       <Stack direction="row" spacing={0.5} justifyContent="center">
-                        <Tooltip title="Ver detalle">
+                        <Tooltip title={m.source_type === "CHECK_VOID" ? "Ver detalle de la anulación" : "Ver detalle"}>
                           <IconButton size="small" onClick={() => openDetail(m)}>
                             <ReceiptLongIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Anular">
-                          <IconButton size="small" color="error" onClick={() => { setVoidTarget(m); setVoidReason(""); }}>
-                            <CancelIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        {(m.source_type === "BANK_CHECK" || m.source_type === "BANK_DEPOSIT") && m.source_status !== "ANULADO" && (
+                          <Tooltip title="Anular">
+                            <IconButton size="small" color="error" onClick={() => { setVoidTarget(m); setVoidReason(""); }}>
+                              <CancelIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Stack>
                     )}
                   </TableCell>
@@ -887,8 +897,11 @@ export default function BankMovementsList() {
       <Dialog open={Boolean(voidTarget)} onClose={() => setVoidTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Anular movimiento</DialogTitle>
         <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2, mt: 1 }}>
+            Esta acción anula el comprobante contable asociado y no se puede deshacer.
+          </Alert>
           <TextField
-            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2} sx={{ mt: 1 }}
+            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2}
             value={voidReason}
             onChange={(e) => setVoidReason(e.target.value)}
           />
@@ -905,6 +918,14 @@ export default function BankMovementsList() {
       <Dialog open={Boolean(checkDetail)} onClose={() => setCheckDetail(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         {checkDetail?.check && (
           <DialogContent sx={{ p: 3, bgcolor: "#F1F5F9" }}>
+            {checkDetail.check.status === "ANULADO" && (
+              <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
+                Cheque ANULADO
+                {checkDetail.check.void_date ? ` el ${String(checkDetail.check.void_date).slice(0, 10)}` : ""}
+                {checkDetail.check.void_entry_no ? ` · Comprobante ${checkDetail.check.void_entry_no}` : ""}.
+                {checkDetail.check.void_reason ? ` Motivo: ${checkDetail.check.void_reason}` : ""}
+              </Alert>
+            )}
             <Box sx={{
               position: "relative",
               bgcolor: "#fff",
@@ -919,6 +940,22 @@ export default function BankMovementsList() {
                 position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none",
                 background: "repeating-linear-gradient(115deg, #0057B8 0px, #0057B8 2px, transparent 2px, transparent 14px)",
               }} />
+
+              {checkDetail.check.status === "ANULADO" && (
+                <Box sx={{
+                  position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Typography sx={{
+                    transform: "rotate(-18deg)", color: "rgba(211,47,47,0.30)", fontWeight: 900,
+                    fontSize: { xs: 46, md: 96 }, letterSpacing: { xs: 4, md: 10 },
+                    border: "6px solid rgba(211,47,47,0.30)", borderRadius: 2,
+                    px: { xs: 2, md: 4 }, py: 1, textTransform: "uppercase",
+                  }}>
+                    Anulado
+                  </Typography>
+                </Box>
+              )}
 
               <Box sx={{ position: "relative" }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} sx={{ mb: 2.5 }}>
@@ -1061,7 +1098,30 @@ export default function BankMovementsList() {
               </Stack>
             </Box>
 
-            <DialogContent sx={{ p: 3 }}>
+            <DialogContent sx={{ p: 3, position: "relative" }}>
+              {depositDetail.deposit.status === "ANULADO" && (
+                <>
+                  <Box sx={{
+                    position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Typography sx={{
+                      transform: "rotate(-18deg)", color: "rgba(211,47,47,0.28)", fontWeight: 900,
+                      fontSize: { xs: 42, md: 88 }, letterSpacing: { xs: 4, md: 10 },
+                      border: "6px solid rgba(211,47,47,0.28)", borderRadius: 2,
+                      px: { xs: 2, md: 4 }, py: 1, textTransform: "uppercase",
+                    }}>
+                      Anulado
+                    </Typography>
+                  </Box>
+                  <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
+                    Movimiento ANULADO
+                    {depositDetail.deposit.void_date ? ` el ${String(depositDetail.deposit.void_date).slice(0, 10)}` : ""}
+                    {depositDetail.deposit.void_entry_no ? ` · Comprobante ${depositDetail.deposit.void_entry_no}` : ""}.
+                    {depositDetail.deposit.void_reason ? ` Motivo: ${depositDetail.deposit.void_reason}` : ""}
+                  </Alert>
+                </>
+              )}
               <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
                 <Grid item xs={12} sm={6}>
                   <Typography variant="caption" color="text.secondary">Fecha</Typography>

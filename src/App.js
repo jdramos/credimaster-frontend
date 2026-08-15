@@ -35,6 +35,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AppLayoutMenu from "./components/AppLayoutMenu";
 import IdleSessionHandler from "./components/IdleSessionHandler";
 import SuperAdminLayout from "./components/SuperAdminLayout";
+import AssistantChat from "./components/assistant/AssistantChat";
 
 // Todo lo demás es contenido de una sola ruta -- se carga bajo demanda
 // (React.lazy) para que el bundle inicial no incluya los ~90 módulos de
@@ -44,6 +45,9 @@ const Home = lazy(() => import("./pages/Home"));
 const LoanList = lazy(() => import("./components/LoanList"));
 const LoanDisbursementRemittancesList = lazy(() =>
   import("./components/Loan/LoanDisbursementRemittancesList"),
+);
+const PendingDeliveriesList = lazy(() =>
+  import("./components/Loan/PendingDeliveriesList"),
 );
 const Branches = lazy(() => import("./pages/Branches"));
 const Risks = lazy(() => import("./pages/Risks"));
@@ -71,8 +75,15 @@ const PaymentList = lazy(() => import("./components/PaymentList"));
 const GenerateBalances = lazy(() => import("./components/GenerateBalances"));
 const BusinessDayPanel = lazy(() => import("./components/BusinessDayPanel"));
 const CreditPolicyManager = lazy(() => import("./components/CreditPolicyManager"));
+const NotificationsManager = lazy(() => import("./components/notifications/NotificationsManager"));
+const CollectionsPage = lazy(() => import("./components/collections/CollectionsPage"));
+const RetentionsManager = lazy(() => import("./components/retentions/RetentionsManager"));
+const ProvidersList = lazy(() => import("./components/providers/ProvidersList"));
+const PayablesPage = lazy(() => import("./components/payables/PayablesPage"));
+const CashFlowProjection = lazy(() => import("./components/cashflow/CashFlowProjection"));
 const BalanceSummary = lazy(() => import("./components/Balances"));
 const RecoveryProjection = lazy(() => import("./components/RecoveryProjection"));
+const ProductivityReport = lazy(() => import("./components/ProductivityReport"));
 const ProvissionViewer = lazy(() => import("./components/ProvissionViewer"));
 const SinRiesgoReport = lazy(() => import("./components/Sinriesgo"));
 const WrittenOffLoansList = lazy(() => import("./components/WrittenOffLoansList"));
@@ -120,6 +131,7 @@ const CustomerInsurancesList = lazy(() => import("./components/insurance/Custome
 const BudgetsList = lazy(() => import("./components/budget/BudgetsList"));
 const BudgetAccountLinesEditor = lazy(() => import("./components/budget/BudgetAccountLinesEditor"));
 const BudgetPlacementGoalsEditor = lazy(() => import("./components/budget/BudgetPlacementGoalsEditor"));
+const BudgetPromoterGoalsEditor = lazy(() => import("./components/budget/BudgetPromoterGoalsEditor"));
 const BudgetTrackingDashboard = lazy(() => import("./components/budget/BudgetTrackingDashboard"));
 const BudgetAlertsInbox = lazy(() => import("./components/budget/BudgetAlertsInbox"));
 const DepartmentsConfig = lazy(() => import("./components/budget/DepartmentsConfig"));
@@ -153,6 +165,9 @@ const AuditLog = lazy(() => import("./components/AuditLog"));
 const BranchCalendarManager = lazy(() => import("./components/BranchCalendarManager"));
 const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
 const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
+const SupportAdminPage = lazy(() => import("./pages/superadmin/SupportAdminPage"));
+const InvoicesAdminPage = lazy(() => import("./pages/superadmin/InvoicesAdminPage"));
+const SupportTickets = lazy(() => import("./components/support/SupportTickets"));
 
 function RouteLoadingFallback() {
   return (
@@ -223,6 +238,8 @@ function SuperAdminRoutes() {
         <Routes>
           <Route path="/" element={<TenantsPage />} />
           <Route path="/tenants/:id/migration" element={<TenantMigrationPanel />} />
+          <Route path="/soporte" element={<SupportAdminPage />} />
+          <Route path="/facturas" element={<InvoicesAdminPage />} />
         </Routes>
       </Suspense>
     </SuperAdminLayout>
@@ -305,6 +322,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <RecoveryProjection />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/creditos/productividad"
+            element={
+              <PageContainer>
+                <ProductivityReport />
               </PageContainer>
             }
           />
@@ -413,6 +438,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             }
           />
           <Route
+            path="/creditos/entregas-pendientes"
+            element={
+              <PageContainer>
+                <PendingDeliveriesList />
+              </PageContainer>
+            }
+          />
+          <Route
             path="/creditos/archivos"
             element={
               <PageContainer>
@@ -441,6 +474,54 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <CreditPolicyManager />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/notificaciones"
+            element={
+              <PageContainer>
+                <NotificationsManager />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/cobranza"
+            element={
+              <PageContainer>
+                <CollectionsPage />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/retenciones"
+            element={
+              <PageContainer>
+                <RetentionsManager />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/proveedores"
+            element={
+              <PageContainer>
+                <ProvidersList />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/cuentas-por-pagar"
+            element={
+              <PageContainer>
+                <PayablesPage />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/flujo-caja"
+            element={
+              <PageContainer>
+                <CashFlowProjection />
               </PageContainer>
             }
           />
@@ -677,6 +758,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/presupuesto" element={<BudgetsList />} />
           <Route path="/presupuesto/:id/cuentas" element={<BudgetAccountLinesEditor />} />
           <Route path="/presupuesto/:id/metas-colocacion" element={<BudgetPlacementGoalsEditor />} />
+          <Route path="/presupuesto/:id/metas-promotores" element={<BudgetPromoterGoalsEditor />} />
           <Route path="/presupuesto/:id/seguimiento" element={<BudgetTrackingDashboard />} />
           <Route path="/presupuesto/alertas" element={<BudgetAlertsInbox />} />
           <Route path="/presupuesto/departamentos" element={<DepartmentsConfig />} />
@@ -713,6 +795,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
 
           <Route path="/reports/studio" element={<Studio />} />
           <Route path="/auditoria" element={<PageContainer><AuditLog /></PageContainer>} />
+          <Route path="/soporte" element={<PageContainer><SupportTickets /></PageContainer>} />
           <Route path="/configuracion/calendarios" element={<PageContainer><BranchCalendarManager /></PageContainer>} />
 
           <Route
@@ -728,6 +811,9 @@ function AppRoutes({ themeMode, setThemeMode }) {
         </Routes>
         </Suspense>
       </AppLayoutMenu>
+
+      {/* Asistente de IA flotante, disponible en todas las pantallas del tenant */}
+      <AssistantChat />
     </Box>
   );
 }
@@ -802,6 +888,43 @@ function App() {
             styleOverrides: {
               root: {
                 backgroundColor: themeMode === "light" ? "#F1F4F9" : "#1B2430",
+              },
+            },
+          },
+          // DataGrid global: las celdas ajustan el texto (no se corta con "…")
+          // y las filas crecen en alto automáticamente, para que SIEMPRE se vea
+          // todo el contenido de la fila. Aplica a todas las tablas del sistema
+          // sin tocar cada pantalla.
+          MuiDataGrid: {
+            defaultProps: {
+              getRowHeight: () => "auto",
+            },
+            styleOverrides: {
+              root: {
+                "& .MuiDataGrid-cell": {
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  lineHeight: 1.35,
+                  alignItems: "flex-start",
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                },
+                "& .MuiDataGrid-cellContent": {
+                  whiteSpace: "normal",
+                  overflow: "visible",
+                  textOverflow: "clip",
+                  wordBreak: "break-word",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  whiteSpace: "normal",
+                  lineHeight: 1.2,
+                  fontWeight: 700,
+                },
+                // Deja visible el separador de columnas (borde) para que se
+                // perciba dónde termina cada una.
+                "& .MuiDataGrid-columnSeparator": {
+                  visibility: "visible",
+                },
               },
             },
           },

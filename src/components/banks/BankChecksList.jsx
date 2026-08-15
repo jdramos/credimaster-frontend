@@ -16,6 +16,7 @@ import {
   DialogActions,
   MenuItem,
   Autocomplete,
+  Checkbox,
   Table,
   TableHead,
   TableRow,
@@ -51,7 +52,7 @@ const emptyForm = {
   check_number: "",
   issue_date: new Date().toISOString().slice(0, 10),
   beneficiary_name: "",
-  vendor: null,
+  provider: null,
   concept: "",
   lines: [emptyLine()],
 };
@@ -69,7 +70,9 @@ export default function BankChecksList() {
   const [rows, setRows] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [accounts, setAccounts] = useState([]);
-  const [vendors, setVendors] = useState([]);
+  const [providers, setProviders] = useState([]);
+  const [openInvoices, setOpenInvoices] = useState([]);
+  const [invoiceSel, setInvoiceSel] = useState({}); // invoice_id -> monto a aplicar (string)
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [bankAccountFilter, setBankAccountFilter] = useState("");
@@ -81,6 +84,7 @@ export default function BankChecksList() {
 
   const [voidTarget, setVoidTarget] = useState(null);
   const [voidReason, setVoidReason] = useState("");
+  const [voidDate, setVoidDate] = useState("");
   const [voiding, setVoiding] = useState(false);
 
   const [detail, setDetail] = useState(null);
@@ -114,11 +118,24 @@ export default function BankChecksList() {
       const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
       setAccounts(list.filter((a) => Number(a.is_movement) === 1));
     }).catch(() => {});
-    API.get("/api/vendors").then((res) => setVendors(Array.isArray(res.data) ? res.data : res.data?.data || [])).catch(() => setVendors([]));
+    API.get("/api/providers").then((res) => setProviders(Array.isArray(res.data) ? res.data : res.data?.data || [])).catch(() => setProviders([]));
   }, []);
+
+  const loadOpenInvoices = async (providerId) => {
+    setInvoiceSel({});
+    if (!providerId) { setOpenInvoices([]); return; }
+    try {
+      const res = await API.get("/api/payables/invoices", { params: { provider_id: providerId, open: 1 } });
+      setOpenInvoices(res.data?.data || []);
+    } catch {
+      setOpenInvoices([]);
+    }
+  };
 
   const handleOpenDialog = () => {
     setForm(emptyForm);
+    setOpenInvoices([]);
+    setInvoiceSel({});
     setDialogOpen(true);
   };
 
@@ -138,6 +155,30 @@ export default function BankChecksList() {
     [form.lines],
   );
 
+  // "Modo factura": si el cheque paga facturas de CxP, las líneas contables las
+  // arma el backend (débito gasto, crédito retención) y el neto sale de las
+  // facturas (aplicado − retención). El editor de líneas manual se oculta.
+  const invoicePayments = useMemo(
+    () =>
+      Object.entries(invoiceSel)
+        .map(([id, amt]) => {
+          const inv = openInvoices.find((i) => String(i.id) === String(id));
+          const amount = Number(amt) || 0;
+          const retention = inv && Number(inv.amount) > 0
+            ? Math.round((Number(inv.retention_amount) * amount) / Number(inv.amount) * 100) / 100
+            : 0;
+          return { invoice_id: Number(id), amount, retention };
+        })
+        .filter((p) => p.amount > 0),
+    [invoiceSel, openInvoices],
+  );
+  const invoiceMode = invoicePayments.length > 0;
+  const invoiceNet = useMemo(
+    () => invoicePayments.reduce((s, p) => s + p.amount - p.retention, 0),
+    [invoicePayments],
+  );
+  const effectiveNet = invoiceMode ? invoiceNet : netAmount;
+
   const selectedBankAccount = useMemo(
     () => bankAccounts.find((b) => b.id === form.bank_account_id) || null,
     [bankAccounts, form.bank_account_id],
@@ -148,12 +189,12 @@ export default function BankChecksList() {
       showAlert("Complete cuenta bancaria, número, fecha, beneficiario y concepto", "error");
       return;
     }
-    if (form.lines.some((l) => !l.account || (!Number(l.debit) && !Number(l.credit)))) {
+    if (!invoiceMode && form.lines.some((l) => !l.account || (!Number(l.debit) && !Number(l.credit)))) {
       showAlert("Cada línea debe tener cuenta y un monto en débito o crédito", "error");
       return;
     }
-    if (netAmount <= 0) {
-      showAlert("El neto de las líneas (lo que sale del banco) debe ser mayor a 0", "error");
+    if (effectiveNet <= 0) {
+      showAlert("El neto del cheque (lo que sale del banco) debe ser mayor a 0", "error");
       return;
     }
 
@@ -164,14 +205,18 @@ export default function BankChecksList() {
         check_number: form.check_number,
         issue_date: form.issue_date,
         beneficiary_name: form.beneficiary_name,
-        vendor_id: form.vendor?.id || null,
+        provider_id: form.provider?.id || null,
+        invoice_payments: invoicePayments.map((p) => ({ invoice_id: p.invoice_id, amount: p.amount })),
         concept: form.concept,
-        lines: form.lines.map((l) => ({
-          account_id: l.account.id,
-          debit: Number(l.debit) || 0,
-          credit: Number(l.credit) || 0,
-          description: l.description || undefined,
-        })),
+        // En modo factura las líneas las arma el backend desde las facturas.
+        lines: invoiceMode
+          ? []
+          : form.lines.map((l) => ({
+              account_id: l.account.id,
+              debit: Number(l.debit) || 0,
+              credit: Number(l.credit) || 0,
+              description: l.description || undefined,
+            })),
       });
       showAlert(`Cheque #${form.check_number} emitido por ${selectedBankAccount?.currency_symbol || "C$"} ${money(res.data.data.amount)} (comprobante ${res.data.data.entry_no})`);
       setDialogOpen(false);
@@ -185,12 +230,13 @@ export default function BankChecksList() {
 
   const confirmVoid = async () => {
     if (!voidTarget) return;
-    const confirmed = window.confirm(`¿Confirma anular el cheque #${voidTarget.check_number} por ${voidTarget.currency_symbol || "C$"} ${money(voidTarget.amount)}?\n\nEsta acción anula el comprobante contable asociado.`);
-    if (!confirmed) return;
 
     try {
       setVoiding(true);
-      await API.put(`${API_URL}/${voidTarget.id}/void`, { void_reason: voidReason || null });
+      await API.put(`${API_URL}/${voidTarget.id}/void`, {
+        void_reason: voidReason || null,
+        annulment_date: voidDate || null,
+      });
       showAlert(`Cheque #${voidTarget.check_number} anulado`);
       setVoidTarget(null);
       setVoidReason("");
@@ -246,7 +292,7 @@ export default function BankChecksList() {
           </Tooltip>
           {params.row.status === "EMITIDO" && canVoidCheck && (
             <Tooltip title="Anular cheque">
-              <IconButton size="small" color="error" onClick={() => { setVoidTarget(params.row); setVoidReason(""); }}>
+              <IconButton size="small" color="error" onClick={() => { setVoidTarget(params.row); setVoidReason(""); setVoidDate(new Date().toISOString().slice(0, 10)); }}>
                 <CancelIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -395,14 +441,16 @@ export default function BankChecksList() {
                   <Autocomplete
                     size="small"
                     freeSolo
-                    options={vendors}
+                    options={providers}
                     getOptionLabel={(o) => (typeof o === "string" ? o : o.name)}
-                    value={form.vendor}
+                    value={form.provider}
                     onChange={(_, value) => {
                       if (typeof value === "string") {
-                        setForm((f) => ({ ...f, vendor: null, beneficiary_name: value }));
+                        setForm((f) => ({ ...f, provider: null, beneficiary_name: value }));
+                        loadOpenInvoices(null);
                       } else {
-                        setForm((f) => ({ ...f, vendor: value, beneficiary_name: value?.name || f.beneficiary_name }));
+                        setForm((f) => ({ ...f, provider: value, beneficiary_name: value?.name || f.beneficiary_name }));
+                        loadOpenInvoices(value?.id);
                       }
                     }}
                     onInputChange={(_, value, reason) => {
@@ -415,14 +463,14 @@ export default function BankChecksList() {
                 <Box sx={{ width: 190, flexShrink: 0 }}>
                   <Typography variant="caption" color="text.secondary">{selectedBankAccount?.currency_symbol || "C$"}</Typography>
                   <Box sx={{ border: "1px solid #333", borderRadius: 1, px: 1.5, py: 0.75, textAlign: "right" }}>
-                    <Typography variant="body1" fontWeight={800} color={netAmount > 0 ? "text.primary" : "error"}>{money(netAmount)}</Typography>
+                    <Typography variant="body1" fontWeight={800} color={effectiveNet > 0 ? "text.primary" : "error"}>{money(effectiveNet)}</Typography>
                   </Box>
                 </Box>
               </Stack>
 
               <Stack direction="row" alignItems="center" spacing={1} sx={{ borderBottom: "1px solid #333", pb: 0.5, mb: 2.5 }}>
                 <Typography variant="body2" noWrap sx={{ flex: 1, textTransform: "uppercase", fontStyle: "italic", color: "text.secondary", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {numberToWords(netAmount)} {selectedBankAccount?.currency_name || "CÓRDOBAS"}
+                  {numberToWords(effectiveNet)} {selectedBankAccount?.currency_name || "CÓRDOBAS"}
                 </Typography>
                 <LockIcon fontSize="small" sx={{ color: "text.disabled", flexShrink: 0 }} />
               </Stack>
@@ -436,10 +484,49 @@ export default function BankChecksList() {
                   placeholder="Concepto del pago"
                 />
               </Box>
+
+              {openInvoices.length > 0 && (
+                <Box sx={{ mt: 2, p: 1.5, border: "1px dashed #CBD5E1", borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    FACTURAS PENDIENTES DE {form.provider?.name} — marque las que paga este cheque
+                  </Typography>
+                  <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                    {openInvoices.map((inv) => {
+                      const sel = invoiceSel[inv.id] != null;
+                      return (
+                        <Stack key={inv.id} direction="row" spacing={1} alignItems="center">
+                          <Checkbox size="small" checked={sel} sx={{ p: 0.5 }}
+                            onChange={(e) => setInvoiceSel((m) => {
+                              const next = { ...m };
+                              if (e.target.checked) next[inv.id] = String(inv.balance);
+                              else delete next[inv.id];
+                              return next;
+                            })} />
+                          <Typography variant="body2" sx={{ flex: 1 }}>
+                            {inv.document_number || `#${inv.id}`} · {String(inv.document_date).slice(0, 10)} · saldo C$ {money(inv.balance)}
+                            {Number(inv.retention_amount) > 0 ? ` · ret. C$ ${money(inv.retention_amount)}` : ""}
+                          </Typography>
+                          {sel && (
+                            <TextField size="small" type="number" label="Aplicar" value={invoiceSel[inv.id]}
+                              onChange={(e) => setInvoiceSel((m) => ({ ...m, [inv.id]: e.target.value }))}
+                              sx={{ width: 120 }} />
+                          )}
+                        </Stack>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              )}
             </Box>
           </Box>
 
-          {/* Líneas contables */}
+          {/* Líneas contables — se ocultan en modo factura (las arma el sistema) */}
+          {invoiceMode ? (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              El asiento se arma automáticamente desde las facturas seleccionadas: débito a la cuenta de gasto de cada factura, crédito a la cuenta de retención, y el neto sale del banco.
+            </Alert>
+          ) : (
+          <>
           <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
             Líneas (gasto, retención, etc. — el banco se acredita automático por el neto)
           </Typography>
@@ -477,6 +564,8 @@ export default function BankChecksList() {
           ))}
 
           <Button size="small" onClick={addLine} sx={{ textTransform: "none", mt: 0.5 }}>+ Agregar línea</Button>
+          </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
@@ -490,7 +579,14 @@ export default function BankChecksList() {
         <DialogTitle>Anular cheque {voidTarget?.check_number}</DialogTitle>
         <DialogContent>
           <TextField
-            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2} sx={{ mt: 1 }}
+            fullWidth size="small" type="date" label="Fecha de anulación"
+            InputLabelProps={{ shrink: true }} sx={{ mt: 1 }}
+            value={voidDate}
+            onChange={(e) => setVoidDate(e.target.value)}
+            helperText="Para cheques de desembolso: debe ser ≥ la fecha del cheque y en un día abierto."
+          />
+          <TextField
+            fullWidth size="small" label="Motivo de anulación (opcional)" multiline minRows={2} sx={{ mt: 2 }}
             value={voidReason}
             onChange={(e) => setVoidReason(e.target.value)}
           />
@@ -506,6 +602,14 @@ export default function BankChecksList() {
       <Dialog open={Boolean(detail)} onClose={() => setDetail(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         {detail && (
           <DialogContent sx={{ p: 3, bgcolor: "#F1F5F9" }}>
+            {detail.check.status === "ANULADO" && (
+              <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
+                Cheque ANULADO
+                {detail.check.void_date ? ` el ${String(detail.check.void_date).slice(0, 10)}` : ""}
+                {detail.check.void_entry_no ? ` · Comprobante ${detail.check.void_entry_no}` : ""}.
+                {detail.check.void_reason ? ` Motivo: ${detail.check.void_reason}` : ""}
+              </Alert>
+            )}
             {/* Cuerpo del cheque, estilo físico — apaisado */}
             <Box sx={{
               position: "relative",
@@ -521,6 +625,27 @@ export default function BankChecksList() {
                 position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none",
                 background: "repeating-linear-gradient(115deg, #0057B8 0px, #0057B8 2px, transparent 2px, transparent 14px)",
               }} />
+
+              {detail.check.status === "ANULADO" && (
+                <Box sx={{
+                  position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Typography sx={{
+                    transform: "rotate(-18deg)",
+                    color: "rgba(211,47,47,0.30)",
+                    fontWeight: 900,
+                    fontSize: { xs: 46, md: 96 },
+                    letterSpacing: { xs: 4, md: 10 },
+                    border: "6px solid rgba(211,47,47,0.30)",
+                    borderRadius: 2,
+                    px: { xs: 2, md: 4 }, py: 1,
+                    textTransform: "uppercase",
+                  }}>
+                    Anulado
+                  </Typography>
+                </Box>
+              )}
 
               <Box sx={{ position: "relative" }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} sx={{ mb: 2.5 }}>

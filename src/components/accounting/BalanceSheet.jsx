@@ -14,6 +14,7 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormA } from "./mucReportModels";
 
@@ -21,7 +22,8 @@ export default function BalanceSheet() {
   const [rows, setRows] = useState([]);
   const [allRows, setAllRows] = useState([]);
   const [previousRows, setPreviousRows] = useState([]);
-  const [filters, setFilters] = useState({ to_date: "" });
+  const [filters, setFilters] = useState({ to_date: "", branch_id: "" });
+  const [branchName, setBranchName] = useState("Todas");
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     open: false,
@@ -38,13 +40,17 @@ export default function BalanceSheet() {
 
       const params = {};
       if (filters.to_date) params.end_date = filters.to_date;
+      if (filters.branch_id) params.branch_id = filters.branch_id;
 
       const previousDate = filters.to_date
         ? `${Number(filters.to_date.slice(0, 4)) - 1}${filters.to_date.slice(4)}`
         : "";
+      const previousParams = {};
+      if (previousDate) previousParams.end_date = previousDate;
+      if (filters.branch_id) previousParams.branch_id = filters.branch_id;
       const [res, previousRes] = await Promise.all([
         API.get("/api/accounting/trial-balance", { params }),
-        API.get("/api/accounting/trial-balance", { params: previousDate ? { end_date: previousDate } : {} }),
+        API.get("/api/accounting/trial-balance", { params: previousParams }),
       ]);
 
       const rawData = Array.isArray(res.data)
@@ -170,7 +176,7 @@ export default function BalanceSheet() {
 
   const printReport = () => printAccountingReport({
     title: "Estado de Situación Financiera",
-    subtitle: "Forma A - Manual Único de Cuentas CONAMI",
+    subtitle: `Forma A - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Al ${filters.to_date || "fecha de corte"}`,
     columns: [
       { field: "label", label: "Concepto" },
@@ -201,7 +207,7 @@ export default function BalanceSheet() {
           sx={{
             mb: 2,
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "180px 130px 130px" },
+            gridTemplateColumns: { xs: "1fr", md: "180px 200px 130px 130px" },
             gap: 1,
           }}
         >
@@ -214,6 +220,14 @@ export default function BalanceSheet() {
               setFilters((p) => ({ ...p, to_date: e.target.value }))
             }
             InputLabelProps={{ shrink: true }}
+          />
+
+          <ReportBranchFilter
+            value={filters.branch_id}
+            onChange={(id, name) => {
+              setFilters((p) => ({ ...p, branch_id: id }));
+              setBranchName(name);
+            }}
           />
 
           <Button

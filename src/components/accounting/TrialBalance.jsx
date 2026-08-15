@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -15,6 +16,7 @@ import FactCheckIcon from "@mui/icons-material/FactCheck";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 
 export default function TrialBalance() {
@@ -22,11 +24,17 @@ export default function TrialBalance() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [accounts, setAccounts] = useState([]);
+  const [accountFrom, setAccountFrom] = useState(null);
+  const [accountTo, setAccountTo] = useState(null);
+
   const [filters, setFilters] = useState({
     from_date: "",
     to_date: "",
     scope: "ALL",
+    branch_id: "",
   });
+  const [branchName, setBranchName] = useState("Todas");
 
   const [alert, setAlert] = useState({
     open: false,
@@ -38,6 +46,31 @@ export default function TrialBalance() {
     setAlert({ open: true, severity, message });
   };
 
+  // Catálogo de cuentas para el filtro de rango (Cuenta desde / Cuenta
+  // hasta). Se listan todas las cuentas activas — de movimiento y de
+  // encabezado — porque el rango se aplica por código MUC y el usuario
+  // puede querer acotar por un grupo (p. ej. 1101 a 1105).
+  const fetchAccounts = async () => {
+    try {
+      const res = await API.get("/api/accounting/accounts", {
+        params: { is_active: 1 },
+      });
+      const data = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+      setAccounts(data);
+    } catch (error) {
+      // Silencioso: el rango es opcional; si falla el catálogo el balance
+      // sigue funcionando sin rango.
+    }
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
   const fetchTrialBalance = async () => {
     try {
       setLoading(true);
@@ -45,6 +78,9 @@ export default function TrialBalance() {
       const params = { scope: filters.scope };
       if (filters.from_date) params.start_date = filters.from_date;
       if (filters.to_date) params.end_date = filters.to_date;
+      if (filters.branch_id) params.branch_id = filters.branch_id;
+      if (accountFrom?.muc_code) params.account_from = accountFrom.muc_code;
+      if (accountTo?.muc_code) params.account_to = accountTo.muc_code;
 
       const res = await API.get("/api/accounting/trial-balance", { params });
 
@@ -219,9 +255,14 @@ export default function TrialBalance() {
     [],
   );
 
+  const rangeLabel =
+    accountFrom || accountTo
+      ? ` · Rango: ${accountFrom?.muc_code || "inicio"} a ${accountTo?.muc_code || "fin"}`
+      : "";
+
   const printReport = () => printAccountingReport({
     title: "Balance de Comprobación de Saldos",
-    subtitle: "Forma E - Manual Único de Cuentas CONAMI",
+    subtitle: `Forma E - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}${rangeLabel}`,
     period: `Del ${filters.from_date || "inicio"} al ${filters.to_date || "corte"}`,
     columns: [
       { field: "muc_code", label: "Código" }, { field: "account_name", label: "Denominación" },
@@ -261,9 +302,10 @@ export default function TrialBalance() {
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              md: "180px 180px 200px 130px 130px",
+              md: "repeat(4, minmax(180px, 1fr))",
             },
             gap: 1,
+            alignItems: "center",
           }}
         >
           <TextField
@@ -300,6 +342,46 @@ export default function TrialBalance() {
             <MenuItem value="ALL">Todas las cuentas</MenuItem>
             <MenuItem value="WITH_MOVEMENTS">Solo con movimientos</MenuItem>
           </TextField>
+
+          <Autocomplete
+            size="small"
+            options={accounts}
+            value={accountFrom}
+            getOptionLabel={(option) =>
+              `${option.muc_code} - ${option.account_name}`
+            }
+            isOptionEqualToValue={(option, value) =>
+              option.muc_code === value.muc_code
+            }
+            onChange={(_, value) => setAccountFrom(value)}
+            renderInput={(params) => (
+              <TextField {...params} label="Cuenta desde" />
+            )}
+          />
+
+          <Autocomplete
+            size="small"
+            options={accounts}
+            value={accountTo}
+            getOptionLabel={(option) =>
+              `${option.muc_code} - ${option.account_name}`
+            }
+            isOptionEqualToValue={(option, value) =>
+              option.muc_code === value.muc_code
+            }
+            onChange={(_, value) => setAccountTo(value)}
+            renderInput={(params) => (
+              <TextField {...params} label="Cuenta hasta" />
+            )}
+          />
+
+          <ReportBranchFilter
+            value={filters.branch_id}
+            onChange={(id, name) => {
+              setFilters((prev) => ({ ...prev, branch_id: id }));
+              setBranchName(name);
+            }}
+          />
 
           <Button
             variant="outlined"

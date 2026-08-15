@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -22,23 +22,34 @@ import {
   TableBody,
   Checkbox,
   Chip,
+  Autocomplete,
 } from "@mui/material";
 import API from "../../api";
 import { loanApi } from "../../api/loanApi";
+import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { printCheckDisbursementDetail } from "../../reports/checkDisbursementDetailReport";
 
 const money = (n) =>
   Number(n || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, defaultMethod }) {
+  const { user } = useContext(UserContext);
+  const currentUserId = user?.id ?? null;
+  const { user: authUser, tenant } = useAuth();
+
   const [method, setMethod] = useState(defaultMethod || "CHEQUE");
   const [bankAccountId, setBankAccountId] = useState("");
   const [checkNumber, setCheckNumber] = useState("");
+  const [beneficiaryName, setBeneficiaryName] = useState("");
   const [cashRegisterId, setCashRegisterId] = useState("");
   const [bankAccounts, setBankAccounts] = useState([]);
   const [cashRegisters, setCashRegisters] = useState([]);
   const [loans, setLoans] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [search, setSearch] = useState("");
+  const [deliveryAgents, setDeliveryAgents] = useState([]);
+  const [deliveryAgentId, setDeliveryAgentId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingLoans, setLoadingLoans] = useState(false);
   const [error, setError] = useState("");
@@ -49,10 +60,12 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
     setMethod(defaultMethod || "CHEQUE");
     setBankAccountId("");
     setCheckNumber("");
+    setBeneficiaryName("");
     setCashRegisterId("");
     setSelectedIds([]);
     setSearch("");
     setError("");
+    setDeliveryAgentId(currentUserId);
 
     API.get("/api/banks/accounts", { params: { status: "ACTIVA" } })
       .then((res) => setBankAccounts(res.data?.data || []))
@@ -60,6 +73,12 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
     API.get("/api/caja/registers", { params: { status: "ACTIVA" } })
       .then((res) => setCashRegisters(res.data?.data || []))
       .catch(() => setCashRegisters([]));
+    API.get("/api/users")
+      .then((res) => {
+        const active = (res.data || []).filter((u) => u.user_status === 1 || u.user_status === undefined);
+        setDeliveryAgents(active);
+      })
+      .catch(() => setDeliveryAgents([]));
 
     setLoadingLoans(true);
     loanApi
@@ -133,23 +152,55 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
       setError("Debe seleccionar la caja");
       return;
     }
+    if (!deliveryAgentId) {
+      setError("Debe indicar quién le va a entregar el cheque/efectivo al cliente");
+      return;
+    }
 
     try {
       setLoading(true);
       setError("");
 
-      await loanApi.createBatchRemittance({
+      const res = await loanApi.createBatchRemittance({
         loan_ids: selectedIds,
         disbursement_method: method,
         bank_account_id: method !== "EFECTIVO" ? bankAccountId : null,
         check_number: method === "CHEQUE" ? checkNumber : null,
+        beneficiary_name: method === "CHEQUE" ? beneficiaryName : null,
         cash_register_id: method === "EFECTIVO" ? cashRegisterId : null,
+        delivery_agent_id: deliveryAgentId,
       });
+
+      // Al desembolsar con cheque, imprimir automáticamente el detalle con los
+      // créditos que respaldan el cheque (el asiento consolida el monto).
+      const bankCheckId = res?.data?.bank_check_id;
+      if (method === "CHEQUE" && bankCheckId) {
+        try {
+          const det = await API.get(`/api/loans/remittances/check/${bankCheckId}/supporting`);
+          const data = det.data?.data || {};
+          printCheckDisbursementDetail({
+            company: {
+              commercial_name: tenant?.commercial_name || tenant?.name,
+              legal_name: tenant?.legal_name || tenant?.company_name,
+              logo_url: tenant?.logo_url,
+              tax_id: tenant?.tax_id,
+              address: tenant?.address,
+              phone: tenant?.phone,
+            },
+            user: { full_name: authUser?.full_name },
+            check: data.check || {},
+            loans: data.loans || [],
+            total: data.total || 0,
+          });
+        } catch {
+          // Si falla la impresión, el desembolso igual se registró; no se bloquea.
+        }
+      }
 
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err?.response?.data?.message || err.message || "Error al registrar el desembolso por lote");
+      setError(err?.response?.data?.message || err.message || "Error al desembolsar los créditos");
     } finally {
       setLoading(false);
     }
@@ -162,8 +213,9 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Seleccione los créditos aprobados y aún no desembolsados que saldrán en este cheque,
-          transferencia o movimiento de caja. Se emite un solo comprobante por el monto total y se
-          registra contra la cuenta de Remesas en Tránsito hasta que se confirme cada desembolso.
+          transferencia o movimiento de caja. Se emite un solo comprobante por el monto total y los
+          créditos quedan desembolsados de inmediato, pendientes solo de entregar el cheque/efectivo
+          al cliente.
         </Typography>
 
         {error && (
@@ -207,6 +259,17 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
             />
           )}
 
+          {method === "CHEQUE" && (
+            <TextField
+              fullWidth
+              label="Beneficiario del cheque"
+              placeholder="A nombre de quién se emite el cheque"
+              value={beneficiaryName}
+              onChange={(e) => setBeneficiaryName(e.target.value)}
+              helperText="Si se deja vacío, se usa el detalle del desembolso."
+            />
+          )}
+
           {method === "EFECTIVO" && (
             <TextField
               select
@@ -222,6 +285,21 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
               ))}
             </TextField>
           )}
+
+          <Autocomplete
+            options={deliveryAgents}
+            getOptionLabel={(o) => o.full_name || ""}
+            isOptionEqualToValue={(o, v) => o.id === v.id}
+            value={deliveryAgents.find((u) => u.id === deliveryAgentId) || null}
+            onChange={(_, newValue) => setDeliveryAgentId(newValue?.id || null)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="¿Quién le va a entregar el cheque/efectivo al cliente?"
+                helperText="Puede ser usted mismo, o un gestor que lo entregará después"
+              />
+            )}
+          />
 
           <TextField
             fullWidth
@@ -298,8 +376,8 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
         <Button onClick={onClose} color="inherit" disabled={loading}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={loading}>
-          {loading ? "Registrando..." : "Confirmar desembolso"}
+        <Button onClick={handleSubmit} variant="contained" disabled={loading || !deliveryAgentId}>
+          {loading ? "Desembolsando..." : "Confirmar desembolso"}
         </Button>
       </DialogActions>
     </Dialog>

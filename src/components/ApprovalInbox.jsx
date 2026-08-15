@@ -3,10 +3,15 @@ import { UserContext } from "../contexts/UserContext";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
   MenuItem,
@@ -28,8 +33,32 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
+import GppMaybeIcon from "@mui/icons-material/GppMaybe";
+import { toast } from "react-toastify";
 import API from "../api"; // ajusta esta ruta
 import LoanDetailsModal from "./Loan/LoanDetailsModal";
+
+// Excepción de garantía insuficiente (política collateral_requirement_mode =
+// 'approval'): el crédito se grabó sin garantía suficiente y no puede aprobarse
+// hasta que un usuario con el permiso especial la autorice. Ver backend
+// api/loan/collateralExceptionController.js.
+const hasPendingCollateralException = (row) =>
+  Number(row?.collateral_exception) === 1 &&
+  row?.collateral_exception_status === "PENDING";
+
+const getCollateralChip = (row) => {
+  if (!hasPendingCollateralException(row)) return null;
+  return (
+    <Tooltip title={row.collateral_exception_reason || "Garantía insuficiente"}>
+      <Chip
+        size="small"
+        color="error"
+        icon={<GppMaybeIcon />}
+        label="SIN GARANTÍA SUFICIENTE"
+      />
+    </Tooltip>
+  );
+};
 
 const moneyFormat = (value) =>
   Number(value || 0).toLocaleString("es-NI", {
@@ -178,8 +207,61 @@ const SummaryCard = ({ title, value, icon, color = "#0057B8" }) => {
 };
 
 export default function ApprovalInbox({ onViewLoan, onViewModification }) {
-  const { user } = useContext(UserContext);
+  const { user, permissions = [], role } = useContext(UserContext);
   const currentUserId = user?.id ?? user;
+  const canApproveException =
+    role === 1 ||
+    (Array.isArray(permissions) &&
+      permissions.includes("especial.creditos.excepcion_garantia.aprobar"));
+
+  // Diálogo para resolver la excepción de garantía (aprobar/rechazar).
+  const [exceptionDialog, setExceptionDialog] = useState({
+    open: false,
+    row: null,
+    decision: null,
+    comment: "",
+    saving: false,
+  });
+
+  // Desglose numérico (monto vs garantía) que se carga al abrir el diálogo.
+  const [exceptionSummary, setExceptionSummary] = useState(null);
+  const [exceptionSummaryLoading, setExceptionSummaryLoading] = useState(false);
+
+  const openExceptionDialog = (row, decision) => {
+    setExceptionDialog({ open: true, row, decision, comment: "", saving: false });
+    setExceptionSummary(null);
+    setExceptionSummaryLoading(true);
+    API.get(`/api/loans/${row.loan_id}/collateral-summary`)
+      .then((res) => setExceptionSummary(res.data))
+      .catch(() => setExceptionSummary(null))
+      .finally(() => setExceptionSummaryLoading(false));
+  };
+
+  const closeExceptionDialog = () =>
+    setExceptionDialog((s) => (s.saving ? s : { ...s, open: false }));
+
+  const submitException = async () => {
+    const { row, decision, comment } = exceptionDialog;
+    if (!row) return;
+    setExceptionDialog((s) => ({ ...s, saving: true }));
+    try {
+      await API.put(`/api/loans/${row.loan_id}/collateral-exception`, {
+        decision,
+        comment,
+      });
+      toast.success(
+        decision === "APPROVED"
+          ? "Excepción de garantía autorizada"
+          : "Excepción de garantía rechazada (crédito denegado)",
+      );
+      setExceptionDialog({ open: false, row: null, decision: null, comment: "", saving: false });
+      fetchInbox();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "No se pudo resolver la excepción");
+      setExceptionDialog((s) => ({ ...s, saving: false }));
+    }
+  };
+
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState({
     total: 0,
@@ -623,7 +705,12 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                     <TableRow key={`${row.item_type}-${row.approval_id}`} hover>
                       <TableCell>{getTypeChip(row)}</TableCell>
                       <TableCell>{getSubtypeChip(row.item_subtype)}</TableCell>
-                      <TableCell>{getCommitteeChip(row)}</TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5} alignItems="flex-start">
+                          {getCommitteeChip(row)}
+                          {getCollateralChip(row)}
+                        </Stack>
+                      </TableCell>
                       <TableCell>{row.credit_code}</TableCell>
                       <TableCell>{row.customer_name}</TableCell>
                       <TableCell>{row.branch_name}</TableCell>
@@ -640,11 +727,33 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
                         {getPendingDaysChip(row.pending_days)}
                       </TableCell>
                       <TableCell align="center">
-                        <Tooltip title="Ver detalle">
-                          <IconButton onClick={() => handleView(row)}>
-                            <VisibilityIcon />
-                          </IconButton>
-                        </Tooltip>
+                        <Stack direction="row" spacing={0.5} justifyContent="center">
+                          <Tooltip title="Ver detalle">
+                            <IconButton onClick={() => handleView(row)}>
+                              <VisibilityIcon />
+                            </IconButton>
+                          </Tooltip>
+                          {hasPendingCollateralException(row) && canApproveException && (
+                            <>
+                              <Tooltip title="Autorizar excepción de garantía">
+                                <IconButton
+                                  color="success"
+                                  onClick={() => openExceptionDialog(row, "APPROVED")}
+                                >
+                                  <AssignmentTurnedInIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Rechazar excepción (denegar crédito)">
+                                <IconButton
+                                  color="error"
+                                  onClick={() => openExceptionDialog(row, "REJECTED")}
+                                >
+                                  <GppMaybeIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))
@@ -654,6 +763,135 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
           </TableContainer>
         )}
       </Paper>
+
+      <Dialog open={exceptionDialog.open} onClose={closeExceptionDialog} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 800 }}>
+          {exceptionDialog.decision === "APPROVED"
+            ? "Autorizar excepción de garantía"
+            : "Rechazar excepción de garantía"}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Alert severity={exceptionDialog.decision === "APPROVED" ? "warning" : "error"} sx={{ mb: 2 }}>
+            {exceptionDialog.row?.collateral_exception_reason || "Garantía insuficiente."}
+          </Alert>
+
+          {exceptionSummaryLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+              <CircularProgress size={22} />
+            </Box>
+          ) : exceptionSummary ? (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
+                Relación garantía / monto
+              </Typography>
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Monto del crédito</TableCell>
+                    <TableCell align="right">C$ {moneyFormat(exceptionSummary.amount)}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Cobertura mínima requerida</TableCell>
+                    <TableCell align="right">{exceptionSummary.min_coverage_pct}%</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Garantía requerida</TableCell>
+                    <TableCell align="right">C$ {moneyFormat(exceptionSummary.required_value)}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Garantía del crédito</TableCell>
+                    <TableCell align="right">C$ {moneyFormat(exceptionSummary.linked_guarantee_value)}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Cobertura actual</TableCell>
+                    <TableCell align="right">
+                      {Number(exceptionSummary.coverage_pct || 0).toFixed(1)}%
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800, color: "error.main" }}>Faltante</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 800, color: "error.main" }}>
+                      C$ {moneyFormat(exceptionSummary.shortfall)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+
+              {exceptionSummary.customer_guarantees?.length > 0 && (
+                <>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5, mb: 0.5 }}>
+                    Garantías del cliente ({exceptionSummary.customer_guarantees.length}):
+                  </Typography>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Garantía</TableCell>
+                        <TableCell align="right">Valor</TableCell>
+                        <TableCell align="center">Estado</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {exceptionSummary.customer_guarantees.map((g) => (
+                        <TableRow key={g.id}>
+                          <TableCell>
+                            {g.article || `#${g.id}`}
+                            {g.brand ? ` · ${g.brand}` : ""}
+                          </TableCell>
+                          <TableCell align="right">C$ {moneyFormat(g.value)}</TableCell>
+                          <TableCell align="center">
+                            {g.is_committed ? (
+                              <Chip
+                                size="small"
+                                color="warning"
+                                label={`Comprometida (#${g.committed_loan_id})`}
+                              />
+                            ) : (
+                              <Chip size="small" color="success" label="Disponible" />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+            </Box>
+          ) : null}
+
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {exceptionDialog.decision === "APPROVED"
+              ? `Vas a autorizar que el crédito No. ${exceptionDialog.row?.loan_id} continúe pese a no tener garantía suficiente. Quedará registrado en auditoría.`
+              : `Vas a rechazar la excepción: el crédito No. ${exceptionDialog.row?.loan_id} será denegado por no tener garantía suficiente.`}
+          </Typography>
+          <TextField
+            label="Comentario (opcional)"
+            value={exceptionDialog.comment}
+            onChange={(e) =>
+              setExceptionDialog((s) => ({ ...s, comment: e.target.value }))
+            }
+            fullWidth
+            multiline
+            minRows={2}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeExceptionDialog} disabled={exceptionDialog.saving}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color={exceptionDialog.decision === "APPROVED" ? "success" : "error"}
+            onClick={submitException}
+            disabled={exceptionDialog.saving}
+          >
+            {exceptionDialog.saving
+              ? "Guardando..."
+              : exceptionDialog.decision === "APPROVED"
+                ? "Autorizar"
+                : "Rechazar crédito"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <LoanDetailsModal
         open={openModal}

@@ -5,6 +5,7 @@ import {
   Button,
   Chip,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -18,13 +19,30 @@ import {
   Typography,
 } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
+import CancelIcon from "@mui/icons-material/Cancel";
+import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2 });
 
-export default function JournalDetailDialog({ open, onClose, journalId }) {
+// Los comprobantes generados por otros módulos deben anularse desde su origen
+// (que también revierte el registro asociado: cheque, desembolso, etc.), no
+// desde el Libro Diario. Solo los MANUAL se pueden anular aquí.
+const MODULE_ORIGIN = {
+  BANKS: "Bancos (Cheques / Depósitos / Movimientos)",
+  LOANS: "Créditos",
+  CAJA: "Caja (Movimientos)",
+  HR: "Recursos Humanos",
+  PAYMENTS: "Pagos",
+  FIXED_ASSETS: "Activo Fijo",
+  BUSINESS_DAY: "Cierre del día",
+};
+const isManualOrigin = (sourceModule) =>
+  !sourceModule || ["MANUAL", "ACCOUNTING"].includes(sourceModule);
+
+export default function JournalDetailDialog({ open, onClose, journalId, canVoid = false, onRequestVoid, canEdit = false, onRequestEdit }) {
   const [loading, setLoading] = useState(false);
   const [entry, setEntry] = useState(null);
 
@@ -250,6 +268,47 @@ export default function JournalDetailDialog({ open, onClose, journalId }) {
             </>
           )}
         </DialogContent>
+
+        <DialogActions sx={{ px: 2, py: 1.5 }}>
+          {entry && entry.status !== "VOID" && (
+            isManualOrigin(entry.source_module) ? (
+              <Box sx={{ mr: "auto", display: "flex", gap: 1 }}>
+                {canEdit && (
+                  <Button
+                    color="primary"
+                    variant="outlined"
+                    startIcon={<EditIcon />}
+                    onClick={() => onRequestEdit?.(entry)}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Editar
+                  </Button>
+                )}
+                {canVoid && (
+                  <Button
+                    color="error"
+                    variant="outlined"
+                    startIcon={<CancelIcon />}
+                    onClick={() => onRequestVoid?.(entry)}
+                    sx={{ textTransform: "none" }}
+                  >
+                    Anular comprobante
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              (canVoid || canEdit) && (
+                <Alert severity="info" sx={{ mr: "auto", py: 0 }}>
+                  Este comprobante proviene de {MODULE_ORIGIN[entry.source_module] || entry.source_module}.
+                  Debe editarse/anularse desde ese módulo.
+                </Alert>
+              )
+            )
+          )}
+          <Button onClick={onClose} variant="contained" sx={{ textTransform: "none" }}>
+            Cerrar
+          </Button>
+        </DialogActions>
       </Dialog>
 
       <Snackbar
