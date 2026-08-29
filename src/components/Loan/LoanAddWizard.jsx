@@ -29,6 +29,7 @@ import CollectorSelect from "../CollectorSelect";
 import { NumericFormat } from "react-number-format";
 import FrecuencySelect from "../FrecuencySelect";
 import LoanGuaranteeSelector from "./LoanGuaranteeSelector";
+import RiskBureauQueryPanel from "./RiskBureauQueryPanel";
 import dayjs from "dayjs";
 import BranchSelect from "../BranchSelect";
 import LoanAmortization from "../LoanAmortization";
@@ -110,6 +111,7 @@ const LoanAddWizard = () => {
     errors,
     loading,
     loan,
+    loanId,
     catalogs,
     guarantees,
     selectedGuaranteeIds,
@@ -656,6 +658,11 @@ const LoanAddWizard = () => {
                     <Alert severity="info" sx={{ borderRadius: 2 }}>No hay información documental disponible para este cliente.</Alert>
                   )}
                 </Paper>
+
+                <RiskBureauQueryPanel
+                  customerId={loan.customer_id}
+                  loanId={loanId || null}
+                />
               </Box>
             </>
           )}

@@ -26,18 +26,11 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import HistoryIcon from "@mui/icons-material/History";
-import GroupsIcon from "@mui/icons-material/Groups";
-import DescriptionIcon from "@mui/icons-material/Description";
-import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
+import InfoIcon from "@mui/icons-material/Info";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import API from "../../api";
-import { useAuth } from "../../contexts/AuthContext";
-import EmployeeHistoryDialog from "./EmployeeHistoryDialog";
-import EmployeeBeneficiariesDialog from "./EmployeeBeneficiariesDialog";
-import { printEmployeeContractReport } from "../../reports/printEmployeeContractReport";
-import { printWorkCertificateReport } from "../../reports/printWorkCertificateReport";
+import EmployeeDetailDialog from "./EmployeeDetailDialog";
 
 const API_URL = "/api/hr/employees";
 
@@ -52,6 +45,8 @@ const emptyForm = {
   full_name: "",
   id_card: "",
   position: "",
+  department: null,
+  positionRef: null,
   hire_date: new Date().toISOString().slice(0, 10),
   base_salary: "",
   branch_id: "",
@@ -82,14 +77,22 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 
 export default function EmployeesList() {
-  const { tenant } = useAuth();
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   const [rows, setRows] = useState([]);
   const [branches, setBranches] = useState([]);
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ open: false, severity: "success", message: "" });
+
+  const [quickAddDeptOpen, setQuickAddDeptOpen] = useState(false);
+  const [quickAddDeptName, setQuickAddDeptName] = useState("");
+  const [quickAddDeptSaving, setQuickAddDeptSaving] = useState(false);
+
+  const [quickAddPositionOpen, setQuickAddPositionOpen] = useState(false);
+  const [quickAddPositionTitle, setQuickAddPositionTitle] = useState("");
+  const [quickAddPositionSaving, setQuickAddPositionSaving] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -99,8 +102,7 @@ export default function EmployeesList() {
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuRow, setMenuRow] = useState(null);
 
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [beneficiariesOpen, setBeneficiariesOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [activeRow, setActiveRow] = useState(null);
 
   const [deactivateOpen, setDeactivateOpen] = useState(false);
@@ -125,10 +127,15 @@ export default function EmployeesList() {
     }
   };
 
+  const fetchDepartments = () => API.get("/api/hr/departments").then((res) => setDepartments(res.data?.data || [])).catch(() => {});
+  const fetchPositions = () => API.get("/api/hr/positions").then((res) => setPositions(res.data?.data || [])).catch(() => {});
+
   useEffect(() => {
     fetchEmployees();
     API.get("/api/branches").then(({ data }) => setBranches(Array.isArray(data) ? data : [])).catch(() => {});
     API.get("/api/users").then(({ data }) => setUsers(Array.isArray(data) ? data : data?.data || [])).catch(() => {});
+    fetchDepartments();
+    fetchPositions();
   }, []);
 
   const activeEmployees = useMemo(() => rows.filter((r) => r.status === "ACTIVO"), [rows]);
@@ -145,6 +152,8 @@ export default function EmployeesList() {
       full_name: row.full_name,
       id_card: row.id_card || "",
       position: row.position || "",
+      department: row.department_id ? { id: row.department_id, name: row.department_name } : null,
+      positionRef: row.position_id ? { id: row.position_id, title: row.position_title, department_id: row.department_id } : null,
       hire_date: String(row.hire_date).slice(0, 10),
       base_salary: String(row.base_salary),
       branch_id: row.branch_id || "",
@@ -171,6 +180,57 @@ export default function EmployeesList() {
     setDialogOpen(true);
   };
 
+  const handleQuickAddDepartment = async () => {
+    if (!quickAddDeptName.trim()) {
+      showAlert("Escriba un nombre para el nuevo departamento", "error");
+      return;
+    }
+    try {
+      setQuickAddDeptSaving(true);
+      const res = await API.post("/api/hr/departments", { name: quickAddDeptName.trim() });
+      await fetchDepartments();
+      setForm((f) => ({ ...f, department: { id: res.data?.data?.id, name: quickAddDeptName.trim() } }));
+      setQuickAddDeptOpen(false);
+      setQuickAddDeptName("");
+      showAlert("Departamento creado correctamente");
+    } catch (error) {
+      showAlert(error.response?.data?.message || "Error al crear el departamento", "error");
+    } finally {
+      setQuickAddDeptSaving(false);
+    }
+  };
+
+  const handleQuickAddPosition = async () => {
+    if (!quickAddPositionTitle.trim()) {
+      showAlert("Escriba un nombre para el nuevo puesto", "error");
+      return;
+    }
+    try {
+      setQuickAddPositionSaving(true);
+      const res = await API.post("/api/hr/positions", {
+        title: quickAddPositionTitle.trim(),
+        department_id: form.department?.id || null,
+      });
+      await fetchPositions();
+      setForm((f) => ({
+        ...f,
+        positionRef: { id: res.data?.data?.id, title: quickAddPositionTitle.trim(), department_id: form.department?.id || null },
+      }));
+      setQuickAddPositionOpen(false);
+      setQuickAddPositionTitle("");
+      showAlert("Puesto creado correctamente");
+    } catch (error) {
+      showAlert(error.response?.data?.message || "Error al crear el puesto", "error");
+    } finally {
+      setQuickAddPositionSaving(false);
+    }
+  };
+
+  const positionOptions = useMemo(
+    () => (form.department ? positions.filter((p) => p.department_id === form.department.id) : positions),
+    [positions, form.department],
+  );
+
   const handleSave = async () => {
     if (!form.full_name || !form.hire_date) {
       showAlert("Complete el nombre y la fecha de ingreso", "error");
@@ -182,7 +242,9 @@ export default function EmployeesList() {
       const payload = {
         full_name: form.full_name,
         id_card: form.id_card || null,
-        position: form.position || null,
+        position: form.positionRef?.title || form.position || null,
+        department_id: form.department?.id || null,
+        position_id: form.positionRef?.id || null,
         hire_date: form.hire_date,
         base_salary: Number(form.base_salary || 0),
         branch_id: form.branch_id || null,
@@ -233,22 +295,9 @@ export default function EmployeesList() {
     setMenuRow(null);
   };
 
-  const handleOpenHistory = () => {
+  const handleOpenDetail = () => {
     setActiveRow(menuRow);
-    setHistoryOpen(true);
-    handleCloseMenu();
-  };
-  const handleOpenBeneficiaries = () => {
-    setActiveRow(menuRow);
-    setBeneficiariesOpen(true);
-    handleCloseMenu();
-  };
-  const handlePrintContract = () => {
-    printEmployeeContractReport({ company: tenant, user: currentUser, employee: menuRow });
-    handleCloseMenu();
-  };
-  const handlePrintCertificate = () => {
-    printWorkCertificateReport({ company: tenant, user: currentUser, employee: menuRow });
+    setDetailOpen(true);
     handleCloseMenu();
   };
 
@@ -303,7 +352,8 @@ export default function EmployeesList() {
 
   const columns = useMemo(() => [
     { field: "full_name", headerName: "Nombre", flex: 1, minWidth: 200 },
-    { field: "position", headerName: "Puesto", width: 160, renderCell: (p) => p.value || "-" },
+    { field: "position", headerName: "Puesto", width: 160, renderCell: (p) => p.row.position_title || p.value || "-" },
+    { field: "department_name", headerName: "Departamento", width: 160, renderCell: (p) => p.value || "-" },
     { field: "branch_name", headerName: "Sucursal", width: 160, renderCell: (p) => p.value || "Sin asignar" },
     { field: "supervisor_name", headerName: "Jefe inmediato", width: 180, renderCell: (p) => p.value || "-" },
     { field: "base_salary", headerName: "Salario base", width: 130, renderCell: (p) => `C$ ${money(p.value)}` },
@@ -379,17 +429,8 @@ export default function EmployeesList() {
       </Paper>
 
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleCloseMenu}>
-        <MenuItem onClick={handleOpenHistory}>
-          <HistoryIcon fontSize="small" sx={{ mr: 1.2 }} /> Ver historial
-        </MenuItem>
-        <MenuItem onClick={handleOpenBeneficiaries}>
-          <GroupsIcon fontSize="small" sx={{ mr: 1.2 }} /> Beneficiarios
-        </MenuItem>
-        <MenuItem onClick={handlePrintContract}>
-          <DescriptionIcon fontSize="small" sx={{ mr: 1.2 }} /> Imprimir contrato
-        </MenuItem>
-        <MenuItem onClick={handlePrintCertificate}>
-          <BadgeOutlinedIcon fontSize="small" sx={{ mr: 1.2 }} /> Imprimir constancia laboral
+        <MenuItem onClick={handleOpenDetail}>
+          <InfoIcon fontSize="small" sx={{ mr: 1.2 }} /> Ver detalle
         </MenuItem>
         <Divider />
         {menuRow?.status === "ACTIVO" ? (
@@ -403,17 +444,10 @@ export default function EmployeesList() {
         )}
       </Menu>
 
-      <EmployeeHistoryDialog
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        employeeId={activeRow?.id}
-        employeeName={activeRow?.full_name}
-      />
-      <EmployeeBeneficiariesDialog
-        open={beneficiariesOpen}
-        onClose={() => setBeneficiariesOpen(false)}
-        employeeId={activeRow?.id}
-        employeeName={activeRow?.full_name}
+      <EmployeeDetailDialog
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        employee={activeRow}
       />
 
       <Dialog open={deactivateOpen} onClose={() => setDeactivateOpen(false)} maxWidth="xs" fullWidth>
@@ -491,11 +525,52 @@ export default function EmployeesList() {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth size="small" label="Puesto"
-                value={form.position}
-                onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-              />
+              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <Autocomplete
+                  size="small"
+                  fullWidth
+                  options={departments}
+                  value={form.department}
+                  getOptionLabel={(o) => o.name || ""}
+                  isOptionEqualToValue={(o, v) => o.id === v.id}
+                  onChange={(_, value) => setForm((f) => ({
+                    ...f,
+                    department: value,
+                    positionRef: f.positionRef && value && f.positionRef.department_id !== value.id ? null : f.positionRef,
+                  }))}
+                  renderInput={(params) => <TextField {...params} label="Departamento (opcional)" />}
+                />
+                <Tooltip title="Agregar nuevo departamento">
+                  <IconButton size="small" onClick={() => setQuickAddDeptOpen(true)} sx={{ mt: 0.5 }}>
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <Autocomplete
+                  size="small"
+                  fullWidth
+                  options={positionOptions}
+                  value={form.positionRef}
+                  getOptionLabel={(o) => o.title || ""}
+                  isOptionEqualToValue={(o, v) => o.id === v.id}
+                  onChange={(_, value) => setForm((f) => ({ ...f, positionRef: value }))}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Puesto"
+                      helperText={!form.positionRef && form.position ? `Valor previo: ${form.position}` : undefined}
+                    />
+                  )}
+                />
+                <Tooltip title="Agregar nuevo puesto">
+                  <IconButton size="small" onClick={() => setQuickAddPositionOpen(true)} sx={{ mt: 0.5 }}>
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -683,6 +758,40 @@ export default function EmployeesList() {
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Registrar empleado"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={quickAddDeptOpen} onClose={() => setQuickAddDeptOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Nuevo departamento</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth size="small" label="Nombre" sx={{ mt: 1 }} autoFocus
+            value={quickAddDeptName}
+            onChange={(e) => setQuickAddDeptName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQuickAddDeptOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <Button variant="contained" onClick={handleQuickAddDepartment} disabled={quickAddDeptSaving} sx={{ textTransform: "none" }}>
+            {quickAddDeptSaving ? "Guardando..." : "Crear departamento"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={quickAddPositionOpen} onClose={() => setQuickAddPositionOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Nuevo puesto{form.department ? ` — ${form.department.name}` : ""}</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth size="small" label="Nombre del puesto" sx={{ mt: 1 }} autoFocus
+            value={quickAddPositionTitle}
+            onChange={(e) => setQuickAddPositionTitle(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQuickAddPositionOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <Button variant="contained" onClick={handleQuickAddPosition} disabled={quickAddPositionSaving} sx={{ textTransform: "none" }}>
+            {quickAddPositionSaving ? "Guardando..." : "Crear puesto"}
           </Button>
         </DialogActions>
       </Dialog>

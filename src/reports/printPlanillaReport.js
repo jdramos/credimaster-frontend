@@ -3,7 +3,7 @@ import { openReport } from "./reportViewer";
 import { date, money } from "./reportUtils";
 
 // Planilla completa (todos los empleados de una corrida), formato apaisado.
-export const printPlanillaReport = ({ company = {}, user = {}, run = {}, items = [] }) => {
+export const printPlanillaReport = ({ company = {}, user = {}, run = {}, items = [], title = "Planilla de Pago" }) => {
   const fmt = (value) => money(value, "C$");
 
   const totalIncome = items.reduce((s, i) => s + Number(i.total_income || 0), 0);
@@ -13,7 +13,7 @@ export const printPlanillaReport = ({ company = {}, user = {}, run = {}, items =
   const html = createReport({
     company,
     user,
-    title: "Planilla de Pago",
+    title,
     subtitle: `${date(run.period_start)} al ${date(run.period_end)} · Pago: ${date(run.pay_date)} · ${run.branch_name || "Todas las sucursales"}`,
     orientation: "landscape",
 

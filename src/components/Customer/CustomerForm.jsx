@@ -35,11 +35,13 @@ import ErrorIcon from "@mui/icons-material/Error";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import GavelIcon from "@mui/icons-material/Gavel";
 import PrintIcon from "@mui/icons-material/Print";
+import RoomIcon from "@mui/icons-material/Room";
 
 import GeneralInfoTab from "./CustomerGeneralInfoTab";
 import GuaranteesTab from "./CustomerGuaranteesTab";
 
 import CustomerBusinessTab from "./CustomerBusinessTab";
+import CustomerLocationTab from "./CustomerLocationTab";
 import CustomerReferencesTab from "./CustomerReferencesTab";
 import CustomerChecklist from "./CustomerCheckList";
 import CustomerFinancialEvaluationTab from "./CustomerFinancialEvaluationTab";
@@ -150,6 +152,8 @@ const CustomerForm = () => {
     branch_id: "",
 
     business_address: "",
+    business_lat: null,
+    business_lng: null,
     business_name: "",
     business_telephone: "",
     business_type_id: "",
@@ -176,6 +180,8 @@ const CustomerForm = () => {
     genre_id: "",
 
     home_address: "",
+    home_lat: null,
+    home_lng: null,
     home_status: "",
     identification: "",
 
@@ -397,29 +403,29 @@ const CustomerForm = () => {
     business_receivables: 1,
     business_monthly_income: 1,
 
-    guarantees: 2,
-    article: 2,
-    series: 2,
-    brand: 2,
-    value: 2,
+    guarantees: 3,
+    article: 3,
+    series: 3,
+    brand: 3,
+    value: 3,
 
-    reference_name: 3,
-    reference_identity: 3,
-    reference_address: 3,
-    reference_workplace: 3,
-    reference_telephone: 3,
-    reference_relationship: 3,
-    reference_known_time: 3,
-    reference2_name: 3,
-    reference2_identity: 3,
-    reference2_address: 3,
-    reference2_workplace: 3,
-    reference2_telephone: 3,
-    reference2_relationship: 3,
-    reference2_known_time: 3,
+    reference_name: 4,
+    reference_identity: 4,
+    reference_address: 4,
+    reference_workplace: 4,
+    reference_telephone: 4,
+    reference_relationship: 4,
+    reference_known_time: 4,
+    reference2_name: 4,
+    reference2_identity: 4,
+    reference2_address: 4,
+    reference2_workplace: 4,
+    reference2_telephone: 4,
+    reference2_relationship: 4,
+    reference2_known_time: 4,
 
-    is_pep: 6,
-    pep_details: 6,
+    is_pep: 7,
+    pep_details: 7,
   };
 
   const handleSubmit = (e) => {
@@ -679,8 +685,9 @@ const CustomerForm = () => {
             "business_receivables",
             "business_monthly_income",
           ],
-      2: ["guarantees", "article", "series", "brand", "value"],
-      3: [
+      2: ["home_lat", "home_lng", "business_lat", "business_lng"],
+      3: ["guarantees", "article", "series", "brand", "value"],
+      4: [
         "reference_name",
         "reference_address",
         "reference_telephone",
@@ -692,8 +699,8 @@ const CustomerForm = () => {
         "reference2_known_time",
         "reference2_relationship",
       ],
-      4: [],
       5: [],
+      6: [],
     };
 
     const fields = tabFields[tabIndex] || [];
@@ -701,7 +708,7 @@ const CustomerForm = () => {
 
     if (hasErrors) return "error";
 
-    if (tabIndex === 2) {
+    if (tabIndex === 3) {
       const hasGuarantees = guarantees.some(
         (g) => String(g.article || "").trim() || Number(g.value || 0) > 0,
       );
@@ -709,7 +716,7 @@ const CustomerForm = () => {
       return hasGuarantees ? "complete" : "pending";
     }
 
-    if (tabIndex === 4 || tabIndex === 5) {
+    if (tabIndex === 5 || tabIndex === 6) {
       return customer?.id ? "complete" : "pending";
     }
 
@@ -903,31 +910,36 @@ const CustomerForm = () => {
                 label="Actividad económica"
               />
               <Tab
-                icon={getTabIcon(2, <VerifiedUserIcon fontSize="small" />)}
+                icon={getTabIcon(2, <RoomIcon fontSize="small" />)}
+                iconPosition="start"
+                label="Ubicación"
+              />
+              <Tab
+                icon={getTabIcon(3, <VerifiedUserIcon fontSize="small" />)}
                 iconPosition="start"
                 label="Garantías"
               />
               <Tab
-                icon={getTabIcon(3, <GroupsIcon fontSize="small" />)}
+                icon={getTabIcon(4, <GroupsIcon fontSize="small" />)}
                 iconPosition="start"
                 label="Referencias"
               />
 
               <Tab
                 icon={getTabIcon(
-                  4,
+                  5,
                   <AccountBalanceWalletIcon fontSize="small" />,
                 )}
                 iconPosition="start"
                 label="Evaluación financiera"
               />
               <Tab
-                icon={getTabIcon(5, <DescriptionIcon fontSize="small" />)}
+                icon={getTabIcon(6, <DescriptionIcon fontSize="small" />)}
                 iconPosition="start"
                 label="Documentos"
               />
               <Tab
-                icon={getTabIcon(6, <GavelIcon fontSize="small" />)}
+                icon={getTabIcon(7, <GavelIcon fontSize="small" />)}
                 iconPosition="start"
                 label="Cumplimiento PLA-FT"
               />
@@ -966,6 +978,14 @@ const CustomerForm = () => {
             </TabPanel>
 
             <TabPanel value={activeTab} index={2}>
+              <CustomerLocationTab
+                customer={customer}
+                setCustomer={setCustomer}
+                mode={internalMode}
+              />
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={3}>
               <GuaranteesTab
                 ref={guaranteesRef}
                 guarantees={guarantees}
@@ -974,7 +994,7 @@ const CustomerForm = () => {
               />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={3}>
+            <TabPanel value={activeTab} index={4}>
               <CustomerReferencesTab
                 ref={referencesRef}
                 customer={customer}
@@ -985,7 +1005,7 @@ const CustomerForm = () => {
               />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={4}>
+            <TabPanel value={activeTab} index={5}>
               <CustomerFinancialEvaluationTab
                 form={financialEvaluation}
                 setForm={setFinancialEvaluation}
@@ -996,7 +1016,7 @@ const CustomerForm = () => {
               />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={5}>
+            <TabPanel value={activeTab} index={6}>
               <CustomerChecklist
                 customerId={customer.id}
                 customerName={customer.customer_name}
@@ -1004,7 +1024,7 @@ const CustomerForm = () => {
               />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={6}>
+            <TabPanel value={activeTab} index={7}>
               <CustomerAmlCompliance
                 ref={amlRef}
                 customer={customer}

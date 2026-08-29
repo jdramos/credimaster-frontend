@@ -54,7 +54,8 @@ const emptyRunForm = {
 
 const emptyManualItem = { employee: null, concept: null, amount: "", detail: "" };
 
-export default function PayrollRunsList() {
+export default function PayrollRunsList({ runKind = "NOMINA" }) {
+  const isAguinaldo = runKind === "AGUINALDO";
   const { tenant } = useAuth();
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -81,7 +82,7 @@ export default function PayrollRunsList() {
   const fetchRuns = async () => {
     try {
       setLoading(true);
-      const res = await API.get(API_URL);
+      const res = await API.get(API_URL, { params: { run_kind: runKind } });
       setRows(res.data?.data || []);
     } catch (error) {
       showAlert(error.response?.data?.message || "Error al cargar planillas", "error");
@@ -108,7 +109,10 @@ export default function PayrollRunsList() {
     setGenDialogOpen(true);
   };
 
-  const buildPayload = () => ({
+  const buildPayload = () => (isAguinaldo ? {
+    pay_date: runForm.pay_date,
+    branch_id: runForm.branch_id || null,
+  } : {
     period_start: runForm.period_start,
     period_end: runForm.period_end,
     pay_date: runForm.pay_date,
@@ -122,17 +126,24 @@ export default function PayrollRunsList() {
     })),
   });
 
+  // La vista previa de aguinaldo no trae total_income/total_deductions/
+  // net_pay (no aplica: no hay deducciones) — se normaliza acá para que la
+  // misma tabla de vista previa sirva para ambos tipos de corrida.
+  const normalizePreview = (data) => (isAguinaldo && data
+    ? { ...data, items: data.items.map((i) => ({ ...i, total_income: i.amount, total_deductions: 0, net_pay: i.amount })) }
+    : data);
+
   const handlePreview = async () => {
-    if (!runForm.period_start || !runForm.period_end || !runForm.pay_date) {
-      showAlert("Complete el período y la fecha de pago", "error");
+    if (!runForm.pay_date || (!isAguinaldo && (!runForm.period_start || !runForm.period_end))) {
+      showAlert(isAguinaldo ? "Indique la fecha de pago" : "Complete el período y la fecha de pago", "error");
       return;
     }
     try {
       setPreviewing(true);
-      const res = await API.post(`${API_URL}/preview`, buildPayload());
-      setPreview(res.data?.data || null);
+      const res = await API.post(isAguinaldo ? "/api/hr/aguinaldo/preview" : `${API_URL}/preview`, buildPayload());
+      setPreview(normalizePreview(res.data?.data || null));
     } catch (error) {
-      showAlert(error.response?.data?.message || "Error al calcular la planilla", "error");
+      showAlert(error.response?.data?.message || `Error al calcular ${isAguinaldo ? "el aguinaldo" : "la planilla"}`, "error");
     } finally {
       setPreviewing(false);
     }
@@ -156,12 +167,12 @@ export default function PayrollRunsList() {
   const handleConfirm = async () => {
     try {
       setConfirming(true);
-      const res = await API.post(API_URL, buildPayload());
-      showAlert(res.data?.message || "Planilla generada correctamente");
+      const res = await API.post(isAguinaldo ? "/api/hr/aguinaldo" : API_URL, buildPayload());
+      showAlert(res.data?.message || `${isAguinaldo ? "Aguinaldo" : "Planilla"} generado correctamente`);
       setGenDialogOpen(false);
       fetchRuns();
     } catch (error) {
-      showAlert(error.response?.data?.message || "Error al generar la planilla", "error");
+      showAlert(error.response?.data?.message || `Error al generar ${isAguinaldo ? "el aguinaldo" : "la planilla"}`, "error");
     } finally {
       setConfirming(false);
     }
@@ -217,7 +228,10 @@ export default function PayrollRunsList() {
     try {
       const res = await API.get(`${API_URL}/${runId}/payslip/${employeeId}`);
       const { run, item, concepts } = res.data?.data || {};
-      printColillaDePagoReport({ company: tenant, user: currentUser, run, item, concepts });
+      printColillaDePagoReport({
+        company: tenant, user: currentUser, run, item, concepts,
+        title: isAguinaldo ? "Colilla de Aguinaldo" : undefined,
+      });
     } catch (error) {
       showAlert(error.response?.data?.message || "Error al generar la colilla", "error");
     }
@@ -225,7 +239,10 @@ export default function PayrollRunsList() {
 
   const handlePrintPlanilla = () => {
     if (!detail) return;
-    printPlanillaReport({ company: tenant, user: currentUser, run: detail.run, items: detail.items });
+    printPlanillaReport({
+      company: tenant, user: currentUser, run: detail.run, items: detail.items,
+      title: isAguinaldo ? "Aguinaldo (Décimo Tercer Mes)" : undefined,
+    });
   };
 
   const columns = useMemo(() => [
@@ -293,16 +310,18 @@ export default function PayrollRunsList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <PaidIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Planillas</Typography>
+              <Typography variant="h6" fontWeight={700}>{isAguinaldo ? "Aguinaldo" : "Planillas"}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Generación y control de corridas de nómina
+                {isAguinaldo
+                  ? "Décimo tercer mes prorrateado para empleados activos"
+                  : "Generación y control de corridas de nómina"}
               </Typography>
             </Box>
           </Box>
 
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button variant="contained" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={handleOpenGenerate}>
-              Generar planilla
+              {isAguinaldo ? "Generar aguinaldo" : "Generar planilla"}
             </Button>
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchRuns}>
               Actualizar
@@ -330,41 +349,48 @@ export default function PayrollRunsList() {
 
       {/* Diálogo: generar planilla */}
       <Dialog open={genDialogOpen} onClose={() => setGenDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Generar planilla</DialogTitle>
+        <DialogTitle>{isAguinaldo ? "Generar aguinaldo" : "Generar planilla"}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth size="small" type="date" label="Período desde" InputLabelProps={{ shrink: true }}
-                value={runForm.period_start}
-                onChange={(e) => { setRunForm((f) => ({ ...f, period_start: e.target.value })); setPreview(null); }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth size="small" type="date" label="Período hasta" InputLabelProps={{ shrink: true }}
-                value={runForm.period_end}
-                onChange={(e) => { setRunForm((f) => ({ ...f, period_end: e.target.value })); setPreview(null); }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
+            {!isAguinaldo && (
+              <>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth size="small" type="date" label="Período desde" InputLabelProps={{ shrink: true }}
+                    value={runForm.period_start}
+                    onChange={(e) => { setRunForm((f) => ({ ...f, period_start: e.target.value })); setPreview(null); }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth size="small" type="date" label="Período hasta" InputLabelProps={{ shrink: true }}
+                    value={runForm.period_end}
+                    onChange={(e) => { setRunForm((f) => ({ ...f, period_end: e.target.value })); setPreview(null); }}
+                  />
+                </Grid>
+              </>
+            )}
+            <Grid item xs={12} sm={isAguinaldo ? 6 : 3}>
               <TextField
                 fullWidth size="small" type="date" label="Fecha de pago" InputLabelProps={{ shrink: true }}
                 value={runForm.pay_date}
                 onChange={(e) => { setRunForm((f) => ({ ...f, pay_date: e.target.value })); setPreview(null); }}
+                helperText={isAguinaldo ? "Determina el ciclo dic-nov y hasta qué día se prorratea" : undefined}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                select fullWidth size="small" label="Tipo de período"
-                value={runForm.period_type}
-                onChange={(e) => { setRunForm((f) => ({ ...f, period_type: e.target.value })); setPreview(null); }}
-              >
-                <MenuItem value="MENSUAL">Mensual</MenuItem>
-                <MenuItem value="QUINCENAL">Quincenal</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} sm={4}>
+            {!isAguinaldo && (
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  select fullWidth size="small" label="Tipo de período"
+                  value={runForm.period_type}
+                  onChange={(e) => { setRunForm((f) => ({ ...f, period_type: e.target.value })); setPreview(null); }}
+                >
+                  <MenuItem value="MENSUAL">Mensual</MenuItem>
+                  <MenuItem value="QUINCENAL">Quincenal</MenuItem>
+                </TextField>
+              </Grid>
+            )}
+            <Grid item xs={12} sm={isAguinaldo ? 6 : 4}>
               <TextField
                 select fullWidth size="small" label="Sucursal (opcional)"
                 value={runForm.branch_id}
@@ -375,52 +401,56 @@ export default function PayrollRunsList() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                Conceptos manuales (opcional) — horas extra, otros ingresos, otras deducciones
-              </Typography>
-            </Grid>
+            {!isAguinaldo && (
+              <>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+                    Conceptos manuales (opcional) — horas extra, otros ingresos, otras deducciones
+                  </Typography>
+                </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <Autocomplete
-                size="small"
-                options={employees}
-                value={manualItemDraft.employee}
-                getOptionLabel={(o) => o.full_name || ""}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                onChange={(_, value) => setManualItemDraft((f) => ({ ...f, employee: value }))}
-                renderInput={(params) => <TextField {...params} label="Empleado" />}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <Autocomplete
-                size="small"
-                options={manualConcepts}
-                value={manualItemDraft.concept}
-                getOptionLabel={(o) => o.name || ""}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                onChange={(_, value) => setManualItemDraft((f) => ({ ...f, concept: value }))}
-                renderInput={(params) => <TextField {...params} label="Concepto" />}
-              />
-            </Grid>
-            <Grid item xs={6} sm={2}>
-              <TextField
-                fullWidth size="small" type="number" label="Monto"
-                value={manualItemDraft.amount}
-                onChange={(e) => setManualItemDraft((f) => ({ ...f, amount: e.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={6} sm={2}>
-              <TextField
-                fullWidth size="small" label="Detalle (opcional)"
-                value={manualItemDraft.detail}
-                onChange={(e) => setManualItemDraft((f) => ({ ...f, detail: e.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} sm={1}>
-              <Button fullWidth sx={{ textTransform: "none", height: "100%" }} onClick={addManualItem}>Agregar</Button>
-            </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Autocomplete
+                    size="small"
+                    options={employees}
+                    value={manualItemDraft.employee}
+                    getOptionLabel={(o) => o.full_name || ""}
+                    isOptionEqualToValue={(o, v) => o.id === v.id}
+                    onChange={(_, value) => setManualItemDraft((f) => ({ ...f, employee: value }))}
+                    renderInput={(params) => <TextField {...params} label="Empleado" />}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <Autocomplete
+                    size="small"
+                    options={manualConcepts}
+                    value={manualItemDraft.concept}
+                    getOptionLabel={(o) => o.name || ""}
+                    isOptionEqualToValue={(o, v) => o.id === v.id}
+                    onChange={(_, value) => setManualItemDraft((f) => ({ ...f, concept: value }))}
+                    renderInput={(params) => <TextField {...params} label="Concepto" />}
+                  />
+                </Grid>
+                <Grid item xs={6} sm={2}>
+                  <TextField
+                    fullWidth size="small" type="number" label="Monto"
+                    value={manualItemDraft.amount}
+                    onChange={(e) => setManualItemDraft((f) => ({ ...f, amount: e.target.value }))}
+                  />
+                </Grid>
+                <Grid item xs={6} sm={2}>
+                  <TextField
+                    fullWidth size="small" label="Detalle (opcional)"
+                    value={manualItemDraft.detail}
+                    onChange={(e) => setManualItemDraft((f) => ({ ...f, detail: e.target.value }))}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={1}>
+                  <Button fullWidth sx={{ textTransform: "none", height: "100%" }} onClick={addManualItem}>Agregar</Button>
+                </Grid>
+              </>
+            )}
 
             {manualItems.length > 0 && (
               <Grid item xs={12}>
@@ -496,7 +526,7 @@ export default function PayrollRunsList() {
             sx={{ textTransform: "none" }}
             onClick={handleConfirm}
           >
-            {confirming ? "Generando..." : "Confirmar y generar planilla"}
+            {confirming ? "Generando..." : `Confirmar y generar ${isAguinaldo ? "aguinaldo" : "planilla"}`}
           </Button>
         </DialogActions>
       </Dialog>
@@ -504,7 +534,7 @@ export default function PayrollRunsList() {
       {/* Diálogo: detalle de una planilla */}
       <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="xl" fullWidth>
         <DialogTitle>
-          Planilla #{detail?.run?.id} — {detail?.run?.status}
+          {isAguinaldo ? "Aguinaldo" : "Planilla"} #{detail?.run?.id} — {detail?.run?.status}
         </DialogTitle>
         <DialogContent>
           {detail && (
@@ -559,7 +589,7 @@ export default function PayrollRunsList() {
         </DialogContent>
         <DialogActions>
           <Button startIcon={<PrintIcon />} sx={{ textTransform: "none" }} onClick={handlePrintPlanilla}>
-            Imprimir planilla completa
+            {isAguinaldo ? "Imprimir aguinaldo completo" : "Imprimir planilla completa"}
           </Button>
           {detail?.run?.status === "APROBADA" && (
             <Button color="error" startIcon={<BlockIcon />} sx={{ textTransform: "none" }} onClick={() => handleVoid(detail.run)}>

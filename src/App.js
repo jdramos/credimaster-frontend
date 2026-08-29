@@ -72,7 +72,6 @@ const UsersList = lazy(() => import("./components/UserList"));
 const RolePermissionManager = lazy(() => import("./components/RolePermissionManager"));
 const PermissionList = lazy(() => import("./components/PermissionList"));
 const PaymentList = lazy(() => import("./components/PaymentList"));
-const GenerateBalances = lazy(() => import("./components/GenerateBalances"));
 const BusinessDayPanel = lazy(() => import("./components/BusinessDayPanel"));
 const CreditPolicyManager = lazy(() => import("./components/CreditPolicyManager"));
 const NotificationsManager = lazy(() => import("./components/notifications/NotificationsManager"));
@@ -91,7 +90,6 @@ const EconomicActivitiesPage = lazy(() => import("./pages/EconomicActivitiesPage
 const GenrePage = lazy(() => import("./pages/GenrePage"));
 const MaritalStatusPage = lazy(() => import("./pages/MaritalStatusPage"));
 const CustomerAddGpt = lazy(() => import("./components/Customer/CustomerForm"));
-const LoanAdd = lazy(() => import("./components/Loan/LoanAddGpt"));
 const LoanAddWizard = lazy(() => import("./components/Loan/LoanAddWizard"));
 const ApprovalInbox = lazy(() => import("./components/ApprovalInbox"));
 const CustomerClaimsList = lazy(() => import("./components/Claims/CustomerClaimsList"));
@@ -409,7 +407,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
             path="/crear-saldos"
             element={
               <PageContainer>
-                <GenerateBalances />
+                <BusinessDayPanel />
               </PageContainer>
             }
           />
@@ -455,14 +453,6 @@ function AppRoutes({ themeMode, setThemeMode }) {
           />
           <Route
             path="/creditos/agregar"
-            element={
-              <PageContainer>
-                <LoanAdd />
-              </PageContainer>
-            }
-          />
-          <Route
-            path="/creditos/agregar-v2"
             element={
               <PageContainer>
                 <LoanAddWizard />
@@ -773,6 +763,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
           <Route path="/rrhh/empleados" element={<EmployeesList />} />
           <Route path="/rrhh/planillas" element={<PayrollRunsList />} />
+          <Route path="/rrhh/aguinaldo" element={<PayrollRunsList runKind="AGUINALDO" />} />
           <Route path="/rrhh/aprobadores-planilla" element={<PayrollApproversConfig />} />
           <Route path="/rrhh/aprobar-planillas" element={<PayrollApprovalInbox />} />
           <Route path="/rrhh/deducciones" element={<EmployeeRecurringItemsList kind="DEDUCCION" />} />

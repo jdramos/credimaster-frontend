@@ -115,8 +115,7 @@ const menuItems = {
     { label: "Proveedores", iconName: "FaStore", to: "/proveedores", permission: "proveedores.ver" },
     { label: "Cuentas por Pagar", iconName: "FaFileInvoice", to: "/cuentas-por-pagar", permission: "cxp.ver" },
     { label: "Flujo de Caja", iconName: "FaChartLine", to: "/flujo-caja", permission: "cxp.ver" },
-    { label: "Crear saldos", iconName: "FaCalculator", to: "/crear-saldos" },
-    { label: "Cierre del día", iconName: "FaLock", to: "/cierre-del-dia" },
+    { label: "Día operativo", iconName: "FaLock", to: "/cierre-del-dia" },
     {
       label: "Políticas crédito",
       iconName: "FaFileSignature",
@@ -324,6 +323,7 @@ const menuItems = {
   rrhh: [
     { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados", permission: "menu.rrhh" },
     { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas", permission: "menu.rrhh" },
+    { label: "Aguinaldo", iconName: "FaGift", to: "/rrhh/aguinaldo", permission: "menu.rrhh" },
     { label: "Aprobadores de Planilla", iconName: "FaUserShield", to: "/rrhh/aprobadores-planilla", permission: "rrhh.configuracion.gestionar" },
     { label: "Aprobar Planillas", iconName: "FaClipboardCheck", to: "/rrhh/aprobar-planillas", permission: "rrhh.planillas.aprobar" },
     { label: "Deducciones", iconName: "FaMinusCircle", to: "/rrhh/deducciones", permission: "menu.rrhh" },

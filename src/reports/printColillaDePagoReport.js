@@ -5,25 +5,29 @@ import { date, money } from "./reportUtils";
 // Colilla individual de un empleado dentro de una corrida de planilla —
 // incluye el desglose de préstamo ("Cuota N de M, Saldo C$ X") y el saldo
 // de vacaciones resultante, tal como pidió el usuario explícitamente.
-export const printColillaDePagoReport = ({ company = {}, user = {}, run = {}, item = {}, concepts = [] }) => {
+export const printColillaDePagoReport = ({ company = {}, user = {}, run = {}, item = {}, concepts = [], title = "Colilla de Pago" }) => {
   const fmt = (value) => money(value, "C$");
 
   const incomeConcepts = concepts.filter((c) => c.type === "INGRESO");
   const deductionConcepts = concepts.filter((c) => c.type === "DEDUCCION");
 
+  const summary = [
+    { label: "Total ingresos", value: fmt(item.total_income) },
+    { label: "Total deducciones", value: fmt(item.total_deductions) },
+    { label: "Neto a pagar", value: fmt(item.net_pay) },
+  ];
+  if (item.vacation_balance_after !== null && item.vacation_balance_after !== undefined) {
+    summary.push({ label: "Saldo de vacaciones", value: `${Number(item.vacation_balance_after).toFixed(2)} días` });
+  }
+
   const html = createReport({
     company,
     user,
-    title: "Colilla de Pago",
+    title,
     subtitle: `${date(run.period_start)} al ${date(run.period_end)} · Pago: ${date(run.pay_date)}`,
     orientation: "portrait",
 
-    summary: [
-      { label: "Total ingresos", value: fmt(item.total_income) },
-      { label: "Total deducciones", value: fmt(item.total_deductions) },
-      { label: "Neto a pagar", value: fmt(item.net_pay) },
-      { label: "Saldo de vacaciones", value: `${Number(item.vacation_balance_after || 0).toFixed(2)} días` },
-    ],
+    summary,
 
     sections: [
       {

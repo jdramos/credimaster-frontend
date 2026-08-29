@@ -15,11 +15,18 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import LockIcon from "@mui/icons-material/Lock";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import BranchSelect from "./BranchSelect";
 import API from "../api";
@@ -37,6 +44,12 @@ function formatDate(value) {
   return `${d}/${m}/${y}`;
 }
 
+// Generar el saldo INICIAL/FINAL y aperturar/cerrar el día son, en el
+// backend, un solo paso (ver LoanController.generateBalances, que llama
+// openBusinessDayCore/closeBusinessDayCore): generar el saldo INICIAL
+// abre el día, generar el FINAL lo cierra. Esta pantalla une lo que
+// antes eran dos menús separados ("Crear saldos" y "Cierre del día")
+// para que no haga falta saber que hay que pasar por los dos.
 const BusinessDayPanel = () => {
   const [branchId, setBranchId] = useState("");
   const [branchName, setBranchName] = useState("");
@@ -45,8 +58,10 @@ const BusinessDayPanel = () => {
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [logs, setLogs] = useState([]);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [regenerateOpen, setRegenerateOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const loadStatus = useCallback(async () => {
@@ -82,39 +97,92 @@ const BusinessDayPanel = () => {
     setBranchName(selected.name || "Sucursal seleccionada");
     setSuccess("");
     setError("");
+    setLogs([]);
   };
 
-  const handleConfirmAction = async () => {
+  const isOpenAction = status?.pending_action === "OPEN";
+  const balanceType = isOpenAction ? "INITIAL" : "FINAL";
+
+  const getCurrentTime = () => new Date().toLocaleTimeString("es-ES", { hour12: false });
+  const addLog = (message) => setLogs((prev) => [...prev, `[${getCurrentTime()}] ${message}`]);
+
+  const startAction = async () => {
+    setError("");
+    setSuccess("");
+    setLogs([]);
+
+    try {
+      const { data } = await API.get(`/api/balances/balance-exist`, {
+        params: { branch_id: branchId, balance_type: balanceType, balance_date: status.pending_date },
+      });
+
+      if (data.exists) setRegenerateOpen(true);
+      else setConfirmOpen(true);
+    } catch {
+      setError("No se pudo verificar si ya existe un saldo para este día.");
+    }
+  };
+
+  const handleGenerate = async () => {
+    setSubmitting(true);
+    setError("");
+    setSuccess("");
+    setConfirmOpen(false);
+    setRegenerateOpen(false);
+
+    addLog(
+      `Generando saldo ${isOpenAction ? "inicial" : "final"} — Sucursal: ${branchName}, día ${formatDate(status.pending_date)}...`,
+    );
+
+    try {
+      const { data } = await API.post(`/api/loans/balances`, {
+        branch_id: branchId,
+        balance_type: balanceType,
+        balance_date: status.pending_date,
+      });
+
+      if (data.generated_dates) {
+        data.generated_dates.forEach((date) => addLog(`Saldo generado para ${formatDate(date)}`));
+      }
+
+      if (data.warning) {
+        addLog(`Atención: ${data.warning}`);
+        setError(data.warning);
+      } else {
+        addLog(`Listo — ${data.loans_processed || 0} crédito(s) procesados. El día quedó ${isOpenAction ? "abierto" : "cerrado"}.`);
+        setSuccess(data.message || "Operación realizada correctamente.");
+      }
+
+      await loadStatus();
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.message || "No se pudo generar el saldo.";
+      addLog(`Error: ${msg}`);
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleManualFallback = async (action) => {
     setSubmitting(true);
     setError("");
     setSuccess("");
 
     try {
-      const endpoint =
-        status.pending_action === "OPEN"
-          ? "/api/business-day/open"
-          : "/api/business-day/close";
-
-      const { data } = await API.post(endpoint, { branch_id: branchId });
-
+      const { data } = await API.post(`/api/business-day/${action}`, { branch_id: branchId });
       setSuccess(data?.message || "Operación realizada correctamente.");
       await loadStatus();
     } catch (err) {
-      setError(
-        err.response?.data?.message || "No se pudo completar la operación.",
-      );
+      setError(err.response?.data?.message || "No se pudo completar la operación.");
     } finally {
       setSubmitting(false);
-      setConfirmOpen(false);
     }
   };
-
-  const isOpenAction = status?.pending_action === "OPEN";
 
   return (
     <Box sx={{ width: "100%", maxWidth: 700, margin: "auto", mt: 5 }}>
       <Typography variant="h5" gutterBottom textAlign="center">
-        Apertura y Cierre del Día
+        Día Operativo
       </Typography>
       <Typography
         variant="body2"
@@ -126,7 +194,8 @@ const BusinessDayPanel = () => {
         registrar pagos, créditos nuevos, aprobaciones, modificaciones ni
         adjudicaciones de esa sucursal. Los días se procesan siempre en
         orden — no se puede elegir una fecha libremente, ya que el saldo de
-        intereses de cada día depende del cierre del día anterior.
+        intereses de cada día depende del cierre del día anterior. Generar
+        el saldo del día también lo abre o lo cierra: es un solo paso.
       </Typography>
 
       <FormControl fullWidth sx={{ mb: 3 }}>
@@ -182,8 +251,8 @@ const BusinessDayPanel = () => {
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {isOpenAction
-                    ? "Falta aperturar este día."
-                    : "Este día está abierto — falta hacer el cierre final."}
+                    ? "Falta generar el saldo inicial y aperturar este día."
+                    : "Este día está abierto — falta generar el saldo final y hacer el cierre."}
                 </Typography>
               </Box>
               <Chip
@@ -214,27 +283,17 @@ const BusinessDayPanel = () => {
             </Box>
 
             <Stack direction="row" spacing={2} justifyContent="center" sx={{ pt: 1 }}>
-              {isOpenAction ? (
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<LockOpenIcon />}
-                  disabled={submitting}
-                  onClick={() => setConfirmOpen(true)}
-                >
-                  Aperturar día {formatDate(status.pending_date)}
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<LockIcon />}
-                  disabled={submitting}
-                  onClick={() => setConfirmOpen(true)}
-                >
-                  Cierre final {formatDate(status.pending_date)}
-                </Button>
-              )}
+              <Button
+                variant="contained"
+                color={isOpenAction ? "success" : "error"}
+                startIcon={isOpenAction ? <LockOpenIcon /> : <LockIcon />}
+                disabled={submitting}
+                onClick={startAction}
+              >
+                {isOpenAction
+                  ? `Generar saldo inicial y aperturar ${formatDate(status.pending_date)}`
+                  : `Generar saldo final y cerrar ${formatDate(status.pending_date)}`}
+              </Button>
               <Button
                 variant="outlined"
                 startIcon={<RefreshIcon />}
@@ -244,19 +303,55 @@ const BusinessDayPanel = () => {
                 Actualizar
               </Button>
             </Stack>
+
+            {logs.length > 0 && (
+              <Box sx={{ textAlign: "left" }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Bitácora</Typography>
+                <List dense>
+                  {logs.map((log, index) => (
+                    <ListItem key={index} disableGutters>
+                      <ListItemText primary={log} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            <Accordion elevation={0} sx={{ border: "1px solid #E5E7EB", "&:before": { display: "none" } }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="body2" color="text.secondary">
+                  Avanzado: aperturar/cerrar manualmente sin generar saldo
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+                  Usá esto solo si ya generaste el saldo pero el día no quedó
+                  abierto/cerrado automáticamente (por ejemplo, sin créditos
+                  desembolsados ese día).
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={submitting}
+                  onClick={() => handleManualFallback(isOpenAction ? "open" : "close")}
+                >
+                  {isOpenAction ? "Forzar apertura manual" : "Forzar cierre manual"}
+                </Button>
+              </AccordionDetails>
+            </Accordion>
           </Stack>
         </Paper>
       )}
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>
-          {isOpenAction ? "Aperturar día" : "Confirmar cierre final"}
+          {isOpenAction ? "Generar saldo inicial y aperturar" : "Generar saldo final y cerrar"}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
             {isOpenAction
-              ? `¿Confirma la apertura del día ${formatDate(status?.pending_date)} para la sucursal "${branchName}"? A partir de este momento se podrán registrar pagos, créditos y aprobaciones en esa sucursal para ese día.`
-              : `⚠️ El cierre final es DEFINITIVO y no se puede deshacer. Una vez cerrado, no se podrá volver a operar el día ${formatDate(status?.pending_date)} en la sucursal "${branchName}". ¿Confirma el cierre final?`}
+              ? `Generar el saldo INICIAL del día ${formatDate(status?.pending_date)} también APERTURA el día operativo de "${branchName}". A partir de ese momento se podrán registrar pagos, créditos y aprobaciones en esa sucursal para ese día. ¿Confirma la apertura?`
+              : `⚠️ Generar el saldo FINAL también CIERRA el día operativo de "${branchName}" de forma DEFINITIVA e IRREVERSIBLE — no hay forma de reabrirlo desde el sistema. A partir de ese momento no se podrán registrar más pagos, créditos, aprobaciones ni desembolsos de esa sucursal para el día ${formatDate(status?.pending_date)}. Verifique antes de confirmar que ya se registró todo lo pendiente. ¿Confirma el cierre?`}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -264,12 +359,31 @@ const BusinessDayPanel = () => {
             Cancelar
           </Button>
           <Button
-            onClick={handleConfirmAction}
+            onClick={handleGenerate}
             color={isOpenAction ? "primary" : "error"}
             variant="contained"
             disabled={submitting}
           >
             {submitting ? "Procesando..." : "Confirmar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={regenerateOpen} onClose={() => setRegenerateOpen(false)}>
+        <DialogTitle>Regenerar saldo existente</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ⚠️ Ya existe un saldo {isOpenAction ? "inicial" : "final"} generado
+            para el {formatDate(status?.pending_date)} en "{branchName}".
+            ¿Desea reemplazarlo y regenerarlo?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRegenerateOpen(false)} color="secondary">
+            Cancelar
+          </Button>
+          <Button onClick={handleGenerate} color="primary" variant="contained" disabled={submitting}>
+            {submitting ? "Procesando..." : "Sí, regenerar"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -385,5 +385,16 @@ export const reportStyles = `
     color:#005AA7;
 }
 
+/* Documentos tipo carta (constancia laboral, carta salarial): centra el
+   cuerpo verticalmente en el espacio que queda entre encabezado y pie de
+   página — opt-in vía createReport({ centerContent: true }), no afecta a
+   los reportes tabulares/EEFF que usan el flujo normal desde arriba. */
+.report-center-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 60vh;
+}
+
 </style>
 `;

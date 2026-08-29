@@ -19,6 +19,7 @@ export const createReport = ({
   context = null,
   styles = reportStyles,
   orientation = "portrait",
+  centerContent = false,
 } = {}) => {
   const safeSections = Array.isArray(sections) ? sections : [];
   const safeFilters = Array.isArray(filters) ? filters : [];
@@ -62,7 +63,7 @@ export const createReport = ({
     html.push(buildSummary(safeSummary));
   }
 
-  safeSections.forEach((section = {}) => {
+  const sectionsHtml = safeSections.map((section = {}) => {
     const contents = [];
 
     if (section.fields) {
@@ -83,15 +84,22 @@ export const createReport = ({
       });
     }
 
-    html.push(
-      buildSection({
-        title: section.title,
-        subtitle: section.subtitle,
-        content: contents.join(""),
-        className: section.className,
-      }),
-    );
-  });
+    return buildSection({
+      title: section.title,
+      subtitle: section.subtitle,
+      content: contents.join(""),
+      className: section.className,
+    });
+  }).join("");
+
+  // centerContent: para documentos cortos tipo carta (constancia laboral,
+  // carta salarial) — no se aplica al resto de reportes (tablas/EEFF), que
+  // siguen fluyendo normalmente desde el encabezado.
+  html.push(
+    centerContent
+      ? `<div class="report-center-content">${sectionsHtml}</div>`
+      : sectionsHtml,
+  );
 
   html.push(
     buildFooter({

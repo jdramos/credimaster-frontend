@@ -41,13 +41,26 @@ const UserAdd = ({ onClose, userToEdit }) => {
     email: "",
     role_id: "",
     department_id: "",
+    collector_id: "",
+    promoter_id: "",
   });
 
   const [departments, setDepartments] = useState([]);
+  const [collectors, setCollectors] = useState([]);
+  const [promoters, setPromoters] = useState([]);
 
   useEffect(() => {
     getDepartments()
       .then((res) => setDepartments((res?.data || []).filter((d) => d.is_active)))
+      .catch(() => {});
+    // Cobrador y promotor son opcionales: un usuario puede solo ingresar
+    // solicitudes (promotor) sin cobrar pagos (cobrador), o viceversa, o
+    // ninguno de los dos.
+    API.get("/api/collectors")
+      .then((res) => setCollectors(Array.isArray(res.data) ? res.data : res.data?.data || []))
+      .catch(() => {});
+    API.get("/api/promoters")
+      .then((res) => setPromoters(Array.isArray(res.data) ? res.data : res.data?.data || []))
       .catch(() => {});
   }, []);
 
@@ -81,6 +94,8 @@ const UserAdd = ({ onClose, userToEdit }) => {
         email: userToEdit.email || "",
         role_id: userToEdit.rol_id || "",
         department_id: userToEdit.department_id || "",
+        collector_id: userToEdit.collector_id || "",
+        promoter_id: userToEdit.promoter_id || "",
       });
     } else {
       setUser({
@@ -91,6 +106,8 @@ const UserAdd = ({ onClose, userToEdit }) => {
         email: "",
         role_id: "",
         department_id: "",
+        collector_id: "",
+        promoter_id: "",
       });
     }
 
@@ -378,6 +395,40 @@ const UserAdd = ({ onClose, userToEdit }) => {
                   <MenuItem value="">Sin departamento</MenuItem>
                   {departments.map((d) => (
                     <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="promoter-select-label">Promotor (opcional)</InputLabel>
+                <Select
+                  labelId="promoter-select-label"
+                  label="Promotor (opcional)"
+                  name="promoter_id"
+                  value={user.promoter_id}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">Sin promotor</MenuItem>
+                  {promoters.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>{p.name}{p.branch_name ? ` — ${p.branch_name}` : ""}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="collector-select-label">Cobrador (opcional)</InputLabel>
+                <Select
+                  labelId="collector-select-label"
+                  label="Cobrador (opcional)"
+                  name="collector_id"
+                  value={user.collector_id}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">Sin cobrador</MenuItem>
+                  {collectors.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>{c.name}{c.branch_name ? ` — ${c.branch_name}` : ""}</MenuItem>
                   ))}
                 </Select>
               </FormControl>

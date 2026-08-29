@@ -63,6 +63,16 @@ export const sumBy = (rows = [], field) =>
 export const fullName = (...parts) =>
   parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 
+// Sustitución simple de placeholders `{{campo}}` en una plantilla editable
+// (ver hr_document_templates / HrConfigPanel.jsx) — sin lógica condicional
+// en la plantilla misma; los pocos fragmentos que deben desaparecer por
+// completo (p.ej. la frase del salario para un empleado dado de baja) ya
+// vienen resueltos en `data` como cadena vacía. La plantilla en sí es
+// HTML generado por el editor de texto enriquecido (toolbar de
+// negrita/cursiva/fuente en HrConfigPanel.jsx), nunca HTML escrito a mano.
+export const interpolate = (template, data = {}) =>
+  String(template || "").replace(/\{\{(\w+)\}\}/g, (_, key) => (data[key] ?? ""));
+
 export const yesNo = (value) => {
   if (value === true || value === "Y" || value === 1) return "Sí";
   if (value === false || value === "N" || value === 0) return "No";
