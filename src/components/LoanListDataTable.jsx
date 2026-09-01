@@ -441,6 +441,16 @@ function LoanListDataTable({
         );
       }
       if (loanStatus === "DISBURSED") {
+        if (row.delivered_at) {
+          return (
+            <Chip
+              size="small"
+              label="Entregado"
+              color="success"
+              icon={<CheckCircleIcon fontSize="small" />}
+            />
+          );
+        }
         return (
           <Chip
             size="small"
@@ -521,11 +531,17 @@ function LoanListDataTable({
           color: "error",
           icon: <CancelIcon fontSize="small" />,
         },
-        DISBURSED: {
-          label: "Desembolsado",
-          color: "info",
-          icon: <PaidIcon fontSize="small" />,
-        },
+        DISBURSED: row.delivered_at
+          ? {
+              label: "Entregado",
+              color: "success",
+              icon: <CheckCircleIcon fontSize="small" />,
+            }
+          : {
+              label: "Desembolsado",
+              color: "info",
+              icon: <PaidIcon fontSize="small" />,
+            },
         CANCELLED: {
           label: "Cancelado",
           color: "secondary",

@@ -111,10 +111,7 @@ const menuItems = {
     },
     { label: "Pagos", iconName: "FaCashRegister", to: "/pagos", permission: "menu.pagos" },
     { label: "Cobranza", iconName: "FaHandshake", to: "/cobranza", permission: "cobranza.ver" },
-    { label: "Retenciones (DGI)", iconName: "FaFileInvoiceDollar", to: "/retenciones", permission: "retenciones.ver" },
-    { label: "Proveedores", iconName: "FaStore", to: "/proveedores", permission: "proveedores.ver" },
-    { label: "Cuentas por Pagar", iconName: "FaFileInvoice", to: "/cuentas-por-pagar", permission: "cxp.ver" },
-    { label: "Flujo de Caja", iconName: "FaChartLine", to: "/flujo-caja", permission: "cxp.ver" },
+    
     { label: "Día operativo", iconName: "FaLock", to: "/cierre-del-dia" },
     {
       label: "Políticas crédito",
@@ -285,6 +282,10 @@ const menuItems = {
       to: "/contabilidad/conciliacion",
       permission: "menu.contabilidad",
     },
+    { label: "Retenciones (DGI)", iconName: "FaFileInvoiceDollar", to: "/retenciones", permission: "retenciones.ver" },
+    { label: "Proveedores", iconName: "FaStore", to: "/proveedores", permission: "proveedores.ver" },
+    { label: "Cuentas por Pagar", iconName: "FaFileInvoice", to: "/cuentas-por-pagar", permission: "cxp.ver" },
+    { label: "Flujo de Caja", iconName: "FaChartLine", to: "/flujo-caja", permission: "cxp.ver" },
   ],
 
   banks: [

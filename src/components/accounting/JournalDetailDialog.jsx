@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -21,6 +24,7 @@ import {
 import PrintIcon from "@mui/icons-material/Print";
 import CancelIcon from "@mui/icons-material/Cancel";
 import EditIcon from "@mui/icons-material/Edit";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 
@@ -80,6 +84,7 @@ export default function JournalDetailDialog({ open, onClose, journalId, canVoid 
       setEntry({
         ...(data.entry || {}),
         details: data.lines || data.details || [],
+        lineDetails: data.lineDetails || [],
       });
     } catch (error) {
       showAlert(
@@ -102,6 +107,7 @@ export default function JournalDetailDialog({ open, onClose, journalId, canVoid 
   }, [open, journalId]);
 
   const details = entry?.details || [];
+  const lineDetails = entry?.lineDetails || [];
 
   const totalDebit = details.reduce(
     (sum, row) => sum + Number(row.debit || 0),
@@ -265,6 +271,44 @@ export default function JournalDetailDialog({ open, onClose, journalId, canVoid 
                   Crédito: {money(totalCredit)}
                 </Typography>
               </Box>
+
+              {lineDetails.length > 0 && (
+                <Accordion sx={{ mt: 1.5, "&:before": { display: "none" } }} elevation={0} variant="outlined">
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="body2" fontWeight={700}>
+                      Ver detalle por crédito ({new Set(lineDetails.map((r) => r.loan_id)).size})
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ p: 0 }}>
+                    <TableContainer>
+                      <Table size="small" sx={{ "& td, & th": { py: 0.5, px: 1, fontSize: 13 } }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 800 }}>Crédito</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }}>Cliente</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }}>Cuenta</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }} align="right">Débito</TableCell>
+                            <TableCell sx={{ fontWeight: 800 }} align="right">Crédito</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {lineDetails.map((row, index) => (
+                            <TableRow key={index} hover>
+                              <TableCell>{row.credit_code || row.loan_id}</TableCell>
+                              <TableCell>{row.customer_name || "-"}</TableCell>
+                              <TableCell sx={{ fontWeight: 600 }}>
+                                {row.muc_code} - {row.account_name}
+                              </TableCell>
+                              <TableCell align="right">{money(row.debit)}</TableCell>
+                              <TableCell align="right">{money(row.credit)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </AccordionDetails>
+                </Accordion>
+              )}
             </>
           )}
         </DialogContent>
