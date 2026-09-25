@@ -24,6 +24,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import GavelIcon from "@mui/icons-material/Gavel";
+import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import PrintIcon from "@mui/icons-material/Print";
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
@@ -211,6 +212,7 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
         risk_score: data.risk_score,
         risk_level: data.risk_level,
         risk_calculated_at: new Date().toISOString(),
+        risk_criteria_detail: data.applied_criteria,
       }));
     } catch (err) {
       console.error(err);
@@ -319,6 +321,43 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
     loadScreenings();
   }, [loadScreenings]);
 
+  // Tamizaje en vivo contra la tabla compartida OFAC (SDN)/ONU (Consolidated
+  // List) -- ver api/compliance/watchlistEngine.js::searchWatchlist, el mismo
+  // motor que ya se usa para el tamizaje automático de clientes/empleados/
+  // fiadores. El registro sigue siendo manual (queda como constancia
+  // auditable en sanctions_screenings), pero ahora se prellena con un
+  // resultado real en vez de que el usuario lo declare a ciegas.
+  const [liveMatches, setLiveMatches] = useState(null);
+  const [searchingLive, setSearchingLive] = useState(false);
+  const [liveSearchError, setLiveSearchError] = useState("");
+
+  const handleSearchLive = async () => {
+    const name = (customer?.customer_name || customer?.public_name || "").trim();
+    if (!name) {
+      setLiveSearchError("El cliente no tiene un nombre registrado para buscar.");
+      return;
+    }
+    try {
+      setSearchingLive(true);
+      setLiveSearchError("");
+      const { data } = await API.get("/api/aml/watchlists/search", { params: { name } });
+      const matches = Array.isArray(data) ? data : [];
+      setLiveMatches(matches);
+      setListName(matches.length ? matches.map((m) => m.source).filter((v, i, a) => a.indexOf(v) === i).join(" / ") : "OFAC SDN / ONU Consolidada");
+      setResult(matches.length ? "MATCH" : "CLEAR");
+      setNotes(
+        matches.length
+          ? `Coincidencia(s) automática(s): ${matches.map((m) => m.entry_name).join("; ")}`
+          : "Sin coincidencias en la búsqueda automática OFAC/ONU.",
+      );
+    } catch (err) {
+      console.error(err);
+      setLiveSearchError(err?.response?.data?.message || "No se pudo consultar las listas OFAC/ONU.");
+    } finally {
+      setSearchingLive(false);
+    }
+  };
+
   const handleFundsSourceChange = (e) => {
     setCustomer((prev) => ({ ...prev, funds_source: e.target.value }));
   };
@@ -422,6 +461,25 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                 </Typography>
               )}
             </Stack>
+
+            {Array.isArray(customer?.risk_criteria_detail) && customer.risk_criteria_detail.length > 0 && (
+              <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  Criterios aplicados:
+                </Typography>
+                {customer.risk_criteria_detail.map((c) => (
+                  <Stack key={c.code} direction="row" spacing={1} alignItems="center">
+                    <Chip size="small" variant="outlined" label={`+${c.points} pts`} />
+                    <Typography variant="body2">{c.label}</Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            )}
+            {Array.isArray(customer?.risk_criteria_detail) && customer.risk_criteria_detail.length === 0 && customer?.risk_calculated_at && (
+              <Typography variant="caption" color="text.secondary">
+                Ningún criterio de riesgo aplica actualmente para este cliente.
+              </Typography>
+            )}
 
             {riskError && <Alert severity="error">{riskError}</Alert>}
             {picError && <Alert severity="error">{picError}</Alert>}
@@ -640,9 +698,59 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
       {customerId && (
       <Section
         title="Tamizaje contra listas de sanciones"
-        subtitle="Registro manual de la consulta contra listas OFAC/ONU u otras. No hay integración automática a una API de terceros."
+        subtitle="Verificación en vivo contra las listas OFAC (SDN) y ONU (Consolidated List) sincronizadas cada noche, más registro manual para otras listas (UE, locales, etc.)."
       >
         <Stack spacing={1.5}>
+          {!disabled && (
+            <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems="center" flexWrap="wrap">
+              <Button
+                variant="outlined"
+                startIcon={searchingLive ? <CircularProgress size={16} /> : <TravelExploreIcon fontSize="small" />}
+                onClick={handleSearchLive}
+                disabled={searchingLive}
+                sx={{ textTransform: "none", fontWeight: 700, whiteSpace: "nowrap" }}
+              >
+                {searchingLive ? "Buscando..." : "Buscar en OFAC/ONU"}
+              </Button>
+              {liveMatches !== null && (
+                liveMatches.length ? (
+                  <Chip
+                    size="small"
+                    color="error"
+                    label={`${liveMatches.length} coincidencia(s) encontrada(s)`}
+                  />
+                ) : (
+                  <Chip size="small" color="success" label="Sin coincidencias" />
+                )
+              )}
+            </Stack>
+          )}
+
+          {liveSearchError && <Alert severity="error">{liveSearchError}</Alert>}
+
+          {liveMatches !== null && liveMatches.length > 0 && (
+            <TableContainer sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#FEF2F2" }}>
+                    <TableCell sx={{ fontWeight: 800 }}>Nombre</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Lista</TableCell>
+                    <TableCell sx={{ fontWeight: 800 }}>Identificación</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {liveMatches.map((m) => (
+                    <TableRow key={`${m.source}-${m.id}`}>
+                      <TableCell>{m.entry_name}</TableCell>
+                      <TableCell>{m.source}</TableCell>
+                      <TableCell>{m.identification_number || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
           {!disabled && (
             <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ md: "flex-end" }}>
               <TextField
