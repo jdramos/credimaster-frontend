@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -239,7 +240,10 @@ export default function ObligacionesList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <RequestQuoteIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Obligaciones Financieras</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Obligaciones Financieras</Typography>
+                <HelpButton screenKey="obligaciones.listado" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Deuda de la institución con sus financiadores
               </Typography>

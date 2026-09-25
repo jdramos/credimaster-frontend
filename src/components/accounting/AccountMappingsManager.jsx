@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -267,9 +268,12 @@ export default function AccountMappingsManager() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <AccountBalanceIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>
-                Cuentas contables por operación
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>
+                  Cuentas contables por operación
+                </Typography>
+                <HelpButton screenKey="contabilidad.mapeos" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Define qué cuenta del catálogo MUC se usa para cada operación (ingresos, cartera, caja, provisión, etc.). Ya vienen precargadas las cuentas establecidas en el MUC.
               </Typography>

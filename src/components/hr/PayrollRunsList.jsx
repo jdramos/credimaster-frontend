@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -25,7 +26,7 @@ import {
   Divider,
   Stack,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import PaidIcon from "@mui/icons-material/Paid";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -33,6 +34,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import BlockIcon from "@mui/icons-material/Block";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
+import { exportToExcel } from "./hrExcelExport";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import dayjs from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
 import { printColillaDePagoReport } from "../../reports/printColillaDePagoReport";
 import { printPlanillaReport } from "../../reports/printPlanillaReport";
@@ -310,7 +314,10 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <PaidIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>{isAguinaldo ? "Aguinaldo" : "Planillas"}</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>{isAguinaldo ? "Aguinaldo" : "Planillas"}</Typography>
+                <HelpButton screenKey={isAguinaldo ? "rrhh.aguinaldo" : "rrhh.planillas"} />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 {isAguinaldo
                   ? "Décimo tercer mes prorrateado para empleados activos"
@@ -326,6 +333,29 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchRuns}>
               Actualizar
             </Button>
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              sx={{ textTransform: "none" }}
+              onClick={() =>
+                exportToExcel(
+                  rows.map((r) => ({
+                    "#": r.id,
+                    "Período desde": String(r.period_start).slice(0, 10),
+                    "Período hasta": String(r.period_end).slice(0, 10),
+                    "Fecha de pago": String(r.pay_date).slice(0, 10),
+                    Sucursal: r.branch_name || "Todas",
+                    Empleados: r.employee_count,
+                    "Total neto": Number(r.total_net || 0),
+                    Estado: r.status,
+                  })),
+                  isAguinaldo ? "Aguinaldo" : "Planillas",
+                  `${isAguinaldo ? "aguinaldo" : "planillas"}_${dayjs().format("YYYYMMDD_HHmmss")}.xlsx`,
+                )
+              }
+            >
+              Exportar Excel
+            </Button>
           </Box>
         </Box>
 
@@ -338,6 +368,8 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 25, page: 0 } } }}
             disableRowSelectionOnClick
+            components={{ Toolbar: GridToolbar }}
+            componentsProps={{ toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 300 } } }}
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,

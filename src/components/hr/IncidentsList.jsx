@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -181,7 +182,10 @@ export default function IncidentsList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <EventBusyIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Incidencias</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Incidencias</Typography>
+                <HelpButton screenKey="rrhh.incidencias" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Ausencias, permisos, subsidios y horas extra — se aplican automáticamente al generar la siguiente planilla
               </Typography>

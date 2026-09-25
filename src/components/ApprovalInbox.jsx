@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { UserContext } from "../contexts/UserContext";
+import HelpButton from "./help/HelpButton";
 import {
   Alert,
   Box,
@@ -36,7 +37,7 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import { toast } from "react-toastify";
 import API from "../api"; // ajusta esta ruta
-import LoanDetailsModal from "./Loan/LoanDetailsModal";
+import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
 
 // Excepción de garantía insuficiente (política collateral_requirement_mode =
 // 'approval'): el crédito se grabó sin garantía suficiente y no puede aprobarse
@@ -442,9 +443,12 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
         mb={2}
       >
         <Box>
-          <Typography variant="h5" fontWeight={700}>
-            Bandeja de aprobaciones
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography variant="h5" fontWeight={700}>
+              Bandeja de aprobaciones
+            </Typography>
+            <HelpButton screenKey="bandeja-aprobacion" />
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Créditos y modificaciones pendientes por aprobar
           </Typography>

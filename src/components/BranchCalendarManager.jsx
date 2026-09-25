@@ -4,6 +4,7 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import API from "../api";
 import BranchCalendarFields from "./BranchCalendarFields";
+import HelpButton from "./help/HelpButton";
 
 const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 const formatRecurringDate = (item) => item.easterOffset
@@ -51,7 +52,7 @@ export default function BranchCalendarManager() {
 
   return (
     <Stack spacing={2.5}>
-      <Box><Stack direction="row" spacing={1} alignItems="center"><CalendarMonthRoundedIcon color="primary" /><Typography variant="h5" fontWeight={900}>Calendarios laborales</Typography></Stack><Typography color="text.secondary">Configura días hábiles y feriados particulares por sucursal.</Typography></Box>
+      <Box><Stack direction="row" spacing={1} alignItems="center"><CalendarMonthRoundedIcon color="primary" /><Typography variant="h5" fontWeight={900}>Calendarios laborales</Typography><HelpButton screenKey="configuracion.calendarios" /></Stack><Typography color="text.secondary">Configura días hábiles y feriados particulares por sucursal.</Typography></Box>
       <Card variant="outlined"><CardContent><Stack spacing={3}>
         <TextField select label="Sucursal" size="small" value={branchId} onChange={(e) => selectBranch(e.target.value)} sx={{ maxWidth: 480 }}><MenuItem value="">Seleccione una sucursal</MenuItem>{branches.map((branch) => <MenuItem key={branch.id} value={branch.id}>{branch.name}</MenuItem>)}</TextField>
         {loading ? <Box textAlign="center" py={4}><CircularProgress size={28} /></Box> : branchId ? <><BranchCalendarFields value={calendar} onChange={setCalendar} /><Button variant="contained" startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />} disabled={saving} onClick={save} sx={{ alignSelf: "flex-end" }}>Guardar calendario</Button></> : <Alert severity="info">Seleccione una sucursal para configurar su calendario.</Alert>}

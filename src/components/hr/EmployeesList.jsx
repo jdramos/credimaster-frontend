@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -20,7 +21,7 @@ import {
   Divider,
   Autocomplete,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import BadgeIcon from "@mui/icons-material/Badge";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -30,6 +31,9 @@ import InfoIcon from "@mui/icons-material/Info";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import API from "../../api";
+import { exportToExcel } from "./hrExcelExport";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import dayjs from "dayjs";
 import EmployeeDetailDialog from "./EmployeeDetailDialog";
 
 const API_URL = "/api/hr/employees";
@@ -393,7 +397,10 @@ export default function EmployeesList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <BadgeIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Empleados</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Empleados</Typography>
+                <HelpButton screenKey="rrhh.empleados" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Expediente de personal para nómina
               </Typography>
@@ -407,6 +414,28 @@ export default function EmployeesList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchEmployees}>
               Actualizar
             </Button>
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              sx={{ textTransform: "none" }}
+              onClick={() =>
+                exportToExcel(
+                  rows.map((r) => ({
+                    Nombre: r.full_name,
+                    Puesto: r.position_title || r.position || "",
+                    Departamento: r.department_name || "",
+                    Sucursal: r.branch_name || "",
+                    "Jefe inmediato": r.supervisor_name || "",
+                    "Salario base": Number(r.base_salary || 0),
+                    Estado: r.status,
+                  })),
+                  "Empleados",
+                  `empleados_${dayjs().format("YYYYMMDD_HHmmss")}.xlsx`,
+                )
+              }
+            >
+              Exportar Excel
+            </Button>
           </Box>
         </Box>
 
@@ -419,6 +448,8 @@ export default function EmployeesList() {
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 25, page: 0 } } }}
             disableRowSelectionOnClick
+            components={{ Toolbar: GridToolbar }}
+            componentsProps={{ toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 300 } } }}
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,

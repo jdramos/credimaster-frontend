@@ -17,6 +17,7 @@ import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
 import JournalDetailDialog from "./JournalDetailDialog";
+import HelpButton from "../help/HelpButton";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -263,9 +264,12 @@ export default function LedgerList() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <AccountBalanceWalletIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Mayor General
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Mayor General
+              </Typography>
+              <HelpButton screenKey="contabilidad.mayor" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Movimientos contables por cuenta
             </Typography>

@@ -27,6 +27,22 @@ export const getBalancesFastAging = async (params) => {
   return data;
 };
 
+export const getBalancesFastPortfolioByBranch = async (params) => {
+  const { data } = await API.get(
+    "/api/dashboard/balances-fast/portfolio-by-branch",
+    { params },
+  );
+  return data;
+};
+
+export const getBalancesFastRiskBreakdown = async (params) => {
+  const { data } = await API.get(
+    "/api/dashboard/balances-fast/risk-breakdown",
+    { params },
+  );
+  return data;
+};
+
 export const getBalancesDetail = async (params) => {
   const { data } = await API.get("/api/balances/balances-detail", { params });
   return data;

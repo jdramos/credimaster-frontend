@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   Button,
@@ -28,7 +29,7 @@ import { saveAs } from "file-saver";
 import API from "../api";
 import BranchSelect from "./BranchSelect";
 import AccountStatementModal from "./AccountStatementModal";
-import LoanDetailsModal from "./Loan/LoanDetailsModal";
+import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import PrintIcon from "@mui/icons-material/Print";
 import { printCustomerBalanceReport } from "../reports/customerBalanceReport";
@@ -653,9 +654,12 @@ const CustomerBalanceViewer = () => {
           justifyContent="space-between"
         >
           <Box>
-            <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
-              Consulta de Saldos por Cliente
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
+                Consulta de Saldos por Cliente
+              </Typography>
+              <HelpButton screenKey="saldos.listado" sx={{ color: "white" }} />
+            </Box>
             <Typography sx={{ opacity: 0.9, fontSize: 13 }}>
               Corte: {dayjs(date).format("DD/MM/YYYY")} · Tipo:{" "}
               {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}

@@ -12,9 +12,11 @@ import TipoDocumentoSelect from "../TipoDocumentoSelect";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-import { Box, TextField, Grid, Paper, Stack, Typography } from "@mui/material";
+import { Box, TextField, Grid, Paper, Stack, Typography, MenuItem, Tooltip } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
-const Section = ({ title, subtitle, children }) => (
+const Section = ({ title, subtitle, titleIcon, children }) => (
   <Paper
     elevation={0}
     sx={{
@@ -27,9 +29,12 @@ const Section = ({ title, subtitle, children }) => (
   >
     <Stack spacing={1}>
       <Box>
-        <Typography variant="subtitle2" fontWeight={900}>
-          {title}
-        </Typography>
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Typography variant="subtitle2" fontWeight={900}>
+            {title}
+          </Typography>
+          {titleIcon}
+        </Stack>
 
         {subtitle && (
           <Typography variant="caption" color="text.secondary">
@@ -327,6 +332,24 @@ const CustomerGeneralInfoTab = forwardRef(
 
               <Grid item xs={12} md={4}>
                 <TextField
+                  select
+                  name="customer_type"
+                  label="Tipo de cliente"
+                  value={customer?.customer_type || "DEUDOR"}
+                  onChange={handleInputChange}
+                  disabled={disabled}
+                  fullWidth
+                  size="small"
+                  helperText="Fiador/Ambos permite seleccionar a esta persona como fiador de un crédito"
+                >
+                  <MenuItem value="DEUDOR">Deudor</MenuItem>
+                  <MenuItem value="FIADOR">Fiador</MenuItem>
+                  <MenuItem value="AMBOS">Ambos</MenuItem>
+                </TextField>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <TextField
                   name="email"
                   label="Correo electrónico"
                   value={customer?.email || ""}
@@ -353,6 +376,17 @@ const CustomerGeneralInfoTab = forwardRef(
           <Section
             title="Identificación"
             subtitle="Documento legal, país de emisión y fechas de vigencia."
+            titleIcon={
+              customer?.id ? (
+                <Tooltip title={customer?.identity_verified_at ? "Identidad verificada" : "Identidad sin verificar"}>
+                  {customer?.identity_verified_at ? (
+                    <CheckCircleIcon fontSize="small" sx={{ color: "#2E7D32" }} />
+                  ) : (
+                    <ErrorOutlineIcon fontSize="small" sx={{ color: "#ED6C02" }} />
+                  )}
+                </Tooltip>
+              ) : null
+            }
           >
             <Grid container spacing={1.2}>
               <Grid item xs={12} md={3}>

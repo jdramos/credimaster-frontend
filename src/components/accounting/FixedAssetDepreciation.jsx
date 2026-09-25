@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert, Box, Button, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Divider,
   Table, TableHead, TableRow, TableCell, TableBody, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -218,7 +219,10 @@ export default function FixedAssetDepreciation() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <EventRepeatIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Depreciación de Activos Fijos</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Depreciación de Activos Fijos</Typography>
+              <HelpButton screenKey="contabilidad.depreciacion" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Genera el gasto por depreciación (línea recta) del período seleccionado
             </Typography>

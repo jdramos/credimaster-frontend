@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -112,7 +113,10 @@ export default function ProvidersList() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <StorefrontIcon sx={{ color: "#0057B8" }} />
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700}>Proveedores</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Proveedores</Typography>
+              <HelpButton screenKey="proveedores.listado" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Proveedores a quienes se paga y se retiene IR (con RUC para el DMI)
             </Typography>

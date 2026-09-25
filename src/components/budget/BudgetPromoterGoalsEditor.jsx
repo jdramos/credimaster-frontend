@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -152,7 +153,10 @@ export default function BudgetPromoterGoalsEditor() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <PersonPinIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Metas de colocación por promotor</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Metas de colocación por promotor</Typography>
+                <HelpButton screenKey="presupuesto.metas-promotores" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Monto meta de desembolso individual por promotor y mes, usado en el reporte de Productividad.
               </Typography>

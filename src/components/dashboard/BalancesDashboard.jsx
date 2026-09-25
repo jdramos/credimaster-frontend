@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Grid,
@@ -385,9 +386,12 @@ export default function BalancesDashboardPro() {
           spacing={1.5}
         >
           <Box>
-            <Typography variant="h5" fontWeight={800}>
-              Dashboard de Saldos
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h5" fontWeight={800}>
+                Dashboard de Saldos
+              </Typography>
+              <HelpButton screenKey="dashboard.saldos" sx={{ color: "white" }} />
+            </Box>
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
               Cartera, mora y provisión — {dayjs(filters.date_from).format("DD/MM/YYYY")} al{" "}
               {dayjs(filters.date_to).format("DD/MM/YYYY")}

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -18,7 +19,12 @@ import {
 } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import EventNoteIcon from "@mui/icons-material/EventNote";
+import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
+import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { printAnnualRiskReport } from "../../reports/annualRiskReport";
+import { printMonthlyReport } from "../../reports/monthlyReport";
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 const currentYear = () => new Date().getFullYear();
@@ -48,6 +54,9 @@ export default function AmlMonthlyReport() {
   const [year, setYear] = useState(currentYear());
   const [annualReport, setAnnualReport] = useState(null);
   const [loadingAnnual, setLoadingAnnual] = useState(false);
+
+  const { user } = useContext(UserContext);
+  const { tenant } = useAuth();
 
   const showAlert = (message, severity = "success") => setAlert({ open: true, severity, message });
 
@@ -106,15 +115,37 @@ export default function AmlMonthlyReport() {
 
   const annualDaysLeft = annualReport ? daysUntilDeadline(annualReport.deadline) : null;
 
+  const buildCompany = () => ({
+    commercial_name: tenant?.commercial_name || tenant?.name || "",
+    legal_name: tenant?.legal_name || tenant?.company_name || "",
+    tax_id: tenant?.tax_id || tenant?.ruc || "",
+    address: tenant?.address || "",
+    phone: tenant?.phone || "",
+    logo_url: tenant?.logo_url || "",
+  });
+
+  const handlePrintAnnual = () => {
+    if (!annualReport) return;
+    printAnnualRiskReport({ company: buildCompany(), user, report: annualReport });
+  };
+
+  const handlePrintMonthly = () => {
+    if (!report) return;
+    printMonthlyReport({ company: buildCompany(), user, report });
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff", mb: 2 }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <AssessmentIcon sx={{ color: "#1D4ED8" }} />
           <Box flexGrow={1}>
-            <Typography variant="h6" fontWeight={700}>
-              Informe Mensual PLA/FT/FP a CONAMI
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Informe Mensual PLA/FT/FP a CONAMI
+              </Typography>
+              <HelpButton screenKey="cumplimiento.informe-mensual" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Art. 42.1 CD-CONAMI-070-01OCT07-2025 — remisión los primeros 5 días del mes siguiente.
             </Typography>
@@ -127,6 +158,15 @@ export default function AmlMonthlyReport() {
             onChange={(e) => setPeriod(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
+          <Button
+            variant="contained"
+            startIcon={<PrintIcon />}
+            onClick={handlePrintMonthly}
+            disabled={!report}
+            sx={{ textTransform: "none", whiteSpace: "nowrap" }}
+          >
+            Emitir informe
+          </Button>
         </Box>
 
         {report && (
@@ -288,6 +328,15 @@ export default function AmlMonthlyReport() {
             onChange={(e) => setYear(Number(e.target.value) || currentYear())}
             sx={{ width: 120 }}
           />
+          <Button
+            variant="contained"
+            startIcon={<PrintIcon />}
+            onClick={handlePrintAnnual}
+            disabled={!annualReport}
+            sx={{ textTransform: "none", whiteSpace: "nowrap" }}
+          >
+            Emitir informe
+          </Button>
         </Box>
 
         {annualReport && (

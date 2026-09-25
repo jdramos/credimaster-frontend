@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert, Box, Button, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Accordion,
   AccordionSummary, AccordionDetails,
@@ -67,7 +68,10 @@ export default function FinancialStatementNotes() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <DescriptionIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Notas a los Estados Financieros</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Notas a los Estados Financieros</Typography>
+              <HelpButton screenKey="contabilidad.notas-estados-financieros" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               13 notas obligatorias del Manual Único de Cuentas CONAMI (Cap. IV)
             </Typography>

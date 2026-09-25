@@ -18,6 +18,8 @@ import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
+import AccountMovementsDialog from "./AccountMovementsDialog";
+import HelpButton from "../help/HelpButton";
 
 export default function TrialBalance() {
   const [rows, setRows] = useState([]);
@@ -45,6 +47,13 @@ export default function TrialBalance() {
   const showAlert = (message, severity = "error") => {
     setAlert({ open: true, severity, message });
   };
+
+  // Cuenta seleccionada para ver su detalle de movimientos -- se le pasa al
+  // diálogo el MISMO período/sucursal que ya está aplicado en este balance
+  // (filters), para que "el período consultado" sea consistente con lo que
+  // el usuario está viendo en la grilla, no algo aparte que haya que volver
+  // a filtrar.
+  const [movementsAccount, setMovementsAccount] = useState(null);
 
   // Catálogo de cuentas para el filtro de rango (Cuenta desde / Cuenta
   // hasta). Se listan todas las cuentas activas — de movimiento y de
@@ -165,22 +174,49 @@ export default function TrialBalance() {
         width: 150,
         cellClassName: (params) =>
           params.row.is_movement ? "" : "tb-header-cell",
+        renderCell: (params) =>
+          params.row.is_movement ? (
+            <Button
+              size="small"
+              onClick={() => setMovementsAccount(params.row)}
+              sx={{ textTransform: "none", minWidth: 0, p: 0, fontWeight: 700 }}
+            >
+              {params.value}
+            </Button>
+          ) : (
+            params.value
+          ),
       },
       {
         field: "account_name",
         headerName: "Cuenta",
         flex: 1,
         minWidth: 300,
-        renderCell: (params) => (
-          <span
-            style={{
-              paddingLeft: Math.max(Number(params.row.level_no || 1) - 1, 0) * 16,
-              fontWeight: params.row.is_movement ? 400 : 700,
-            }}
-          >
-            {params.value}
-          </span>
-        ),
+        renderCell: (params) =>
+          params.row.is_movement ? (
+            <Button
+              size="small"
+              onClick={() => setMovementsAccount(params.row)}
+              sx={{
+                textTransform: "none",
+                justifyContent: "flex-start",
+                minWidth: 0,
+                pl: `${Math.max(Number(params.row.level_no || 1) - 1, 0) * 16}px`,
+                fontWeight: 400,
+              }}
+            >
+              {params.value}
+            </Button>
+          ) : (
+            <span
+              style={{
+                paddingLeft: Math.max(Number(params.row.level_no || 1) - 1, 0) * 16,
+                fontWeight: 700,
+              }}
+            >
+              {params.value}
+            </span>
+          ),
         cellClassName: (params) =>
           params.row.is_movement ? "" : "tb-header-cell",
       },
@@ -287,9 +323,12 @@ export default function TrialBalance() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <FactCheckIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Balance de Comprobación
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Balance de Comprobación
+              </Typography>
+              <HelpButton screenKey="contabilidad.balance-comprobacion" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Validación de débitos y créditos contables
             </Typography>
@@ -450,6 +489,13 @@ export default function TrialBalance() {
           />
         </Box>
       </Paper>
+
+      <AccountMovementsDialog
+        open={Boolean(movementsAccount)}
+        onClose={() => setMovementsAccount(null)}
+        account={movementsAccount}
+        filters={filters}
+      />
 
       <Snackbar
         open={alert.open}

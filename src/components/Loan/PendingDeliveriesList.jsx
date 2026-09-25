@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Paper,
   Stack,
@@ -200,9 +201,12 @@ export default function PendingDeliveriesList() {
     <Paper sx={{ p: 2.5 }}>
       <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }} spacing={1.5} mb={2}>
         <Box>
-          <Typography variant="h6" fontWeight={700}>
-            Mis entregas pendientes
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography variant="h6" fontWeight={700}>
+              Mis entregas pendientes
+            </Typography>
+            <HelpButton screenKey="creditos.entregas-pendientes" />
+          </Box>
           <Typography variant="body2" color="text.secondary">
             Créditos ya desembolsados cuyo cheque/efectivo todavía no le entregó al cliente
           </Typography>

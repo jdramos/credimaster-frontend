@@ -25,6 +25,7 @@ const BUSINESS_COLOR = "#C62828";
 const CustomerLocationTab = ({ customer, setCustomer, mode }) => {
   const disabled = mode === "show";
   const [activeKey, setActiveKey] = useState("home");
+  const [focusPosition, setFocusPosition] = useState(null);
 
   const homePos =
     customer?.home_lat != null && customer?.home_lat !== "" &&
@@ -102,6 +103,7 @@ const CustomerLocationTab = ({ customer, setCustomer, mode }) => {
           activeKey={activeKey}
           onSetPosition={handleSetPosition}
           disabled={disabled}
+          focusPosition={focusPosition}
         />
       </Paper>
 
@@ -109,28 +111,46 @@ const CustomerLocationTab = ({ customer, setCustomer, mode }) => {
         <Grid item xs={12} sm={6}>
           <Paper
             elevation={0}
-            sx={{ p: 1.2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+            onClick={() => homePos && setFocusPosition(homePos)}
+            sx={{
+              p: 1.2,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              cursor: homePos ? "pointer" : "default",
+              transition: "border-color 0.15s, background-color 0.15s",
+              "&:hover": homePos ? { borderColor: HOME_COLOR, bgcolor: "action.hover" } : undefined,
+            }}
           >
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
               <Chip size="small" label="C" sx={{ bgcolor: HOME_COLOR, color: "#fff", fontWeight: 900 }} />
               <Typography variant="body2" fontWeight={700}>Casa</Typography>
             </Stack>
             <Typography variant="caption" color="text.secondary">
-              {homePos ? `${homePos.lat.toFixed(6)}, ${homePos.lng.toFixed(6)}` : "Sin ubicación fijada"}
+              {homePos ? `${homePos.lat.toFixed(6)}, ${homePos.lng.toFixed(6)} — clic para ver en el mapa` : "Sin ubicación fijada"}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6}>
           <Paper
             elevation={0}
-            sx={{ p: 1.2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+            onClick={() => businessPos && setFocusPosition(businessPos)}
+            sx={{
+              p: 1.2,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              cursor: businessPos ? "pointer" : "default",
+              transition: "border-color 0.15s, background-color 0.15s",
+              "&:hover": businessPos ? { borderColor: BUSINESS_COLOR, bgcolor: "action.hover" } : undefined,
+            }}
           >
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
               <Chip size="small" label="N" sx={{ bgcolor: BUSINESS_COLOR, color: "#fff", fontWeight: 900 }} />
               <Typography variant="body2" fontWeight={700}>Negocio</Typography>
             </Stack>
             <Typography variant="caption" color="text.secondary">
-              {businessPos ? `${businessPos.lat.toFixed(6)}, ${businessPos.lng.toFixed(6)}` : "Sin ubicación fijada"}
+              {businessPos ? `${businessPos.lat.toFixed(6)}, ${businessPos.lng.toFixed(6)} — clic para ver en el mapa` : "Sin ubicación fijada"}
             </Typography>
           </Paper>
         </Grid>

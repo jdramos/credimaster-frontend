@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -210,7 +211,10 @@ export default function CashRegistersList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <PointOfSaleIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Cajas</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Cajas</Typography>
+                <HelpButton screenKey="caja.cajas" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Cajas de efectivo de la institución
               </Typography>

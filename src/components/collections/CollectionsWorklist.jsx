@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -248,7 +249,10 @@ export default function CollectionsWorklist() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <GavelIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Cobranza</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Cobranza</Typography>
+              <HelpButton screenKey="cobranza" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Cartera en mora, gestión de cobro y promesas de pago
             </Typography>

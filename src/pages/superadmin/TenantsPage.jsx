@@ -20,6 +20,7 @@ import {
   FormGroup,
   FormControlLabel,
   Checkbox,
+  MenuItem,
   IconButton,
   Table,
   TableHead,
@@ -37,6 +38,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
 import ProvinceSelect from "../../components/ProvinceSelect";
 import MunicipalitySelect from "../../components/MunicipalitySelect";
+import SanctionsFeedSyncPanel from "./SanctionsFeedSyncPanel";
 
 const PROVINCES_CATALOG_URL = "/api/superadmin/catalogs/provinces";
 const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
@@ -67,7 +69,21 @@ const emptyForm = {
   admin_full_name: "",
   admin_email: "",
   enabled_modules: null,
+  regulatory_type: "IMF_REGULADA",
 };
+
+// IMF plenamente regulada (Ley 769) vs. Proveedor de Servicio de Empeño y/o
+// Préstamo (persona natural/jurídica bajo CD-CONAMI-055-2024, sin la carga
+// de reportería de una IMF) — ver db/license/017_add_tenant_regulatory_type.js.
+const REGULATORY_TYPE_OPTIONS = [
+  { value: "IMF_REGULADA", label: "IMF Regulada" },
+  { value: "PERSONA_NATURAL_PRESTAMISTA", label: "Persona Natural / Prestamista" },
+];
+
+// Módulos exclusivos de IMF regulada — se desmarcan por defecto al crear un
+// tenant "Persona Natural / Prestamista" (el superadmin puede reactivarlos
+// manualmente si ese tenant en particular sí los necesita).
+const IMF_ONLY_MODULE_KEYS = ["icc", "isc", "sinriesgo", "risk_classification_ngrc"];
 
 // Slugifica el código de empresa a un nombre de base de datos válido
 // (mismo patrón que valida el backend: minúsculas, dígitos, guión bajo).
@@ -222,6 +238,24 @@ export default function TenantsPage() {
     setForm((prev) => ({ ...prev, database_name: e.target.value }));
   };
 
+  // Solo prellena/desmarca los checkboxes al ELEGIR el tipo en el diálogo de
+  // creación — el superadmin puede volver a marcarlos manualmente después.
+  // No se replica este efecto en "Editar Empresa" (más abajo) a propósito:
+  // reclasificar un tenant ya existente no debe pisar módulos ya elegidos.
+  const handleRegulatoryTypeChange = (e) => {
+    const value = e.target.value;
+    setForm((prev) => {
+      const next = { ...prev, regulatory_type: value };
+      if (value === "PERSONA_NATURAL_PRESTAMISTA") {
+        const allKeys = availableModules.map((m) => m.key);
+        next.enabled_modules = allKeys.filter((k) => !IMF_ONLY_MODULE_KEYS.includes(k));
+      } else {
+        next.enabled_modules = null;
+      }
+      return next;
+    });
+  };
+
   // enabled_modules === null significa "todos habilitados". Al desmarcar un
   // módulo por primera vez, se expande null al listado completo de claves
   // conocidas para poder representar la exclusión.
@@ -251,6 +285,7 @@ export default function TenantsPage() {
       email: row.email || "",
       address: row.address || "",
       enabled_modules: row.enabled_modules ?? null,
+      regulatory_type: row.regulatory_type || "IMF_REGULADA",
     });
     setEditDialogOpen(true);
   };
@@ -490,6 +525,8 @@ export default function TenantsPage() {
 
   return (
     <Box>
+      <SanctionsFeedSyncPanel />
+
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Typography variant="h6" fontWeight={800}>
@@ -562,6 +599,21 @@ export default function TenantsPage() {
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField label="Dirección" fullWidth size="small" value={form.address} onChange={handleFieldChange("address")} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                select
+                label="Tipo de entidad regulatoria"
+                fullWidth
+                size="small"
+                value={form.regulatory_type}
+                onChange={handleRegulatoryTypeChange}
+                helperText="Determina qué reportes CONAMI vienen habilitados por defecto"
+              >
+                {REGULATORY_TYPE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
           </Grid>
 
@@ -693,6 +745,21 @@ export default function TenantsPage() {
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <TextField label="Dirección" fullWidth size="small" value={editForm.address} onChange={handleEditFieldChange("address")} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    select
+                    label="Tipo de entidad regulatoria"
+                    fullWidth
+                    size="small"
+                    value={editForm.regulatory_type}
+                    onChange={handleEditFieldChange("regulatory_type")}
+                    helperText="Cambiarlo no toca los módulos ya configurados abajo"
+                  >
+                    {REGULATORY_TYPE_OPTIONS.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                    ))}
+                  </TextField>
                 </Grid>
               </Grid>
 

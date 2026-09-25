@@ -477,7 +477,16 @@ const CustomerForm = () => {
     const body = {
       customer: payloadCustomer,
       guarantees: cleanedGuarantees,
-      financial_evaluation: financialEvaluation,
+      // CustomerFinancialEvaluationTab guarda los conceptos en
+      // concept_values (soporta conceptos configurables por tenant), pero
+      // este flujo (api/customer/CustomerControllerGpt.js) todavía solo
+      // entiende los 6 campos planos legacy -- se aplanan acá para no
+      // perder los datos capturados. Un concepto nuevo agregado por el
+      // tenant no se reflejará aquí (gap preexistente, fuera de alcance).
+      financial_evaluation: {
+        ...financialEvaluation,
+        ...(financialEvaluation.concept_values || {}),
+      },
     };
 
     try {
@@ -517,7 +526,10 @@ const CustomerForm = () => {
   };
 
   const handlePrintProfile = async () => {
-    let evaluation = financialEvaluation;
+    let evaluation = {
+      ...financialEvaluation,
+      ...(financialEvaluation.concept_values || {}),
+    };
     let documents = [];
 
     try {

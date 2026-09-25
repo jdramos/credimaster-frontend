@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -212,7 +213,10 @@ export default function DepartmentBudgetEditor() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <EditNoteIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Mi presupuesto de departamento</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Mi presupuesto de departamento</Typography>
+                <HelpButton screenKey="presupuesto.mi-departamento" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Llena los montos por concepto y mes, y envía a aprobación cuando esté listo
               </Typography>

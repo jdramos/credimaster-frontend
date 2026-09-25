@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -145,7 +146,10 @@ export default function MyVacations() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <BeachAccessIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Mis Vacaciones</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Mis Vacaciones</Typography>
+                <HelpButton screenKey="rrhh.vacaciones" />
+              </Box>
               <Typography variant="body2" color="text.secondary">{employee?.full_name}</Typography>
             </Box>
           </Box>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -170,7 +171,10 @@ export default function BudgetAccountLinesEditor() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <EditNoteIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Presupuesto operativo por cuenta</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Presupuesto operativo por cuenta</Typography>
+                <HelpButton screenKey="presupuesto.cuentas" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Monto presupuestado por cuenta MUC (gasto/ingreso) y mes
               </Typography>

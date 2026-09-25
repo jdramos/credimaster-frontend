@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -172,9 +173,12 @@ export default function InsuranceProvidersList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <HealthAndSafetyIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>
-                Aseguradoras
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>
+                  Aseguradoras
+                </Typography>
+                <HelpButton screenKey="seguros.aseguradoras" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Compañías de seguros tercerizadas que ofrecen pólizas a los clientes
               </Typography>

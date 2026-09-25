@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -148,7 +149,10 @@ export default function FinanciadoresList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <AccountBalanceIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Financiadores</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Financiadores</Typography>
+                <HelpButton screenKey="obligaciones.financiadores" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Bancos, organismos y otras instituciones que fondean a la IMF
               </Typography>

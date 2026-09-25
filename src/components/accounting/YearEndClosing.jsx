@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert, Box, Button, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Divider,
 } from "@mui/material";
@@ -77,7 +78,10 @@ export default function YearEndClosing() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <EventRepeatIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Cierre de Ejercicio</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Cierre de Ejercicio</Typography>
+              <HelpButton screenKey="contabilidad.cierre-anual" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Modelo 09 del Cap. V del MUC — cancela ingresos y gastos del año contra el patrimonio
             </Typography>

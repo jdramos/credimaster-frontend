@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import AddCircle from "./AddCircle";
 import EmptyNotice from "./EmptyNotice";
 import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
@@ -134,9 +135,12 @@ export default function ProvincesList() {
               </Box>
 
               <Box>
-                <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                  Departamentos del país
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                    Departamentos del país
+                  </Typography>
+                  <HelpButton screenKey="catalogos.departamentos" sx={{ color: "white" }} />
+                </Box>
                 <Typography fontSize={13} sx={{ opacity: 0.85 }}>
                   Administración de departamentos y clasificación de riesgo
                 </Typography>

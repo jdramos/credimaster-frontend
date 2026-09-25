@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -150,7 +151,10 @@ export default function BudgetAlertsInbox() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <WarningAmberIcon sx={{ color: "#B45309" }} />
           <Box flexGrow={1}>
-            <Typography variant="h6" fontWeight={700}>Alertas de Presupuesto</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Alertas de Presupuesto</Typography>
+              <HelpButton screenKey="presupuesto.alertas" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Gastos sobre umbral, ingresos y colocación por debajo de la meta mensual
             </Typography>

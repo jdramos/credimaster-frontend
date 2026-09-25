@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -156,7 +157,10 @@ export default function BudgetPlacementGoalsEditor() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FlagIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Metas de colocación de cartera</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Metas de colocación de cartera</Typography>
+                <HelpButton screenKey="presupuesto.metas-colocacion" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Monto meta de desembolso por sucursal y mes. "Consolidado" es la meta general de la empresa.
               </Typography>

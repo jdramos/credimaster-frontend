@@ -22,6 +22,7 @@ const BranchSelect = ({
   error = false,
   helperText = "",
   fullWidth = true,
+  sx = {},
 }) => {
   const { userBranches = [], role } = useContext(UserContext);
   const { data: allBranches, error: fetchApiError } = useCachedFetch(url);
@@ -46,7 +47,7 @@ const BranchSelect = ({
   }, [data, currentValue]);
 
   return (
-    <FormControl fullWidth={fullWidth} sx={{ mt: 0 }}>
+    <FormControl fullWidth={fullWidth} sx={{ mt: 0, ...sx }}>
       <Autocomplete
         size={size}
         fullWidth

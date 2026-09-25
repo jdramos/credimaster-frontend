@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -104,9 +105,12 @@ export default function ComplianceOfficerHistory() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <PersonPinIcon sx={{ color: "#0F766E" }} />
           <Box flexGrow={1}>
-            <Typography variant="h6" fontWeight={700}>
-              Oficial de Cumplimiento LA/FT/FP
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Oficial de Cumplimiento LA/FT/FP
+              </Typography>
+              <HelpButton screenKey="cumplimiento.oficial-cumplimiento" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Art. 42.3.2 CD-CONAMI-070-01OCT07-2025 — todo cambio debe notificarse a CONAMI dentro de {notifyDays} días.
             </Typography>

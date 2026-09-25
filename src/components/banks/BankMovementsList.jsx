@@ -38,6 +38,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import LockIcon from "@mui/icons-material/Lock";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import HelpButton from "../help/HelpButton";
 import { numberToWords } from "./numberToWords";
 import { printBankAccountStatementReport } from "../../reports/bankAccountStatementReport";
 import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
@@ -424,7 +425,10 @@ export default function BankMovementsList() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <SwapHorizIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Movimientos Bancarios</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Movimientos Bancarios</Typography>
+              <HelpButton screenKey="bancos.movimientos" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Saldo, movimientos y registro de cheques/depósitos de una cuenta bancaria
             </Typography>

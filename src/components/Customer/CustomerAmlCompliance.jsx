@@ -25,6 +25,11 @@ import {
 } from "@mui/material";
 import GavelIcon from "@mui/icons-material/Gavel";
 import PrintIcon from "@mui/icons-material/Print";
+import AcUnitIcon from "@mui/icons-material/AcUnit";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import BadgeIcon from "@mui/icons-material/Badge";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -108,7 +113,7 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
   const isCreate = mode !== "edit" && mode !== "show";
   const customerId = customer?.id;
 
-  const { user } = useContext(UserContext);
+  const { user, fullName } = useContext(UserContext);
   const { tenant } = useAuth();
   const company = {
     commercial_name: tenant?.commercial_name || tenant?.name || "",
@@ -212,6 +217,77 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
       setRiskError(err?.response?.data?.message || "No se pudo recalcular el riesgo.");
     } finally {
       setRecalculatingRisk(false);
+    }
+  };
+
+  const [freezeReason, setFreezeReason] = useState("");
+  const [freezingCustomer, setFreezingCustomer] = useState(false);
+  const [freezeError, setFreezeError] = useState("");
+  const isFrozen = customer?.is_frozen === 1 || customer?.is_frozen === true;
+
+  const handleToggleFreeze = async () => {
+    if (!customerId) return;
+    if (!freezeReason.trim()) {
+      setFreezeError(
+        isFrozen
+          ? "Indique el motivo para descongelar al cliente."
+          : "Indique el motivo de la inmovilización.",
+      );
+      return;
+    }
+
+    try {
+      setFreezingCustomer(true);
+      setFreezeError("");
+      const action = isFrozen ? "unfreeze" : "freeze";
+      await API.post(`/api/aml/customers/${customerId}/${action}`, {
+        reason: freezeReason.trim(),
+      });
+
+      setCustomer((prev) => ({
+        ...prev,
+        is_frozen: isFrozen ? 0 : 1,
+        frozen_reason: isFrozen ? null : freezeReason.trim(),
+        frozen_at: isFrozen ? null : new Date().toISOString(),
+      }));
+      setFreezeReason("");
+    } catch (err) {
+      console.error(err);
+      setFreezeError(
+        err?.response?.data?.message ||
+          (isFrozen ? "No se pudo descongelar al cliente." : "No se pudo congelar al cliente."),
+      );
+    } finally {
+      setFreezingCustomer(false);
+    }
+  };
+
+  // Art. 22 Ley N°. 1215: verificación de identidad del cliente y su
+  // beneficiario final, dentro de un plazo de 10 días hábiles desde el alta
+  // (ver api/compliance/amlController.js::markIdentityVerified,
+  // IdentityVerificationReminders.jsx para el recordatorio por vencer/
+  // vencido). Aquí solo se muestra el estado y la acción de marcarlo, sobre
+  // el propio cliente.
+  const isIdentityVerified = Boolean(customer?.identity_verified_at);
+  const [verifyingIdentity, setVerifyingIdentity] = useState(false);
+  const [identityError, setIdentityError] = useState("");
+
+  const handleMarkIdentityVerified = async () => {
+    if (!customerId) return;
+    try {
+      setVerifyingIdentity(true);
+      setIdentityError("");
+      await API.put(`/api/aml/customers/${customerId}/identity-verification`);
+      setCustomer((prev) => ({
+        ...prev,
+        identity_verified_at: new Date().toISOString(),
+        identity_verified_by: fullName || "Usuario actual",
+      }));
+    } catch (err) {
+      console.error(err);
+      setIdentityError(err?.response?.data?.message || "No se pudo registrar la verificación.");
+    } finally {
+      setVerifyingIdentity(false);
     }
   };
 
@@ -371,6 +447,111 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                 {printingPic ? "Generando..." : "Imprimir PIC"}
               </Button>
             </Stack>
+          </Stack>
+        </Section>
+      )}
+
+      {customerId && (
+        <Section
+          title="Inmovilización de fondos"
+          subtitle="Congelar bloquea la aprobación de nuevos créditos y el desembolso de créditos ya aprobados de este cliente (Art. 46 CD-CONAMI-070-01OCT07-2025)."
+        >
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+              {isFrozen ? (
+                <Chip
+                  icon={<AcUnitIcon fontSize="small" />}
+                  label="Cliente congelado"
+                  sx={{ bgcolor: "#FEE2E2", color: "#B42318", fontWeight: 700 }}
+                />
+              ) : (
+                <Chip label="Sin inmovilización" size="small" variant="outlined" />
+              )}
+              {isFrozen && customer?.frozen_at && (
+                <Typography variant="caption" color="text.secondary">
+                  Desde: {formatDateTime(customer.frozen_at)}
+                </Typography>
+              )}
+            </Stack>
+
+            {isFrozen && customer?.frozen_reason && (
+              <Typography variant="body2" color="text.secondary">
+                Motivo: {customer.frozen_reason}
+              </Typography>
+            )}
+
+            {!disabled && (
+              <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ md: "flex-end" }}>
+                <TextField
+                  label={isFrozen ? "Motivo para descongelar *" : "Motivo de la inmovilización *"}
+                  value={freezeReason}
+                  onChange={(e) => setFreezeReason(e.target.value)}
+                  size="small"
+                  fullWidth
+                  multiline
+                  minRows={1}
+                />
+                <Button
+                  variant="contained"
+                  color={isFrozen ? "success" : "error"}
+                  onClick={handleToggleFreeze}
+                  disabled={freezingCustomer}
+                  startIcon={isFrozen ? <LockOpenIcon /> : <AcUnitIcon />}
+                  sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, whiteSpace: "nowrap" }}
+                >
+                  {freezingCustomer ? "Guardando..." : isFrozen ? "Descongelar cliente" : "Congelar cliente"}
+                </Button>
+              </Stack>
+            )}
+
+            {freezeError && <Alert severity="error">{freezeError}</Alert>}
+          </Stack>
+        </Section>
+      )}
+
+      {customerId && (
+        <Section
+          title="Verificación de identidad"
+          subtitle="Confirma que se verificó la identidad del cliente y de su beneficiario final (documento de identidad + consulta a fuentes), dentro del plazo de 10 días hábiles desde el alta (Art. 22 Ley N°. 1215)."
+        >
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+              {isIdentityVerified ? (
+                <Chip
+                  icon={<CheckCircleIcon fontSize="small" />}
+                  label="Identidad verificada"
+                  sx={{ bgcolor: "#E8F5E9", color: BAC.success, fontWeight: 700 }}
+                />
+              ) : (
+                <Chip
+                  icon={<ErrorOutlineIcon fontSize="small" />}
+                  label="Identidad sin verificar"
+                  sx={{ bgcolor: "#FFF3E0", color: BAC.warning, fontWeight: 700 }}
+                />
+              )}
+              {isIdentityVerified && customer?.identity_verified_at && (
+                <Typography variant="caption" color="text.secondary">
+                  {formatDateTime(customer.identity_verified_at)}
+                  {customer.identity_verified_by ? ` — por ${customer.identity_verified_by}` : ""}
+                </Typography>
+              )}
+            </Stack>
+
+            {!disabled && !isIdentityVerified && (
+              <Box>
+                <Button
+                  variant="contained"
+                  onClick={handleMarkIdentityVerified}
+                  disabled={verifyingIdentity}
+                  startIcon={verifyingIdentity ? <CircularProgress size={16} color="inherit" /> : <BadgeIcon />}
+                  sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, bgcolor: BAC.success, "&:hover": { bgcolor: "#1B5E20" } }}
+                >
+                  {verifyingIdentity ? "Guardando..." : "Marcar identidad verificada"}
+                </Button>
+              </Box>
+            )}
+
+            {identityError && <Alert severity="error">{identityError}</Alert>}
           </Stack>
         </Section>
       )}

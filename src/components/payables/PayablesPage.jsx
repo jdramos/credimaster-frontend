@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import HelpButton from "../help/HelpButton";
 import { Box, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import InvoicesTab from "./InvoicesTab";
@@ -13,7 +14,10 @@ export default function PayablesPage() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <AccountBalanceIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Cuentas por Pagar</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Cuentas por Pagar</Typography>
+              <HelpButton screenKey="cuentas-por-pagar.listado" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Facturas de proveedores, antigüedad de saldos y retenciones
             </Typography>

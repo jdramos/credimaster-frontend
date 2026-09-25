@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import AddCircle from "./AddCircle";
 import CollectorModal from "./CollectorModal";
 import {
@@ -217,9 +218,12 @@ export default function CollectorList() {
               </Box>
 
               <Box>
-                <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                  Listado de colectores
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                    Listado de colectores
+                  </Typography>
+                  <HelpButton screenKey="colectores.listado" sx={{ color: "white" }} />
+                </Box>
                 <Typography fontSize={13} sx={{ opacity: 0.85 }}>
                   Administración de colectores asignados por sucursal
                 </Typography>

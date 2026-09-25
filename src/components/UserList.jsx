@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import HelpButton from "./help/HelpButton";
 import API from '../api';
 import { UserContext } from '../contexts/UserContext';
 import {
@@ -204,7 +205,10 @@ const UsersList = () => {
         <>
             <Box p={3} sx={{ height: '100vh', overflowY: 'auto', width: '100%' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5">Lista de Usuarios</Typography>
+                    <Box display="flex" alignItems="center" gap={0.25}>
+                        <Typography variant="h5">Lista de Usuarios</Typography>
+                        <HelpButton screenKey="usuarios.listado" />
+                    </Box>
                     {canCreateUser && (
                         <Button
                             variant="contained"

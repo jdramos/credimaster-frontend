@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert, Autocomplete, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
   IconButton, MenuItem, Paper, Snackbar, Stack, TextField, Typography,
@@ -158,7 +159,10 @@ export default function CashFlowProjection() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <WaterfallChartIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Flujo de Caja Proyectado</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Flujo de Caja Proyectado</Typography>
+              <HelpButton screenKey="creditos.flujo-caja" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Cobros esperados de créditos vs. pagos a proveedores, por período
             </Typography>

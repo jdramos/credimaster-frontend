@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import { Alert, Box, Button, Chip, Paper, Stack, TextField, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -77,7 +78,10 @@ export default function EquityChanges() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <TrendingUpIcon color="primary" />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Estado de Cambios en el Patrimonio</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Estado de Cambios en el Patrimonio</Typography>
+              <HelpButton screenKey="contabilidad.patrimonio" />
+            </Box>
             <Typography variant="body2" color="text.secondary">Forma C del Manual Único de Cuentas CONAMI</Typography>
           </Box>
         </Stack>

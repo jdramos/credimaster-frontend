@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -156,7 +157,10 @@ export default function LineasCreditoList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <LinkIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Líneas de Crédito</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Líneas de Crédito</Typography>
+                <HelpButton screenKey="obligaciones.lineas-credito" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Líneas de crédito autorizadas por los financiadores
               </Typography>

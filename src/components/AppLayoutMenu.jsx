@@ -41,6 +41,7 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import Visibility from "@mui/icons-material/Visibility";
@@ -120,6 +121,12 @@ const menuItems = {
       permission: "menu.politicas_credito",
     },
     {
+      label: "Evaluación financiera (config.)",
+      iconName: "FaFileSignature",
+      to: "/creditos/evaluacion-financiera/configuracion",
+      permission: "clientes.evaluacion.configuracion.gestionar",
+    },
+    {
       label: "Notificaciones",
       iconName: "FaBell",
       to: "/notificaciones",
@@ -172,11 +179,13 @@ const menuItems = {
   compliance: [
     { label: "Matriz de Riesgo LA/FT/FP", iconName: "FaBalanceScale", to: "/cumplimiento/matriz-riesgo", permission: "menu.cumplimiento" },
     { label: "Recordatorio PIC", iconName: "FaClipboardList", to: "/cumplimiento/pic", permission: "menu.cumplimiento" },
+    { label: "Verificación de Identidad Pendiente", iconName: "FaIdCard", to: "/cumplimiento/verificacion-identidad", permission: "menu.cumplimiento" },
     { label: "Listas de Riesgo", iconName: "FaListUl", to: "/cumplimiento/listas", permission: "menu.cumplimiento" },
     { label: "Alertas de Operaciones Inusuales", iconName: "FaExclamationTriangle", to: "/cumplimiento/alertas", permission: "menu.cumplimiento" },
     { label: "Casos ROS", iconName: "FaGavel", to: "/cumplimiento/ros", permission: "menu.cumplimiento" },
     { label: "Informe Mensual PLA/FT/FP", iconName: "FaChartBar", to: "/cumplimiento/informe-mensual", permission: "menu.cumplimiento" },
     { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento", permission: "menu.cumplimiento" },
+    { label: "Riesgo de Nuevos Productos", iconName: "FaFlask", to: "/cumplimiento/productos", permission: "menu.cumplimiento" },
   ],
   conami_tables: [
     {
@@ -322,6 +331,7 @@ const menuItems = {
   ],
 
   rrhh: [
+    { label: "Dashboard de RRHH", iconName: "FaChartLine", to: "/rrhh/dashboard", permission: "menu.rrhh" },
     { label: "Empleados", iconName: "FaUserTie", to: "/rrhh/empleados", permission: "menu.rrhh" },
     { label: "Planillas", iconName: "FaMoneyCheckAlt", to: "/rrhh/planillas", permission: "menu.rrhh" },
     { label: "Aguinaldo", iconName: "FaGift", to: "/rrhh/aguinaldo", permission: "menu.rrhh" },
@@ -333,6 +343,9 @@ const menuItems = {
     { label: "Incidencias", iconName: "FaCalendarTimes", to: "/rrhh/incidencias", permission: "menu.rrhh" },
     { label: "Liquidaciones", iconName: "FaUserSlash", to: "/rrhh/liquidaciones", permission: "menu.rrhh" },
     { label: "Reportes RRHH", iconName: "FaChartBar", to: "/rrhh/reportes", permission: "menu.rrhh" },
+    { label: "Organigrama", iconName: "FaSitemap", to: "/rrhh/organigrama", permission: "menu.rrhh" },
+    { label: "Contratos por Vencer", iconName: "FaFileContract", to: "/rrhh/contratos-por-vencer", permission: "menu.rrhh" },
+    { label: "Conozca a su Empleado", iconName: "FaUserShield", to: "/rrhh/conozca-su-empleado", permission: "menu.rrhh" },
     // Autoservicio: sin "permission" a propósito — el rol "Empleado" no
     // tiene (ni debe tener) menu.rrhh, pero sí debe ver su propia pantalla
     // de vacaciones (mismo criterio que el backend, que tampoco exige
@@ -357,18 +370,28 @@ const menuItems = {
       iconName: "FaFileInvoiceDollar",
       to: "/reports/conami/icc",
       permission: "menu.reportes",
+      moduleKey: "icc",
     },
     {
       label: "ICC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/icc",
       permission: "menu.reportes",
+      moduleKey: "icc",
+    },
+    {
+      label: "Sin Riesgo",
+      iconName: "FaFileInvoiceDollar",
+      to: "/reports/conami/sinriesgo",
+      permission: "menu.reportes",
+      moduleKey: "sinriesgo",
     },
     {
       label: "ISC - CONAMI (generador)",
       iconName: "FaFileInvoice",
       to: "/conami/isc",
       permission: "menu.reportes",
+      moduleKey: "isc",
     },
     {
       label: "CrediMaster Studio",
@@ -597,8 +620,18 @@ export default function AppLayoutMenu({
   // Solo items que declaran "permission" quedan sujetos a este filtro — el
   // resto del menú sigue visible para cualquier usuario autenticado, igual
   // que antes. role === 1 (Gerente General) ve todo, sin excepción.
-  const hasItemAccess = (item) =>
-    !item.permission || role === 1 || permissions.includes(item.permission);
+  //
+  // "moduleKey" es distinto de isSectionEnabled: esa función gatea una
+  // SECCIÓN completa (ej. "banks"), pero ICC/ISC/Sin Riesgo viven dentro de
+  // "reports", una sección que se queda siempre visible — así que estos
+  // ítems declaran su propio moduleKey para ocultarse individualmente sin
+  // afectar al resto de "Reportes" cuando el tenant no tiene ese módulo
+  // habilitado (ver AVAILABLE_MODULES en moduleRegistry.js, backend).
+  const hasItemAccess = (item) => {
+    if (item.permission && role !== 1 && !permissions.includes(item.permission)) return false;
+    if (item.moduleKey && enabledModules !== null && !enabledModules.includes(item.moduleKey)) return false;
+    return true;
+  };
 
   const fullMenu = useMemo(() => {
     const base = {
@@ -848,6 +881,20 @@ export default function AppLayoutMenu({
                       location.pathname === item.to ||
                       location.pathname.startsWith(`${item.to}/`);
 
+                    const isFavorite = favorites.some(
+                      (f) => f.route === item.to,
+                    );
+
+                    const toggleFavorite = (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isFavorite) {
+                        removeFavorite?.(item.to);
+                      } else {
+                        addFavorite?.(item);
+                      }
+                    };
+
                     return (
                       <Tooltip
                         key={item.to}
@@ -895,6 +942,26 @@ export default function AppLayoutMenu({
                                 fontWeight: isActive ? 900 : 700,
                               }}
                             />
+                          )}
+
+                          {!isCompact && (
+                            <IconButton
+                              size="small"
+                              onClick={toggleFavorite}
+                              sx={{
+                                ml: 0.5,
+                                color: isFavorite
+                                  ? "#FACC15"
+                                  : "rgba(255,255,255,.45)",
+                                "&:hover": { color: "#FACC15" },
+                              }}
+                            >
+                              {isFavorite ? (
+                                <StarRoundedIcon fontSize="small" />
+                              ) : (
+                                <StarBorderRoundedIcon fontSize="small" />
+                              )}
+                            </IconButton>
                           )}
                         </ListItemButton>
                       </Tooltip>

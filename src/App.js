@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { esES as dataGridEsES } from "@mui/x-data-grid/locales";
 
 import "./App.scss";
 import "bootstrap/scss/bootstrap.scss";
@@ -74,6 +75,7 @@ const PermissionList = lazy(() => import("./components/PermissionList"));
 const PaymentList = lazy(() => import("./components/PaymentList"));
 const BusinessDayPanel = lazy(() => import("./components/BusinessDayPanel"));
 const CreditPolicyManager = lazy(() => import("./components/CreditPolicyManager"));
+const FinancialEvaluationConfigManager = lazy(() => import("./components/FinancialEvaluationConfigManager"));
 const NotificationsManager = lazy(() => import("./components/notifications/NotificationsManager"));
 const CollectionsPage = lazy(() => import("./components/collections/CollectionsPage"));
 const RetentionsManager = lazy(() => import("./components/retentions/RetentionsManager"));
@@ -94,6 +96,7 @@ const LoanAddWizard = lazy(() => import("./components/Loan/LoanAddWizard"));
 const ApprovalInbox = lazy(() => import("./components/ApprovalInbox"));
 const CustomerClaimsList = lazy(() => import("./components/Claims/CustomerClaimsList"));
 const BalancesDashboard = lazy(() => import("./components/dashboard/BalancesDashboard"));
+const PortfolioDashboard = lazy(() => import("./components/dashboard/PortfolioDashboard"));
 const CreditFileTemplatePage = lazy(() => import("./components/credit-files/CreditFileTemplatePage"));
 const ConamiDefaultsManager = lazy(() => import("./components/conami/ConamiDefaultsManager"));
 const AccountsList = lazy(() => import("./components/accounting/AccountsList"));
@@ -107,11 +110,13 @@ const CashFlowStatement = lazy(() => import("./components/accounting/CashFlowSta
 const GuaranteesReport = lazy(() => import("./components/GuaranteesReport"));
 const AmlRiskCriteriaConfig = lazy(() => import("./components/Compliance/AmlRiskCriteriaConfig"));
 const PicReviewReminders = lazy(() => import("./components/Compliance/PicReviewReminders"));
+const IdentityVerificationReminders = lazy(() => import("./components/Compliance/IdentityVerificationReminders"));
 const WatchlistManagement = lazy(() => import("./components/Compliance/WatchlistManagement"));
 const AmlAlertsInbox = lazy(() => import("./components/Compliance/AmlAlertsInbox"));
 const RosCasesList = lazy(() => import("./components/Compliance/RosCasesList"));
 const AmlMonthlyReport = lazy(() => import("./components/Compliance/AmlMonthlyReport"));
 const ComplianceOfficerHistory = lazy(() => import("./components/Compliance/ComplianceOfficerHistory"));
+const ProductRiskAssessments = lazy(() => import("./components/Compliance/ProductRiskAssessments"));
 const AssetAdjudicationsList = lazy(() => import("./components/AssetAdjudicationsList"));
 const FinancialStatementNotes = lazy(() => import("./components/accounting/FinancialStatementNotes"));
 const YearEndClosing = lazy(() => import("./components/accounting/YearEndClosing"));
@@ -149,6 +154,10 @@ const MyVacations = lazy(() => import("./components/hr/MyVacations"));
 const VacationApprovalInbox = lazy(() => import("./components/hr/VacationApprovalInbox"));
 const IncidentsList = lazy(() => import("./components/hr/IncidentsList"));
 const LiquidationsList = lazy(() => import("./components/hr/LiquidationsList"));
+const ContractReminders = lazy(() => import("./components/hr/ContractReminders"));
+const EmployeeKyeReminders = lazy(() => import("./components/hr/EmployeeKyeReminders"));
+const HrDashboard = lazy(() => import("./components/hr/HrDashboard"));
+const OrgChart = lazy(() => import("./components/hr/OrgChart"));
 const HrReports = lazy(() => import("./components/hr/HrReports"));
 const PostingRuns = lazy(() => import("./components/accounting/PostingRuns"));
 const AccountMappingsManager = lazy(() => import("./components/accounting/AccountMappingsManager"));
@@ -157,6 +166,7 @@ const AccountReconciliation = lazy(() => import("./components/accounting/Account
 const IccReportPage = lazy(() => import("./pages/reports/conami/IccReportPage"));
 const IccGenerator = lazy(() => import("./pages/reports/conami/icc/IccGenerator"));
 const IscGenerator = lazy(() => import("./pages/reports/conami/isc/IscGenerator"));
+const SinRiesgoReportPage = lazy(() => import("./pages/reports/conami/sinriesgo/SinRiesgoReportPage"));
 const CustomReportsPage = lazy(() => import("./pages/customReports/CustomReportsPage"));
 const Studio = lazy(() => import("./reports/studio/Studio"));
 const AuditLog = lazy(() => import("./components/AuditLog"));
@@ -165,6 +175,7 @@ const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
 const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
 const SupportAdminPage = lazy(() => import("./pages/superadmin/SupportAdminPage"));
 const InvoicesAdminPage = lazy(() => import("./pages/superadmin/InvoicesAdminPage"));
+const ScreenHelpAdminPage = lazy(() => import("./pages/superadmin/ScreenHelpAdminPage"));
 const SupportTickets = lazy(() => import("./components/support/SupportTickets"));
 
 function RouteLoadingFallback() {
@@ -238,6 +249,7 @@ function SuperAdminRoutes() {
           <Route path="/tenants/:id/migration" element={<TenantMigrationPanel />} />
           <Route path="/soporte" element={<SupportAdminPage />} />
           <Route path="/facturas" element={<InvoicesAdminPage />} />
+          <Route path="/ayuda" element={<ScreenHelpAdminPage />} />
         </Routes>
       </Suspense>
     </SuperAdminLayout>
@@ -464,6 +476,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <CreditPolicyManager />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/creditos/evaluacion-financiera/configuracion"
+            element={
+              <PageContainer>
+                <FinancialEvaluationConfigManager />
               </PageContainer>
             }
           />
@@ -707,7 +727,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
               </PageContainer>
             }
           />
-          <Route path="/dashboard/saldos" element={<BalancesDashboard />} />
+          <Route path="/dashboard/saldos" element={<PortfolioDashboard />} />
           {/* CONTABILIDAD */}
           <Route path="/contabilidad/cuentas" element={<AccountsList />} />
           <Route path="/contabilidad/libro-diario" element={<JournalList />} />
@@ -729,11 +749,13 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/garantias/reporte" element={<GuaranteesReport />} />
           <Route path="/cumplimiento/matriz-riesgo" element={<AmlRiskCriteriaConfig />} />
           <Route path="/cumplimiento/pic" element={<PicReviewReminders />} />
+          <Route path="/cumplimiento/verificacion-identidad" element={<IdentityVerificationReminders />} />
           <Route path="/cumplimiento/listas" element={<WatchlistManagement />} />
           <Route path="/cumplimiento/alertas" element={<AmlAlertsInbox />} />
           <Route path="/cumplimiento/ros" element={<RosCasesList />} />
           <Route path="/cumplimiento/informe-mensual" element={<AmlMonthlyReport />} />
           <Route path="/cumplimiento/oficial-cumplimiento" element={<ComplianceOfficerHistory />} />
+          <Route path="/cumplimiento/productos" element={<ProductRiskAssessments />} />
           <Route path="/adjudicaciones" element={<AssetAdjudicationsList />} />
           <Route path="/contabilidad/notas-eeff" element={<FinancialStatementNotes />} />
           <Route path="/contabilidad/cierre-ejercicio" element={<YearEndClosing />} />
@@ -761,6 +783,10 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/caja/cajas" element={<CashRegistersList />} />
           <Route path="/caja/movimientos" element={<CashMovementsList />} />
           <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
+          <Route path="/rrhh/dashboard" element={<HrDashboard />} />
+          <Route path="/rrhh/organigrama" element={<OrgChart />} />
+          <Route path="/rrhh/contratos-por-vencer" element={<ContractReminders />} />
+          <Route path="/rrhh/conozca-su-empleado" element={<EmployeeKyeReminders />} />
           <Route path="/rrhh/empleados" element={<EmployeesList />} />
           <Route path="/rrhh/planillas" element={<PayrollRunsList />} />
           <Route path="/rrhh/aguinaldo" element={<PayrollRunsList runKind="AGUINALDO" />} />
@@ -781,6 +807,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/conami/icc" element={<IccGenerator />} />
           <Route path="/conami/isc" element={<IscGenerator />} />
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
+          <Route path="/reports/conami/sinriesgo" element={<SinRiesgoReportPage />} />
 
           <Route path="/custom-reports" element={<CustomReportsPage />} />
 
@@ -930,7 +957,13 @@ function App() {
             },
           },
         },
-      }),
+      },
+      // Traduce al español TODO lo que trae texto de UI por defecto en MUI:
+      // paginación, "Filas por página", overlays de DataGrid ("Sin filas"),
+      // etc. Un solo lugar para toda la aplicación en vez de pasar
+      // localeText pantalla por pantalla.
+      dataGridEsES,
+      ),
     [themeMode],
   );
 

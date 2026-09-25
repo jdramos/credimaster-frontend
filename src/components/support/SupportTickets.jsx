@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Stack,
@@ -74,6 +75,7 @@ export default function SupportTickets() {
             <Typography variant="h5" fontWeight={900}>
               Soporte
             </Typography>
+            <HelpButton screenKey="soporte.tickets" />
           </Stack>
           <Typography color="text.secondary">
             Reporta problemas de la aplicación y da seguimiento a tus tickets.

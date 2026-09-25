@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import API from "../../api";
+import { getFinancialEvaluationConfig } from "../../services/financialEvaluationConfig";
+import { getFinancialEvaluationConcepts } from "../../services/financialEvaluationConcepts";
 
 const BAC = {
   primary: "#D71920",
@@ -30,69 +32,124 @@ const money = (n) =>
     maximumFractionDigits: 2,
   }).format(Number(n || 0));
 
-function scoreCapacity(ratio) {
-  if (ratio >= 1.5) return 35;
-  if (ratio >= 1.3) return 28;
-  if (ratio >= 1.1) return 20;
-  if (ratio >= 1.0) return 10;
-  return 0;
+// Valores por defecto usados como vista previa mientras se carga la
+// configuración real del tenant (getFinancialEvaluationConfig) -- son los
+// mismos números que antes estaban hardcodeados acá, y los mismos que
+// utils/creditEvaluationScoring.js usa como fallback en el backend.
+const FALLBACK_SCORING_CONFIG = {
+  capacity_bands: [
+    { min_ratio: 1.5, score: 35 },
+    { min_ratio: 1.3, score: 28 },
+    { min_ratio: 1.1, score: 20 },
+    { min_ratio: 1.0, score: 10 },
+  ],
+  capacity_default_score: 0,
+
+  indebtedness_bands: [
+    { max_ratio: 0.2, score: 20 },
+    { max_ratio: 0.3, score: 16 },
+    { max_ratio: 0.4, score: 10 },
+    { max_ratio: 0.5, score: 5 },
+  ],
+  indebtedness_default_score: 0,
+
+  stability_bands: [
+    { min_years: 5, score: 20 },
+    { min_years: 3, score: 16 },
+    { min_years: 2, score: 12 },
+    { min_years: 1, score: 8 },
+  ],
+  stability_default_score: 3,
+
+  willingness_references_scores: { FAVORABLE: 8, REGULAR: 4 },
+  willingness_bureau_scores: { LIMPIO: 7, OBSERVADO: 3 },
+  willingness_default_score: 0,
+
+  documents_bands: [
+    { min_pct: 1, score: 10 },
+    { min_pct: 0.8, score: 8 },
+    { min_pct: 0.6, score: 5 },
+  ],
+  documents_default_score: 0,
+
+  risk_level_bands: [
+    { min_score: 80, level: "BAJO" },
+    { min_score: 60, level: "MEDIO" },
+    { min_score: 40, level: "ALTO" },
+  ],
+  risk_level_default: "MUY_ALTO",
+
+  recommendation_bands: [
+    { min_score: 80, recommendation: "APROBAR" },
+    { min_score: 60, recommendation: "APROBAR_CON_CONDICIONES" },
+  ],
+  recommendation_default: "PENDIENTE",
+  recommendation_reject_if_capacity_ratio_below: 1,
+
+  minimum_score_required: 60,
+};
+
+// Conceptos por defecto -- vista previa mientras carga la lista real del
+// tenant (getFinancialEvaluationConcepts), mismos 6 que antes eran campos
+// fijos del formulario.
+const FALLBACK_CONCEPTS = [
+  { concept_key: "business_income", label: "Ingreso negocio", type: "INCOME", is_active: 1, sort_order: 1 },
+  { concept_key: "salary_income", label: "Salario", type: "INCOME", is_active: 1, sort_order: 2 },
+  { concept_key: "other_income", label: "Otros ingresos", type: "INCOME", is_active: 1, sort_order: 3 },
+  { concept_key: "business_expenses", label: "Gastos negocio", type: "EXPENSE", is_active: 1, sort_order: 4 },
+  { concept_key: "family_expenses", label: "Gastos familiares", type: "EXPENSE", is_active: 1, sort_order: 5 },
+  { concept_key: "other_debts_installments", label: "Otras cuotas", type: "DEBT", is_active: 1, sort_order: 6 },
+];
+
+const CONCEPT_GROUP_LABELS = {
+  INCOME: "Ingresos",
+  EXPENSE: "Gastos",
+  DEBT: "Deudas",
+};
+
+function scoreCapacity(ratio, config) {
+  const band = config.capacity_bands.find((b) => ratio >= b.min_ratio);
+  return band ? band.score : config.capacity_default_score;
 }
 
-function scoreIndebtedness(ratio) {
-  if (ratio <= 0.2) return 20;
-  if (ratio <= 0.3) return 16;
-  if (ratio <= 0.4) return 10;
-  if (ratio <= 0.5) return 5;
-  return 0;
+function scoreIndebtedness(ratio, config) {
+  const band = config.indebtedness_bands.find((b) => ratio <= b.max_ratio);
+  return band ? band.score : config.indebtedness_default_score;
 }
 
-function scoreStability(years) {
+function scoreStability(years, config) {
   const y = Number(years || 0);
-  if (y >= 5) return 20;
-  if (y >= 3) return 16;
-  if (y >= 2) return 12;
-  if (y >= 1) return 8;
-  return 3;
+  const band = config.stability_bands.find((b) => y >= b.min_years);
+  return band ? band.score : config.stability_default_score;
 }
 
-function scoreWillingness(referencesResult, bureauResult) {
-  let score = 0;
-
-  if (referencesResult === "FAVORABLE") score += 8;
-  else if (referencesResult === "REGULAR") score += 4;
-
-  if (bureauResult === "LIMPIO") score += 7;
-  else if (bureauResult === "OBSERVADO") score += 3;
-
-  return score;
+function scoreWillingness(referencesResult, bureauResult, config) {
+  const referencesScore =
+    config.willingness_references_scores[referencesResult] ?? config.willingness_default_score;
+  const bureauScore = config.willingness_bureau_scores[bureauResult] ?? config.willingness_default_score;
+  return referencesScore + bureauScore;
 }
 
-function scoreDocuments(verifiedRequired, totalRequired) {
+function scoreDocuments(verifiedRequired, totalRequired, config) {
   const total = Number(totalRequired || 0);
   const verified = Number(verifiedRequired || 0);
 
   if (total <= 0) return 0;
 
   const pct = verified / total;
-
-  if (pct === 1) return 10;
-  if (pct >= 0.8) return 8;
-  if (pct >= 0.6) return 5;
-  return 0;
+  const band = config.documents_bands.find((b) => pct >= b.min_pct);
+  return band ? band.score : config.documents_default_score;
 }
 
-function getRiskLevel(finalScore) {
-  if (finalScore >= 80) return "BAJO";
-  if (finalScore >= 60) return "MEDIO";
-  if (finalScore >= 40) return "ALTO";
-  return "MUY_ALTO";
+function getRiskLevel(finalScore, config) {
+  const band = config.risk_level_bands.find((b) => finalScore >= b.min_score);
+  return band ? band.level : config.risk_level_default;
 }
 
-function getRecommendation({ finalScore, paymentCapacityRatio }) {
-  if (paymentCapacityRatio < 1) return "RECHAZAR";
-  if (finalScore >= 80) return "APROBAR";
-  if (finalScore >= 60) return "APROBAR_CON_CONDICIONES";
-  return "PENDIENTE";
+function getRecommendation({ finalScore, paymentCapacityRatio }, config) {
+  if (paymentCapacityRatio < config.recommendation_reject_if_capacity_ratio_below) return "RECHAZAR";
+  const band = config.recommendation_bands.find((b) => finalScore >= b.min_score);
+  return band ? band.recommendation : config.recommendation_default;
 }
 
 function getRiskChipColor(riskLevel) {
@@ -141,6 +198,8 @@ export default function CustomerFinancialEvaluationTab({
     missing: 0,
   });
 
+  const [scoringConfig, setScoringConfig] = useState(FALLBACK_SCORING_CONFIG);
+  const [concepts, setConcepts] = useState(FALLBACK_CONCEPTS);
   const [loadingEvaluation, setLoadingEvaluation] = useState(false);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -186,13 +245,9 @@ export default function CustomerFinancialEvaluationTab({
 
           methodology: data.methodology || "INDIVIDUAL",
 
-          business_income: data.business_income ?? "",
-          salary_income: data.salary_income ?? "",
-          other_income: data.other_income ?? "",
-
-          business_expenses: data.business_expenses ?? "",
-          family_expenses: data.family_expenses ?? "",
-          other_debts_installments: data.other_debts_installments ?? "",
+          concept_values: Object.fromEntries(
+            (data.concept_values || []).map((cv) => [cv.concept_key, cv.value]),
+          ),
 
           proposed_installment: data.proposed_installment ?? "",
 
@@ -221,6 +276,38 @@ export default function CustomerFinancialEvaluationTab({
       active = false;
     };
   }, [customerId, loanId]);
+
+  useEffect(() => {
+    let active = true;
+
+    getFinancialEvaluationConfig()
+      .then((config) => {
+        if (active && config) setScoringConfig(config);
+      })
+      .catch((err) => {
+        console.error("Error cargando configuración de evaluación financiera:", err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    getFinancialEvaluationConcepts()
+      .then((data) => {
+        if (active && data?.length) setConcepts(data);
+      })
+      .catch((err) => {
+        console.error("Error cargando conceptos de evaluación financiera:", err);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -277,25 +364,44 @@ export default function CustomerFinancialEvaluationTab({
     }));
   };
 
+  const handleConceptChange = (conceptKey, value) => {
+    if (readOnly) return;
+
+    setForm((prev) => ({
+      ...prev,
+      concept_values: { ...(prev.concept_values || {}), [conceptKey]: value },
+    }));
+  };
+
   const summary = useMemo(() => {
-    const businessIncome = Number(form.business_income || 0);
-    const salaryIncome = Number(form.salary_income || 0);
-    const otherIncome = Number(form.other_income || 0);
-
-    const businessExpenses = Number(form.business_expenses || 0);
-    const familyExpenses = Number(form.family_expenses || 0);
-    const otherDebts = Number(form.other_debts_installments || 0);
-
+    const conceptValues = form.concept_values || {};
     const proposedInstallment = Number(form.proposed_installment || 0);
 
-    const totalIncome = businessIncome + salaryIncome + otherIncome;
-    const totalExpenses = businessExpenses + familyExpenses + otherDebts;
+    let totalIncome = 0;
+    let totalExpenses = 0;
+    let debtsSum = 0;
+
+    for (const concept of concepts) {
+      if (!concept.is_active) continue;
+
+      const value = Number(conceptValues[concept.concept_key] || 0);
+
+      if (concept.type === "INCOME") {
+        totalIncome += value;
+      } else if (concept.type === "EXPENSE") {
+        totalExpenses += value;
+      } else if (concept.type === "DEBT") {
+        totalExpenses += value;
+        debtsSum += value;
+      }
+    }
+
     const availableCashFlow = totalIncome - totalExpenses;
 
     const paymentCapacityRatio =
       proposedInstallment > 0 ? availableCashFlow / proposedInstallment : 0;
 
-    const indebtednessRatio = totalIncome > 0 ? otherDebts / totalIncome : 0;
+    const indebtednessRatio = totalIncome > 0 ? debtsSum / totalIncome : 0;
 
     return {
       totalIncome,
@@ -304,20 +410,22 @@ export default function CustomerFinancialEvaluationTab({
       paymentCapacityRatio,
       indebtednessRatio,
     };
-  }, [form]);
+  }, [form, concepts]);
 
   const score = useMemo(() => {
     const willingnessScore = scoreWillingness(
       form.references_result,
       form.bureau_result,
+      scoringConfig,
     );
 
-    const capacityScore = scoreCapacity(summary.paymentCapacityRatio);
-    const stabilityScore = scoreStability(form.years_in_business);
-    const indebtednessScore = scoreIndebtedness(summary.indebtednessRatio);
+    const capacityScore = scoreCapacity(summary.paymentCapacityRatio, scoringConfig);
+    const stabilityScore = scoreStability(form.years_in_business, scoringConfig);
+    const indebtednessScore = scoreIndebtedness(summary.indebtednessRatio, scoringConfig);
     const documentaryScore = scoreDocuments(
       docSummary.verified,
       docSummary.total_required,
+      scoringConfig,
     );
 
     const finalScore =
@@ -327,11 +435,11 @@ export default function CustomerFinancialEvaluationTab({
       indebtednessScore +
       documentaryScore;
 
-    const riskLevel = getRiskLevel(finalScore);
-    const recommendation = getRecommendation({
-      finalScore,
-      paymentCapacityRatio: summary.paymentCapacityRatio,
-    });
+    const riskLevel = getRiskLevel(finalScore, scoringConfig);
+    const recommendation = getRecommendation(
+      { finalScore, paymentCapacityRatio: summary.paymentCapacityRatio },
+      scoringConfig,
+    );
 
     return {
       willingness_score: willingnessScore,
@@ -343,7 +451,7 @@ export default function CustomerFinancialEvaluationTab({
       risk_level: riskLevel,
       recommendation,
     };
-  }, [form, summary, docSummary]);
+  }, [form, summary, docSummary, scoringConfig]);
 
   const saveEvaluation = async () => {
     if (readOnly) return;
@@ -360,13 +468,9 @@ export default function CustomerFinancialEvaluationTab({
         evaluation_date: form.evaluation_date,
         methodology: form.methodology,
 
-        business_income: Number(form.business_income || 0),
-        salary_income: Number(form.salary_income || 0),
-        other_income: Number(form.other_income || 0),
-
-        business_expenses: Number(form.business_expenses || 0),
-        family_expenses: Number(form.family_expenses || 0),
-        other_debts_installments: Number(form.other_debts_installments || 0),
+        concept_values: Object.fromEntries(
+          Object.entries(form.concept_values || {}).map(([key, value]) => [key, Number(value || 0)]),
+        ),
 
         proposed_installment: Number(form.proposed_installment || 0),
 
@@ -570,83 +674,36 @@ export default function CustomerFinancialEvaluationTab({
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Ingreso negocio"
-                  name="business_income"
-                  value={form.business_income}
-                  onChange={handleChange}
-                  disabled={readOnly}
-                />
-              </Grid>
+              {["INCOME", "EXPENSE", "DEBT"].map((type) => {
+                const typeConcepts = concepts
+                  .filter((c) => c.is_active && c.type === type)
+                  .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Salario"
-                  name="salary_income"
-                  value={form.salary_income}
-                  onChange={handleChange}
-                  disabled={readOnly}
-                />
-              </Grid>
+                if (!typeConcepts.length) return null;
 
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Otros ingresos"
-                  name="other_income"
-                  value={form.other_income}
-                  onChange={handleChange}
-                  disabled={readOnly}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Gastos negocio"
-                  name="business_expenses"
-                  value={form.business_expenses}
-                  onChange={handleChange}
-                  disabled={readOnly}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Gastos familiares"
-                  name="family_expenses"
-                  value={form.family_expenses}
-                  onChange={handleChange}
-                  disabled={readOnly}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Otras cuotas"
-                  name="other_debts_installments"
-                  value={form.other_debts_installments}
-                  onChange={handleChange}
-                  disabled={readOnly}
-                />
-              </Grid>
+                return (
+                  <React.Fragment key={type}>
+                    <Grid item xs={12}>
+                      <Typography variant="caption" sx={{ color: BAC.textSoft, fontWeight: 700 }}>
+                        {CONCEPT_GROUP_LABELS[type]}
+                      </Typography>
+                    </Grid>
+                    {typeConcepts.map((concept) => (
+                      <Grid item xs={12} md={4} key={concept.concept_key}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          type="number"
+                          label={concept.label}
+                          value={(form.concept_values || {})[concept.concept_key] ?? ""}
+                          onChange={(e) => handleConceptChange(concept.concept_key, e.target.value)}
+                          disabled={readOnly}
+                        />
+                      </Grid>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
 
               <Grid item xs={12} md={3}>
                 <TextField

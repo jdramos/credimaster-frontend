@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import { Alert, Box, Button, Chip, Paper, Stack, TextField, Typography, Tooltip } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import WavesIcon from "@mui/icons-material/Waves";
@@ -91,7 +92,10 @@ export default function CashFlowStatement() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <WavesIcon color="primary" />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Estado de Flujos de Efectivo</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Estado de Flujos de Efectivo</Typography>
+              <HelpButton screenKey="contabilidad.flujo-efectivo" />
+            </Box>
             <Typography variant="body2" color="text.secondary">Forma D del Manual Único de Cuentas CONAMI — método indirecto</Typography>
           </Box>
         </Stack>

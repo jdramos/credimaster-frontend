@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -256,7 +257,10 @@ export default function CashMovementsList() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <PaymentsIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Movimientos de Caja</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Movimientos de Caja</Typography>
+              <HelpButton screenKey="caja.movimientos" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Saldo, movimientos y registro de ingresos/egresos de una caja
             </Typography>

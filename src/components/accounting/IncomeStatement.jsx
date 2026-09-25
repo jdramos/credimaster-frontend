@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
+  FormControlLabel,
   Paper,
   Snackbar,
   TextField,
@@ -25,6 +28,7 @@ export default function IncomeStatement() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ from_date: "", to_date: "", branch_id: "" });
   const [branchName, setBranchName] = useState("Todas");
+  const [onlyWithBalance, setOnlyWithBalance] = useState(false);
   const [alert, setAlert] = useState({
     open: false,
     severity: "success",
@@ -95,6 +99,7 @@ export default function IncomeStatement() {
   const summary = useMemo(() => {
     let income = 0;
     let expenses = 0;
+    let tax = 0;
 
     rows.forEach((row) => {
       const type = String(row.account_type || "").toUpperCase();
@@ -110,12 +115,26 @@ export default function IncomeStatement() {
       }
     });
 
+    // Impuesto sobre la renta (6201): clasificado como account_type "OTRO"
+    // (clase 6, fuera de ingreso/gasto), por eso no cae dentro de `rows`
+    // (ya filtrado a INGRESO/GASTO/COSTO) — se toma de allRows para que el
+    // "Resultado" mostrado aquí sea neto de impuesto, igual que en Balance
+    // General y en el Forma B impreso.
+    allRows.forEach((row) => {
+      if (String(row.muc_code || "").startsWith("6201")) {
+        const debit = Number(row.total_debit || row.debit || 0);
+        const credit = Number(row.total_credit || row.credit || 0);
+        tax += debit - credit;
+      }
+    });
+
     return {
       income,
       expenses,
-      result: income - expenses,
+      tax,
+      result: income - expenses - tax,
     };
-  }, [rows]);
+  }, [rows, allRows]);
 
   const columns = useMemo(
     () => [
@@ -168,9 +187,12 @@ export default function IncomeStatement() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <AssessmentIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Estado de Resultados
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Estado de Resultados
+              </Typography>
+              <HelpButton screenKey="contabilidad.estado-resultados" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Ingresos, costos, gastos y resultado del período
             </Typography>
@@ -226,6 +248,18 @@ export default function IncomeStatement() {
           <ReportSignaturesDialog />
         </Box>
 
+        <FormControlLabel
+          sx={{ mb: 1 }}
+          control={
+            <Checkbox
+              size="small"
+              checked={onlyWithBalance}
+              onChange={(e) => setOnlyWithBalance(e.target.checked)}
+            />
+          }
+          label="Solo cuentas con saldo"
+        />
+
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
             color="success"
@@ -235,6 +269,12 @@ export default function IncomeStatement() {
             color="error"
             label={`Gastos/Costos: ${summary.expenses.toLocaleString("es-NI", { minimumFractionDigits: 2 })}`}
           />
+          {summary.tax !== 0 && (
+            <Chip
+              color="default"
+              label={`Impuesto a la renta: ${summary.tax.toLocaleString("es-NI", { minimumFractionDigits: 2 })}`}
+            />
+          )}
           <Chip
             color={summary.result >= 0 ? "primary" : "warning"}
             label={`Resultado: ${summary.result.toLocaleString("es-NI", { minimumFractionDigits: 2 })}`}
@@ -243,7 +283,17 @@ export default function IncomeStatement() {
 
         <Box sx={{ height: 620 }}>
           <DataGrid
-            rows={rows}
+            rows={
+              onlyWithBalance
+                ? rows.filter((row) => {
+                    const type = String(row.account_type || "").toUpperCase();
+                    const debit = Number(row.total_debit || row.debit || 0);
+                    const credit = Number(row.total_credit || row.credit || 0);
+                    const value = ["INGRESO", "INCOME"].includes(type) ? credit - debit : debit - credit;
+                    return Math.abs(value) >= 0.005;
+                  })
+                : rows
+            }
             columns={columns}
             loading={loading}
             getRowId={(row) => row.account_id || row.id || row.muc_code}

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -137,7 +138,10 @@ export default function BudgetTrackingDashboard() {
       >
         <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1.5}>
           <Box>
-            <Typography variant="h5" fontWeight={800}>Seguimiento de Presupuesto</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h5" fontWeight={800}>Seguimiento de Presupuesto</Typography>
+              <HelpButton screenKey="presupuesto.seguimiento" sx={{ color: "white" }} />
+            </Box>
             <Typography variant="body2" sx={{ opacity: 0.8 }}>
               {data?.budget?.name} — {MONTHS[month - 1]} {data?.budget?.year_no}
             </Typography>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -11,6 +12,12 @@ import {
   Paper,
   Snackbar,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
@@ -34,6 +41,18 @@ const ALERT_TYPE_LABEL = {
 };
 
 export default function AmlAlertsInbox() {
+  const [frequencyRows, setFrequencyRows] = useState([]);
+
+  useEffect(() => {
+    // Art. 33.6: reporte de cuántas veces apareció cada cliente en alertas,
+    // por tipo -- últimos 90 días por defecto.
+    API.get("/api/aml/alerts/frequency-report", {
+      params: { date_from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) },
+    })
+      .then(({ data }) => setFrequencyRows(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState({ OPEN: 0, UNDER_REVIEW: 0, DISMISSED: 0, ESCALATED: 0 });
   const [statusFilter, setStatusFilter] = useState("OPEN");
@@ -160,9 +179,12 @@ export default function AmlAlertsInbox() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <WarningAmberIcon sx={{ color: "#B45309" }} />
           <Box flexGrow={1}>
-            <Typography variant="h6" fontWeight={700}>
-              Alertas de Operaciones Inusuales
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Alertas de Operaciones Inusuales
+              </Typography>
+              <HelpButton screenKey="cumplimiento.alertas" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Art. 33-34, 37-38 CD-CONAMI-070-01OCT07-2025
             </Typography>
@@ -209,6 +231,44 @@ export default function AmlAlertsInbox() {
             }}
           />
         </Box>
+      </Paper>
+
+      <Paper elevation={0} sx={{ p: 2, mt: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+        <Typography variant="subtitle1" fontWeight={800} mb={0.5}>
+          Frecuencia de alertas por cliente (últimos 90 días)
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={1.5}>
+          Art. 33.6 CD-CONAMI-070-01OCT07-2025.
+        </Typography>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Cliente</TableCell>
+                <TableCell>Identificación</TableCell>
+                <TableCell>Tipo de alerta</TableCell>
+                <TableCell align="right">Veces</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {frequencyRows.map((r, i) => (
+                <TableRow key={i} hover>
+                  <TableCell>{r.customer_name || "-"}</TableCell>
+                  <TableCell>{r.customer_identification || "-"}</TableCell>
+                  <TableCell>{ALERT_TYPE_LABEL[r.alert_type] || r.alert_type}</TableCell>
+                  <TableCell align="right">{r.total}</TableCell>
+                </TableRow>
+              ))}
+              {frequencyRows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center">
+                    Sin alertas en el período.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
 
       <Dialog open={!!dialog} onClose={closeDialog} maxWidth="sm" fullWidth>

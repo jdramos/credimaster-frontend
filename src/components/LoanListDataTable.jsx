@@ -41,7 +41,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import UndoIcon from "@mui/icons-material/Undo";
 import BlockIcon from "@mui/icons-material/Block";
 import { UserContext } from "../contexts/UserContext";
-import LoanDetailsModal from "./Loan/LoanDetailsModal";
+import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
 import PaymentForm from "./PaymentForm";
 import AccountStatementModal from "./AccountStatementModal";
 import axios from "axios";

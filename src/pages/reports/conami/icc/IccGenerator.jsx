@@ -154,7 +154,7 @@ export default function IccGenerator() {
       setLoadingGenerate(true);
       setError("");
 
-      const res = await API.post("/api/conami/icc/generate", form);
+      const res = await API.post("/api/reports/conami/icc/generate", form);
 
       const data = res.data || {};
 

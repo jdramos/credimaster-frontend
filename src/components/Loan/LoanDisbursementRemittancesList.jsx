@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Paper,
   Stack,
@@ -196,9 +197,12 @@ export default function LoanDisbursementRemittancesList() {
   return (
     <Paper sx={{ p: 2.5 }}>
       <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }} spacing={1.5} mb={2}>
-        <Typography variant="h6" fontWeight={700}>
-          Remesas de desembolso — seguimiento
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+          <Typography variant="h6" fontWeight={700}>
+            Remesas de desembolso — seguimiento
+          </Typography>
+          <HelpButton screenKey="creditos.remesas" />
+        </Box>
         <Button startIcon={<RefreshIcon />} onClick={loadData}>
           Recargar
         </Button>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   Paper,
@@ -242,9 +243,12 @@ export default function AssetAdjudicationsList() {
   return (
     <Box p={2}>
       <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" fontWeight={800} mb={2}>
-          Adjudicaciones de Bienes
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, mb: 2 }}>
+          <Typography variant="h6" fontWeight={800}>
+            Adjudicaciones de Bienes
+          </Typography>
+          <HelpButton screenKey="adjudicaciones.listado" />
+        </Box>
 
         <div style={{ height: 600, width: "100%" }}>
           <DataGrid

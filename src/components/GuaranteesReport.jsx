@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Alert,
   Autocomplete,
   Box,
+  Button,
   Chip,
   IconButton,
   Paper,
@@ -14,8 +16,10 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import SecurityIcon from "@mui/icons-material/Security";
 import PhotoCameraBackIcon from "@mui/icons-material/PhotoCameraBack";
+import PrintIcon from "@mui/icons-material/Print";
 import API from "../api";
 import GuaranteePhotosDialog from "./GuaranteePhotosDialog";
+import { printAccountingReport } from "./accounting/printAccountingReport";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", {
@@ -26,6 +30,7 @@ const money = (v) =>
 export default function GuaranteesReport() {
   const [rows, setRows] = useState([]);
   const [cuentaContable, setCuentaContable] = useState("");
+  const [ledgerBalance, setLedgerBalance] = useState(null);
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -50,6 +55,7 @@ export default function GuaranteesReport() {
 
       setRows(data.data || []);
       setCuentaContable(data.cuenta_contable || "");
+      setLedgerBalance(typeof data.ledger_balance === "number" ? data.ledger_balance : null);
     } catch (error) {
       showAlert(
         error.response?.data?.message || error.message || "Error al cargar el reporte de garantías",
@@ -77,10 +83,47 @@ export default function GuaranteesReport() {
     fetchReport(value?.id);
   };
 
-  const totalValue = rows.reduce((sum, r) => sum + Number(r.value || 0), 0);
-  const totalPosted = rows
-    .filter((r) => r.posted_at)
+  // Una garantía "Anulada" (posted_at seteado pero el asiento ya no está
+  // POSTED) no debe inflar ningún total del reporte -- ver
+  // GuaranteeController.js::getGuaranteesReport. Sigue apareciendo en la
+  // grilla (con su chip "Anulado") para trazabilidad, solo se excluye de
+  // las sumas.
+  const isVoided = (r) => Boolean(r.posted_at) && r.journal_status && r.journal_status !== "POSTED";
+  const activeRows = rows.filter((r) => !isVoided(r));
+  const totalValue = activeRows.reduce((sum, r) => sum + Number(r.value || 0), 0);
+  const totalPosted = activeRows
+    .filter((r) => r.effectively_posted)
     .reduce((sum, r) => sum + Number(r.value || 0), 0);
+  const reconciles = ledgerBalance === null || Math.abs(ledgerBalance - totalPosted) < 0.01;
+
+  const statusLabel = (row) => {
+    if (row.effectively_posted) return "Contabilizada";
+    if (isVoided(row)) return "Anulado";
+    return "Pendiente";
+  };
+
+  const printReport = () =>
+    printAccountingReport({
+      title: "Reporte de Garantías",
+      subtitle: cuentaContable ? `Cuenta contable: ${cuentaContable}` : undefined,
+      period: selectedCustomer ? `Cliente: ${selectedCustomer.customer_name}` : "Todos los clientes",
+      columns: [
+        { field: "customer_name", label: "Cliente" },
+        { field: "article", label: "Artículo" },
+        { field: "series", label: "Serie" },
+        { field: "brand", label: "Marca" },
+        { field: "value", label: "Valor", numeric: true, format: (v) => money(v) },
+        { field: "status", label: "Estado", value: (row) => statusLabel(row) },
+        { field: "entry_no", label: "Comprobante" },
+        { field: "created_at", label: "Fecha registro", format: (v) => (v ? String(v).slice(0, 10) : "") },
+      ],
+      rows,
+      totals: [
+        { value: "Totales (excluye anuladas)", colspan: 4 },
+        { value: money(totalValue), numeric: true },
+        { value: "", colspan: 3 },
+      ],
+    });
 
   const columns = [
     { field: "customer_name", headerName: "Cliente", flex: 1, minWidth: 180 },
@@ -103,14 +146,21 @@ export default function GuaranteesReport() {
     {
       field: "posted_at",
       headerName: "Contabilizada",
-      width: 140,
-      renderCell: (params) => (
-        <Chip
-          size="small"
-          color={params.value ? "success" : "default"}
-          label={params.value ? "Sí" : "No"}
-        />
-      ),
+      width: 150,
+      renderCell: (params) => {
+        const row = params.row;
+        if (row.effectively_posted) {
+          return <Chip size="small" color="success" label="Sí" />;
+        }
+        if (row.posted_at && row.journal_status && row.journal_status !== "POSTED") {
+          return (
+            <Tooltip title={`El comprobante ${row.entry_no || ""} fue anulado`}>
+              <Chip size="small" color="warning" label="Anulado" />
+            </Tooltip>
+          );
+        }
+        return <Chip size="small" color="default" label="No" />;
+      },
     },
     { field: "entry_no", headerName: "Comprobante", width: 150 },
     {
@@ -152,25 +202,33 @@ export default function GuaranteesReport() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <SecurityIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Reporte de Garantías
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Reporte de Garantías
+              </Typography>
+              <HelpButton screenKey="garantias.reporte" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Garantías registradas por cliente y su estado de contabilización en cuentas de orden
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ mb: 2, maxWidth: 360 }}>
-          <Autocomplete
-            size="small"
-            options={customers}
-            value={selectedCustomer}
-            getOptionLabel={(o) => `${o.customer_name || ""}${o.identification ? " - " + o.identification : ""}`}
-            isOptionEqualToValue={(o, v) => o.id === v.id}
-            onChange={handleCustomerChange}
-            renderInput={(params) => <TextField {...params} label="Filtrar por cliente" />}
-          />
+        <Box sx={{ mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+          <Box sx={{ maxWidth: 360, flex: 1, minWidth: 260 }}>
+            <Autocomplete
+              size="small"
+              options={customers}
+              value={selectedCustomer}
+              getOptionLabel={(o) => `${o.customer_name || ""}${o.identification ? " - " + o.identification : ""}`}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
+              onChange={handleCustomerChange}
+              renderInput={(params) => <TextField {...params} label="Filtrar por cliente" />}
+            />
+          </Box>
+          <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>
+            Imprimir
+          </Button>
         </Box>
 
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -178,6 +236,15 @@ export default function GuaranteesReport() {
           <Chip color="success" label={`Contabilizado: ${money(totalPosted)}`} />
           <Chip label={`Pendiente de contabilizar: ${money(totalValue - totalPosted)}`} />
           <Chip label={`Registros: ${rows.length}`} />
+          {ledgerBalance !== null && (
+            <Tooltip title="Saldo actual de la cuenta de orden de garantías recibidas (solo asientos contabilizados, no anulados)">
+              <Chip
+                color={reconciles ? "success" : "error"}
+                variant={reconciles ? "outlined" : "filled"}
+                label={`Saldo en libro mayor: ${money(ledgerBalance)}${reconciles ? " ✓ cuadra" : " ⚠ no cuadra"}`}
+              />
+            </Tooltip>
+          )}
         </Box>
 
         <Box sx={{ height: 500 }}>

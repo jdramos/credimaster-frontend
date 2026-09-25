@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import HelpButton from "./help/HelpButton";
 import {
     Box, Typography, Table, TableHead, TableBody, TableRow,
     TableCell, TextField, Button, IconButton, Dialog, DialogTitle,
@@ -130,9 +131,12 @@ const CreditPolicyManager = () => {
 
     return (
         <Box p={3}>
-            <Typography variant="h5" gutterBottom>
-                Políticas de Crédito
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h5" gutterBottom>
+                    Políticas de Crédito
+                </Typography>
+                <HelpButton screenKey="creditos.politicas" />
+            </Box>
 
 
             {(role === 1 || permissions.includes('politicas_credito.insertar'))
@@ -208,6 +212,21 @@ const CreditPolicyManager = () => {
                             <MenuItem value="warn">warn — permitir y advertir</MenuItem>
                             <MenuItem value="block">block — bloquear el crédito</MenuItem>
                             <MenuItem value="approval">approval — requiere aprobación especial</MenuItem>
+                        </TextField>
+                    ) : newPolicy.policy_key === 'guarantor_requirement_mode' ? (
+                        <TextField
+                            label="Valor (exigencia de fiador)"
+                            name="policy_value"
+                            value={newPolicy.policy_value}
+                            onChange={handleChange}
+                            select
+                            fullWidth
+                            margin="dense"
+                            helperText="NO_APLICA = no se pide · OPCIONAL = se puede agregar pero no es obligatorio · OBLIGATORIO = el crédito no se puede grabar sin fiador"
+                        >
+                            <MenuItem value="NO_APLICA">NO_APLICA — no se pide fiador</MenuItem>
+                            <MenuItem value="OPCIONAL">OPCIONAL — se puede agregar, no obligatorio</MenuItem>
+                            <MenuItem value="OBLIGATORIO">OBLIGATORIO — requiere al menos un fiador</MenuItem>
                         </TextField>
                     ) : newPolicy.policy_type === 'boolean' ? (
                         <TextField

@@ -1,5 +1,6 @@
 // Agrupado por sucursal y vendedor usando PrimeReact TreeTable con exportación y colores (BAC)
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   IconButton,
@@ -334,9 +335,12 @@ const ProvissionViewer = () => {
           gap={2}
         >
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Provisiones por Sucursal y Vendedor
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                Provisiones por Sucursal y Vendedor
+              </Typography>
+              <HelpButton screenKey="provisiones.visor" sx={{ color: "white" }} />
+            </Box>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
               Corte: {dayjs(date).format("DD/MM/YYYY")} · Balance: {balanceType}
             </Typography>

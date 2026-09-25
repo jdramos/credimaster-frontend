@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogTitle, IconButton, MenuItem, Paper, Stack,
@@ -63,7 +64,7 @@ export default function AuditLog() {
   return (
     <Stack spacing={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Box><Typography variant="h5" fontWeight={900}>Auditoría</Typography><Typography color="text.secondary">Trazabilidad de acciones realizadas en el sistema</Typography></Box>
+        <Box><Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}><Typography variant="h5" fontWeight={900}>Auditoría</Typography><HelpButton screenKey="auditoria.log" /></Box><Typography color="text.secondary">Trazabilidad de acciones realizadas en el sistema</Typography></Box>
         <Button startIcon={<RefreshRoundedIcon />} onClick={load} disabled={loading}>Actualizar</Button>
       </Box>
 

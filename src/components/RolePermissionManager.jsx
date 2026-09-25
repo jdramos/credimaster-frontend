@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   Typography,
@@ -521,9 +522,12 @@ const RolePermissionManager = () => {
           spacing={2}
         >
           <Box>
-            <Typography variant="h4" fontWeight={700}>
-              Asignación de Permisos por Rol
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h4" fontWeight={700}>
+                Asignación de Permisos por Rol
+              </Typography>
+              <HelpButton screenKey="roles.listado" sx={{ color: "white" }} />
+            </Box>
             <Typography variant="body1" sx={{ opacity: 0.92, mt: 0.5 }}>
               Administra los permisos funcionales de cada rol en CrediMaster.
             </Typography>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   Button,
@@ -99,9 +100,12 @@ const RecoveryProjection = () => {
     <Box className="bac-page">
       <Box className="bac-page-header">
         <Box>
-          <Typography variant="h5" className="bac-page-title">
-            Proyección de Recuperación
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography variant="h5" className="bac-page-title">
+              Proyección de Recuperación
+            </Typography>
+            <HelpButton screenKey="creditos.proyeccion-recuperacion" />
+          </Box>
           <div className="bac-page-subtitle">
             Capital e interés que se espera cobrar en el rango de fecha, según el calendario de cuotas vigente
           </div>

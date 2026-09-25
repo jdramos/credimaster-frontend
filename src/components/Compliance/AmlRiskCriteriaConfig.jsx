@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -152,9 +153,12 @@ export default function AmlRiskCriteriaConfig() {
   return (
     <Box p={2}>
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" fontWeight={800} mb={1}>
-          Matriz de Riesgo LA/FT/FP — Criterios
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, mb: 1 }}>
+          <Typography variant="h6" fontWeight={800}>
+            Matriz de Riesgo LA/FT/FP — Criterios
+          </Typography>
+          <HelpButton screenKey="cumplimiento.matriz-riesgo" />
+        </Box>
         <Typography variant="body2" color="text.secondary" mb={2}>
           Puntaje por factor y umbrales que determinan la clasificación BAJO/MEDIO/ALTO de cada
           cliente. PEP y coincidencia de sanciones siempre clasifican ALTO riesgo, sin importar el

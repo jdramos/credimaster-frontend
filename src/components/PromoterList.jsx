@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import PromoterModal from "./PromoterModal";
 import {
   Alert,
@@ -232,9 +233,12 @@ export default function PromoterList() {
               </Box>
 
               <Box>
-                <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                  Listado de promotores
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                    Listado de promotores
+                  </Typography>
+                  <HelpButton screenKey="promotores.listado" sx={{ color: "white" }} />
+                </Box>
                 <Typography fontSize={13} sx={{ opacity: 0.85 }}>
                   Administración de promotores asignados por sucursal
                 </Typography>

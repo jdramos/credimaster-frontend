@@ -19,6 +19,11 @@ export default function LocationMapPicker({
   onSetPosition,
   disabled = false,
   zoom = 13,
+  // Ubicación a la que recentrar el mapa "a demanda" (ej. al hacer clic en
+  // una tarjeta de ubicación fuera del mapa) — distinta del centrado
+  // automático inicial (positioned[0]), que solo aplica mientras nadie pidió
+  // enfocar un punto en particular.
+  focusPosition = null,
 }) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: "credimaster-google-maps",
@@ -43,9 +48,9 @@ export default function LocationMapPicker({
 
   const positioned = markers.filter((m) => m && m.position);
   const mapCenter = useMemo(
-    () => (positioned[0] ? positioned[0].position : DEFAULT_CENTER),
+    () => focusPosition || (positioned[0] ? positioned[0].position : DEFAULT_CENTER),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [positioned.length, positioned[0]?.position?.lat, positioned[0]?.position?.lng],
+    [focusPosition?.lat, focusPosition?.lng, positioned.length, positioned[0]?.position?.lat, positioned[0]?.position?.lng],
   );
 
   if (!process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -157,9 +158,12 @@ const BranchesList = () => {
             spacing={2}
           >
             <Box>
-              <Typography variant="h5" fontWeight={800}>
-                Listado de sucursales
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h5" fontWeight={800}>
+                  Listado de sucursales
+                </Typography>
+                <HelpButton screenKey="sucursales.listado" sx={{ color: "white" }} />
+              </Box>
               <Typography variant="body2" sx={{ opacity: 0.92, mt: 0.5 }}>
                 Consulta, organiza y edita las sucursales registradas en el
                 sistema.

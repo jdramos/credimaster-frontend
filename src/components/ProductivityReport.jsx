@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   Button,
@@ -338,9 +339,12 @@ const ProductivityReport = () => {
     <Box className="bac-page">
       <Box className="bac-page-header">
         <Box>
-          <Typography variant="h5" className="bac-page-title">
-            Productividad de Promotores y Cobradores
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography variant="h5" className="bac-page-title">
+              Productividad de Promotores y Cobradores
+            </Typography>
+            <HelpButton screenKey="creditos.productividad" />
+          </Box>
           <div className="bac-page-subtitle">
             Colocación, calidad de cartera y cumplimiento de meta por promotor; recuperación y efectividad de cobro por cobrador
           </div>

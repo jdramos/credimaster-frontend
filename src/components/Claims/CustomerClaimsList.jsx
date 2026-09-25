@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -126,9 +127,12 @@ export default function CustomerClaimsList() {
           color: "#fff",
         }}
       >
-        <Typography variant="h5" fontWeight={700}>
-          Reclamos de clientes
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+          <Typography variant="h5" fontWeight={700}>
+            Reclamos de clientes
+          </Typography>
+          <HelpButton screenKey="reclamos.listado" sx={{ color: "white" }} />
+        </Box>
         <Typography variant="body2" sx={{ opacity: 0.9 }}>
           Registro, seguimiento y respuesta de reclamos
         </Typography>

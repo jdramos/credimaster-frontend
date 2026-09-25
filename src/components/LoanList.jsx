@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import AddCircle from "./AddCircle";
+import HelpButton from "./help/HelpButton";
 import {
   Alert,
   Box,
@@ -330,7 +331,7 @@ const LoanList = () => {
         <Box
           sx={{
             px: 3,
-            py: 2.2,
+            py: 1.25,
             background: `linear-gradient(135deg, ${BAC.primaryDark}, ${BAC.primary})`,
             color: BAC.white,
           }}
@@ -357,9 +358,12 @@ const LoanList = () => {
               </Box>
 
               <Box>
-                <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                  Listado de créditos.
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                    Listado de créditos.
+                  </Typography>
+                  <HelpButton screenKey="creditos.listado" sx={{ color: "white" }} />
+                </Box>
                 <Typography fontSize={13} sx={{ opacity: 0.85 }}>
                   Consulta, seguimiento y administración de créditos
                 </Typography>
@@ -385,12 +389,12 @@ const LoanList = () => {
           </Stack>
         </Box>
 
-        <Box sx={{ p: 2.5 }}>
+        <Box sx={{ p: 1.75 }}>
           <Paper
             elevation={0}
             sx={{
-              p: 2,
-              mb: 2,
+              p: 1.25,
+              mb: 1.25,
               borderRadius: 2.5,
               border: `1px solid ${BAC.border}`,
               bgcolor: BAC.bg,
@@ -483,13 +487,14 @@ const LoanList = () => {
                 selected={branchId}
                 size="small"
                 label="Sucursal"
+                fullWidth={false}
                 onChange={(e) => {
                   setPage(0);
                   setBranchId(e.target.value);
                 }}
                 sx={{
                   ...inputSx,
-                  minWidth: 220,
+                  width: 260,
                 }}
               />
               <Stack direction="row" spacing={1}>

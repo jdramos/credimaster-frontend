@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
+  FormControlLabel,
   Paper,
   Snackbar,
   TextField,
@@ -22,8 +25,11 @@ export default function BalanceSheet() {
   const [rows, setRows] = useState([]);
   const [allRows, setAllRows] = useState([]);
   const [previousRows, setPreviousRows] = useState([]);
+  const [ytdRows, setYtdRows] = useState([]);
+  const [previousYtdRows, setPreviousYtdRows] = useState([]);
   const [filters, setFilters] = useState({ to_date: "", branch_id: "" });
   const [branchName, setBranchName] = useState("Todas");
+  const [onlyWithBalance, setOnlyWithBalance] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     open: false,
@@ -48,9 +54,34 @@ export default function BalanceSheet() {
       const previousParams = {};
       if (previousDate) previousParams.end_date = previousDate;
       if (filters.branch_id) previousParams.branch_id = filters.branch_id;
-      const [res, previousRes] = await Promise.all([
+
+      // "Resultado del ejercicio" (ingresos/gastos aún no cerrados) debe
+      // acotarse al año fiscal en curso (01-ene del año de la fecha de
+      // corte), no sumarse desde el origen de las cuentas como el resto del
+      // balance (activo/pasivo/patrimonio sí son saldos acumulados desde
+      // siempre). Sin este corte, el monto queda inflado con resultados de
+      // años anteriores no cerrados formalmente y no cuadra contra el
+      // Estado de Resultados corrido para el año en curso.
+      const yearStartOf = (dateStr) => (dateStr ? `${dateStr.slice(0, 4)}-01-01` : "");
+      const ytdParams = {};
+      if (filters.to_date) {
+        ytdParams.start_date = yearStartOf(filters.to_date);
+        ytdParams.end_date = filters.to_date;
+      }
+      if (filters.branch_id) ytdParams.branch_id = filters.branch_id;
+
+      const previousYtdParams = {};
+      if (previousDate) {
+        previousYtdParams.start_date = yearStartOf(previousDate);
+        previousYtdParams.end_date = previousDate;
+      }
+      if (filters.branch_id) previousYtdParams.branch_id = filters.branch_id;
+
+      const [res, previousRes, ytdRes, previousYtdRes] = await Promise.all([
         API.get("/api/accounting/trial-balance", { params }),
         API.get("/api/accounting/trial-balance", { params: previousParams }),
+        API.get("/api/accounting/trial-balance", { params: ytdParams }),
+        API.get("/api/accounting/trial-balance", { params: previousYtdParams }),
       ]);
 
       const rawData = Array.isArray(res.data)
@@ -80,9 +111,14 @@ export default function BalanceSheet() {
       const rawPrevious = previousRes.data?.data || [];
       const previousData = rawPrevious.filter((row) => row.is_movement);
 
+      const rawYtd = ytdRes.data?.data || [];
+      const rawPreviousYtd = previousYtdRes.data?.data || [];
+
       setAllRows(data);
       setRows(filtered);
       setPreviousRows(previousData);
+      setYtdRows(rawYtd.filter((row) => row.is_movement));
+      setPreviousYtdRows(rawPreviousYtd.filter((row) => row.is_movement));
     } catch (error) {
       showAlert(
         error.response?.data?.message ||
@@ -127,13 +163,22 @@ export default function BalanceSheet() {
     // cuadrando con Pasivo + Patrimonio antes de cerrar. El cierre formal
     // deja las cuentas 4/5 en cero (las traslada a 3901/3902), así que esto
     // no duplica nada una vez cerrado el ejercicio.
-    allRows.forEach((row) => {
+    // Se usa ytdRows (año fiscal en curso, 01-ene al corte) en vez de
+    // allRows (histórico completo desde el origen de las cuentas): así el
+    // monto coincide con un Estado de Resultados corrido para el año en
+    // curso, en vez de arrastrar resultados de años anteriores no cerrados
+    // formalmente. Se resta 6201 (Gastos por Impuesto sobre la Renta) para
+    // que el resultado sea neto de impuesto, igual que en Estado de
+    // Resultados.
+    ytdRows.forEach((row) => {
       const type = String(row.account_type || "").toUpperCase();
+      const code = String(row.muc_code || "");
       const debit = Number(row.total_debit || row.debit || 0);
       const credit = Number(row.total_credit || row.credit || 0);
 
       if (["INGRESO", "INCOME"].includes(type)) currentPeriodResult += credit - debit;
       if (["GASTO", "EXPENSE", "COSTO", "COST"].includes(type)) currentPeriodResult -= debit - credit;
+      if (code.startsWith("6201")) currentPeriodResult -= debit - credit;
     });
 
     equity += currentPeriodResult;
@@ -145,7 +190,7 @@ export default function BalanceSheet() {
       currentPeriodResult,
       difference: assets - (liabilities + equity),
     };
-  }, [rows, allRows]);
+  }, [rows, ytdRows]);
 
   const columns = [
     { field: "muc_code", headerName: "Código", width: 140 },
@@ -182,8 +227,18 @@ export default function BalanceSheet() {
       { field: "label", label: "Concepto" },
       { field: "current", label: filters.to_date?.slice(0, 4) || "Actual", numeric: true, format: (v) => typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2 }) : v },
       { field: "previous", label: filters.to_date ? String(Number(filters.to_date.slice(0, 4)) - 1) : "Anterior", numeric: true, format: (v) => typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2 }) : v },
-    ], rows: buildMucFormA(allRows, previousRows),
+    ], rows: buildMucFormA(allRows, previousRows, ytdRows, previousYtdRows),
   });
+
+  const displayRows = onlyWithBalance
+    ? rows.filter((row) => {
+        const type = String(row.account_type || "").toUpperCase();
+        const debit = Number(row.total_debit || row.debit || 0);
+        const credit = Number(row.total_credit || row.credit || 0);
+        const value = ["ACTIVO", "ASSET"].includes(type) ? debit - credit : credit - debit;
+        return Math.abs(value) >= 0.005;
+      })
+    : rows;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -194,9 +249,12 @@ export default function BalanceSheet() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <AccountBalanceIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Balance General
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Balance General
+              </Typography>
+              <HelpButton screenKey="contabilidad.balance-general" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Activos, pasivos y patrimonio
             </Typography>
@@ -241,6 +299,18 @@ export default function BalanceSheet() {
           <ReportSignaturesDialog />
         </Box>
 
+        <FormControlLabel
+          sx={{ mb: 1 }}
+          control={
+            <Checkbox
+              size="small"
+              checked={onlyWithBalance}
+              onChange={(e) => setOnlyWithBalance(e.target.checked)}
+            />
+          }
+          label="Solo cuentas con saldo"
+        />
+
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
             color="primary"
@@ -269,7 +339,7 @@ export default function BalanceSheet() {
             rows={
               rows.length
                 ? [
-                    ...rows,
+                    ...displayRows,
                     {
                       account_id: "current-period-result",
                       muc_code: "",

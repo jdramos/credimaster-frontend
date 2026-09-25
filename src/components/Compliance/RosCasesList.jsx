@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -131,9 +132,12 @@ export default function RosCasesList() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <GavelIcon sx={{ color: "#B91C1C" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Casos ROS
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Casos ROS
+              </Typography>
+              <HelpButton screenKey="cumplimiento.ros" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Registro interno de casos originados por alertas escaladas (Art. 35-42 CD-CONAMI-070-01OCT07-2025).
               El envío real del ROS a la UAF se hace fuera del sistema; aquí solo se documenta el caso.

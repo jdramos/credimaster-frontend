@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -358,7 +359,10 @@ export default function HrConfigPanel() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <SettingsIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Configuración de RRHH</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Configuración de RRHH</Typography>
+              <HelpButton screenKey="rrhh.configuracion" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Tasas de INSS/INATEC, vacaciones, indemnización y demás parámetros de nómina
             </Typography>

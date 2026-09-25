@@ -10,7 +10,7 @@ const amount = (rows, prefixes = [], subtract = []) => rows.reduce((total, row) 
 const row = (label, current, previous, options = {}) => ({ label, current, previous, ...options });
 const section = (label) => row(label, "", "", { section: true });
 
-export const buildMucFormA = (currentRows = [], previousRows = []) => {
+export const buildMucFormA = (currentRows = [], previousRows = [], currentYtdRows = currentRows, previousYtdRows = previousRows) => {
   const value = (positive, negative = []) => [amount(currentRows, positive, negative), amount(previousRows, positive, negative)];
   const data = [section("ACTIVO")];
   const assetLines = [
@@ -47,12 +47,20 @@ export const buildMucFormA = (currentRows = [], previousRows = []) => {
     .forEach(([label, plus, minus]) => { const [c, p] = value(plus, minus); data.push(row(label, c, p)); });
   // "Resultado del ejercicio" = resultado ya cerrado formalmente (3901/3902,
   // solo existe tras Cierre de Ejercicio) + resultado del período todavía
-  // abierto (ingresos clase 4 menos gastos clase 5, que el cierre formal
-  // pone en cero al trasladarlos a 3901/3902 — por eso sumar ambos no
-  // duplica nada, ni antes ni después de cerrar el ejercicio).
+  // abierto (ingresos clase 4 menos gastos clase 5, netos del impuesto sobre
+  // la renta 6201, que el cierre formal pone en cero al trasladarlos a
+  // 3901/3902 — por eso sumar ambos no duplica nada, ni antes ni después de
+  // cerrar el ejercicio). El resultado abierto se acota al año fiscal en
+  // curso (currentYtdRows, 01-ene al corte) y no a todo el histórico desde
+  // el origen de las cuentas (currentRows) — de lo contrario, si el tenant
+  // tiene años anteriores sin Cierre de Ejercicio formal, este monto queda
+  // inflado con resultados de años ya pasados y no cuadra contra un Estado
+  // de Resultados corrido para el año en curso. Se resta 6201 (Impuesto
+  // sobre la Renta) para que "Resultado del ejercicio" sea neto de impuesto
+  // en ambos formularios (Forma A y Forma B ya lo hacía así).
   const [closedC, closedP] = value(["3901"], ["3902"]);
-  const openResultC = amount(currentRows, ["4"]) - amount(currentRows, ["5"]);
-  const openResultP = amount(previousRows, ["4"]) - amount(previousRows, ["5"]);
+  const openResultC = amount(currentYtdRows, ["4"]) - amount(currentYtdRows, ["5"]) - amount(currentYtdRows, ["6201"]);
+  const openResultP = amount(previousYtdRows, ["4"]) - amount(previousYtdRows, ["5"]) - amount(previousYtdRows, ["6201"]);
   data.push(row("Resultado del ejercicio", closedC + openResultC, closedP + openResultP));
   const equity = data.slice(equityStart);
   const totalEquity = row("Total Patrimonio", equity.reduce((s, x) => s + Number(x.current || 0), 0), equity.reduce((s, x) => s + Number(x.previous || 0), 0), { total: true });
@@ -79,11 +87,18 @@ export const buildMucFormB = (currentRows = [], previousRows = []) => {
   const expense = [add("Obligaciones financieras", ["5101"]), add("Obligaciones con instituciones financieras y otros financiamientos", ["5103", "5104", "5105"]), add("Pérdida en venta de inversiones en valores", ["5106"]), add("Deudas subordinadas y obligaciones convertibles en acciones", ["5107", "5108"]), add("Diferencia cambiaria", ["55010101", "55010102", "55010103", "55010107", "55010108", "55010111", "55010112"]), add("Otros gastos financieros", ["5114"])];
   const totalExpense = row("Total gastos financieros", expense.reduce((s,x)=>s+x.current,0), expense.reduce((s,x)=>s+x.previous,0), { total:true }); data.push(totalExpense);
   const marginGross = row("Margen financiero bruto", totalIncome.current-totalExpense.current, totalIncome.previous-totalExpense.previous, { total:true }); data.push(marginGross);
-  const provision = add("Gastos por provisión por incobrabilidad de la cartera de créditos directa", ["520101", "520202", "420301"]);
+  // 420301 (4203.01, "Disminución de provisión...") es un INGRESO/CREDIT —
+  // una reversión que debe NETEARSE contra la provisión constituida
+  // (520101/520202, GASTO/DEBIT), no sumarse como si fuera más gasto. Antes
+  // iba en la lista "plus" de add(), lo que la sumaba con su propio signo
+  // positivo (balance = credit-debit) al total de "gasto", inflándolo en
+  // vez de reducirlo — eso descuadraba este renglón contra el Balance
+  // General, que sí trata 4203.01 como ingreso puro dentro de la clase 4.
+  const provision = add("Gastos por provisión por incobrabilidad de la cartera de créditos directa", ["520101", "520202"], ["420301"]);
   const recovery = add("Ingresos por recuperación de la cartera de créditos directa saneada", ["420102"]);
   const deterioration = add("Gastos por deterioro de inversiones neto de recuperaciones", ["520201", "5203", "5204", "5205"], ["420101", "4202"]);
   const marginNet = row("Margen financiero neto", marginGross.current-provision.current+recovery.current-deterioration.current, marginGross.previous-provision.previous+recovery.previous-deterioration.previous, { total:true }); data.push(marginNet);
-  const opIncome = add("Ingresos operativos diversos", ["4111", "411301", "420103", "420302", "420303", "4301", "4302", "4303", "45010104", "45010105", "45010106", "45010109", "45010110", "45010113"], ["5113"]);
+  const opIncome = add("Ingresos operativos diversos", ["4111", "4112", "411301", "420103", "420302", "420303", "4301", "4302", "4303", "45010104", "45010105", "45010106", "45010109", "45010110", "45010113"], ["5113"]);
   const opExpense = add("Gastos operativos diversos", ["5112", "520102", "520103", "520203", "5301", "5302", "530301", "530302", "530309", "55010104", "55010105", "55010106", "55010109", "55010110", "55010113"]);
   const operating = row("Resultado operativo bruto", marginNet.current+opIncome.current-opExpense.current, marginNet.previous+opIncome.previous-opExpense.previous, { total:true }); data.push(operating, section("Participación en resultados de asociadas"));
   const associatesIncome=add("Utilidades en asociadas",["4401"]), associatesExpense=add("Pérdidas en asociadas",["5701"]); data.push(section("Gastos de administración"));

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert, Box, Button, Checkbox, Chip, MenuItem, Paper, Snackbar, Stack, TextField, Typography, Divider,
   Table, TableHead, TableRow, TableCell, TableBody,
@@ -146,7 +147,10 @@ export default function BankReconciliation() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <AccountBalanceWalletIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Conciliación Bancaria</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Conciliación Bancaria</Typography>
+              <HelpButton screenKey="bancos.conciliacion" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Compara el saldo según el banco contra el saldo según libros a una fecha de corte
             </Typography>

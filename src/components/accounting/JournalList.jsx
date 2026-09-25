@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -271,9 +272,12 @@ export default function JournalList() {
             <ReceiptLongIcon sx={{ color: "#0057B8" }} />
 
             <Box>
-              <Typography variant="h6" fontWeight={700}>
-                Libro Diario
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>
+                  Libro Diario
+                </Typography>
+                <HelpButton screenKey="contabilidad.libro-diario" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Comprobantes contables registrados en CrediMaster
               </Typography>

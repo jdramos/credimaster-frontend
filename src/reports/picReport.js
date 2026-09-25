@@ -64,6 +64,18 @@ export const printPicReport = ({ company = {}, user = {}, customer = {}, screeni
             <div class="report-field-label">País de nacimiento</div>
             <div class="report-field-value">${text(customer.birth_country_name)}</div>
           </div>
+          <div class="report-field">
+            <div class="report-field-label">Sexo</div>
+            <div class="report-field-value">${text(customer.genre_name)}</div>
+          </div>
+          <div class="report-field">
+            <div class="report-field-label">Estado civil</div>
+            <div class="report-field-value">${text(customer.marital_status_name)}</div>
+          </div>
+          <div class="report-field">
+            <div class="report-field-label">Nombre social</div>
+            <div class="report-field-value">${text(customer.public_name)}</div>
+          </div>
         </div>
       </div>
 
@@ -78,8 +90,40 @@ export const printPicReport = ({ company = {}, user = {}, customer = {}, screeni
             <div class="report-field-label">Código CONAMI</div>
             <div class="report-field-value">${text(customer.conami_id_actividad_economica)}</div>
           </div>
+          <div class="report-field">
+            <div class="report-field-label">Ingreso mensual del negocio</div>
+            <div class="report-field-value">${customer.business_monthly_income != null ? Number(customer.business_monthly_income).toLocaleString("es-NI", { style: "currency", currency: "NIO" }) : "—"}</div>
+          </div>
+          <div class="report-field">
+            <div class="report-field-label">Ingreso anual / ventas declaradas</div>
+            <div class="report-field-value">${customer.business_annual_income != null ? Number(customer.business_annual_income).toLocaleString("es-NI", { style: "currency", currency: "NIO" }) : "—"}</div>
+          </div>
+          <div class="report-field">
+            <div class="report-field-label">Salario mensual</div>
+            <div class="report-field-value">${customer.monthly_salary != null ? Number(customer.monthly_salary).toLocaleString("es-NI", { style: "currency", currency: "NIO" }) : "—"}</div>
+          </div>
         </div>
         <div class="note"><strong>Origen de fondos declarado:</strong> ${text(customer.funds_source)}</div>
+      </div>
+
+      <div class="report-section">
+        <div class="section-header"><div class="section-title">II.b Referencias</div></div>
+        <div class="report-fields" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="report-field">
+            <div class="report-field-label">Referencia 1</div>
+            <div class="report-field-value">
+              ${text(customer.reference_name)}${customer.reference_relationship ? ` (${text(customer.reference_relationship)})` : ""}<br/>
+              ${text(customer.reference_telephone)} — ${text(customer.reference_address)}
+            </div>
+          </div>
+          <div class="report-field">
+            <div class="report-field-label">Referencia 2</div>
+            <div class="report-field-value">
+              ${text(customer.reference2_name)}${customer.reference2_relationship ? ` (${text(customer.reference2_relationship)})` : ""}<br/>
+              ${text(customer.reference2_telephone)} — ${text(customer.reference2_address)}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="report-section">
@@ -152,7 +196,16 @@ export const printPicReport = ({ company = {}, user = {}, customer = {}, screeni
         </table>
       </div>
 
+      <div class="note" style="margin-top: 16px;">
+        <strong>Declaración (Art. 17.2 CD-CONAMI-070-01OCT07-2025):</strong> El cliente autoriza al
+        Sujeto Obligado a verificar, actualizar y utilizar la información contenida en este Perfil
+        Integral del Cliente (PIC) para efectos de la debida diligencia y el cumplimiento de la
+        normativa de prevención de lavado de activos, financiamiento al terrorismo y financiamiento
+        a la proliferación de armas de destrucción masiva.
+      </div>
+
       <div class="signatures">
+        <div class="signature">Firma del cliente</div>
         <div class="signature">Oficial de Cumplimiento</div>
         <div class="signature">Elaborado por</div>
       </div>

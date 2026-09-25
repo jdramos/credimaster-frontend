@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -160,9 +161,12 @@ const ConamiDefaultsManager = () => {
           sx={{ mb: 2 }}
         >
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>
-              Valores por defecto CONAMI
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                Valores por defecto CONAMI
+              </Typography>
+              <HelpButton screenKey="conami.tablas" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Selecciona un catálogo y activa el switch de la fila que quieres
               como valor por defecto — se guarda al instante.

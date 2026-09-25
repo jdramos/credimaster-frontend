@@ -1,9 +1,9 @@
-import BalancesDashboard from "../components/dashboard/BalancesDashboard";
+import PortfolioDashboard from "../components/dashboard/PortfolioDashboard";
 
 function Home() {
   return (
     <div>
-      <BalancesDashboard />
+      <PortfolioDashboard />
     </div>
   );
 }

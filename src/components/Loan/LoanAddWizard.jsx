@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import { ToastContainer, toast } from "react-toastify";
 import Button from "@mui/material/Button";
 import Save from "@mui/icons-material/Save";
@@ -29,6 +30,7 @@ import CollectorSelect from "../CollectorSelect";
 import { NumericFormat } from "react-number-format";
 import FrecuencySelect from "../FrecuencySelect";
 import LoanGuaranteeSelector from "./LoanGuaranteeSelector";
+import LoanGuarantorPicker from "./LoanGuarantorPicker";
 import RiskBureauQueryPanel from "./RiskBureauQueryPanel";
 import dayjs from "dayjs";
 import BranchSelect from "../BranchSelect";
@@ -119,6 +121,9 @@ const LoanAddWizard = () => {
     toggleGuaranteeSelection,
     selectAllGuarantees,
     clearGuaranteeSelection,
+    guarantorCandidates,
+    selectedGuarantorIds,
+    toggleGuarantorSelection,
     getPolicy,
     amortizationTable,
     installment,
@@ -200,9 +205,12 @@ const LoanAddWizard = () => {
       >
         <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 900, fontSize: { xs: 20, sm: 24 } }}>
-              Solicitud de préstamos (por pasos)
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h5" sx={{ fontWeight: 900, fontSize: { xs: 20, sm: 24 } }}>
+                Solicitud de préstamos (por pasos)
+              </Typography>
+              <HelpButton screenKey="creditos.agregar" sx={{ color: "white" }} />
+            </Box>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
               Un paso a la vez — menos scroll, más fácil en celular.
             </Typography>
@@ -657,6 +665,22 @@ const LoanAddWizard = () => {
                   ) : (
                     <Alert severity="info" sx={{ borderRadius: 2 }}>No hay información documental disponible para este cliente.</Alert>
                   )}
+                </Paper>
+
+                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid ${BAC.border}`, background: BAC.soft, height: "100%", minWidth: 0 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} flexWrap="wrap" gap={1}>
+                    <Typography sx={{ fontWeight: 900, color: BAC.text }}>
+                      Fiadores del crédito
+                      {getPolicy("guarantor_requirement_mode") === "OBLIGATORIO" && (
+                        <Chip label="Obligatorio" size="small" color="error" sx={{ ml: 1, fontWeight: 700 }} />
+                      )}
+                    </Typography>
+                  </Stack>
+                  <LoanGuarantorPicker
+                    candidates={guarantorCandidates}
+                    selectedIds={selectedGuarantorIds}
+                    onToggle={toggleGuarantorSelection}
+                  />
                 </Paper>
 
                 <RiskBureauQueryPanel

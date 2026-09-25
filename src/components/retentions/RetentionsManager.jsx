@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Autocomplete,
@@ -294,7 +295,10 @@ export default function RetentionsManager() {
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap">
           <ReceiptLongIcon sx={{ color: "#0057B8" }} />
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" fontWeight={700}>Retenciones IR (DGI)</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Retenciones IR (DGI)</Typography>
+              <HelpButton screenKey="contabilidad.retenciones" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Registro de retenciones en la fuente y generación de la Declaración Mensual (DMI)
             </Typography>

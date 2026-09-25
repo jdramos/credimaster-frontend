@@ -147,6 +147,34 @@ export default function useLoanForm() {
     setSelectedGuaranteeIds([]);
   };
 
+  // Fiadores (Art. 48 CD-CONAMI-070-01OCT07-2025): a diferencia de garantías,
+  // los candidatos NO dependen del cliente titular del crédito -- son
+  // cualquier cliente con customer_type FIADOR/AMBOS, se cargan una sola
+  // vez. En modo edición ya se manejan aparte, vía LoanGuarantorsSection.jsx
+  // (el crédito ya tiene id); este selector solo aplica al crear un crédito
+  // nuevo, que no tiene id hasta el guardado final.
+  const [guarantorCandidates, setGuarantorCandidates] = useState([]);
+  const [selectedGuarantorIds, setSelectedGuarantorIds] = useState([]);
+
+  useEffect(() => {
+    const fetchGuarantorCandidates = async () => {
+      try {
+        const { data } = await API.get("/api/loans/guarantor-candidates");
+        setGuarantorCandidates(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Error al obtener candidatos a fiador:", error);
+      }
+    };
+
+    if (!isEditMode) fetchGuarantorCandidates();
+  }, [isEditMode]);
+
+  const toggleGuarantorSelection = (customerId) => {
+    setSelectedGuarantorIds((prev) =>
+      prev.includes(customerId) ? prev.filter((id) => id !== customerId) : [...prev, customerId],
+    );
+  };
+
   // id_garantia (catálogo CONAMI "¿posee garantías?") no tiene un default
   // seguro en el catálogo -- a diferencia de moneda/tipo de crédito/etc.,
   // aquí sí existe una respuesta objetiva: se sigue directamente de si el
@@ -1085,6 +1113,7 @@ export default function useLoanForm() {
         : null,
       id_analista: loan.id_analista ? Number(loan.id_analista) : null,
       guarantee_ids: selectedGuaranteeIds,
+      guarantor_customer_ids: selectedGuarantorIds,
     };
   };
 
@@ -1226,6 +1255,9 @@ export default function useLoanForm() {
     availableGuarantees,
     selectedGuaranteeIds,
     selectedGuaranteeValue,
+    guarantorCandidates,
+    selectedGuarantorIds,
+    toggleGuarantorSelection,
     toggleGuaranteeSelection,
     selectAllGuarantees,
     clearGuaranteeSelection,

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -118,9 +119,12 @@ export default function PendingItemsAging() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <HourglassBottomIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Antigüedad de Partidas Pendientes
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Antigüedad de Partidas Pendientes
+              </Typography>
+              <HelpButton screenKey="contabilidad.antiguedad-partidas" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Cuentas transitorias 1909/2901 — Operaciones Pendientes de Imputación
             </Typography>

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -176,7 +177,10 @@ export default function DepartmentBudgetApprovalInbox() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FactCheckIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Aprobación de presupuesto por departamento</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Aprobación de presupuesto por departamento</Typography>
+                <HelpButton screenKey="presupuesto.aprobacion-departamentos" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Revisa y aprueba o rechaza lo enviado por cada departamento
               </Typography>

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -241,7 +242,10 @@ export default function FixedAssetsList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <WarehouseIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Activo Fijo</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Activo Fijo</Typography>
+                <HelpButton screenKey="contabilidad.activos-fijos" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Registro, depreciación y baja de activos de la institución
               </Typography>

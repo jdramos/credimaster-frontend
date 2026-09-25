@@ -28,6 +28,7 @@ export default function KpiCard({
   type = "currency",
   subtitle,
   growth,
+  invertGrowth = false,
   icon: Icon,
   color = "primary",
 }) {
@@ -43,8 +44,9 @@ export default function KpiCard({
   const GrowthIcon =
     growth > 0 ? TrendingUpIcon : growth < 0 ? TrendingDownIcon : RemoveIcon;
 
+  const goodDirection = invertGrowth ? -growth : growth;
   const growthColor =
-    growth > 0 ? "success.main" : growth < 0 ? "error.main" : "text.secondary";
+    goodDirection > 0 ? "success.main" : goodDirection < 0 ? "error.main" : "text.secondary";
 
   return (
     <Card

@@ -17,6 +17,8 @@ import {
   Grid,
   MenuItem,
   Divider,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
@@ -25,6 +27,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import HelpButton from "../help/HelpButton";
 
 const API_URL = "/api/caja/arqueos";
 
@@ -48,6 +51,23 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   maximumFractionDigits: 2,
 });
 
+// Denominaciones vigentes del córdoba (BCN). El desglose es solo para que
+// quien recibe el efectivo anote cómo venía compuesto -- no afecta la
+// contabilidad, que sigue basada en el monto contado.
+const DENOMINATIONS = [
+  { value: 1000, label: "C$1000", group: "Billetes" },
+  { value: 500, label: "C$500", group: "Billetes" },
+  { value: 200, label: "C$200", group: "Billetes" },
+  { value: 100, label: "C$100", group: "Billetes" },
+  { value: 50, label: "C$50", group: "Billetes" },
+  { value: 20, label: "C$20", group: "Billetes" },
+  { value: 10, label: "C$10", group: "Billetes" },
+  { value: 5, label: "C$5", group: "Monedas" },
+  { value: 1, label: "C$1", group: "Monedas" },
+  { value: 0.5, label: "C$0.50", group: "Monedas" },
+  { value: 0.25, label: "C$0.25", group: "Monedas" },
+];
+
 export default function CollectorArqueosList() {
   const { permissions = [], role } = useContext(UserContext) || {};
   const canRegisterArqueo = role === 1 || permissions.includes("caja.arqueos.registrar");
@@ -64,6 +84,9 @@ export default function CollectorArqueosList() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  const [useDenominations, setUseDenominations] = useState(false);
+  const [denomQty, setDenomQty] = useState({});
 
   const [preview, setPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -103,8 +126,34 @@ export default function CollectorArqueosList() {
   const handleOpenDialog = () => {
     setForm(emptyForm);
     setPreview(null);
+    setUseDenominations(false);
+    setDenomQty({});
     setDialogOpen(true);
   };
+
+  const denomTotal = useMemo(
+    () => Number(DENOMINATIONS.reduce((sum, d) => sum + (Number(denomQty[d.value]) || 0) * d.value, 0).toFixed(2)),
+    [denomQty],
+  );
+
+  const handleDenomQtyChange = (value, qty) => {
+    setDenomQty((prev) => ({ ...prev, [value]: qty }));
+  };
+
+  const handleToggleDenominations = (checked) => {
+    setUseDenominations(checked);
+    if (!checked) {
+      setDenomQty({});
+    }
+  };
+
+  // Mientras el desglose está activo, el monto contado se calcula solo a
+  // partir de las cantidades por denominación -- se deja de poder editar a
+  // mano para que nunca queden desincronizados.
+  useEffect(() => {
+    if (!useDenominations) return;
+    setForm((f) => ({ ...f, cash_amount: denomTotal > 0 ? String(denomTotal) : "" }));
+  }, [useDenominations, denomTotal]);
 
   useEffect(() => {
     if (!dialogOpen || !form.collector_id || !form.period_end) {
@@ -183,6 +232,9 @@ export default function CollectorArqueosList() {
         period_end: form.period_end,
         cash_register_id: cashAmount > 0 ? form.cash_register_id : undefined,
         cash_amount: cashAmount > 0 ? cashAmount : undefined,
+        denominations: cashAmount > 0 && useDenominations
+          ? Object.fromEntries(DENOMINATIONS.filter((d) => Number(denomQty[d.value]) > 0).map((d) => [d.value, Number(denomQty[d.value])]))
+          : undefined,
         bank_account_id: bankAmount > 0 ? form.bank_account_id : undefined,
         bank_amount: bankAmount > 0 ? bankAmount : undefined,
         notes: form.notes || undefined,
@@ -267,7 +319,10 @@ export default function CollectorArqueosList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FactCheckIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Arqueo de Cobradores</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Arqueo de Cobradores</Typography>
+                <HelpButton screenKey="caja.arqueos" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Liquida el efectivo de cada cobrador — parte a caja, parte al banco, o ambos
               </Typography>
@@ -405,8 +460,51 @@ export default function CollectorArqueosList() {
                 fullWidth size="small" type="number" label="Monto contado"
                 value={form.cash_amount}
                 onChange={(e) => setForm((f) => ({ ...f, cash_amount: e.target.value }))}
+                disabled={useDenominations}
+                helperText={useDenominations ? "Calculado del desglose de denominaciones" : " "}
               />
             </Grid>
+
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    size="small"
+                    checked={useDenominations}
+                    onChange={(e) => handleToggleDenominations(e.target.checked)}
+                  />
+                }
+                label="Desglosar por denominación (billetes y monedas)"
+              />
+            </Grid>
+
+            {useDenominations && (
+              <Grid item xs={12}>
+                <Box sx={{ border: "1px solid #E5E7EB", borderRadius: 2, p: 1.5 }}>
+                  {["Billetes", "Monedas"].map((group) => (
+                    <Box key={group} sx={{ mb: group === "Billetes" ? 1.5 : 0 }}>
+                      <Typography variant="caption" fontWeight={700} color="text.secondary">{group}</Typography>
+                      <Grid container spacing={1} sx={{ mt: 0.25 }}>
+                        {DENOMINATIONS.filter((d) => d.group === group).map((d) => (
+                          <Grid item xs={4} sm={3} md={2.4} key={d.value}>
+                            <TextField
+                              fullWidth size="small" type="number" label={d.label}
+                              value={denomQty[d.value] || ""}
+                              onChange={(e) => handleDenomQtyChange(d.value, e.target.value)}
+                              inputProps={{ min: 0, step: 1 }}
+                            />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  ))}
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="body2" fontWeight={700}>
+                    Total del desglose: {currencySymbol} {money(denomTotal)}
+                  </Typography>
+                </Box>
+              </Grid>
+            )}
 
             {preview && (bankAmount > 0 || cashAmount > 0) && (
               <Grid item xs={12}>

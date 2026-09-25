@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Alert,
   Box,
@@ -379,9 +380,12 @@ const PaymentForm = ({
               </Box>
 
               <Box>
-                <Typography variant="h5" fontWeight={900} lineHeight={1.1}>
-                  Registrar Pago
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <Typography variant="h5" fontWeight={900} lineHeight={1.1}>
+                    Registrar Pago
+                  </Typography>
+                  <HelpButton screenKey="pagos.registrar" sx={{ color: "white" }} />
+                </Box>
                 <Typography variant="body2" sx={{ opacity: 0.9 }}>
                   Cliente / Crédito / Sucursal / Monto
                 </Typography>

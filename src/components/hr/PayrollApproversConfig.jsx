@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -82,7 +83,10 @@ export default function PayrollApproversConfig() {
         <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
           <VerifiedUserIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Aprobadores de Planilla</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Aprobadores de Planilla</Typography>
+              <HelpButton screenKey="rrhh.aprobadores-planilla" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Usuarios habilitados para autorizar corridas de nómina. Mientras no haya aprobadores configurados,
               las planillas se contabilizan de inmediato al generarse.

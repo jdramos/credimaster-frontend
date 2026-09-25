@@ -71,6 +71,7 @@ import QuickPaymentModal from "./QuickPaymentModal";
 import today from "../../functions/today";
 import LoanInfo from "../LoanInfo";
 import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluationTab";
+import LoanGuarantorsSection from "./LoanGuarantorsSection";
 import LoanModificationSection from "../Loan/LoanModificationSection";
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import RiskBureauQueryPanel from "./RiskBureauQueryPanel";
@@ -1009,6 +1010,21 @@ const LoanDetailsModal = ({
                       size="small"
                     />
 
+                    {loanData?.status === "DISBURSED" && (
+                      <Chip
+                        icon={<WarningAmberIcon fontSize="small" />}
+                        label={
+                          Number(loanData?.days_overdue || 0) > 0
+                            ? `Mora ${loanData.days_overdue}d — ${loanData?.overdue_installments ?? 0} cuota${
+                                Number(loanData?.overdue_installments) === 1 ? "" : "s"
+                              } vencida${Number(loanData?.overdue_installments) === 1 ? "" : "s"}`
+                            : "Al día"
+                        }
+                        color={Number(loanData?.days_overdue || 0) > 0 ? "error" : "success"}
+                        size="small"
+                      />
+                    )}
+
                     <Chip
                       icon={
                         isComplianceValid ? (
@@ -1327,6 +1343,12 @@ const LoanDetailsModal = ({
                       readOnly={isReadOnly}
                       onTotalChange={setGuaranteesTotal}
                     />
+                  </CompactAccordion>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <CompactAccordion title="Fiadores">
+                    <LoanGuarantorsSection loanId={loan?.id || null} readOnly={isReadOnly} />
                   </CompactAccordion>
                 </Grid>
 

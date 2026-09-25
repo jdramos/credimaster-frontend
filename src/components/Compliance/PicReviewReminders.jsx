@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import { Alert, Box, Button, Chip, Paper, Snackbar, Stack, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AssignmentLateIcon from "@mui/icons-material/AssignmentLate";
@@ -149,9 +150,12 @@ export default function PicReviewReminders() {
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <AssignmentLateIcon sx={{ color: "#B45309" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Actualización de Perfil Integral del Cliente (PIC)
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Actualización de Perfil Integral del Cliente (PIC)
+              </Typography>
+              <HelpButton screenKey="cumplimiento.pic" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Clientes con PIC vencido o por vencer en los próximos 30 días (Art. 17 CD-CONAMI-070-01OCT07-2025)
             </Typography>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -81,7 +82,10 @@ export default function DepartmentsConfig() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <ApartmentIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Departamentos</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Departamentos</Typography>
+              <HelpButton screenKey="presupuesto.departamentos" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Cada usuario se asigna a uno de estos departamentos para llenar su parte del presupuesto
             </Typography>

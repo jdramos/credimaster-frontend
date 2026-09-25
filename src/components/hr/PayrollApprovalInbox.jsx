@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -80,7 +81,10 @@ export default function PayrollApprovalInbox() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FactCheckIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Aprobar Planillas</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Aprobar Planillas</Typography>
+                <HelpButton screenKey="rrhh.aprobar-planillas" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Corridas de nómina pendientes de su autorización — el comprobante contable no se aplica hasta que se apruebe.
               </Typography>

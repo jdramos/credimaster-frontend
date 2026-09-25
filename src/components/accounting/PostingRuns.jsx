@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Alert,
   Box,
@@ -262,9 +263,12 @@ export default function PostingRuns() {
           <AutoFixHighIcon sx={{ color: "#0057B8" }} />
 
           <Box>
-            <Typography variant="h6" fontWeight={700}>
-              Contabilizar operaciones
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>
+                Contabilizar operaciones
+              </Typography>
+              <HelpButton screenKey="contabilidad.contabilizar" />
+            </Box>
 
             <Typography variant="body2" color="text.secondary">
               Generación automática de comprobantes

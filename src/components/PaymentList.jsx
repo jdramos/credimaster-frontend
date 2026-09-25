@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import {
   Box,
   Button,
@@ -269,9 +270,12 @@ const PaymentList = () => {
       </Box>
       <Box className="bac-page-header">
         <Box>
-          <Typography variant="h5" className="bac-page-title">
-            Listado de Pagos
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography variant="h5" className="bac-page-title">
+              Listado de Pagos
+            </Typography>
+            <HelpButton screenKey="pagos.listado" />
+          </Box>
           <div className="bac-page-subtitle">
             Filtra por fecha, sucursal y colector · Vista paginada
           </div>

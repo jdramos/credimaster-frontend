@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -74,7 +75,10 @@ export default function VacationApprovalInbox() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <FactCheckIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Aprobar Vacaciones</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Aprobar Vacaciones</Typography>
+                <HelpButton screenKey="rrhh.aprobar-vacaciones" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Solicitudes pendientes de su equipo
               </Typography>

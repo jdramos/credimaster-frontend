@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -30,6 +31,9 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import PrintIcon from "@mui/icons-material/Print";
 import BlockIcon from "@mui/icons-material/Block";
 import API from "../../api";
+import { exportToExcel } from "./hrExcelExport";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import dayjs from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
 import { printLiquidationReport } from "../../reports/printLiquidationReport";
 
@@ -191,7 +195,10 @@ export default function LiquidationsList() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <PersonRemoveIcon sx={{ color: "#0057B8" }} />
             <Box>
-              <Typography variant="h6" fontWeight={700}>Liquidaciones</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>Liquidaciones</Typography>
+                <HelpButton screenKey="rrhh.liquidaciones" />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 Finiquitos por terminación laboral (Art. 45 Código del Trabajo)
               </Typography>
@@ -204,6 +211,27 @@ export default function LiquidationsList() {
             </Button>
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchLiquidations}>
               Actualizar
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              sx={{ textTransform: "none" }}
+              onClick={() =>
+                exportToExcel(
+                  rows.map((r) => ({
+                    Empleado: r.employee_name,
+                    Terminación: String(r.termination_date).slice(0, 10),
+                    Motivo: MOTIVO_LABELS[r.motivo] || r.motivo,
+                    Bruto: Number(r.total_bruto || 0),
+                    Neto: Number(r.total_neto || 0),
+                    Estado: r.status,
+                  })),
+                  "Liquidaciones",
+                  `liquidaciones_${dayjs().format("YYYYMMDD_HHmmss")}.xlsx`,
+                )
+              }
+            >
+              Exportar Excel
             </Button>
           </Box>
         </Box>

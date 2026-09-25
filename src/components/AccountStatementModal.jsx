@@ -177,6 +177,11 @@ export default function AccountStatementModal({
     };
   }, [header]);
 
+  const overdueInstallmentsCount = useMemo(
+    () => rows.filter((r) => String(r.status).toUpperCase() === "OVERDUE").length,
+    [rows],
+  );
+
   const exportToExcel = () => {
     const h = header || {};
 
@@ -452,6 +457,37 @@ export default function AccountStatementModal({
                 </Grid>
               </Grid>
             </Paper>
+
+            <Grid container spacing={1} sx={{ mb: 1.2 }}>
+              <Grid item xs={6} md={3}>
+                <Kpi
+                  label="Días de mora"
+                  value={totals.defaultedDays}
+                  color={totals.defaultedDays > 0 ? "error.main" : undefined}
+                />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Kpi
+                  label="Cuotas vencidas"
+                  value={overdueInstallmentsCount}
+                  color={overdueInstallmentsCount > 0 ? "error.main" : undefined}
+                />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Kpi
+                  label="Capital vencido"
+                  value={money(totals.overdueCapital)}
+                  color={totals.overdueCapital > 0 ? "error.main" : undefined}
+                />
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Kpi
+                  label="Interés vencido"
+                  value={money(totals.overdueInterest)}
+                  color={totals.overdueInterest > 0 ? "error.main" : undefined}
+                />
+              </Grid>
+            </Grid>
 
             <Paper
               elevation={0}

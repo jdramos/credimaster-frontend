@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
@@ -228,9 +229,12 @@ export default function RiskList() {
               </Box>
 
               <Box>
-                <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
-                  Listado de riesgos
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                  <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+                    Listado de riesgos
+                  </Typography>
+                  <HelpButton screenKey="catalogos.riesgos" sx={{ color: "white" }} />
+                </Box>
                 <Typography fontSize={13} sx={{ opacity: 0.85 }}>
                   Administración de rangos, valores y colores de riesgo
                 </Typography>

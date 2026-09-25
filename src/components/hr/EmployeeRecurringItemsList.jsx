@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -330,7 +331,10 @@ export default function EmployeeRecurringItemsList({ kind }) {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {isIncome ? <TrendingUpIcon sx={{ color: "#0057B8" }} /> : <RequestQuoteIcon sx={{ color: "#0057B8" }} />}
             <Box>
-              <Typography variant="h6" fontWeight={700}>{labelPlural}</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                <Typography variant="h6" fontWeight={700}>{labelPlural}</Typography>
+                <HelpButton screenKey={isIncome ? "rrhh.ingresos" : "rrhh.deducciones"} />
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 {isIncome ? "Ingresos fijos recurrentes aplicados por planilla" : "Deducciones recurrentes aplicadas por planilla"}
               </Typography>

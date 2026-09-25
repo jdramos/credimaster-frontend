@@ -23,8 +23,10 @@ import {
 } from "@mui/material";
 import {
   Add as AddIcon,
+  CheckCircle as CheckCircleIcon,
   Clear as ClearIcon,
   Edit as EditIcon,
+  ErrorOutline as ErrorOutlineIcon,
   Print as PrintIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
@@ -35,6 +37,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
 import API from "../../api";
+import HelpButton from "../help/HelpButton";
 import { printPicReport } from "../../reports/picReport";
 import { printCustomerProfileReport } from "../../reports/customerProfileReport";
 
@@ -172,7 +175,19 @@ export default function CustomerList() {
       {
         field: "identification",
         headerName: "Identificación",
-        width: 170,
+        width: 190,
+        renderCell: (params) => (
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <span>{params.value}</span>
+            <Tooltip title={params.row.identity_verified_at ? "Identidad verificada" : "Identidad sin verificar"}>
+              {params.row.identity_verified_at ? (
+                <CheckCircleIcon fontSize="small" sx={{ color: "#2E7D32" }} />
+              ) : (
+                <ErrorOutlineIcon fontSize="small" sx={{ color: "#ED6C02" }} />
+              )}
+            </Tooltip>
+          </Stack>
+        ),
       },
       {
         field: "customer_name",
@@ -194,6 +209,25 @@ export default function CustomerList() {
           if (!cfg) return <Chip size="small" label="Sin calcular" />;
           return <Chip size="small" label={cfg.label} color={cfg.color} />;
         },
+      },
+      {
+        field: "customer_type",
+        headerName: "Tipo",
+        width: 110,
+        renderCell: (params) => {
+          if (!params.value || params.value === "DEUDOR") return null;
+          const label = params.value === "AMBOS" ? "Deudor/Fiador" : "Fiador";
+          return <Chip size="small" label={label} variant="outlined" />;
+        },
+      },
+      {
+        field: "is_frozen",
+        headerName: "Inmovilización",
+        width: 140,
+        renderCell: (params) =>
+          params.value === 1 || params.value === true ? (
+            <Chip size="small" label="Congelado" sx={{ bgcolor: "#FEE2E2", color: "#B42318", fontWeight: 700 }} />
+          ) : null,
       },
       {
         field: "actions",
@@ -421,6 +455,7 @@ export default function CustomerList() {
                 <Typography variant="h6" fontWeight={900}>
                   Clientes
                 </Typography>
+                <HelpButton screenKey="clientes.listado" sx={{ color: "white" }} />
 
                 <Chip
                   size="small"

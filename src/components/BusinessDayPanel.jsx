@@ -29,6 +29,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import BranchSelect from "./BranchSelect";
+import HelpButton from "./help/HelpButton";
 import API from "../api";
 
 function formatDateTime(value) {
@@ -181,8 +182,9 @@ const BusinessDayPanel = () => {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 700, margin: "auto", mt: 5 }}>
-      <Typography variant="h5" gutterBottom textAlign="center">
+      <Typography variant="h5" gutterBottom textAlign="center" sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
         Día Operativo
+        <HelpButton screenKey="dia-operativo" />
       </Typography>
       <Typography
         variant="body2"

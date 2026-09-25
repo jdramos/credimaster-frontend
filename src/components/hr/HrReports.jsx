@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "../help/HelpButton";
 import {
   Box,
   Paper,
@@ -229,7 +230,10 @@ export default function HrReports() {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <AssessmentIcon sx={{ color: "#0057B8" }} />
           <Box>
-            <Typography variant="h6" fontWeight={700}>Reportes de RRHH</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h6" fontWeight={700}>Reportes de RRHH</Typography>
+              <HelpButton screenKey="rrhh.reportes" />
+            </Box>
             <Typography variant="body2" color="text.secondary">
               Rentas del trabajo (soporte DGI) y prestaciones sociales acumuladas
             </Typography>

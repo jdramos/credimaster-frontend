@@ -24,6 +24,7 @@ import { UserContext } from "../../contexts/UserContext";
 import { printEmployeeContractReport } from "../../reports/printEmployeeContractReport";
 import { printWorkCertificateReport } from "../../reports/printWorkCertificateReport";
 import { printSalaryCertificateReport } from "../../reports/printSalaryCertificateReport";
+import EmployeeKyeTab from "./EmployeeKyeTab";
 
 const MOTIVO_LABELS = {
   RENUNCIA: "Renuncia voluntaria",
@@ -305,6 +306,7 @@ export default function EmployeeDetailDialog({ open, onClose, employee }) {
           <Tab label="Movimientos" />
           <Tab label="Beneficiarios" />
           <Tab label="Documentos" />
+          <Tab label="Conozca a su Empleado" />
         </Tabs>
 
         {tab === 0 && (
@@ -644,6 +646,8 @@ export default function EmployeeDetailDialog({ open, onClose, employee }) {
             />
           </>
         )}
+
+        {tab === 4 && <EmployeeKyeTab employeeId={employeeId} canManage={canManage} />}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2, flexWrap: "wrap", gap: 1 }}>
         <Button

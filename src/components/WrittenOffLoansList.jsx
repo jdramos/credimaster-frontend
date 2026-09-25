@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import HelpButton from "./help/HelpButton";
 import { Box, Paper, Typography, TextField, Alert } from "@mui/material";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import API from "../api";
@@ -67,9 +68,12 @@ export default function WrittenOffLoansList() {
     <Box>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
-          <Typography variant="h6" fontWeight={800}>
-            Cartera saneada
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+            <Typography variant="h6" fontWeight={800}>
+              Cartera saneada
+            </Typography>
+            <HelpButton screenKey="cartera.saneada" />
+          </Box>
           <TextField
             size="small"
             placeholder="Buscar cliente, identificación o código..."
