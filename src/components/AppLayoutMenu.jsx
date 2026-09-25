@@ -48,6 +48,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import * as FaIcons from "react-icons/fa";
+import BrandMark from "./BrandMark";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
@@ -721,21 +722,7 @@ export default function AppLayoutMenu({
           alignItems="center"
           sx={{ minWidth: 0 }}
         >
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              bgcolor: "#fff",
-              color: "#0F4C81",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <FaIcons.FaUniversity size={16} />
-          </Box>
+          <BrandMark size={36} />
 
           {(drawerOpen || isMobile) && (
             <Box sx={{ minWidth: 0 }}>

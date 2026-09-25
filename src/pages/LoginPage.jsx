@@ -21,7 +21,7 @@ import {
   DialogActions,
   Link,
 } from "@mui/material";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import BrandMark from "../components/BrandMark";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
@@ -105,7 +105,7 @@ export default function LoginPage() {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <AccountBalanceIcon />
+            <BrandMark size={44} sx={{ border: "2px solid rgba(255,255,255,0.35)" }} />
             <Box>
               <Typography
                 sx={{ fontWeight: 900, lineHeight: 1.1 }}
