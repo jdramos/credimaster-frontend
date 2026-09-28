@@ -63,19 +63,32 @@ API.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// Mensajes que SÍ significan "el token ya no sirve" (emitidos únicamente por
+// middleware/auth.js y middleware/tenantDb.js). Antes se trataba CUALQUIER
+// 401 que no viniera de /api/login como sesión caducada -- pero varios
+// endpoints de negocio (ej. cambiar contraseña con la contraseña actual
+// incorrecta) también respondían 401 por su cuenta, y eso disparaba un
+// logout forzado (window.location.replace) en medio de un formulario válido,
+// que es el bug reportado como "me saca al login al navegar". Ahora el
+// interceptor solo actúa sobre las señales exactas que emite el propio
+// middleware de autenticación, nunca sobre un 401 de validación de negocio.
+const SESSION_INVALID_MESSAGES = new Set([
+  "Token missing",
+  "Session expired",
+  "Invalid token",
+  "Authentication failed",
+]);
+
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    // El propio POST /api/login responde 401 cuando la contraseña es
-    // incorrecta — eso es un resultado normal del formulario, no una sesión
-    // caducada. Sin esta exclusión, el interceptor lo confundía con un
-    // logout forzado y tapaba el mensaje real ("Contraseña incorrecta") con
-    // el modal de "Sesión Expirada".
     const isLoginAttempt = error.config?.url === "/api/login";
+    const data = error.response?.data;
+    const isSessionReplaced = data?.code === "SESSION_REPLACED";
+    const isSessionInvalid = SESSION_INVALID_MESSAGES.has(data?.message);
 
-    if (error.response?.status === 401 && !isLoginAttempt) {
+    if (error.response?.status === 401 && !isLoginAttempt && (isSessionReplaced || isSessionInvalid)) {
       console.warn("Sesión expirada");
-      const isSessionReplaced = error.response?.data?.code === "SESSION_REPLACED";
       logoutExpiredSession(
         isSessionReplaced ? "Tu sesión se cerró porque se inició sesión en otro equipo." : undefined,
       );

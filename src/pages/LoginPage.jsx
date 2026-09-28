@@ -96,12 +96,16 @@ export default function LoginPage() {
           overflow: "hidden",
         }}
       >
-        {/* Header bancario */}
+        {/* Header bancario -- azul de marca (#003E8A) fijo, no primary.main del
+            tema: el isotipo (BrandMark) trae ese mismo navy horneado en sus
+            propios píxeles (moneda + mano), así que si el header usa otro azul
+            (el primary.main claro del tema, #005EB8) se nota un parche de dos
+            azules distintos alrededor del círculo del logo. */}
         <Box
           sx={{
             p: 2.5,
-            color: "primary.contrastText",
-            bgcolor: "primary.main",
+            color: "#FFFFFF",
+            bgcolor: "#003E8A",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
@@ -111,7 +115,7 @@ export default function LoginPage() {
                 sx={{ fontWeight: 900, lineHeight: 1.1 }}
                 variant="h6"
               >
-                Credimaster
+                CrediMaster
               </Typography>
               <Typography sx={{ opacity: 0.9 }} variant="body2">
                 Acceso seguro a la plataforma

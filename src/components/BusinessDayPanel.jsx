@@ -93,9 +93,14 @@ const BusinessDayPanel = () => {
   }, [loadStatus]);
 
   const handleBranchChange = (e) => {
-    const selected = e?.target?.value || e;
-    setBranchId(selected.id || selected);
-    setBranchName(selected.name || "Sucursal seleccionada");
+    // BranchSelect manda el id en target.value y el nombre aparte en
+    // target.branch_name (ver BranchSelect.jsx) -- target.value NUNCA es un
+    // objeto {id, name}, así que leer selected.name aquí siempre caía al
+    // placeholder "Sucursal seleccionada", incluso con una sucursal elegida.
+    const selectedId = e?.target?.value ?? e;
+    const selectedName = e?.target?.branch_name || "la sucursal seleccionada";
+    setBranchId(selectedId);
+    setBranchName(selectedName);
     setSuccess("");
     setError("");
     setLogs([]);

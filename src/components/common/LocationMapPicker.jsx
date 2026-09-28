@@ -93,16 +93,20 @@ export default function LocationMapPicker({
         <Marker
           key={m.key}
           position={m.position}
-          label={m.label ? { text: m.label, color: "#fff", fontWeight: "bold" } : undefined}
+          label={
+            m.label
+              ? { text: m.label, color: "#fff", fontWeight: "bold", fontSize: "15px" }
+              : undefined
+          }
           icon={
             m.color
               ? {
                   path: window.google.maps.SymbolPath.CIRCLE,
-                  scale: 10,
+                  scale: 16,
                   fillColor: m.color,
                   fillOpacity: 1,
                   strokeColor: "#fff",
-                  strokeWeight: 2,
+                  strokeWeight: 3,
                 }
               : undefined
           }

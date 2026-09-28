@@ -12,6 +12,10 @@ export default function IdleSessionHandler() {
     );
 
     localStorage.removeItem("token");
+    localStorage.removeItem("session");
+    localStorage.removeItem("user");
+    // Llaves planas heredadas de un diseño de auth anterior — ver
+    // logoutExpiredSession en api.js, mismo criterio de limpieza.
     localStorage.removeItem("permissions");
     localStorage.removeItem("role_id");
     localStorage.removeItem("branches");
