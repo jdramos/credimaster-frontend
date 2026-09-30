@@ -151,9 +151,27 @@ const BusinessDayPanel = () => {
         data.generated_dates.forEach((date) => addLog(`Saldo generado para ${formatDate(date)}`));
       }
 
-      if (data.warning) {
-        addLog(`Atención: ${data.warning}`);
-        setError(data.warning);
+      // El saldo (balances) y la apertura/cierre del día son dos pasos
+      // dentro de la misma llamada (ver generateBalances en LoanController.js)
+      // -- el primero puede tener éxito aunque el segundo falle (ej. un
+      // asiento de cierre descuadrado). El backend lo reporta en
+      // day_closed/day_close_message (o day_opened/day_open_message al
+      // aperturar), NUNCA en "warning" -- ese campo no existe en esta
+      // respuesta. Antes esto se revisaba mal (if (data.warning)), así que
+      // SIEMPRE caía en "Listo... cerrado" aunque el día siguiera abierto.
+      const dayActionOk = isOpenAction ? data.day_opened !== false : data.day_closed !== false;
+      const dayActionMsg = isOpenAction ? data.day_open_message : data.day_close_message;
+
+      if (!dayActionOk) {
+        addLog(
+          `Atención: el saldo se generó (${data.loans_processed || 0} crédito(s)), pero el día NO quedó ${
+            isOpenAction ? "abierto" : "cerrado"
+          } — ${dayActionMsg || "motivo desconocido"}.`,
+        );
+        setError(
+          dayActionMsg ||
+            `El saldo se generó, pero el día no quedó ${isOpenAction ? "abierto" : "cerrado"}.`,
+        );
       } else {
         addLog(`Listo — ${data.loans_processed || 0} crédito(s) procesados. El día quedó ${isOpenAction ? "abierto" : "cerrado"}.`);
         setSuccess(data.message || "Operación realizada correctamente.");
@@ -293,11 +311,21 @@ const BusinessDayPanel = () => {
               <Button
                 variant="contained"
                 color={isOpenAction ? "success" : "error"}
-                startIcon={isOpenAction ? <LockOpenIcon /> : <LockIcon />}
+                startIcon={
+                  submitting ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : isOpenAction ? (
+                    <LockOpenIcon />
+                  ) : (
+                    <LockIcon />
+                  )
+                }
                 disabled={submitting}
                 onClick={startAction}
               >
-                {isOpenAction
+                {submitting
+                  ? "Generando..."
+                  : isOpenAction
                   ? `Generar saldo inicial y aperturar ${formatDate(status.pending_date)}`
                   : `Generar saldo final y cerrar ${formatDate(status.pending_date)}`}
               </Button>

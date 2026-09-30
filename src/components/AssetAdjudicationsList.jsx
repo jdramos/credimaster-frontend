@@ -21,8 +21,15 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SellIcon from "@mui/icons-material/Sell";
 import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../api";
+import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
 
 const API_URL = "/api/asset-adjudications";
+
+const normalizeLoanResponse = (resp) => {
+  const body = resp?.data;
+  if (Array.isArray(body)) return body[0] || null;
+  return body?.data || body || null;
+};
 
 const STATUS_CHIP = {
   DRAFT: { label: "Borrador", color: "default" },
@@ -48,6 +55,12 @@ export default function AssetAdjudicationsList() {
   const [saleForm, setSaleForm] = useState({ entry_date: new Date().toISOString().slice(0, 10), sale_price: "" });
   const [saleError, setSaleError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [loanModalOpen, setLoanModalOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [selectedLoanGuarantees, setSelectedLoanGuarantees] = useState([]);
+  const [selectedClient, setSelectedClient] = useState({ id: null, identification: null });
+  const [loadingLoanDetails, setLoadingLoanDetails] = useState(false);
 
   const showAlert = (message, severity = "success") => setAlert({ open: true, severity, message });
 
@@ -80,6 +93,35 @@ export default function AssetAdjudicationsList() {
     }
   };
 
+  const openLoanDetail = async (row) => {
+    setLoadingLoanDetails(true);
+    setSelectedLoan(null);
+    setSelectedLoanGuarantees([]);
+    setSelectedClient({ id: row.customer_id, identification: null });
+
+    try {
+      const [loanRes, guaranteesRes] = await Promise.all([
+        API.get(`/api/loans/${row.loan_id}`),
+        API.get(`/api/guarantees/${row.customer_id}`),
+      ]);
+
+      const loanData = normalizeLoanResponse(loanRes);
+
+      if (loanData) {
+        setSelectedLoan(loanData);
+        setSelectedLoanGuarantees(guaranteesRes.data || []);
+        setSelectedClient({ id: row.customer_id, identification: loanData.customer_identification });
+        setLoanModalOpen(true);
+      } else {
+        showAlert("No se encontró información del crédito.", "warning");
+      }
+    } catch (error) {
+      showAlert(error.response?.data?.message || "Error al obtener los datos del crédito", "error");
+    } finally {
+      setLoadingLoanDetails(false);
+    }
+  };
+
   const openSaleDialog = (row) => {
     setSaleTarget(row);
     setSaleForm({ entry_date: new Date().toISOString().slice(0, 10), sale_price: "" });
@@ -107,7 +149,21 @@ export default function AssetAdjudicationsList() {
   };
 
   const columns = [
-    { field: "credit_code", headerName: "Crédito", width: 130 },
+    {
+      field: "credit_code",
+      headerName: "Crédito",
+      width: 130,
+      renderCell: (params) => (
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => openLoanDetail(params.row)}
+          sx={{ minWidth: 0, textTransform: "none", fontWeight: 700 }}
+        >
+          #{params.value}
+        </Button>
+      ),
+    },
     { field: "customer_name", headerName: "Cliente", flex: 1, minWidth: 200 },
     {
       field: "adjudication_date",
@@ -303,6 +359,21 @@ export default function AssetAdjudicationsList() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {loanModalOpen && selectedLoan && (
+        <LoanDetailsModal
+          open={loanModalOpen}
+          loan={selectedLoan}
+          guarantees={selectedLoanGuarantees}
+          loading={loadingLoanDetails}
+          clientId={selectedClient.id}
+          clientIdentification={selectedClient.identification}
+          onClose={() => {
+            setLoanModalOpen(false);
+            setSelectedLoan(null);
+          }}
+        />
+      )}
 
       <Snackbar
         open={alert.open}

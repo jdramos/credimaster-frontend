@@ -153,6 +153,8 @@ const menuItems = {
   ],
   users: [
     { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
+    { label: "Tipos de cambio", iconName: "FaExchangeAlt", to: "/configuracion/tipos-cambio", permission: "configuracion.tipos_cambio.gestionar" },
+    { label: "Datos legales de la IMF", iconName: "FaGavel", to: "/configuracion/datos-legales-imf", permission: "configuracion.datos_legales_imf.gestionar" },
     { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },
     { label: "Roles", iconName: "FaUserShield", to: "/roles", permission: "menu.roles" },
     { label: "Permisos", iconName: "FaKey", to: "/permisos" },
@@ -187,6 +189,7 @@ const menuItems = {
     { label: "Informe Mensual PLA/FT/FP", iconName: "FaChartBar", to: "/cumplimiento/informe-mensual", permission: "menu.cumplimiento" },
     { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento", permission: "menu.cumplimiento" },
     { label: "Riesgo de Nuevos Productos", iconName: "FaFlask", to: "/cumplimiento/productos", permission: "menu.cumplimiento" },
+    { label: "Firma Pre-Impresa en Contratos", iconName: "FaSignature", to: "/cumplimiento/firma-preimpresa", permission: "cumplimiento.firma_preimpresa.gestionar" },
   ],
   conami_tables: [
     {
@@ -230,6 +233,12 @@ const menuItems = {
       label: "Balance general",
       iconName: "FaLandmark",
       to: "/contabilidad/balance-general",
+      permission: "menu.contabilidad",
+    },
+    {
+      label: "Ingresos diarios",
+      iconName: "FaCoins",
+      to: "/contabilidad/ingresos-diarios",
       permission: "menu.contabilidad",
     },
     {
@@ -374,11 +383,11 @@ const menuItems = {
       moduleKey: "icc",
     },
     {
-      label: "ICC - CONAMI (generador)",
+      label: "ICC / ISC - CONAMI (generador)",
       iconName: "FaFileInvoice",
-      to: "/conami/icc",
+      to: "/conami/icc-isc",
       permission: "menu.reportes",
-      moduleKey: "icc",
+      moduleKey: ["icc", "isc"],
     },
     {
       label: "Sin Riesgo",
@@ -386,13 +395,6 @@ const menuItems = {
       to: "/reports/conami/sinriesgo",
       permission: "menu.reportes",
       moduleKey: "sinriesgo",
-    },
-    {
-      label: "ISC - CONAMI (generador)",
-      iconName: "FaFileInvoice",
-      to: "/conami/isc",
-      permission: "menu.reportes",
-      moduleKey: "isc",
     },
     {
       label: "CrediMaster Studio",
@@ -630,7 +632,13 @@ export default function AppLayoutMenu({
   // habilitado (ver AVAILABLE_MODULES en moduleRegistry.js, backend).
   const hasItemAccess = (item) => {
     if (item.permission && role !== 1 && !permissions.includes(item.permission)) return false;
-    if (item.moduleKey && enabledModules !== null && !enabledModules.includes(item.moduleKey)) return false;
+    if (item.moduleKey && enabledModules !== null) {
+      // moduleKey puede ser un solo código o una lista -- una lista se
+      // trata como OR (ej. ICC/ISC combinados en un mismo ítem de menú:
+      // basta con que el tenant tenga habilitado uno de los dos).
+      const requiredKeys = Array.isArray(item.moduleKey) ? item.moduleKey : [item.moduleKey];
+      if (!requiredKeys.some((key) => enabledModules.includes(key))) return false;
+    }
     return true;
   };
 

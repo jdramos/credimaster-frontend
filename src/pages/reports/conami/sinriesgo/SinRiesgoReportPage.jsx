@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import GridOnIcon from "@mui/icons-material/GridOn";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -161,6 +162,28 @@ export default function SinRiesgoReportPage() {
     }
   };
 
+  // Copia de revisión: Base de Crédito + Base de Contacto en una sola hoja
+  // de Excel -- no reemplaza el ZIP con los .PSZ oficiales, es una descarga
+  // aparte para revisar ambas bases juntas antes de subir el oficial.
+  const handleDownloadExcel = async (runId) => {
+    try {
+      const response = await API.get(`/api/reports/conami/sinriesgo/runs/${runId}/download-excel`, {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sinriesgo_run_${runId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage({ type: "error", text: error.response?.data?.message || error.message });
+    }
+  };
+
   const statusChip = (status) => {
     const map = {
       GENERATED: { label: "Generado", color: "success" },
@@ -184,7 +207,7 @@ export default function SinRiesgoReportPage() {
     {
       field: "actions",
       headerName: "Acciones",
-      width: 240,
+      width: 330,
       sortable: false,
       renderCell: (params) => (
         <Stack direction="row" spacing={1}>
@@ -210,6 +233,18 @@ export default function SinRiesgoReportPage() {
             sx={{ textTransform: "none", borderRadius: 2, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
           >
             ZIP
+          </Button>
+
+          <Button
+            size="small"
+            variant="outlined"
+            color="success"
+            startIcon={<GridOnIcon />}
+            disabled={params.row.status !== "GENERATED"}
+            onClick={() => handleDownloadExcel(params.row.id)}
+            sx={{ textTransform: "none", borderRadius: 2 }}
+          >
+            Excel
           </Button>
         </Stack>
       ),

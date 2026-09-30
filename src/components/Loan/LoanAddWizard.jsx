@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { tceaFromAmortizationTable } from "../../utils/tcea";
 import HelpButton from "../help/HelpButton";
 import { ToastContainer, toast } from "react-toastify";
 import Button from "@mui/material/Button";
@@ -102,6 +103,28 @@ const stepForField = (field) => {
   return idx === -1 ? 0 : idx;
 };
 
+const money = (value) =>
+  `C$ ${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const RiskIndicator = ({ label, value, hint, bad = false }) => (
+  <Box
+    sx={{
+      p: 1.25,
+      borderRadius: 2,
+      border: `1px solid ${bad ? "#FCA5A5" : BAC.border}`,
+      background: bad ? "#FEF2F2" : BAC.white,
+    }}
+  >
+    <Typography variant="caption" color="text.secondary">{label}</Typography>
+    <Typography sx={{ fontWeight: 800, color: bad ? "#B91C1C" : BAC.text }}>{value}</Typography>
+    {hint && (
+      <Typography variant="caption" sx={{ display: "block", color: bad ? "#B91C1C" : "text.secondary" }}>
+        {hint}
+      </Typography>
+    )}
+  </Box>
+);
+
 // Segunda propuesta de layout para "Agregar crédito" — mismo estado y misma
 // lógica que LoanAddGpt.jsx (comparten useLoanForm), pero en vez de una sola
 // página larga, el formulario se divide en 3 pasos. Solo un paso es visible
@@ -158,6 +181,48 @@ const LoanAddWizard = () => {
     totalInsurance,
     totalOtherCharges,
   } = useLoanForm();
+
+  // Mismo criterio que la Hoja Resumen: desembolso neto = monto - deducción.
+  const tcea = useMemo(
+    () =>
+      tceaFromAmortizationTable(
+        Number(loan.amount || 0) - Number(loan.deduction || 0),
+        amortizationTable,
+      ),
+    [loan.amount, loan.deduction, amortizationTable],
+  );
+
+  const summary = useMemo(() => {
+    const amount = Number(loan.amount || 0);
+    const netDisbursed = amount - Number(loan.deduction || 0);
+    const totalToPay = Number(totalPaymentAmount || 0);
+    const term = Number(loan.term || 0);
+    const monthlyPayment = term > 0 ? totalToPay / term : 0;
+
+    const coveragePct = amount > 0 ? (Number(selectedGuaranteeValue || 0) / amount) * 100 : null;
+    const minCoverage = getPolicy("min_collateral_coverage");
+
+    // Mismo criterio que utils/creditEvaluationScoring.js del backend:
+    // capacidad de pago = flujo disponible = ingresos totales - gastos totales.
+    const totalIncome = Number(selectedEvaluation?.total_income || 0);
+    const capacity = totalIncome - Number(selectedEvaluation?.total_expenses || 0);
+
+    return {
+      netDisbursed,
+      totalToPay,
+      totalCost: totalToPay - netDisbursed,
+      monthlyPayment,
+      firstPaymentDate: installment?.paymentDate || null,
+      coveragePct,
+      minCoverage: minCoverage != null ? Number(minCoverage) : null,
+      hasEvaluation: Boolean(selectedEvaluation),
+      capacity,
+      capacityPct: capacity > 0 ? (monthlyPayment / capacity) * 100 : null,
+      incomePct: totalIncome > 0 ? (monthlyPayment / totalIncome) * 100 : null,
+      currentDebt: Number(activeLoansSummary?.total_balance || 0),
+      activeCount: Number(activeLoansSummary?.count || 0),
+    };
+  }, [loan.amount, loan.deduction, loan.term, totalPaymentAmount, selectedGuaranteeValue, getPolicy, selectedEvaluation, installment, activeLoansSummary]);
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -724,12 +789,94 @@ const LoanAddWizard = () => {
                     ["Cargos por seguros", `C$ ${Number(loan.insurance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`],
                     ["Cargos administrativos", `C$ ${Number(loan.other_charges || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`],
                     ["Cuota estimada", `C$ ${Number(installment?.paymentAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`],
+                    ["TCEA", tcea != null ? `${tcea.toFixed(2)}%` : "—"],
+                    ["Primera cuota", summary.firstPaymentDate ? dayjs(summary.firstPaymentDate).format("DD/MM/YYYY") : "—"],
                   ].map(([label, value]) => (
                     <Box key={label}>
                       <Typography variant="caption" color="text.secondary">{label}</Typography>
                       <Typography sx={{ fontWeight: 700, color: BAC.text }}>{value}</Typography>
                     </Box>
                   ))}
+                </Box>
+
+                <Divider sx={{ my: 1.5 }} />
+
+                <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>Costo del crédito</Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gap: 1.5,
+                  }}
+                >
+                  {[
+                    ["Monto neto a recibir", money(summary.netDisbursed)],
+                    ["Total a pagar", money(summary.totalToPay)],
+                    ["Costo total del crédito", money(summary.totalCost)],
+                    ["Intereses", money(totalInterest)],
+                    ["Comisiones", money(Number(totalFee || 0) + Number(loan.deduction || 0))],
+                    ["Seguros", money(totalInsurance)],
+                    ["Otros cargos", money(totalOtherCharges)],
+                  ].map(([label, value]) => (
+                    <Box key={label}>
+                      <Typography variant="caption" color="text.secondary">{label}</Typography>
+                      <Typography sx={{ fontWeight: 700, color: BAC.text }}>{value}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                <Divider sx={{ my: 1.5 }} />
+
+                <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>Indicadores de riesgo</Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                    gap: 1.5,
+                  }}
+                >
+                  <RiskIndicator
+                    label="Cobertura de garantías"
+                    value={summary.coveragePct != null ? `${summary.coveragePct.toFixed(0)}%` : "—"}
+                    hint={summary.minCoverage != null ? `Mínimo de política: ${summary.minCoverage}%` : "Sin mínimo configurado"}
+                    bad={summary.minCoverage != null && summary.coveragePct != null && summary.coveragePct < summary.minCoverage}
+                  />
+                  <RiskIndicator
+                    label="Cuota / capacidad de pago"
+                    value={summary.capacityPct != null ? `${summary.capacityPct.toFixed(0)}%` : "—"}
+                    hint={
+                      !summary.hasEvaluation
+                        ? "Sin evaluación financiera seleccionada"
+                        : summary.capacityPct != null
+                          ? `Cuota mensual ${money(summary.monthlyPayment)} de ${money(summary.capacity)} disponibles`
+                          : "Gastos iguales o mayores a ingresos"
+                    }
+                    bad={
+                      summary.hasEvaluation &&
+                      (summary.capacityPct == null || summary.capacityPct > 100)
+                    }
+                  />
+                  <RiskIndicator
+                    label="Cuota / ingreso total"
+                    value={summary.incomePct != null ? `${summary.incomePct.toFixed(0)}%` : "—"}
+                    hint={
+                      !summary.hasEvaluation
+                        ? "Sin evaluación financiera seleccionada"
+                        : summary.incomePct != null
+                          ? "Porción del ingreso mensual del cliente"
+                          : "La evaluación no tiene ingresos registrados"
+                    }
+                    bad={summary.incomePct != null && summary.incomePct > 100}
+                  />
+                  <RiskIndicator
+                    label="Deuda total con la institución"
+                    value={money(summary.currentDebt + Number(loan.amount || 0))}
+                    hint={
+                      summary.activeCount
+                        ? `${money(summary.currentDebt)} en ${summary.activeCount} crédito${summary.activeCount === 1 ? "" : "s"} activo${summary.activeCount === 1 ? "" : "s"} + este crédito`
+                        : "Sin otros créditos activos"
+                    }
+                  />
                 </Box>
 
                 <Divider sx={{ my: 1.5 }} />

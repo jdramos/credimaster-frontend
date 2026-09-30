@@ -107,6 +107,7 @@ const IncomeStatement = lazy(() => import("./components/accounting/IncomeStateme
 const BalanceSheet = lazy(() => import("./components/accounting/BalanceSheet"));
 const EquityChanges = lazy(() => import("./components/accounting/EquityChanges"));
 const CashFlowStatement = lazy(() => import("./components/accounting/CashFlowStatement"));
+const DailyInterestIncome = lazy(() => import("./components/accounting/DailyInterestIncome"));
 const GuaranteesReport = lazy(() => import("./components/GuaranteesReport"));
 const AmlRiskCriteriaConfig = lazy(() => import("./components/Compliance/AmlRiskCriteriaConfig"));
 const PicReviewReminders = lazy(() => import("./components/Compliance/PicReviewReminders"));
@@ -166,11 +167,15 @@ const AccountReconciliation = lazy(() => import("./components/accounting/Account
 const IccReportPage = lazy(() => import("./pages/reports/conami/IccReportPage"));
 const IccGenerator = lazy(() => import("./pages/reports/conami/icc/IccGenerator"));
 const IscGenerator = lazy(() => import("./pages/reports/conami/isc/IscGenerator"));
+const IccIscGenerator = lazy(() => import("./pages/reports/conami/IccIscGenerator"));
 const SinRiesgoReportPage = lazy(() => import("./pages/reports/conami/sinriesgo/SinRiesgoReportPage"));
 const CustomReportsPage = lazy(() => import("./pages/customReports/CustomReportsPage"));
 const Studio = lazy(() => import("./reports/studio/Studio"));
 const AuditLog = lazy(() => import("./components/AuditLog"));
 const BranchCalendarManager = lazy(() => import("./components/BranchCalendarManager"));
+const ExchangeRatesManager = lazy(() => import("./components/ExchangeRatesManager"));
+const PreprintedSignatureManager = lazy(() => import("./components/PreprintedSignatureManager"));
+const InstitutionalLegalDataManager = lazy(() => import("./components/InstitutionalLegalDataManager"));
 const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
 const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
 const SupportAdminPage = lazy(() => import("./pages/superadmin/SupportAdminPage"));
@@ -746,6 +751,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           />
           <Route path="/contabilidad/cambios-patrimonio" element={<EquityChanges />} />
           <Route path="/contabilidad/flujo-efectivo" element={<CashFlowStatement />} />
+          <Route path="/contabilidad/ingresos-diarios" element={<DailyInterestIncome />} />
           <Route path="/garantias/reporte" element={<GuaranteesReport />} />
           <Route path="/cumplimiento/matriz-riesgo" element={<AmlRiskCriteriaConfig />} />
           <Route path="/cumplimiento/pic" element={<PicReviewReminders />} />
@@ -806,6 +812,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/contabilidad/conciliacion" element={<AccountReconciliation />} />
           <Route path="/conami/icc" element={<IccGenerator />} />
           <Route path="/conami/isc" element={<IscGenerator />} />
+          <Route path="/conami/icc-isc" element={<IccIscGenerator />} />
           <Route path="/reports/conami/icc" element={<IccReportPage />} />
           <Route path="/reports/conami/sinriesgo" element={<SinRiesgoReportPage />} />
 
@@ -815,6 +822,9 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/auditoria" element={<PageContainer><AuditLog /></PageContainer>} />
           <Route path="/soporte" element={<PageContainer><SupportTickets /></PageContainer>} />
           <Route path="/configuracion/calendarios" element={<PageContainer><BranchCalendarManager /></PageContainer>} />
+          <Route path="/configuracion/tipos-cambio" element={<PageContainer><ExchangeRatesManager /></PageContainer>} />
+          <Route path="/cumplimiento/firma-preimpresa" element={<PageContainer><PreprintedSignatureManager /></PageContainer>} />
+          <Route path="/configuracion/datos-legales-imf" element={<PageContainer><InstitutionalLegalDataManager /></PageContainer>} />
 
           <Route
             path="*"
