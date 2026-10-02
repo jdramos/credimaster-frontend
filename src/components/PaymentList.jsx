@@ -15,6 +15,7 @@ import {
   TextField,
   MenuItem,
   Stack,
+  Chip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -28,6 +29,7 @@ import { UserContext } from "../contexts/UserContext";
 
 import PaymentForm from "./PaymentForm";
 import PaymentCorrectionDialog from "./PaymentCorrectionDialog";
+import PaymentEvidenceDialog from "./PaymentEvidenceDialog";
 import API from "../api";
 
 const API_URL = "/api/payments";
@@ -44,6 +46,7 @@ const Money = ({ value }) => (
 );
 
 const PaymentList = () => {
+  const [evidencePayment, setEvidencePayment] = useState(null);
   // data
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -431,6 +434,7 @@ const PaymentList = () => {
                 <TableCell align="right">Interés</TableCell>
                 <TableCell>Sucursal</TableCell>
                 <TableCell>Colector</TableCell>
+                <TableCell>Respaldo</TableCell>
                 {canCorrectPayment && <TableCell align="center">Acciones</TableCell>}
               </TableRow>
             </TableHead>
@@ -438,7 +442,7 @@ const PaymentList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={10} sx={{ py: 4 }}>
+                  <TableCell colSpan={11} sx={{ py: 4 }}>
                     <Box sx={{ display: "flex", justifyContent: "center" }}>
                       <CircularProgress />
                     </Box>
@@ -447,7 +451,7 @@ const PaymentList = () => {
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     sx={{ color: "var(--bac-muted)", py: 3 }}
                   >
                     No hay pagos para mostrar con esos filtros.
@@ -481,6 +485,20 @@ const PaymentList = () => {
                     <TableCell>{p.branch_name ?? "—"}</TableCell>
                     <TableCell>
                       {p.collector_name ?? p.collector ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      {Number(p.evidence_photo) > 0 || Number(p.evidence_signature) > 0 ? (
+                        <Stack direction="row" spacing={0.5}>
+                          {Number(p.evidence_photo) > 0 && (
+                            <Chip size="small" color="primary" variant="outlined" label="Foto" onClick={() => setEvidencePayment(p)} />
+                          )}
+                          {Number(p.evidence_signature) > 0 && (
+                            <Chip size="small" color="primary" variant="outlined" label="Firma" onClick={() => setEvidencePayment(p)} />
+                          )}
+                        </Stack>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     {canCorrectPayment && (
                       <TableCell align="center">
@@ -524,6 +542,8 @@ const PaymentList = () => {
         onClose={handleClose}
         onSuccess={handlePaymentSaved}
       />
+
+      <PaymentEvidenceDialog payment={evidencePayment} onClose={() => setEvidencePayment(null)} />
 
       <PaymentCorrectionDialog
         open={!!correctionPayment}
