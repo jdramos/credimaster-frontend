@@ -28,6 +28,26 @@ const money = (v) =>
 const dateStr = (v) => (v ? String(v).slice(0, 10) : "");
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Estado de verificación GPS de una visita (lo calcula el backend, ver
+// visitVerification en collectionsController.js): la visita cuenta como
+// verificada si se registró a pocos metros de la casa o el negocio del
+// cliente. Solo las visitas traen estado; llamadas y mensajes no.
+const formatDistance = (m) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
+const verificationChip = (a) => {
+  switch (a.visit_verification) {
+    case "VERIFIED":
+      return <Chip size="small" color="success" sx={{ mt: 0.5 }} label={`Visita verificada (a ${formatDistance(a.visit_distance_meters)})`} />;
+    case "FAR":
+      return <Chip size="small" color="error" sx={{ mt: 0.5 }} label={`Lejos del domicilio (${formatDistance(a.visit_distance_meters)})`} />;
+    case "NO_GPS":
+      return <Chip size="small" color="warning" variant="outlined" sx={{ mt: 0.5 }} label="Visita sin ubicación GPS" />;
+    case "NO_CUSTOMER_LOCATION":
+      return <Chip size="small" variant="outlined" sx={{ mt: 0.5 }} label="Cliente sin ubicación guardada" />;
+    default:
+      return null;
+  }
+};
+
 const ACTION_TYPES = [
   ["CALL", "Llamada"],
   ["VISIT", "Visita"],
@@ -396,6 +416,7 @@ export default function CollectionsWorklist() {
                     <Typography variant="caption" color="text.secondary">{a.created_by_name}</Typography>
                   )}
                 </Stack>
+                {verificationChip(a)}
                 {a.notes && <Typography variant="body2" sx={{ mt: 0.5 }}>{a.notes}</Typography>}
                 {a.promise_status && a.promise_status !== "NONE" && (
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }} flexWrap="wrap">
