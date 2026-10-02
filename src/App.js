@@ -176,6 +176,7 @@ const BranchCalendarManager = lazy(() => import("./components/BranchCalendarMana
 const ExchangeRatesManager = lazy(() => import("./components/ExchangeRatesManager"));
 const PreprintedSignatureManager = lazy(() => import("./components/PreprintedSignatureManager"));
 const InstitutionalLegalDataManager = lazy(() => import("./components/InstitutionalLegalDataManager"));
+const CompanyProfileManager = lazy(() => import("./components/CompanyProfileManager"));
 const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
 const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
 const SupportAdminPage = lazy(() => import("./pages/superadmin/SupportAdminPage"));
@@ -825,6 +826,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/configuracion/tipos-cambio" element={<PageContainer><ExchangeRatesManager /></PageContainer>} />
           <Route path="/cumplimiento/firma-preimpresa" element={<PageContainer><PreprintedSignatureManager /></PageContainer>} />
           <Route path="/configuracion/datos-legales-imf" element={<PageContainer><InstitutionalLegalDataManager /></PageContainer>} />
+          <Route path="/configuracion/perfil-empresa" element={<PageContainer><CompanyProfileManager /></PageContainer>} />
 
           <Route
             path="*"

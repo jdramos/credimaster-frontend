@@ -155,6 +155,7 @@ const menuItems = {
     { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
     { label: "Tipos de cambio", iconName: "FaExchangeAlt", to: "/configuracion/tipos-cambio", permission: "configuracion.tipos_cambio.gestionar" },
     { label: "Datos legales de la IMF", iconName: "FaGavel", to: "/configuracion/datos-legales-imf", permission: "configuracion.datos_legales_imf.gestionar" },
+    { label: "Perfil de la empresa", iconName: "FaBuilding", to: "/configuracion/perfil-empresa", permission: "configuracion.editar" },
     { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },
     { label: "Roles", iconName: "FaUserShield", to: "/roles", permission: "menu.roles" },
     { label: "Permisos", iconName: "FaKey", to: "/permisos" },
