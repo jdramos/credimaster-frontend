@@ -113,6 +113,7 @@ const menuItems = {
     },
     { label: "Pagos", iconName: "FaCashRegister", to: "/pagos", permission: "menu.pagos" },
     { label: "Cobranza", iconName: "FaHandshake", to: "/cobranza", permission: "cobranza.ver" },
+    { label: "Rutas del día", iconName: "FaRoute", to: "/cobranza/rutas", permission: "rastreo.ver" },
     
     { label: "Día operativo", iconName: "FaLock", to: "/cierre-del-dia" },
     {

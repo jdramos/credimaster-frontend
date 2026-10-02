@@ -78,6 +78,7 @@ const CreditPolicyManager = lazy(() => import("./components/CreditPolicyManager"
 const FinancialEvaluationConfigManager = lazy(() => import("./components/FinancialEvaluationConfigManager"));
 const NotificationsManager = lazy(() => import("./components/notifications/NotificationsManager"));
 const CollectionsPage = lazy(() => import("./components/collections/CollectionsPage"));
+const TrackingRoutes = lazy(() => import("./components/TrackingRoutes"));
 const RetentionsManager = lazy(() => import("./components/retentions/RetentionsManager"));
 const ProvidersList = lazy(() => import("./components/providers/ProvidersList"));
 const PayablesPage = lazy(() => import("./components/payables/PayablesPage"));
@@ -498,6 +499,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <NotificationsManager />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/cobranza/rutas"
+            element={
+              <PageContainer>
+                <TrackingRoutes />
               </PageContainer>
             }
           />
