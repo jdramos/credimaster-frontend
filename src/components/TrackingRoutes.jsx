@@ -106,6 +106,11 @@ export default function TrackingRoutes() {
 
   const path = useMemo(() => (detail?.route || []).map((p) => ({ lat: p.lat, lng: p.lng })), [detail]);
 
+  // El centro inicial del mapa debe tener identidad ESTABLE: si GoogleMap recibe un
+  // objeto nuevo en cada render, vuelve a centrar el mapa en el primer punto y
+  // deshace el ajuste a la ruta (fitBounds) o el foco en un evento.
+  const initialCenter = useMemo(() => path[0] || DEFAULT_CENTER, [path]);
+
   // Eventos de la jornada ordenados por hora (línea de tiempo).
   const events = useMemo(() => {
     if (!detail) return [];
@@ -293,7 +298,7 @@ export default function TrackingRoutes() {
                     ) : (
                       <GoogleMap
                         mapContainerStyle={{ width: "100%", height: MAP_HEIGHT, borderRadius: 8 }}
-                        center={path[0] || DEFAULT_CENTER}
+                        center={initialCenter}
                         zoom={13}
                         onLoad={(map) => {
                           mapRef.current = map;
