@@ -116,6 +116,7 @@ const menuItems = {
     { label: "Rutas del día", iconName: "FaRoute", to: "/cobranza/rutas", permission: "rastreo.ver" },
     
     { label: "Día operativo", iconName: "FaLock", to: "/cierre-del-dia" },
+    { label: "Notas de crédito/débito", iconName: "FaFileInvoiceDollar", to: "/creditos/notas", permission: "creditos.ver" },
     {
       label: "Políticas crédito",
       iconName: "FaFileSignature",
@@ -157,6 +158,7 @@ const menuItems = {
     { label: "Tipos de cambio", iconName: "FaExchangeAlt", to: "/configuracion/tipos-cambio", permission: "configuracion.tipos_cambio.gestionar" },
     { label: "Datos legales de la IMF", iconName: "FaGavel", to: "/configuracion/datos-legales-imf", permission: "configuracion.datos_legales_imf.gestionar" },
     { label: "Perfil de la empresa", iconName: "FaBuilding", to: "/configuracion/perfil-empresa", permission: "configuracion.editar" },
+    { label: "Provisión de cartera", iconName: "FaPercentage", to: "/configuracion/provision-cartera", permission: "creditos.provision.configurar", moduleKey: "risk_classification_ngrc" },
     { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },
     { label: "Roles", iconName: "FaUserShield", to: "/roles", permission: "menu.roles" },
     { label: "Permisos", iconName: "FaKey", to: "/permisos" },

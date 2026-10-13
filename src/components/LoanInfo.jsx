@@ -21,6 +21,7 @@ import {
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { NumericFormat } from "react-number-format";
 import API from "../api";
+import LoanPaymentProfile from "./LoanPaymentProfile";
 
 const toMoney = (v) => Number(v || 0);
 
@@ -296,6 +297,8 @@ const LoanInfo = ({
 
         <Box sx={{ p: 1 }}>
           <Stack spacing={0.75}>
+            <LoanPaymentProfile loanId={loan.id} refreshKey={refreshKey} />
+
             <div className="bac-tiles">
               <SummaryTile
                 label="Saldo corriente"

@@ -28,6 +28,8 @@ import API from "../api";
 import PrintIcon from "@mui/icons-material/Print";
 import { printAccountStatementReport } from "../reports/accountStatementReport";
 import { useAuth } from "../contexts/AuthContext";
+import LoanPaymentProfile from "./LoanPaymentProfile";
+import { installmentDays, installmentDaysLabel } from "../utils/installmentDays";
 
 const BAC = {
   blue: "#005AA7",
@@ -114,10 +116,15 @@ export default function AccountStatementModal({
   const [loading, setLoading] = useState(false);
   const [header, setHeader] = useState(null);
   const [rows, setRows] = useState([]);
+  // Perfil de pago a la fecha de corte (lo carga LoanPaymentProfile) --
+  // se reutiliza en la impresión y el Excel.
+  const [paymentProfile, setPaymentProfile] = useState(null);
+  // Notas de crédito/débito aplicadas hasta la fecha de corte.
+  const [adjustments, setAdjustments] = useState([]);
 
   const finalCutDate = cutDate || dayjs().format("YYYY-MM-DD");
 
-  const { tenant, user } = useAuth();
+  const { tenant } = useAuth();
 
   useEffect(() => {
     if (!open || !loanId) return;
@@ -132,9 +139,11 @@ export default function AccountStatementModal({
 
         setHeader(res.data?.header ?? null);
         setRows(res.data?.movements ?? []);
+        setAdjustments(res.data?.adjustments ?? []);
       } catch (error) {
         console.error("Error estado de cuenta:", error);
         setHeader(null);
+        setAdjustments([]);
         setRows([]);
       } finally {
         setLoading(false);
@@ -212,6 +221,22 @@ export default function AccountStatementModal({
         "Cuotas pagadas": totals.paidInstallments,
         "Cuotas parciales": totals.partialInstallments,
         "Cuotas pendientes": totals.pendingInstallments,
+        ...(paymentProfile
+          ? {
+              "Estado de mora": paymentProfile.delinquency.label,
+              "Estado de cartera": paymentProfile.delinquency.portfolio_status_label || "",
+              "Cuotas vencidas": paymentProfile.delinquency.overdue_installments,
+              "Monto vencido": paymentProfile.delinquency.overdue_amount,
+              "Próxima cuota": paymentProfile.next_installment ? fmtDate(paymentProfile.next_installment.date) : "",
+              "Monto próxima cuota": paymentProfile.next_installment ? paymentProfile.next_installment.amount : "",
+              Comportamiento: paymentProfile.behavior.label,
+              "Días promedio de pago": paymentProfile.behavior.avg_days,
+              "% cuotas a tiempo": paymentProfile.behavior.on_time_pct ?? "",
+              "Peor atraso (días)": paymentProfile.behavior.max_days_late,
+              "Último pago": paymentProfile.behavior.last_payment_date ? fmtDate(paymentProfile.behavior.last_payment_date) : "",
+              "Monto último pago": paymentProfile.behavior.last_payment_amount ?? "",
+            }
+          : {}),
       },
     ];
 
@@ -219,6 +244,8 @@ export default function AccountStatementModal({
       Cuota: r.payment_number,
       "Fecha cuota": fmtDate(r.payment_date),
       "Pagado el": fmtDate(r.paid_at),
+      // + días tarde / - días antes del vencimiento (vencidas: días a la fecha de corte)
+      Días: r.payment_number === 0 ? "" : installmentDaysLabel(installmentDays(r, finalCutDate)),
       Estado: r.status_label || r.status,
       Capital: Number(r.payment_principal || 0),
       Interés: Number(r.payment_interest || 0),
@@ -245,6 +272,23 @@ export default function AccountStatementModal({
       XLSX.utils.json_to_sheet(installments),
       "Cuotas",
     );
+    if (adjustments.length) {
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.json_to_sheet(
+          adjustments.map((a) => ({
+            Fecha: fmtDate(a.applied_date),
+            Tipo: a.adjustment_type === "CREDIT" ? "Nota de crédito" : "Nota de débito",
+            Concepto: a.concept_label,
+            Monto: (a.adjustment_type === "CREDIT" ? -1 : 1) * Number(a.total_amount || 0),
+            Motivo: a.reason,
+            Soporte: a.support_reference || "",
+            Aprobó: a.approved_by_name || "",
+          })),
+        ),
+        "Notas",
+      );
+    }
 
     const excelBuffer = XLSX.write(wb, {
       bookType: "xlsx",
@@ -259,6 +303,13 @@ export default function AccountStatementModal({
 
   const h = header || {};
 
+  // Rojo si se pagó tarde o está vencida; verde si se pagó a tiempo o antes.
+  const daysCellSx = (r) => {
+    const info = installmentDays(r, finalCutDate);
+    if (r.payment_number === 0 || info.days === null) return { color: "text.secondary" };
+    return { fontWeight: 800, color: info.days > 0 ? "error.main" : "success.main" };
+  };
+
   const handlePrintReport = () => {
     printAccountStatementReport({
       company: tenant,
@@ -269,6 +320,8 @@ export default function AccountStatementModal({
       rows: rows,
       header: header,
       cutDate,
+      paymentProfile,
+      adjustments,
     });
   };
 
@@ -458,6 +511,54 @@ export default function AccountStatementModal({
               </Grid>
             </Paper>
 
+            <Paper
+              elevation={0}
+              sx={{ p: 1.2, mb: 1.2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff" }}
+            >
+              <Typography sx={{ fontWeight: 900, fontSize: 13, mb: 0.75, color: BAC.blue }}>
+                Estado y comportamiento de pago al {fmtDate(finalCutDate)}
+              </Typography>
+              <LoanPaymentProfile loanId={loanId} asOfDate={finalCutDate} onLoaded={setPaymentProfile} />
+            </Paper>
+
+            {adjustments.length ? (
+              <Paper
+                elevation={0}
+                sx={{ p: 1.2, mb: 1.2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff" }}
+              >
+                <Typography sx={{ fontWeight: 900, fontSize: 13, mb: 0.75, color: BAC.blue }}>
+                  Notas de crédito y débito
+                </Typography>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Fecha</TableCell>
+                      <TableCell>Tipo</TableCell>
+                      <TableCell>Concepto</TableCell>
+                      <TableCell align="right">Monto</TableCell>
+                      <TableCell>Motivo</TableCell>
+                      <TableCell>Aprobó</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {adjustments.map((a) => (
+                      <TableRow key={a.id}>
+                        <TableCell>{fmtDate(a.applied_date)}</TableCell>
+                        <TableCell>{a.adjustment_type === "CREDIT" ? "Crédito" : "Débito"}</TableCell>
+                        <TableCell>{a.concept_label}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 800, color: a.adjustment_type === "CREDIT" ? "success.main" : "error.main" }}>
+                          {a.adjustment_type === "CREDIT" ? "-" : "+"}
+                          {money(a.total_amount)}
+                        </TableCell>
+                        <TableCell>{a.reason}</TableCell>
+                        <TableCell>{a.approved_by_name || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            ) : null}
+
             <Grid container spacing={1} sx={{ mb: 1.2 }}>
               <Grid item xs={6} md={3}>
                 <Kpi
@@ -547,6 +648,11 @@ export default function AccountStatementModal({
                       <TableCell>Cuota</TableCell>
                       <TableCell>Fecha cuota</TableCell>
                       <TableCell>Pagado el</TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Días entre el vencimiento y el pago: + tarde, - antes. En cuotas vencidas sin pagar, días que llevan vencidas a la fecha de corte." arrow>
+                          <span>Días</span>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell>Estado</TableCell>
 
                       <TableCell align="right">Capital</TableCell>
@@ -571,6 +677,9 @@ export default function AccountStatementModal({
 
                         <TableCell>{fmtDate(r.payment_date)}</TableCell>
                         <TableCell>{fmtDate(r.paid_at)}</TableCell>
+                        <TableCell align="center" sx={daysCellSx(r)}>
+                          {r.payment_number === 0 ? "" : installmentDaysLabel(installmentDays(r, finalCutDate))}
+                        </TableCell>
 
                         <TableCell>
                           {r.payment_number === 0 ? (
@@ -619,7 +728,7 @@ export default function AccountStatementModal({
                     {!rows.length && (
                       <TableRow>
                         <TableCell
-                          colSpan={16}
+                          colSpan={13}
                           align="center"
                           sx={{ py: 4, color: BAC.sub }}
                         >
