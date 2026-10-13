@@ -1,5 +1,7 @@
-import React from "react";
-import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { AppBar, Box, Button, IconButton, Toolbar, Tooltip, Typography } from "@mui/material";
+import KeyboardRoundedIcon from "@mui/icons-material/KeyboardRounded";
+import KeyboardShortcuts, { SUPERADMIN_NAV_SHORTCUTS, SUPERADMIN_ACTION_SHORTCUTS } from "./KeyboardShortcuts";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -13,6 +15,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 export default function SuperAdminLayout({ children, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const shortcutFor = (to) => SUPERADMIN_NAV_SHORTCUTS.find((sc) => sc.to === to)?.keys;
 
   const navItems = [
     { label: "Empresas", to: "/superadmin", icon: <BusinessIcon /> },
@@ -37,24 +41,31 @@ export default function SuperAdminLayout({ children, onLogout }) {
 
           <Box sx={{ display: "flex", gap: 0.5, ml: { xs: 0, md: 2 } }}>
             {navItems.map((item) => (
-              <Button
-                key={item.to}
-                color="inherit"
-                startIcon={item.icon}
-                onClick={() => navigate(item.to)}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: isActive(item.to) ? 800 : 500,
-                  borderBottom: isActive(item.to) ? "2px solid #90caf9" : "2px solid transparent",
-                  borderRadius: 0,
-                }}
-              >
-                {item.label}
-              </Button>
+              <Tooltip key={item.to} title={shortcutFor(item.to) || ""}>
+                <Button
+                  color="inherit"
+                  startIcon={item.icon}
+                  onClick={() => navigate(item.to)}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: isActive(item.to) ? 800 : 500,
+                    borderBottom: isActive(item.to) ? "2px solid #90caf9" : "2px solid transparent",
+                    borderRadius: 0,
+                  }}
+                >
+                  {item.label}
+                </Button>
+              </Tooltip>
             ))}
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
+
+          <Tooltip title="Atajos de teclado (?)">
+            <IconButton color="inherit" onClick={() => setShortcutsOpen(true)} aria-label="Atajos de teclado">
+              <KeyboardRoundedIcon />
+            </IconButton>
+          </Tooltip>
 
           <Button
             color="inherit"
@@ -67,7 +78,17 @@ export default function SuperAdminLayout({ children, onLogout }) {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ p: 2 }}>{children}</Box>
+      {/* component="main": UnsavedChangesGuard distingue así el contenido
+          de la página de la barra superior. */}
+      <Box component="main" sx={{ p: 2 }}>{children}</Box>
+
+      <KeyboardShortcuts
+        shortcuts={SUPERADMIN_NAV_SHORTCUTS}
+        actions={SUPERADMIN_ACTION_SHORTCUTS}
+        helpOpen={shortcutsOpen}
+        onHelpOpenChange={setShortcutsOpen}
+        pathname={location.pathname}
+      />
     </Box>
   );
 }

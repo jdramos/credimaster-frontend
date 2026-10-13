@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Paper,
@@ -232,6 +232,22 @@ export default function TenantsPage() {
     setDbNameEdited(false);
     setDialogOpen(true);
   };
+
+  // ?nueva=1 llega del atajo Alt+N del panel: abre "Nueva Empresa" y limpia
+  // el parámetro para que recargar la página no la vuelva a abrir.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("nueva") !== "1") return;
+    handleOpenCreate();
+    setSearchParams(
+      (prev) => {
+        prev.delete("nueva");
+        return prev;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleFieldChange = (field) => (e) => {
     const value = e.target.value;

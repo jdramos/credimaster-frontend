@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import HelpButton from "../help/HelpButton";
+import useUnsavedChangesWarning from "../../hooks/useUnsavedChangesWarning";
 import {
   Box,
   Paper,
@@ -103,6 +105,13 @@ export default function EmployeesList() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  // Aviso al salir del formulario de empleado con cambios sin guardar
+  // (menú, cerrar pestaña, y cerrar el diálogo vía closeEmployeeDialog).
+  const { confirmDiscard } = useUnsavedChangesWarning({ data: form, disabled: !dialogOpen });
+  const closeEmployeeDialog = () => {
+    if (confirmDiscard()) setDialogOpen(false);
+  };
+
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [menuRow, setMenuRow] = useState(null);
 
@@ -143,6 +152,26 @@ export default function EmployeesList() {
   }, []);
 
   const activeEmployees = useMemo(() => rows.filter((r) => r.status === "ACTIVO"), [rows]);
+
+  // ?empleado=<id> llega desde la búsqueda general de la barra superior:
+  // abre la ficha de ese empleado y limpia el parámetro de la URL.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const id = Number(searchParams.get("empleado"));
+    if (!id || !rows.length) return;
+    const row = rows.find((r) => Number(r.id) === id);
+    if (row) {
+      setActiveRow(row);
+      setDetailOpen(true);
+    }
+    setSearchParams(
+      (prev) => {
+        prev.delete("empleado");
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [searchParams, rows, setSearchParams]);
 
   const handleOpenCreate = () => {
     setEditingId(null);
@@ -536,7 +565,7 @@ export default function EmployeesList() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog open={dialogOpen} onClose={closeEmployeeDialog} maxWidth="md" fullWidth>
         <DialogTitle>{editingId ? "Editar empleado" : "Nuevo empleado"}</DialogTitle>
         <DialogContent>
           <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 1, mb: 1 }}>Datos generales</Typography>
@@ -786,7 +815,7 @@ export default function EmployeesList() {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <Button onClick={closeEmployeeDialog} sx={{ textTransform: "none" }}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Registrar empleado"}
           </Button>

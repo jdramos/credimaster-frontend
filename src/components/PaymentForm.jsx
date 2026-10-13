@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import HelpButton from "./help/HelpButton";
+import { newClientReferenceId } from "../utils/clientReferenceId";
+import useUnsavedChangesWarning from "../hooks/useUnsavedChangesWarning";
 import {
   Alert,
   Box,
@@ -84,8 +86,22 @@ const PaymentForm = ({
     severity: "error",
   });
 
+  // Aviso al salir con un pago a medio capturar (menú, cerrar pestaña,
+  // Cancelar/Escape/clic afuera vía handleClose).
+  const { allowNavigation, confirmDiscard } = useUnsavedChangesWarning({
+    data: form,
+    disabled: !open || initialLoading,
+  });
+  const handleClose = () => {
+    if (confirmDiscard()) onClose?.();
+  };
+
+  // Un código por cada apertura del formulario (ver utils/clientReferenceId).
+  const clientReferenceIdRef = useRef(null);
+
   useEffect(() => {
     if (open) {
+      clientReferenceIdRef.current = newClientReferenceId();
       setInitialLoading(true);
 
       if (initialLoan) {
@@ -286,8 +302,10 @@ const PaymentForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (confirmDuplicate = false) => {
     if (!validate()) return;
+
+    let retryConfirmed = false;
 
     try {
       setLoading(true);
@@ -297,25 +315,38 @@ const PaymentForm = ({
         payment_date: dayjs().format("YYYY-MM-DD"),
         payment_amount: Number(form.payment_amount),
         payment_method_id: Number(form.payment_method_id),
+        client_reference_id: clientReferenceIdRef.current,
+        confirm_duplicate: confirmDuplicate || undefined,
       };
 
       const res = await API.post("/api/payments", {
         params: payload,
       });
 
+      allowNavigation();
       onSuccess?.(res.data);
     } catch (error) {
-      setSnackbar({
-        open: true,
-        message:
-          error.response?.data?.error ||
-          error.response?.data?.message ||
-          "Error al guardar el pago",
-        severity: "error",
-      });
+      // Posible pago repetido (mismo crédito y monto hace pocos minutos):
+      // el backend pide confirmación explícita antes de grabar otro.
+      if (error.response?.data?.code === "POSSIBLE_DUPLICATE") {
+        retryConfirmed = window.confirm(
+          `${error.response.data.error}\n\n¿Desea registrar este pago de todas formas?`,
+        );
+      } else {
+        setSnackbar({
+          open: true,
+          message:
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            "Error al guardar el pago",
+          severity: "error",
+        });
+      }
     } finally {
       setLoading(false);
     }
+
+    if (retryConfirmed) await handleSubmit(true);
   };
 
   const newBalances = {
@@ -338,7 +369,7 @@ const PaymentForm = ({
     <>
       <Dialog
         open={open}
-        onClose={loading ? undefined : onClose}
+        onClose={loading ? undefined : handleClose}
         fullWidth
         maxWidth="xl"
         PaperProps={{
@@ -739,7 +770,7 @@ const PaymentForm = ({
 
           <Stack direction="row" spacing={1.5}>
             <Button
-              onClick={onClose}
+              onClick={handleClose}
               variant="outlined"
               disabled={loading}
               startIcon={<CloseIcon />}
@@ -750,7 +781,7 @@ const PaymentForm = ({
 
             <Button
               variant="contained"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={loading || initialLoading || paymentApplicationLoading}
               startIcon={
                 loading ? (

@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { newClientReferenceId } from "../../utils/clientReferenceId";
+import useUnsavedChangesWarning from "../../hooks/useUnsavedChangesWarning";
 import {
   Alert,
   Box,
@@ -158,9 +160,23 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
 
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "error" });
 
+  // Aviso al salir con un pago a medio capturar. Tras grabar (success) ya
+  // no hay nada que perder, así que se deshabilita.
+  const { confirmDiscard } = useUnsavedChangesWarning({
+    data: { amount, methodId },
+    disabled: !open || Boolean(success),
+  });
+  const handleClose = () => {
+    if (confirmDiscard()) onClose?.();
+  };
+
+  // Un código por cada apertura del modal (ver utils/clientReferenceId).
+  const clientReferenceIdRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
 
+    clientReferenceIdRef.current = newClientReferenceId();
     setAmount("");
     setApplied(EMPTY_APPLIED);
     setSimulateError("");
@@ -260,7 +276,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
     balanceTotal > 0.004 && { label: `Cancelar todo · C$${money(balanceTotal)}`, value: balanceTotal, icon: <BoltIcon fontSize="small" /> },
   ].filter(Boolean);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (confirmDuplicate = false) => {
     if (!paymentAmount || paymentAmount <= 0) {
       setSubmitError("Ingrese un monto mayor a cero.");
       return;
@@ -276,6 +292,8 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
       return;
     }
 
+    let retryConfirmed = false;
+
     try {
       setSubmitting(true);
       setSubmitError("");
@@ -286,20 +304,32 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
           payment_date: dayjs().format("YYYY-MM-DD"),
           payment_amount: paymentAmount,
           payment_method_id: Number(methodId),
+          client_reference_id: clientReferenceIdRef.current,
+          confirm_duplicate: confirmDuplicate || undefined,
         },
       });
 
       setSuccess(res.data);
       setTimeout(() => onSuccess?.(res.data), 1300);
     } catch (error) {
-      setSnackbar({
-        open: true,
-        severity: "error",
-        message: error.response?.data?.error || error.response?.data?.message || "Error al registrar el pago",
-      });
+      // Posible pago repetido (mismo crédito y monto hace pocos minutos):
+      // el backend pide confirmación explícita antes de grabar otro.
+      if (error.response?.data?.code === "POSSIBLE_DUPLICATE") {
+        retryConfirmed = window.confirm(
+          `${error.response.data.error}\n\n¿Desea registrar este pago de todas formas?`,
+        );
+      } else {
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: error.response?.data?.error || error.response?.data?.message || "Error al registrar el pago",
+        });
+      }
     } finally {
       setSubmitting(false);
     }
+
+    if (retryConfirmed) await handleSubmit(true);
   };
 
   const customerName = loanFull?.customer_name || loanBase.customer_name || loanBase.full_name || "";
@@ -308,7 +338,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
     <>
       <Dialog
         open={open}
-        onClose={submitting ? undefined : onClose}
+        onClose={submitting ? undefined : handleClose}
         fullWidth
         maxWidth="xs"
         PaperProps={{ sx: { borderRadius: 4, overflow: "hidden" } }}
@@ -486,13 +516,13 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
 
         {!success && !loadingLoan && (
           <DialogActions sx={{ px: 2.5, py: 1.75, borderTop: "1px solid #E2E8F0", background: "#fff" }}>
-            <Button onClick={onClose} disabled={submitting} startIcon={<CloseIcon />} sx={{ fontWeight: 800, borderRadius: 2 }}>
+            <Button onClick={handleClose} disabled={submitting} startIcon={<CloseIcon />} sx={{ fontWeight: 800, borderRadius: 2 }}>
               Cancelar
             </Button>
             <Divider flexItem orientation="vertical" sx={{ mx: "auto" }} />
             <Button
               variant="contained"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={submitting || simulating || !paymentAmount}
               startIcon={submitting ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <PaymentsIcon />}
               sx={{

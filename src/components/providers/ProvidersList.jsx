@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import HelpButton from "../help/HelpButton";
+import useUnsavedChangesWarning from "../../hooks/useUnsavedChangesWarning";
 import {
   Alert,
   Box,
@@ -32,10 +34,23 @@ const emptyForm = {
 export default function ProvidersList() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
+  // ?buscar= llega desde la búsqueda general de la barra superior.
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("buscar") || "");
+  useEffect(() => {
+    const fromUrl = searchParams.get("buscar");
+    if (fromUrl !== null) setSearch(fromUrl);
+  }, [searchParams]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [codes, setCodes] = useState([]);
+
+  // Aviso al salir del formulario de proveedor con cambios sin guardar
+  // (menú, cerrar pestaña, y cerrar el diálogo vía closeProviderDialog).
+  const { confirmDiscard } = useUnsavedChangesWarning({ data: form, disabled: !open });
+  const closeProviderDialog = () => {
+    if (confirmDiscard()) setOpen(false);
+  };
   const [alert, setAlert] = useState({ open: false, severity: "success", message: "" });
   const notify = (message, severity = "success") => setAlert({ open: true, severity, message });
 
@@ -143,7 +158,7 @@ export default function ProvidersList() {
         </Box>
       </Paper>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={open} onClose={closeProviderDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>{form.id ? "Editar" : "Nuevo"} proveedor</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={1.5} sx={{ mt: 0.5 }}>
@@ -174,7 +189,7 @@ export default function ProvidersList() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <Button onClick={closeProviderDialog} sx={{ textTransform: "none" }}>Cancelar</Button>
           <Button variant="contained" onClick={save}
             sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             Guardar

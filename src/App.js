@@ -34,6 +34,7 @@ import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AppLayoutMenu from "./components/AppLayoutMenu";
+import UnsavedChangesGuard from "./components/UnsavedChangesGuard";
 import IdleSessionHandler from "./components/IdleSessionHandler";
 import SuperAdminLayout from "./components/SuperAdminLayout";
 import AssistantChat from "./components/assistant/AssistantChat";
@@ -255,6 +256,7 @@ function SuperAdminRoutes() {
 
   return (
     <SuperAdminLayout onLogout={handleLogout}>
+      <UnsavedChangesGuard />
       <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           <Route path="/" element={<TenantsPage />} />
@@ -305,6 +307,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
         appName="CrediMaster"
         tenantName={tenant?.commercial_name || tenant?.legal_name}
       >
+        <UnsavedChangesGuard />
         <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           <Route

@@ -140,6 +140,7 @@ export default function AssistantChat() {
       {/* Panel de chat */}
       <Fade in={abierto} unmountOnExit>
         <Paper
+          data-no-unsaved-guard
           elevation={8}
           sx={{
             position: "fixed",

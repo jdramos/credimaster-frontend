@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   AppBar,
@@ -31,6 +31,9 @@ import {
   Snackbar,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import GlobalSearch from "./GlobalSearch";
+import KeyboardShortcuts, { SHORTCUT_BY_PATH } from "./KeyboardShortcuts";
+import KeyboardRoundedIcon from "@mui/icons-material/KeyboardRounded";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -49,6 +52,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import * as FaIcons from "react-icons/fa";
 import BrandMark from "./BrandMark";
+import BusinessDayAlert from "./BusinessDayAlert";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
@@ -530,6 +534,7 @@ export default function AppLayoutMenu({
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const [recentScreens, setRecentScreens] = useState(() => loadRecentScreens(user));
 
@@ -669,6 +674,14 @@ export default function AppLayoutMenu({
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [favoritesSection, enabledModules, permissions, role]);
+
+  // Rutas que el usuario ve en su menú: los atajos de teclado solo llevan a
+  // estas (mismos permisos y módulos que el menú lateral).
+  const visibleMenuPaths = useMemo(
+    () => new Set(Object.values(fullMenu).flat().map((item) => item.to)),
+    [fullMenu],
+  );
+  const hasPermission = useCallback((tag) => role === 1 || permissions.includes(tag), [role, permissions]);
 
   const filteredMenu = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -951,6 +964,15 @@ export default function AppLayoutMenu({
                             />
                           )}
 
+                          {!isCompact && SHORTCUT_BY_PATH[item.to] && (
+                            <Typography
+                              component="span"
+                              sx={{ fontSize: 10.5, fontWeight: 800, opacity: 0.5, whiteSpace: "nowrap", ml: 0.5 }}
+                            >
+                              {SHORTCUT_BY_PATH[item.to]}
+                            </Typography>
+                          )}
+
                           {!isCompact && (
                             <IconButton
                               size="small"
@@ -1057,27 +1079,9 @@ export default function AppLayoutMenu({
             </Typography>
           </Box>
 
-          <TextField
-            size="small"
-            placeholder="Buscar..."
-            sx={{
-              display: { xs: "none", sm: "block" },
-              width: 260,
-              "& .MuiOutlinedInput-root": {
-                height: 38,
-                borderRadius: 2.5,
-                bgcolor: "#F8FAFC",
-                fontSize: 13,
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRoundedIcon sx={{ fontSize: 18 }} />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <BusinessDayAlert />
+
+          <GlobalSearch />
 
           <Tooltip title="Usuario">
             <IconButton onClick={(e) => setUserMenuAnchor(e.currentTarget)}>
@@ -1179,6 +1183,14 @@ export default function AppLayoutMenu({
         <Box sx={{ p: { xs: 1.5, md: 2 } }}>{children}</Box>
       </Box>
 
+      <KeyboardShortcuts
+        visiblePaths={visibleMenuPaths}
+        hasPermission={hasPermission}
+        helpOpen={shortcutsOpen}
+        onHelpOpenChange={setShortcutsOpen}
+        pathname={location.pathname}
+      />
+
       <Menu
         anchorEl={userMenuAnchor}
         open={Boolean(userMenuAnchor)}
@@ -1235,6 +1247,19 @@ export default function AppLayoutMenu({
         <MenuItem onClick={handleOpenPasswordDialog}>
           <LockOutlinedIcon sx={{ mr: 1.2, fontSize: 18 }} />
           Cambiar contraseña
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            setUserMenuAnchor(null);
+            setShortcutsOpen(true);
+          }}
+        >
+          <KeyboardRoundedIcon sx={{ mr: 1.2, fontSize: 18 }} />
+          Atajos de teclado
+          <Typography component="span" sx={{ ml: "auto", pl: 2, fontSize: 12, opacity: 0.6, fontWeight: 800 }}>
+            ?
+          </Typography>
         </MenuItem>
 
         <MenuItem

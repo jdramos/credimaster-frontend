@@ -179,6 +179,11 @@ export default function useLoanForm() {
   const [guarantorCandidates, setGuarantorCandidates] = useState([]);
   const [selectedGuarantorIds, setSelectedGuarantorIds] = useState([]);
 
+  // Aviso al salir de la solicitud con cambios sin guardar.
+  const { allowNavigation } = useUnsavedChangesWarning({
+    data: { loan, selectedGuaranteeIds, selectedGuarantorIds },
+  });
+
   useEffect(() => {
     const fetchGuarantorCandidates = async () => {
       try {
@@ -1219,6 +1224,7 @@ export default function useLoanForm() {
         "success",
       );
 
+      allowNavigation();
       setTimeout(() => {
         setOpenDialog(false);
         navigate("/creditos");
@@ -1257,6 +1263,8 @@ export default function useLoanForm() {
     if (cancelDialog) {
       setCancelDialog(false);
       setOpenDialog(false);
+      // El usuario ya confirmó cancelar en el diálogo propio del formulario.
+      allowNavigation();
       navigate("/creditos");
       return;
     }

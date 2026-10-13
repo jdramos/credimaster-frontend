@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useContext } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import useUnsavedChangesWarning from "../../hooks/useUnsavedChangesWarning";
 import {
   Tabs,
   Tab,
@@ -259,6 +260,13 @@ const CustomerForm = () => {
     committee_comment: "",
   });
 
+  // Aviso al salir con cambios sin guardar (no aplica en modo "ver" ni
+  // mientras se cargan los datos del cliente en modo edición).
+  const { allowNavigation } = useUnsavedChangesWarning({
+    data: { customer, guarantees, financialEvaluation },
+    disabled: internalMode === "show" || loading,
+  });
+
   const cleanedGuarantees = useMemo(
     () =>
       guarantees.map((g) => ({
@@ -501,6 +509,7 @@ const CustomerForm = () => {
         alertMessage: "Registro guardado exitosamente",
       });
 
+      allowNavigation();
       setTimeout(() => navigate("/clientes"), 800);
     } catch (error) {
       const result = error.response?.data;
@@ -564,6 +573,8 @@ const CustomerForm = () => {
     setOpenDialog(false);
 
     if (cancelDialog) {
+      // El usuario ya confirmó cancelar en el diálogo propio del formulario.
+      allowNavigation();
       navigate("/clientes");
       return;
     }
