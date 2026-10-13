@@ -39,6 +39,7 @@ import API from "../../api";
 import ProvinceSelect from "../../components/ProvinceSelect";
 import MunicipalitySelect from "../../components/MunicipalitySelect";
 import SanctionsFeedSyncPanel from "./SanctionsFeedSyncPanel";
+import ConamiIndicatorsPanel from "./ConamiIndicatorsPanel";
 
 const PROVINCES_CATALOG_URL = "/api/superadmin/catalogs/provinces";
 const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
@@ -538,6 +539,7 @@ export default function TenantsPage() {
   return (
     <Box>
       <SanctionsFeedSyncPanel />
+      <ConamiIndicatorsPanel />
 
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>

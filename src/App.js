@@ -121,6 +121,7 @@ const ComplianceOfficerHistory = lazy(() => import("./components/Compliance/Comp
 const ProductRiskAssessments = lazy(() => import("./components/Compliance/ProductRiskAssessments"));
 const AssetAdjudicationsList = lazy(() => import("./components/AssetAdjudicationsList"));
 const FinancialStatementNotes = lazy(() => import("./components/accounting/FinancialStatementNotes"));
+const FinancialIndicators = lazy(() => import("./components/accounting/FinancialIndicators"));
 const YearEndClosing = lazy(() => import("./components/accounting/YearEndClosing"));
 const FixedAssetsList = lazy(() => import("./components/accounting/FixedAssetsList"));
 const FixedAssetDepreciation = lazy(() => import("./components/accounting/FixedAssetDepreciation"));
@@ -776,6 +777,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/cumplimiento/productos" element={<ProductRiskAssessments />} />
           <Route path="/adjudicaciones" element={<AssetAdjudicationsList />} />
           <Route path="/contabilidad/notas-eeff" element={<FinancialStatementNotes />} />
+          <Route path="/contabilidad/indicadores-financieros" element={<FinancialIndicators />} />
           <Route path="/contabilidad/cierre-ejercicio" element={<YearEndClosing />} />
           <Route path="/contabilidad/activo-fijo" element={<FixedAssetsList />} />
           <Route path="/contabilidad/activo-fijo/depreciacion" element={<FixedAssetDepreciation />} />

@@ -1,0 +1,1158 @@
+{
+ "ok": true,
+ "data": {
+  "period": "2026-08",
+  "cut_date": "2026-08-31",
+  "has_accounting_data": true,
+  "groups": [
+   {
+    "key": "activos",
+    "label": "Estructura de activos"
+   },
+   {
+    "key": "pasivos",
+    "label": "Estructura de pasivos"
+   },
+   {
+    "key": "rentabilidad",
+    "label": "Rentabilidad y eficiencia"
+   },
+   {
+    "key": "calidad",
+    "label": "Calidad de la cartera"
+   },
+   {
+    "key": "liquidez",
+    "label": "Liquidez"
+   },
+   {
+    "key": "solvencia",
+    "label": "Solvencia"
+   },
+   {
+    "key": "veces",
+    "label": "Indicadores por número de veces"
+   }
+  ],
+  "levels": {
+   "FUERTE": {
+    "label": "Fuerte",
+    "rank": 4
+   },
+   "FAVORABLE": {
+    "label": "Favorable",
+    "rank": 3
+   },
+   "OBSERVACION": {
+    "label": "En observación",
+    "rank": 2
+   },
+   "DEBIL": {
+    "label": "Débil",
+    "rank": 1
+   }
+  },
+  "indicators": [
+   {
+    "key": "fd_at",
+    "group": "activos",
+    "label": "Fondos Disponibles / Activos Totales",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Fondos disponibles (11) / Activos totales (1)",
+    "what": "Qué parte de los activos se mantiene en caja y bancos.",
+    "value": 92.94,
+    "parts": {
+     "num_label": "Fondos disponibles (11)",
+     "num": 465001,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 100,
+    "sector": {
+     "n": 80,
+     "p25": 6.22,
+     "p75": 20.09,
+     "median": 10.79
+    },
+    "level": null,
+    "percentile": 100,
+    "text": "Resultado de 92.94%, por encima de la mediana del sector (10.79%; la mitad central de las IMF está entre 6.22% y 20.09%), en el percentil 100. La institución mantiene una proporción de efectivo mayor que la del sector: tiene holgura para atender desembolsos y obligaciones, pero ese dinero no genera rendimiento; conviene revisar si puede colocarse en cartera. Respecto al mes anterior baja 7.06 puntos porcentuales.",
+    "compare_value": null
+   },
+   {
+    "key": "invt_at",
+    "group": "activos",
+    "label": "Inversiones Temporales / Activos Totales",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Inversiones temporales (12) / Activos totales (1)",
+    "what": "Peso de las inversiones de corto plazo dentro de los activos.",
+    "value": 0,
+    "parts": {
+     "num_label": "Inversiones temporales (12)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 0,
+     "p75": 0,
+     "median": 0
+    },
+    "level": null,
+    "percentile": 46,
+    "text": "Resultado de 0.00%, en de la mediana del sector (0.00%; la mitad central de las IMF está entre 0.00% y 0.00%), en el percentil 46. Las inversiones temporales pesan menos que en el sector; la liquidez se concentra en caja y bancos o en cartera. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "invp_at",
+    "group": "activos",
+    "label": "Inversiones Permanentes / Activos Totales",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Inversiones permanentes (17) / Activos totales (1)",
+    "what": "Recursos inmovilizados en participaciones en otras empresas.",
+    "value": 0,
+    "parts": {
+     "num_label": "Inversiones permanentes (17)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 0,
+     "p75": 0,
+     "median": 0
+    },
+    "level": null,
+    "percentile": 44,
+    "text": "Resultado de 0.00%, en de la mediana del sector (0.00%; la mitad central de las IMF está entre 0.00% y 0.00%), en el percentil 44. Las inversiones permanentes son bajas o nulas, como en la mayoría del sector: los recursos se concentran en la actividad crediticia. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "cn_at",
+    "group": "activos",
+    "label": "Cartera Neta / Activos Totales",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Cartera neta (14) / Activos totales (1)",
+    "what": "Qué tanto de los activos está colocado en el negocio principal: la cartera de créditos.",
+    "value": 7.06,
+    "parts": {
+     "num_label": "Cartera neta (14)",
+     "num": 35322.3,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 57.97,
+     "p75": 83.8,
+     "median": 75.47
+    },
+    "level": "DEBIL",
+    "percentile": 3,
+    "text": "Resultado de 7.06%, por debajo de la mediana del sector (75.47%; la mitad central de las IMF está entre 57.97% y 83.80%), en el percentil 3. La cartera neta pesa menos que en el sector: hay recursos en activos que no generan intereses (efectivo ocioso, cuentas por cobrar, bienes) o la cartera está muy provisionada. Respecto al mes anterior sube 7.06 puntos porcentuales, una mejora.",
+    "compare_value": null
+   },
+   {
+    "key": "occ_at",
+    "group": "activos",
+    "label": "Otras Cuentas Por Cobrar / Activos Totales",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Otras cuentas por cobrar (16) / Activos totales (1)",
+    "what": "Saldos por cobrar distintos de la cartera de créditos (anticipos, deudores diversos).",
+    "value": 0,
+    "parts": {
+     "num_label": "Otras cuentas por cobrar (16)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 0.21,
+     "p75": 3.97,
+     "median": 0.95
+    },
+    "level": "FUERTE",
+    "percentile": 5,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (0.95%; la mitad central de las IMF está entre 0.21% y 3.97%), en el percentil 5. Las otras cuentas por cobrar son bajas, señal de un balance enfocado en la cartera. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "bu_at",
+    "group": "activos",
+    "label": "Bienes De Uso Neto / Activos Totales",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Bienes de uso neto (18) / Activos totales (1)",
+    "what": "Recursos invertidos en activos fijos (locales, vehículos, equipo).",
+    "value": 0,
+    "parts": {
+     "num_label": "Bienes de uso neto (18)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 0.75,
+     "p75": 6.67,
+     "median": 2.72
+    },
+    "level": "FUERTE",
+    "percentile": 3,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (2.72%; la mitad central de las IMF está entre 0.75% y 6.67%), en el percentil 3. El activo fijo es moderado frente al sector, lo que deja más recursos disponibles para la cartera. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "oa_at",
+    "group": "activos",
+    "label": "Otros Activos / Activos Totales",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Otros activos (19) / Activos totales (1)",
+    "what": "Activos diversos: cargos diferidos, gastos pagados por anticipado y otros.",
+    "value": 0,
+    "parts": {
+     "num_label": "Otros activos (19)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 0.75,
+     "p75": 6.3,
+     "median": 2.67
+    },
+    "level": "FUERTE",
+    "percentile": 4,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (2.67%; la mitad central de las IMF está entre 0.75% y 6.30%), en el percentil 4. Los otros activos son bajos frente al sector. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "pf_at",
+    "group": "pasivos",
+    "label": "Pasivos Financieros / Activos Totales",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Pasivos financieros (21 + 22 + 28) / Activos totales (1)",
+    "what": "Qué parte de los activos se financia con préstamos de bancos, fondos y otros financiadores.",
+    "value": 0,
+    "parts": {
+     "num_label": "Pasivos financieros (21 + 22 + 28)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 0,
+     "p75": 59.77,
+     "median": 8.3
+    },
+    "level": null,
+    "percentile": 23,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (8.30%; la mitad central de las IMF está entre 0.00% y 59.77%), en el percentil 23. Depende menos de deuda financiera que el sector: la cartera se financia más con patrimonio, lo que da solidez pero puede limitar el crecimiento. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "pf_pt",
+    "group": "pasivos",
+    "label": "Pasivos Financieros / Pasivos Totales",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Pasivos financieros (21 + 22 + 28) / Pasivos totales (2)",
+    "what": "Qué tanto de las deudas son préstamos con costo financiero.",
+    "value": null,
+    "parts": {
+     "num_label": "Pasivos financieros (21 + 22 + 28)",
+     "num": 0,
+     "den_label": "Pasivos totales (2)",
+     "den": 0
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 0,
+     "p75": 77.41,
+     "median": 22.92
+    },
+    "level": null,
+    "text": "No hay datos contables suficientes para calcularlo.",
+    "compare_value": null
+   },
+   {
+    "key": "pt_at",
+    "group": "pasivos",
+    "label": "Pasivos Totales / Activos Totales",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Pasivos totales (2) / Activos totales (1)",
+    "what": "Endeudamiento: qué parte de los activos se financia con recursos de terceros.",
+    "value": 0,
+    "parts": {
+     "num_label": "Pasivos totales (2)",
+     "num": 0,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 44.78,
+     "p75": 89.56,
+     "median": 72.09
+    },
+    "level": "FUERTE",
+    "percentile": 0,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (72.09%; la mitad central de las IMF está entre 44.78% y 89.56%), en el percentil 0. El endeudamiento es menor que en el sector; la institución se financia en mayor medida con recursos propios. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "roa",
+    "group": "rentabilidad",
+    "label": "Utilidad Excedente Del Ejercicio / Activos Totales",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Utilidad o excedente del ejercicio (resultado del año: 4 − 5 − 6) / Activos totales (1)",
+    "what": "Cuánto gana la institución por cada córdoba de activos.",
+    "value": 0.06,
+    "parts": {
+     "num_label": "Utilidad o excedente del ejercicio (resultado del año: 4 − 5 − 6)",
+     "num": 323.3,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": -3.86,
+     "p75": 5.35,
+     "median": 2.57
+    },
+    "level": "OBSERVACION",
+    "percentile": 35,
+    "text": "Resultado de 0.06%, por debajo de la mediana del sector (2.57%; la mitad central de las IMF está entre -3.86% y 5.35%), en el percentil 35. La rentabilidad sobre activos es inferior a la del sector; conviene revisar el rendimiento de la cartera, el gasto en provisiones y los gastos operativos. Respecto al mes anterior sube 0.06 puntos porcentuales, una mejora.",
+    "compare_value": null
+   },
+   {
+    "key": "roe",
+    "group": "rentabilidad",
+    "label": "Utilidad Excedente Del Ejercicio / Patrimonio",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Utilidad o excedente del ejercicio (resultado del año: 4 − 5 − 6) / Patrimonio (3 + resultados no cerrados)",
+    "what": "Rentabilidad del capital de los socios.",
+    "value": 0.06,
+    "parts": {
+     "num_label": "Utilidad o excedente del ejercicio (resultado del año: 4 − 5 − 6)",
+     "num": 323.3,
+     "den_label": "Patrimonio (3 + resultados no cerrados)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": -3.06,
+     "p75": 19.12,
+     "median": 6.07
+    },
+    "level": "OBSERVACION",
+    "percentile": 33,
+    "text": "Resultado de 0.06%, por debajo de la mediana del sector (6.07%; la mitad central de las IMF está entre -3.06% y 19.12%), en el percentil 33. El retorno sobre el patrimonio es menor que en el sector. Respecto al mes anterior sube 0.06 puntos porcentuales, una mejora.",
+    "compare_value": null
+   },
+   {
+    "key": "rend_cartera",
+    "group": "rentabilidad",
+    "label": "Ingresos De Cartera Anualizados / Cartera Bruta",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Ingresos de cartera del año (4106 a 4110) anualizados / Cartera bruta (1401 a 1405)",
+    "what": "Rendimiento efectivo de la cartera de créditos en el año.",
+    "value": 2.89,
+    "parts": {
+     "num_label": "Ingresos de cartera del año (4106 a 4110) anualizados",
+     "num": 1009.94,
+     "den_label": "Cartera bruta (1401 a 1405)",
+     "den": 34999
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 18.35,
+     "p75": 74.02,
+     "median": 34.38
+    },
+    "level": "DEBIL",
+    "percentile": 6,
+    "text": "Resultado de 2.89%, por debajo de la mediana del sector (34.38%; la mitad central de las IMF está entre 18.35% y 74.02%), en el percentil 6. La cartera rinde menos que en el sector: puede deberse a tasas más bajas, a intereses que no se están cobrando o a cartera en mora que dejó de devengar.",
+    "compare_value": null
+   },
+   {
+    "key": "ap_at",
+    "group": "rentabilidad",
+    "label": "Activos Productivos / Activos Totales",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Activos productivos (cartera bruta 1401 a 1405 + inversiones 12 y 17) / Activos totales (1)",
+    "what": "Qué parte de los activos genera ingresos financieros.",
+    "value": 7,
+    "parts": {
+     "num_label": "Activos productivos (cartera bruta 1401 a 1405 + inversiones 12 y 17)",
+     "num": 34999,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 60.28,
+     "p75": 89.69,
+     "median": 76.52
+    },
+    "level": "DEBIL",
+    "percentile": 3,
+    "text": "Resultado de 7.00%, por debajo de la mediana del sector (76.52%; la mitad central de las IMF está entre 60.28% y 89.69%), en el percentil 3. Una parte importante de los activos no genera ingresos (efectivo, activo fijo, cuentas por cobrar, bienes adjudicados). Respecto al mes anterior sube 7.00 puntos porcentuales, una mejora.",
+    "compare_value": null
+   },
+   {
+    "key": "gp_cb",
+    "group": "rentabilidad",
+    "label": "Gastos De Personal / Cartera Bruta",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Gastos de personal del año (5401) / Cartera bruta (1401 a 1405)",
+    "what": "Eficiencia: cuánto cuesta el personal por cada córdoba de cartera.",
+    "value": 0,
+    "parts": {
+     "num_label": "Gastos de personal del año (5401)",
+     "num": 0,
+     "den_label": "Cartera bruta (1401 a 1405)",
+     "den": 34999
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 9.95,
+     "p75": 58.94,
+     "median": 19.85
+    },
+    "level": "FUERTE",
+    "percentile": 2,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (19.85%; la mitad central de las IMF está entre 9.95% y 58.94%), en el percentil 2. El gasto de personal es bajo en relación con la cartera: buena productividad del personal.",
+    "compare_value": null
+   },
+   {
+    "key": "if_gastos",
+    "group": "rentabilidad",
+    "label": "Ingresos Financieros Anualizados / Gastos",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Ingresos financieros del año (41) anualizados / Gastos del año (5)",
+    "what": "Autosuficiencia: ingresos financieros llevados a un año completo frente a los gastos acumulados del año.",
+    "value": 288.56,
+    "parts": {
+     "num_label": "Ingresos financieros del año (41) anualizados",
+     "num": 1009.94,
+     "den_label": "Gastos del año (5)",
+     "den": 349.99
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 76.55,
+     "p75": 119.44,
+     "median": 98
+    },
+    "level": "FUERTE",
+    "percentile": 100,
+    "text": "Resultado de 288.56%, por encima de la mediana del sector (98.00%; la mitad central de las IMF está entre 76.55% y 119.44%), en el percentil 100. Los ingresos financieros cubren los gastos con más holgura que en el sector.",
+    "compare_value": null
+   },
+   {
+    "key": "mora_cb",
+    "group": "calidad",
+    "label": "Cartera En Mora / Cartera Bruta",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Cartera en mora (vencidos 1404 + cobro judicial 1405) / Cartera bruta (1401 a 1405)",
+    "what": "Qué parte de la cartera está vencida o en cobro judicial.",
+    "value": 0,
+    "parts": {
+     "num_label": "Cartera en mora (vencidos 1404 + cobro judicial 1405)",
+     "num": 0,
+     "den_label": "Cartera bruta (1401 a 1405)",
+     "den": 34999
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 2.26,
+     "p75": 14.08,
+     "median": 7.31
+    },
+    "level": "FUERTE",
+    "percentile": 4,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (7.31%; la mitad central de las IMF está entre 2.26% y 14.08%), en el percentil 4. La mora es menor que en el sector, señal de una buena gestión de cobro y de selección de clientes.",
+    "compare_value": null
+   },
+   {
+    "key": "rp_cb",
+    "group": "calidad",
+    "label": "Reestructurada Prorrogada / Cartera Bruta",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Cartera reestructurada y prorrogada (1403 + 1402) / Cartera bruta (1401 a 1405)",
+    "what": "Créditos a los que se les cambiaron las condiciones por dificultades de pago.",
+    "value": 0,
+    "parts": {
+     "num_label": "Cartera reestructurada y prorrogada (1403 + 1402)",
+     "num": 0,
+     "den_label": "Cartera bruta (1401 a 1405)",
+     "den": 34999
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 0,
+     "p75": 0.86,
+     "median": 0
+    },
+    "level": "FUERTE",
+    "percentile": 29,
+    "text": "Resultado de 0.00%, en de la mediana del sector (0.00%; la mitad central de las IMF está entre 0.00% y 0.86%), en el percentil 29. La cartera reestructurada o prorrogada es baja.",
+    "compare_value": null
+   },
+   {
+    "key": "prov_at",
+    "group": "calidad",
+    "label": "Provisión / Activos Totales",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Provisión de cartera (1408 + 1409) / Activos totales (1)",
+    "what": "Peso de las provisiones por incobrabilidad dentro del balance.",
+    "value": 0.07,
+    "parts": {
+     "num_label": "Provisión de cartera (1408 + 1409)",
+     "num": 349.99,
+     "den_label": "Activos totales (1)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 2.85,
+     "p75": 14.01,
+     "median": 6.55
+    },
+    "level": "FUERTE",
+    "percentile": 3,
+    "text": "Resultado de 0.07%, por debajo de la mediana del sector (6.55%; la mitad central de las IMF está entre 2.85% y 14.01%), en el percentil 3. Las provisiones pesan menos que en el sector, consistente con una cartera de menor riesgo. Respecto al mes anterior sube 0.07 puntos porcentuales, un deterioro.",
+    "compare_value": null
+   },
+   {
+    "key": "fd_pf",
+    "group": "liquidez",
+    "label": "Fondos Disponibles / Pasivos Financieros",
+    "unit": "pct",
+    "polarity": "higher",
+    "formula": "Fondos disponibles (11) / Pasivos financieros (21 + 22 + 28)",
+    "what": "Capacidad de cubrir la deuda financiera con el efectivo disponible.",
+    "value": null,
+    "parts": {
+     "num_label": "Fondos disponibles (11)",
+     "num": 465001,
+     "den_label": "Pasivos financieros (21 + 22 + 28)",
+     "den": 0
+    },
+    "previous": null,
+    "sector": {
+     "n": 44,
+     "p25": 9.85,
+     "p75": 27.21,
+     "median": 17.31
+    },
+    "level": null,
+    "text": "No aplica: la institución no tiene obligaciones financieras.",
+    "compare_value": null
+   },
+   {
+    "key": "prov_cb",
+    "group": "solvencia",
+    "label": "Provisión / Cartera Bruta",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Provisión de cartera (1408 + 1409) / Cartera bruta (1401 a 1405)",
+    "what": "Qué parte de la cartera ya está cubierta con provisiones por posibles pérdidas.",
+    "value": 1,
+    "parts": {
+     "num_label": "Provisión de cartera (1408 + 1409)",
+     "num": 349.99,
+     "den_label": "Cartera bruta (1401 a 1405)",
+     "den": 34999
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 4.37,
+     "p75": 18.5,
+     "median": 9.62
+    },
+    "level": null,
+    "percentile": 1,
+    "text": "Resultado de 1.00%, por debajo de la mediana del sector (9.62%; la mitad central de las IMF está entre 4.37% y 18.50%), en el percentil 1. Las provisiones cubren una proporción de la cartera menor que en el sector, coherente con una cartera sana; debe verificarse que sigan cubriendo la mora.",
+    "compare_value": null
+   },
+   {
+    "key": "mora_pat",
+    "group": "solvencia",
+    "label": "Cartera En Mora / Patrimonio",
+    "unit": "pct",
+    "polarity": "lower",
+    "formula": "Cartera en mora (1404 + 1405) / Patrimonio (3 + resultados no cerrados)",
+    "what": "Cuánto del patrimonio quedaría comprometido si la cartera en mora se perdiera.",
+    "value": 0,
+    "parts": {
+     "num_label": "Cartera en mora (1404 + 1405)",
+     "num": 0,
+     "den_label": "Patrimonio (3 + resultados no cerrados)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 1.75,
+     "p75": 23.49,
+     "median": 8.81
+    },
+    "level": "FUERTE",
+    "percentile": 15,
+    "text": "Resultado de 0.00%, por debajo de la mediana del sector (8.81%; la mitad central de las IMF está entre 1.75% y 23.49%), en el percentil 15. La mora compromete una parte pequeña del patrimonio. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "cs_pat",
+    "group": "solvencia",
+    "label": "Capital Social Aportes / Patrimonio",
+    "unit": "pct",
+    "polarity": "neutral",
+    "formula": "Capital social y aportes (31) / Patrimonio (3 + resultados no cerrados)",
+    "what": "Qué parte del patrimonio proviene del capital aportado por los socios (y no de utilidades acumuladas).",
+    "value": 99.94,
+    "parts": {
+     "num_label": "Capital social y aportes (31)",
+     "num": 500000,
+     "den_label": "Patrimonio (3 + resultados no cerrados)",
+     "den": 500323.3
+    },
+    "previous": 100,
+    "sector": {
+     "n": 80,
+     "p25": 15.03,
+     "p75": 95.3,
+     "median": 58.86
+    },
+    "level": null,
+    "percentile": 76,
+    "text": "Resultado de 99.94%, por encima de la mediana del sector (58.86%; la mitad central de las IMF está entre 15.03% y 95.30%), en el percentil 76. El patrimonio depende principalmente del capital aportado; por encima de 100% indica que hay pérdidas acumuladas que consumen capital. Respecto al mes anterior baja 0.06 puntos porcentuales.",
+    "compare_value": null
+   },
+   {
+    "key": "v_at_pt",
+    "group": "veces",
+    "label": "Activos Totales / Pasivos Totales",
+    "unit": "veces",
+    "polarity": "higher",
+    "formula": "Activos totales (1) / Pasivos totales (2)",
+    "what": "Cuántas veces los activos cubren las deudas.",
+    "value": null,
+    "parts": {
+     "num_label": "Activos totales (1)",
+     "num": 500323.3,
+     "den_label": "Pasivos totales (2)",
+     "den": 0
+    },
+    "previous": null,
+    "sector": {
+     "n": 80,
+     "p25": 111.67,
+     "p75": 223.34,
+     "median": 138.72
+    },
+    "level": null,
+    "text": "No hay datos contables suficientes para calcularlo.",
+    "compare_value": null
+   },
+   {
+    "key": "v_pt_pat",
+    "group": "veces",
+    "label": "Pasivos Totales / Patrimonio",
+    "unit": "veces",
+    "polarity": "lower",
+    "formula": "Pasivos totales (2) / Patrimonio (3 + resultados no cerrados)",
+    "what": "Apalancamiento: cuántos córdobas de deuda hay por cada córdoba de patrimonio.",
+    "value": 0,
+    "parts": {
+     "num_label": "Pasivos totales (2)",
+     "num": 0,
+     "den_label": "Patrimonio (3 + resultados no cerrados)",
+     "den": 500323.3
+    },
+    "previous": 0,
+    "sector": {
+     "n": 80,
+     "p25": 38.54,
+     "p75": 301.42,
+     "median": 125.55
+    },
+    "level": "FUERTE",
+    "percentile": 13,
+    "text": "Resultado de 0.00 veces, por debajo de la mediana del sector (1.26 veces; la mitad central de las IMF está entre 0.39 veces y 3.01 veces), en el percentil 13. El apalancamiento es menor que en el sector; hay capacidad para tomar más financiamiento si se necesita crecer. Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   },
+   {
+    "key": "v_ap_pf",
+    "group": "veces",
+    "label": "Activos Productivos / Pasivos Con Costo",
+    "unit": "veces",
+    "polarity": "higher",
+    "formula": "Activos productivos (1401 a 1405 + 12 + 17) / Pasivos con costo (21 + 22 + 28)",
+    "what": "Si los activos que generan ingresos alcanzan para cubrir la deuda que genera costo.",
+    "value": null,
+    "parts": {
+     "num_label": "Activos productivos (1401 a 1405 + 12 + 17)",
+     "num": 34999,
+     "den_label": "Pasivos con costo (21 + 22 + 28)",
+     "den": 0
+    },
+    "previous": null,
+    "sector": {
+     "n": 46,
+     "p25": 114.4,
+     "p75": 209.47,
+     "median": 144.45
+    },
+    "level": null,
+    "text": "No aplica: la institución no tiene obligaciones financieras.",
+    "compare_value": null
+   },
+   {
+    "key": "v_liq_pf",
+    "group": "veces",
+    "label": "Fondos Disponibles + Inversiones Temporales + Cartera / Pasivos Con Costo",
+    "unit": "veces",
+    "polarity": "higher",
+    "formula": "Fondos disponibles (11) + inversiones temporales (12) + cartera neta (14) / Pasivos con costo (21 + 22 + 28)",
+    "what": "Cobertura de la deuda con costo con los activos más líquidos y la cartera.",
+    "value": null,
+    "parts": {
+     "num_label": "Fondos disponibles (11) + inversiones temporales (12) + cartera neta (14)",
+     "num": 500323.3,
+     "den_label": "Pasivos con costo (21 + 22 + 28)",
+     "den": 0
+    },
+    "previous": null,
+    "sector": {
+     "n": 44,
+     "p25": 123.59,
+     "p75": 212.39,
+     "median": 154.28
+    },
+    "level": null,
+    "text": "No aplica: la institución no tiene obligaciones financieras.",
+    "compare_value": null
+   },
+   {
+    "key": "v_at_pat",
+    "group": "veces",
+    "label": "Activos Totales / Patrimonio",
+    "unit": "veces",
+    "polarity": "lower",
+    "formula": "Activos totales (1) / Patrimonio (3 + resultados no cerrados)",
+    "what": "Multiplicador del patrimonio: cuántos córdobas de activos se sostienen con cada córdoba propio.",
+    "value": 100,
+    "parts": {
+     "num_label": "Activos totales (1)",
+     "num": 500323.3,
+     "den_label": "Patrimonio (3 + resultados no cerrados)",
+     "den": 500323.3
+    },
+    "previous": 100,
+    "sector": {
+     "n": 80,
+     "p25": 126.63,
+     "p75": 383.38,
+     "median": 224.2
+    },
+    "level": "FUERTE",
+    "percentile": 13,
+    "text": "Resultado de 1.00 veces, por debajo de la mediana del sector (2.24 veces; la mitad central de las IMF está entre 1.27 veces y 3.83 veces), en el percentil 13. Cada córdoba de patrimonio sostiene menos activos que en el sector (menor apalancamiento). Se mantiene estable respecto al mes anterior.",
+    "compare_value": null
+   }
+  ],
+  "summary": {
+   "paragraphs": [
+    {
+     "pillar": "Rentabilidad",
+     "text": "El ROA es 0.06% y el ROE 0.06%. Los ingresos financieros anualizados equivalen a 2.89 veces los gastos del año. La rentabilidad está por debajo de la mediana del sector."
+    },
+    {
+     "pillar": "Calidad de la cartera",
+     "text": "La mora (vencida y en cobro judicial) es 0.00% de la cartera bruta. La mora es menor que la de la mayoría del sector."
+    },
+    {
+     "pillar": "Solvencia",
+     "text": "Por cada córdoba de patrimonio hay 0.00 córdobas de deuda y el endeudamiento es 0.00% de los activos. La cartera en mora equivale al 0.00% del patrimonio. El nivel de apalancamiento es manejable frente al sector."
+    },
+    {
+     "pillar": "Liquidez y eficiencia",
+     "text": "El efectivo representa 92.94% de los activos y la cartera neta 7.06%. El gasto de personal del año equivale a 0.00% de la cartera bruta."
+    }
+   ],
+   "strengths": [
+    "Otras Cuentas Por Cobrar / Activos Totales",
+    "Bienes De Uso Neto / Activos Totales",
+    "Otros Activos / Activos Totales",
+    "Pasivos Totales / Activos Totales",
+    "Gastos De Personal / Cartera Bruta",
+    "Ingresos Financieros Anualizados / Gastos",
+    "Cartera En Mora / Cartera Bruta",
+    "Reestructurada Prorrogada / Cartera Bruta",
+    "Provisión / Activos Totales",
+    "Cartera En Mora / Patrimonio",
+    "Pasivos Totales / Patrimonio",
+    "Activos Totales / Patrimonio"
+   ],
+   "alerts": [
+    "Cartera Neta / Activos Totales",
+    "Ingresos De Cartera Anualizados / Cartera Bruta",
+    "Activos Productivos / Activos Totales"
+   ],
+   "watch": [
+    "Utilidad Excedente Del Ejercicio / Activos Totales",
+    "Utilidad Excedente Del Ejercicio / Patrimonio"
+   ],
+   "data_warnings": []
+  },
+  "sector": {
+   "period": "2026-08-31",
+   "institutions_count": 80,
+   "institutions": [
+    "A y Z, S. A.",
+    "ADDAC",
+    "AFODENIC",
+    "ALDEA GLOBAL S.A.",
+    "ALFACREDIT, S.A.",
+    "AMLK S.A.",
+    "ASODENIC S.A.",
+    "B´ORO",
+    "COASFINSA",
+    "COLIBERTAD",
+    "CONFIANSA",
+    "CONSERFICSA",
+    "CORFINSA",
+    "CREDI 100, S. A",
+    "CREDI Q",
+    "CREDICITI",
+    "CREDICOM CIA.",
+    "CREDICOMPRAS",
+    "CREDIFAST, S. A.",
+    "CREDIFIN",
+    "CREDIGLOBEX S.A.",
+    "CREDIHSA",
+    "CREDINISF",
+    "CREDIT BLUE",
+    "CREDIT MARCT",
+    "CREDITGRAY",
+    "CRÉDITOS ABIL",
+    "DAILY CREDIT",
+    "FAMA, SOCIEDAD",
+    "FAMESA",
+    "FI$A",
+    "FICODs, S. A",
+    "FID S.A.",
+    "FIDEM S.A.",
+    "FIDES CAMINA, S.A.",
+    "FINANCIANDO",
+    "FINCORP",
+    "FINICSA",
+    "FODEMI",
+    "FUMDEC S.A.",
+    "FUNDEMUJER",
+    "FUNDENUSE S.A.",
+    "GMG Servicios",
+    "GRUPO DUHO, S.A.",
+    "IMG",
+    "INFICSA",
+    "INSTACREDIT",
+    "MICREDICASA S.A.",
+    "MICREDITO S.A.",
+    "MICROCREDIT S.A.",
+    "MICROFINANCIERA",
+    "MIDECSA",
+    "MIDESA",
+    "NICACREDIT",
+    "PAC S.A.",
+    "PANA PANA S.A.",
+    "PODER CAPITAL",
+    "PRESTA MAX, S. A",
+    "PRESTA PLUS, S.A.",
+    "PRESTANICA S.A.",
+    "PRODEL, S.A.",
+    "PRODESA CORP.",
+    "PRODESSA",
+    "PROMUJER LLC",
+    "PRONIC, S.A.",
+    "R&G INFISA",
+    "RSF, S.A",
+    "SERFIDE",
+    "SERVICREDITO",
+    "SERVIFINSA",
+    "SERVIMERINTER S.A",
+    "SIASA",
+    "SMART CREDIT, S.A.",
+    "SOLFINSA",
+    "SOLFIPERSA",
+    "SOLUCIONA",
+    "SOMOS UNICREDIT",
+    "SOYAHORA S.A.",
+    "T PRESTO",
+    "UNICOSERVI S.A."
+   ]
+  },
+  "sector_period_mismatch": false,
+  "report_periods": [
+   {
+    "period": "2026-08",
+    "cut_date": "2026-08-31",
+    "institutions_count": 80,
+    "uploaded_at": "2026-10-13 19:27:10"
+   }
+  ],
+  "compare_institution": null,
+  "series": [
+   {
+    "period": "2026-03",
+    "values": {
+     "fd_at": null,
+     "invt_at": null,
+     "invp_at": null,
+     "cn_at": null,
+     "occ_at": null,
+     "bu_at": null,
+     "oa_at": null,
+     "pf_at": null,
+     "pf_pt": null,
+     "pt_at": null,
+     "roa": null,
+     "roe": null,
+     "rend_cartera": null,
+     "ap_at": null,
+     "gp_cb": null,
+     "if_gastos": null,
+     "mora_cb": null,
+     "rp_cb": null,
+     "prov_at": null,
+     "fd_pf": null,
+     "prov_cb": null,
+     "mora_pat": null,
+     "cs_pat": null,
+     "v_at_pt": null,
+     "v_pt_pat": null,
+     "v_ap_pf": null,
+     "v_liq_pf": null,
+     "v_at_pat": null
+    }
+   },
+   {
+    "period": "2026-04",
+    "values": {
+     "fd_at": null,
+     "invt_at": null,
+     "invp_at": null,
+     "cn_at": null,
+     "occ_at": null,
+     "bu_at": null,
+     "oa_at": null,
+     "pf_at": null,
+     "pf_pt": null,
+     "pt_at": null,
+     "roa": null,
+     "roe": null,
+     "rend_cartera": null,
+     "ap_at": null,
+     "gp_cb": null,
+     "if_gastos": null,
+     "mora_cb": null,
+     "rp_cb": null,
+     "prov_at": null,
+     "fd_pf": null,
+     "prov_cb": null,
+     "mora_pat": null,
+     "cs_pat": null,
+     "v_at_pt": null,
+     "v_pt_pat": null,
+     "v_ap_pf": null,
+     "v_liq_pf": null,
+     "v_at_pat": null
+    }
+   },
+   {
+    "period": "2026-05",
+    "values": {
+     "fd_at": null,
+     "invt_at": null,
+     "invp_at": null,
+     "cn_at": null,
+     "occ_at": null,
+     "bu_at": null,
+     "oa_at": null,
+     "pf_at": null,
+     "pf_pt": null,
+     "pt_at": null,
+     "roa": null,
+     "roe": null,
+     "rend_cartera": null,
+     "ap_at": null,
+     "gp_cb": null,
+     "if_gastos": null,
+     "mora_cb": null,
+     "rp_cb": null,
+     "prov_at": null,
+     "fd_pf": null,
+     "prov_cb": null,
+     "mora_pat": null,
+     "cs_pat": null,
+     "v_at_pt": null,
+     "v_pt_pat": null,
+     "v_ap_pf": null,
+     "v_liq_pf": null,
+     "v_at_pat": null
+    }
+   },
+   {
+    "period": "2026-06",
+    "values": {
+     "fd_at": null,
+     "invt_at": null,
+     "invp_at": null,
+     "cn_at": null,
+     "occ_at": null,
+     "bu_at": null,
+     "oa_at": null,
+     "pf_at": null,
+     "pf_pt": null,
+     "pt_at": null,
+     "roa": null,
+     "roe": null,
+     "rend_cartera": null,
+     "ap_at": null,
+     "gp_cb": null,
+     "if_gastos": null,
+     "mora_cb": null,
+     "rp_cb": null,
+     "prov_at": null,
+     "fd_pf": null,
+     "prov_cb": null,
+     "mora_pat": null,
+     "cs_pat": null,
+     "v_at_pt": null,
+     "v_pt_pat": null,
+     "v_ap_pf": null,
+     "v_liq_pf": null,
+     "v_at_pat": null
+    }
+   },
+   {
+    "period": "2026-07",
+    "values": {
+     "fd_at": 100,
+     "invt_at": 0,
+     "invp_at": 0,
+     "cn_at": 0,
+     "occ_at": 0,
+     "bu_at": 0,
+     "oa_at": 0,
+     "pf_at": 0,
+     "pf_pt": null,
+     "pt_at": 0,
+     "roa": 0,
+     "roe": 0,
+     "rend_cartera": null,
+     "ap_at": 0,
+     "gp_cb": null,
+     "if_gastos": null,
+     "mora_cb": null,
+     "rp_cb": null,
+     "prov_at": 0,
+     "fd_pf": null,
+     "prov_cb": null,
+     "mora_pat": 0,
+     "cs_pat": 100,
+     "v_at_pt": null,
+     "v_pt_pat": 0,
+     "v_ap_pf": null,
+     "v_liq_pf": null,
+     "v_at_pat": 100
+    }
+   },
+   {
+    "period": "2026-08",
+    "values": {
+     "fd_at": 92.94,
+     "invt_at": 0,
+     "invp_at": 0,
+     "cn_at": 7.06,
+     "occ_at": 0,
+     "bu_at": 0,
+     "oa_at": 0,
+     "pf_at": 0,
+     "pf_pt": null,
+     "pt_at": 0,
+     "roa": 0.06,
+     "roe": 0.06,
+     "rend_cartera": 2.89,
+     "ap_at": 7,
+     "gp_cb": 0,
+     "if_gastos": 288.56,
+     "mora_cb": 0,
+     "rp_cb": 0,
+     "prov_at": 0.07,
+     "fd_pf": null,
+     "prov_cb": 1,
+     "mora_pat": 0,
+     "cs_pat": 99.94,
+     "v_at_pt": null,
+     "v_pt_pat": 0,
+     "v_ap_pf": null,
+     "v_liq_pf": null,
+     "v_at_pat": 100
+    }
+   }
+  ],
+  "rubros": {
+   "activos": 500323.3,
+   "pasivos": 0,
+   "patrimonio": 500323.3,
+   "cartera_bruta": 34999,
+   "cartera_mora": 0,
+   "provisiones": 349.99,
+   "utilidad": 323.29999999999995
+  }
+ }
+}

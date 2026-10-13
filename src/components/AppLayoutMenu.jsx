@@ -264,6 +264,12 @@ const menuItems = {
       permission: "menu.contabilidad",
     },
     {
+      label: "Indicadores financieros",
+      iconName: "FaChartLine",
+      to: "/contabilidad/indicadores-financieros",
+      permission: "menu.contabilidad",
+    },
+    {
       label: "Cierre de ejercicio",
       iconName: "FaCalendarCheck",
       to: "/contabilidad/cierre-ejercicio",
