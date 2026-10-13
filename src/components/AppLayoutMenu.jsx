@@ -190,6 +190,7 @@ const menuItems = {
     { label: "Listas de Riesgo", iconName: "FaListUl", to: "/cumplimiento/listas", permission: "menu.cumplimiento" },
     { label: "Alertas de Operaciones Inusuales", iconName: "FaExclamationTriangle", to: "/cumplimiento/alertas", permission: "menu.cumplimiento" },
     { label: "Casos ROS", iconName: "FaGavel", to: "/cumplimiento/ros", permission: "menu.cumplimiento" },
+    { label: "Reportes a la UAF", iconName: "FaLandmark", to: "/cumplimiento/reportes-uaf", permission: "cumplimiento.uaf.ver" },
     { label: "Informe Mensual PLA/FT/FP", iconName: "FaChartBar", to: "/cumplimiento/informe-mensual", permission: "menu.cumplimiento" },
     { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento", permission: "menu.cumplimiento" },
     { label: "Riesgo de Nuevos Productos", iconName: "FaFlask", to: "/cumplimiento/productos", permission: "menu.cumplimiento" },

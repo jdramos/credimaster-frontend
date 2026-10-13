@@ -18,6 +18,17 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import GavelIcon from "@mui/icons-material/Gavel";
 import API from "../../api";
+import RosDossierDialog from "./RosDossierDialog";
+
+// Plazo de envío del ROS: 30 días desde la alerta (Art. 6 Resolución UAF-N-021-2019).
+const DEADLINE_CHIP = {
+  EN_PLAZO: { color: "default", label: (r) => `Vence ${r.deadline_date} (${r.days_left} días)` },
+  POR_VENCER: { color: "warning", label: (r) => `Vence en ${r.days_left} día(s)` },
+  VENCIDO: { color: "error", label: (r) => `Vencido hace ${Math.abs(r.days_left)} día(s)` },
+  ENVIADO_EN_PLAZO: { color: "success", label: () => "Enviado en plazo" },
+  ENVIADO_FUERA_DE_PLAZO: { color: "error", label: () => "Enviado fuera de plazo" },
+  DESCARTADO: { color: "default", label: () => "—" },
+};
 
 const STATUS_CHIP = {
   EN_ANALISIS: { label: "En análisis", color: "info" },
@@ -32,6 +43,8 @@ export default function RosCasesList() {
   const [alert, setAlert] = useState({ open: false, severity: "success", message: "" });
   const [dialog, setDialog] = useState(null); // { mode: 'notes'|'DESCARTADO'|'ROS_ENVIADO', row }
   const [notes, setNotes] = useState("");
+  const [sirelReceipt, setSirelReceipt] = useState("");
+  const [dossierCase, setDossierCase] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const showAlert = (message, severity = "success") => setAlert({ open: true, severity, message });
@@ -56,6 +69,7 @@ export default function RosCasesList() {
   const openDialog = (mode, row) => {
     setDialog({ mode, row });
     setNotes(row.analysis_notes || "");
+    setSirelReceipt(row.sirel_receipt || "");
   };
 
   const closeDialog = () => setDialog(null);
@@ -64,6 +78,7 @@ export default function RosCasesList() {
     try {
       setSubmitting(true);
       const payload = dialog.mode === "notes" ? { analysis_notes: notes } : { analysis_notes: notes, status: dialog.mode };
+      if (dialog.mode === "ROS_ENVIADO" || dialog.row.status === "ROS_ENVIADO") payload.sirel_receipt = sirelReceipt;
       await API.put(`/api/aml/ros-cases/${dialog.row.id}`, payload);
       showAlert("Caso ROS actualizado");
       closeDialog();
@@ -94,14 +109,28 @@ export default function RosCasesList() {
         return <Chip size="small" label={cfg.label} color={cfg.color} />;
       },
     },
-    { field: "analysis_notes", headerName: "Notas de análisis", flex: 1.5, minWidth: 260 },
+    {
+      field: "deadline_status",
+      headerName: "Plazo UAF (30 días)",
+      width: 190,
+      renderCell: (params) => {
+        const cfg = DEADLINE_CHIP[params.value];
+        if (!cfg) return "";
+        return <Chip size="small" variant={params.value === "EN_PLAZO" ? "outlined" : "filled"} color={cfg.color} label={cfg.label(params.row)} />;
+      },
+    },
+    { field: "sirel_receipt", headerName: "Acuse SIREL", width: 130 },
+    { field: "analysis_notes", headerName: "Notas de análisis", flex: 1.5, minWidth: 220 },
     {
       field: "acciones",
       headerName: "Acciones",
-      width: 300,
+      width: 410,
       sortable: false,
       renderCell: (params) => (
         <Stack direction="row" spacing={1}>
+          <Button size="small" variant="outlined" onClick={() => setDossierCase(params.row)}>
+            Expediente
+          </Button>
           <Button size="small" variant="outlined" onClick={() => openDialog("notes", params.row)}>
             Editar notas
           </Button>
@@ -139,8 +168,9 @@ export default function RosCasesList() {
               <HelpButton screenKey="cumplimiento.ros" />
             </Box>
             <Typography variant="body2" color="text.secondary">
-              Registro interno de casos originados por alertas escaladas (Art. 35-42 CD-CONAMI-070-01OCT07-2025).
-              El envío real del ROS a la UAF se hace fuera del sistema; aquí solo se documenta el caso.
+              Casos originados por alertas escaladas (Art. 35-42 CD-CONAMI-070-01OCT07-2025). El ROS se envía a la UAF por
+              SIREL a más tardar 30 días después de la alerta (Art. 6 Resolución UAF-N-021-2019); el expediente reúne los
+              anexos obligatorios del Art. 9.
             </Typography>
           </Box>
         </Box>
@@ -186,7 +216,17 @@ export default function RosCasesList() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             sx={{ mt: 1 }}
+            helperText={dialog?.mode === "ROS_ENVIADO" ? "Este es el informe de análisis del caso (anexo 4 del ROS): antecedentes y razones de la sospecha." : ""}
           />
+          {(dialog?.mode === "ROS_ENVIADO" || dialog?.row?.status === "ROS_ENVIADO") && (
+            <TextField
+              label="Número de acuse de SIREL"
+              fullWidth
+              value={sirelReceipt}
+              onChange={(e) => setSirelReceipt(e.target.value)}
+              sx={{ mt: 2 }}
+            />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Cancelar</Button>
@@ -195,6 +235,8 @@ export default function RosCasesList() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <RosDossierDialog rosCase={dossierCase} onClose={() => setDossierCase(null)} />
 
       <Snackbar
         open={alert.open}
