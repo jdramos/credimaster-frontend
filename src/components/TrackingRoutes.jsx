@@ -13,7 +13,9 @@ import {
   Typography,
 } from "@mui/material";
 import RouteIcon from "@mui/icons-material/Route";
-import { GoogleMap, Marker, Polyline, useJsApiLoader } from "@react-google-maps/api";
+// MarkerF / PolylineF (versión funcional): con React 18 + StrictMode los
+// componentes de clase Marker / Polyline no llegan a dibujarse en el mapa.
+import { GoogleMap, MarkerF, PolylineF, useJsApiLoader } from "@react-google-maps/api";
 import dayjs from "dayjs";
 import API from "../api";
 import HelpButton from "./help/HelpButton";
@@ -328,17 +330,21 @@ export default function TrackingRoutes() {
                         onLoad={(map) => {
                           mapRef.current = map;
                           fitToRoute();
+                          // Si el contenedor aún no tenía tamaño al cargar, el
+                          // primer fitBounds deja el mapa en zoom máximo sobre un
+                          // punto: se repite cuando el mapa termina de dibujarse.
+                          window.google.maps.event.addListenerOnce(map, "idle", fitToRoute);
                         }}
                         onUnmount={() => {
                           mapRef.current = null;
                         }}
                         options={{ streetViewControl: false, mapTypeControl: false }}
                       >
-                        <Polyline path={path} options={{ strokeColor: "#1D4ED8", strokeOpacity: 0.85, strokeWeight: 4 }} />
+                        <PolylineF path={path} options={{ strokeColor: "#1D4ED8", strokeOpacity: 0.85, strokeWeight: 4 }} />
                         {events
                           .filter((e) => e.lat != null)
                           .map((e) => (
-                            <Marker
+                            <MarkerF
                               key={e.key}
                               position={{ lat: e.lat, lng: e.lng }}
                               icon={markerIcon(e.kind)}
@@ -374,7 +380,9 @@ export default function TrackingRoutes() {
                         <Card
                           key={e.key}
                           variant="outlined"
-                          sx={{ cursor: e.lat != null ? "pointer" : "default" }}
+                          // flexShrink 0: sin esto la lista con altura máxima aplastaba
+                          // cada tarjeta (texto cortado) en vez de hacer scroll.
+                          sx={{ cursor: e.lat != null ? "pointer" : "default", flexShrink: 0 }}
                           onClick={() => e.lat != null && setFocus({ lat: e.lat, lng: e.lng })}
                         >
                           <Box sx={{ p: 1 }}>
