@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import HelpButton from "./help/HelpButton";
-import AddCircle from "./AddCircle";
 import CollectorModal from "./CollectorModal";
+import CollectorPortfolioDialog from "./CollectorPortfolioDialog";
 import {
   Alert,
   Box,
@@ -13,11 +13,16 @@ import {
   Tooltip,
   Typography,
   Button,
+  TextField,
+  MenuItem,
+  InputAdornment,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import SearchIcon from "@mui/icons-material/Search";
 import API from "../api";
 
 const BAC = {
@@ -40,6 +45,39 @@ export default function CollectorList() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCollector, setSelectedCollector] = useState(null);
+  // Cartera / traslado / baja del cobrador (CollectorPortfolioDialog).
+  const [portfolioCollector, setPortfolioCollector] = useState(null);
+
+  // Filtros (en pantalla, sobre la lista ya cargada).
+  const [search, setSearch] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
+
+  const branchOptions = useMemo(() => {
+    const map = new Map();
+    rows.forEach((r) => r.branch_id && map.set(String(r.branch_id), r.branch_name || `Sucursal ${r.branch_id}`));
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    const q = search
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    return rows.filter((r) => {
+      const active = Number(r.active ?? 1) === 1;
+      if (statusFilter === "ACTIVE" && !active) return false;
+      if (statusFilter === "INACTIVE" && active) return false;
+      if (branchFilter && String(r.branch_id) !== branchFilter) return false;
+      if (!q) return true;
+      const haystack = `${r.id} ${r.name || ""} ${r.telephone || ""} ${r.branch_name || ""}`
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      return haystack.includes(q);
+    });
+  }, [rows, search, branchFilter, statusFilter]);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -135,14 +173,42 @@ export default function CollectorList() {
         ),
       },
       {
+        field: "active",
+        headerName: "Estado",
+        width: 110,
+        renderCell: (params) =>
+          Number(params.value ?? 1) === 1 ? (
+            <Chip label="Activo" size="small" color="success" variant="outlined" sx={{ fontWeight: 700 }} />
+          ) : (
+            <Tooltip title={params.row.deactivation_reason || ""}>
+              <Chip label="Inactivo" size="small" sx={{ fontWeight: 700 }} />
+            </Tooltip>
+          ),
+      },
+      {
         field: "actions",
         headerName: "Acción",
-        width: 90,
+        width: 120,
         headerAlign: "center",
         align: "center",
         sortable: false,
         filterable: false,
         renderCell: (params) => (
+          <Stack direction="row" spacing={0.75}>
+          <Tooltip title="Cartera: ver, trasladar a otro cobrador o dar de baja">
+            <IconButton
+              size="small"
+              onClick={() => setPortfolioCollector(params.row)}
+              sx={{
+                color: BAC.primary,
+                bgcolor: BAC.soft,
+                border: `1px solid ${BAC.border}`,
+                "&:hover": { bgcolor: BAC.primary, color: BAC.white },
+              }}
+            >
+              <SwapHorizIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Editar colector">
             <IconButton
               size="small"
@@ -160,6 +226,7 @@ export default function CollectorList() {
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+          </Stack>
         ),
       },
     ],
@@ -232,7 +299,7 @@ export default function CollectorList() {
 
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip
-                label={`${rows.length} registros`}
+                label={filteredRows.length === rows.length ? `${rows.length} registros` : `${filteredRows.length} de ${rows.length} registros`}
                 size="small"
                 sx={{
                   bgcolor: "rgba(255,255,255,0.18)",
@@ -261,6 +328,61 @@ export default function CollectorList() {
         </Box>
 
         <Box sx={{ p: 2.5, bgcolor: BAC.bg }}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ mb: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Buscar por nombre, teléfono o ID"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ flex: 1, bgcolor: BAC.white }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              select
+              size="small"
+              label="Sucursal"
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              sx={{ minWidth: 220, bgcolor: BAC.white }}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {branchOptions.map(([id, name]) => (
+                <MenuItem key={id} value={id}>
+                  {name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              size="small"
+              label="Estado"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              sx={{ minWidth: 160, bgcolor: BAC.white }}
+            >
+              <MenuItem value="ACTIVE">Activos</MenuItem>
+              <MenuItem value="INACTIVE">Inactivos</MenuItem>
+              <MenuItem value="">Todos</MenuItem>
+            </TextField>
+            {(search || branchFilter || statusFilter !== "ACTIVE") && (
+              <Button
+                onClick={() => {
+                  setSearch("");
+                  setBranchFilter("");
+                  setStatusFilter("ACTIVE");
+                }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </Stack>
+
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
               {error}
@@ -279,7 +401,7 @@ export default function CollectorList() {
             }}
           >
             <DataGrid
-              rows={rows}
+              rows={filteredRows}
               columns={columns}
               loading={loading}
               pageSizeOptions={[10, 25, 50]}
@@ -324,6 +446,14 @@ export default function CollectorList() {
           </Paper>
         </Box>
       </Paper>
+
+      <CollectorPortfolioDialog
+        open={!!portfolioCollector}
+        collector={portfolioCollector}
+        collectors={rows}
+        onClose={() => setPortfolioCollector(null)}
+        onChanged={fetchCollectors}
+      />
 
       <CollectorModal
         open={modalOpen}

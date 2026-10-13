@@ -12,12 +12,16 @@ import {
   Stack,
   Tooltip,
   Typography,
+  TextField,
+  MenuItem,
+  InputAdornment,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import API from "../api";
 
 const BAC = {
@@ -32,6 +36,8 @@ const BAC = {
 };
 
 const url = "/api/promoters";
+// Marcas diacríticas (acentos) tras normalize("NFD"): la búsqueda no distingue acentos.
+const ACCENTS = /[\u0300-\u036f]/g;
 
 export default function PromoterList() {
   const [rows, setRows] = useState([]);
@@ -39,6 +45,26 @@ export default function PromoterList() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPromoter, setSelectedPromoter] = useState(null);
+
+  // Filtros (en pantalla, sobre la lista ya cargada).
+  const [search, setSearch] = useState("");
+  const [branchFilter, setBranchFilter] = useState("");
+
+  const branchOptions = useMemo(() => {
+    const map = new Map();
+    rows.forEach((r) => r.branch_id && map.set(String(r.branch_id), r.branch_name || `Sucursal ${r.branch_id}`));
+    return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    const norm = (v) => String(v || "").toLowerCase().normalize("NFD").replace(ACCENTS, "");
+    const q = norm(search.trim());
+    return rows.filter((r) => {
+      if (branchFilter && String(r.branch_id) !== branchFilter) return false;
+      if (!q) return true;
+      return norm(`${r.id} ${r.name} ${r.identification} ${r.telephone} ${r.branch_name}`).includes(q);
+    });
+  }, [rows, search, branchFilter]);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -247,7 +273,7 @@ export default function PromoterList() {
 
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip
-                label={`${rows.length} registros`}
+                label={filteredRows.length === rows.length ? `${rows.length} registros` : `${filteredRows.length} de ${rows.length} registros`}
                 size="small"
                 sx={{
                   bgcolor: "rgba(255,255,255,0.18)",
@@ -278,6 +304,48 @@ export default function PromoterList() {
         </Box>
 
         <Box sx={{ p: 2.5 }}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ mb: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Buscar por nombre, identificación, teléfono o ID"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ flex: 1, bgcolor: BAC.white }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              select
+              size="small"
+              label="Sucursal"
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              sx={{ minWidth: 220, bgcolor: BAC.white }}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {branchOptions.map(([id, name]) => (
+                <MenuItem key={id} value={id}>
+                  {name}
+                </MenuItem>
+              ))}
+            </TextField>
+            {(search || branchFilter) && (
+              <Button
+                onClick={() => {
+                  setSearch("");
+                  setBranchFilter("");
+                }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </Stack>
+
           <Box
             sx={{
               height: 520,
@@ -288,7 +356,7 @@ export default function PromoterList() {
             }}
           >
             <DataGrid
-              rows={rows}
+              rows={filteredRows}
               columns={columns}
               loading={loading}
               pageSizeOptions={[10, 25, 50]}

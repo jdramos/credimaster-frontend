@@ -16,6 +16,8 @@ import {
   Tooltip,
   Tabs,
   Tab,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
@@ -44,6 +46,18 @@ const Percent = ({ value }) =>
     <span>{Number(value).toFixed(1)}%</span>
   );
 
+const PAR_HELP =
+  "PAR: capital de los créditos con alguna cuota vencida sobre el capital total de la cartera. Mismo indicador que \"Mi productividad\" en la app móvil.";
+
+// Promotores/cobradores sin colocación, cobros, cartera ni meta en el rango
+// (p.ej. registros duplicados o inactivos) se ocultan por defecto.
+const ActivityToggle = ({ checked, onChange }) => (
+  <FormControlLabel
+    control={<Switch size="small" checked={checked} onChange={(e) => onChange(e.target.checked)} />}
+    label={<Typography variant="body2">Ocultar sin actividad</Typography>}
+  />
+);
+
 function PromoterProductivityPanel() {
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -53,6 +67,8 @@ function PromoterProductivityPanel() {
   const [dateFrom, setDateFrom] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
   const [dateTo, setDateTo] = useState(dayjs().format("YYYY-MM-DD"));
   const [branchId, setBranchId] = useState("");
+  const [hideIdle, setHideIdle] = useState(true);
+  const visibleRows = hideIdle ? rows.filter((r) => r.has_activity) : rows;
 
   const fetchData = async () => {
     if (!dateFrom || !dateTo) return;
@@ -74,18 +90,19 @@ function PromoterProductivityPanel() {
   };
 
   const handleExportExcel = () => {
-    if (!rows.length) return;
+    if (!visibleRows.length) return;
     const ws = XLSX.utils.json_to_sheet(
-      rows.map((r) => ({
+      visibleRows.map((r) => ({
         Promotor: r.promoter_name,
         Sucursal: r.branch_name || "",
         "Créditos colocados": r.loans_count,
         "Monto colocado": r.placed_amount,
-        "Cartera actual": r.current_portfolio,
-        "Mora actual": r.overdue_amount,
-        "% Mora": r.overdue_pct,
         "Meta del período": r.goal_amount,
         "% Cumplimiento": r.goal_pct,
+        "Créditos activos": r.active_loans,
+        "Cartera (capital)": r.current_portfolio,
+        "Mora (capital + interés)": r.overdue_amount,
+        "PAR %": r.par_pct,
       })),
     );
     const wb = XLSX.utils.book_new();
@@ -98,9 +115,9 @@ function PromoterProductivityPanel() {
   return (
     <>
       {summary && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4,1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(5,1fr)" }, gap: 2, mb: 2 }}>
           <Box className="bac-summary-card">
-            <Typography variant="caption">Promotores</Typography>
+            <Typography variant="caption">Promotores con actividad</Typography>
             <Typography variant="h6">{summary.promoters_count}</Typography>
           </Box>
           <Box className="bac-summary-card">
@@ -112,11 +129,19 @@ function PromoterProductivityPanel() {
             <Typography variant="h6">C$ <Money value={summary.total_placed} /></Typography>
           </Box>
           <Box className="bac-summary-card">
-            <Typography variant="caption">Mora de cartera colocada</Typography>
+            <Typography variant="caption">Cumplimiento de meta</Typography>
             <Typography variant="h6">
-              C$ <Money value={summary.total_overdue} /> (<Percent value={summary.total_overdue_pct} />)
+              {summary.total_goal ? <Percent value={summary.total_goal_pct} /> : <span style={{ color: "var(--bac-muted)" }}>Sin metas</span>}
             </Typography>
           </Box>
+          <Tooltip title={PAR_HELP}>
+            <Box className="bac-summary-card">
+              <Typography variant="caption">Cartera (capital) · PAR</Typography>
+              <Typography variant="h6">
+                C$ <Money value={summary.total_portfolio} /> · <Percent value={summary.total_par_pct} />
+              </Typography>
+            </Box>
+          </Tooltip>
         </Box>
       )}
 
@@ -131,11 +156,14 @@ function PromoterProductivityPanel() {
             </Button>
             <Tooltip title="Exportar a Excel">
               <span>
-                <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportExcel} className="bac-btn-muted" disabled={!rows.length} fullWidth>
+                <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportExcel} className="bac-btn-muted" disabled={!visibleRows.length} fullWidth>
                   Exportar
                 </Button>
               </span>
             </Tooltip>
+          </Box>
+          <Box sx={{ mt: 1 }}>
+            <ActivityToggle checked={hideIdle} onChange={setHideIdle} />
           </Box>
         </Box>
       </Box>
@@ -147,40 +175,44 @@ function PromoterProductivityPanel() {
               <TableRow>
                 <TableCell>Promotor</TableCell>
                 <TableCell>Sucursal</TableCell>
-                <TableCell align="right">Créditos</TableCell>
+                <TableCell align="right">Créditos colocados</TableCell>
                 <TableCell align="right">Monto colocado</TableCell>
-                <TableCell align="right">Cartera actual</TableCell>
-                <TableCell align="right">Mora actual</TableCell>
-                <TableCell align="right">% Mora</TableCell>
                 <TableCell align="right">Meta del período</TableCell>
                 <TableCell align="right">% Cumplimiento</TableCell>
+                <TableCell align="right">Créditos activos</TableCell>
+                <TableCell align="right">Cartera (capital)</TableCell>
+                <TableCell align="right">Mora</TableCell>
+                <TableCell align="right">
+                  <Tooltip title={PAR_HELP}><span>PAR</span></Tooltip>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} sx={{ py: 4 }}>
+                  <TableCell colSpan={10} sx={{ py: 4 }}>
                     <Box sx={{ display: "flex", justifyContent: "center" }}><CircularProgress /></Box>
                   </TableCell>
                 </TableRow>
-              ) : rows.length === 0 ? (
+              ) : visibleRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} sx={{ color: "var(--bac-muted)", py: 3 }}>
+                  <TableCell colSpan={10} sx={{ color: "var(--bac-muted)", py: 3 }}>
                     {hasQueried ? "No hay promotores con actividad en ese rango." : "Elige un rango de fecha y presiona Calcular."}
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((r) => (
+                visibleRows.map((r) => (
                   <TableRow key={r.promoter_id} hover>
                     <TableCell>{r.promoter_name}</TableCell>
                     <TableCell>{r.branch_name ?? "—"}</TableCell>
                     <TableCell align="right">{r.loans_count}</TableCell>
                     <TableCell align="right"><Money value={r.placed_amount} /></TableCell>
-                    <TableCell align="right"><Money value={r.current_portfolio} /></TableCell>
-                    <TableCell align="right"><Money value={r.overdue_amount} /></TableCell>
-                    <TableCell align="right"><Percent value={r.overdue_pct} /></TableCell>
                     <TableCell align="right">{r.goal_amount === null ? <span style={{ color: "var(--bac-muted)" }}>Sin meta</span> : <Money value={r.goal_amount} />}</TableCell>
                     <TableCell align="right"><Percent value={r.goal_pct} /></TableCell>
+                    <TableCell align="right">{r.active_loans}</TableCell>
+                    <TableCell align="right"><Money value={r.current_portfolio} /></TableCell>
+                    <TableCell align="right"><Money value={r.overdue_amount} /></TableCell>
+                    <TableCell align="right"><Percent value={r.par_pct} /></TableCell>
                   </TableRow>
                 ))
               )}
@@ -201,6 +233,8 @@ function CollectorProductivityPanel() {
   const [dateFrom, setDateFrom] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
   const [dateTo, setDateTo] = useState(dayjs().format("YYYY-MM-DD"));
   const [branchId, setBranchId] = useState("");
+  const [hideIdle, setHideIdle] = useState(true);
+  const visibleRows = hideIdle ? rows.filter((r) => r.has_activity) : rows;
 
   const fetchData = async () => {
     if (!dateFrom || !dateTo) return;
@@ -222,16 +256,19 @@ function CollectorProductivityPanel() {
   };
 
   const handleExportExcel = () => {
-    if (!rows.length) return;
+    if (!visibleRows.length) return;
     const ws = XLSX.utils.json_to_sheet(
-      rows.map((r) => ({
+      visibleRows.map((r) => ({
         Cobrador: r.collector_name,
         Sucursal: r.branch_name || "",
         "Pagos recibidos": r.payments_count,
         "Monto recuperado": r.collected_amount,
         "Esperado del período": r.expected_amount,
         "% Efectividad": r.effectiveness_pct,
-        "Cartera en mora que administra": r.overdue_amount,
+        "Créditos activos": r.active_loans,
+        "Cartera (capital)": r.portfolio_principal,
+        "Mora (capital + interés)": r.overdue_amount,
+        "PAR %": r.par_pct,
       })),
     );
     const wb = XLSX.utils.book_new();
@@ -244,9 +281,9 @@ function CollectorProductivityPanel() {
   return (
     <>
       {summary && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(4,1fr)" }, gap: 2, mb: 2 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(5,1fr)" }, gap: 2, mb: 2 }}>
           <Box className="bac-summary-card">
-            <Typography variant="caption">Cobradores</Typography>
+            <Typography variant="caption">Cobradores con actividad</Typography>
             <Typography variant="h6">{summary.collectors_count}</Typography>
           </Box>
           <Box className="bac-summary-card">
@@ -257,8 +294,16 @@ function CollectorProductivityPanel() {
             <Typography variant="caption">Efectividad de cobro</Typography>
             <Typography variant="h6"><Percent value={summary.total_effectiveness_pct} /></Typography>
           </Box>
+          <Tooltip title={PAR_HELP}>
+            <Box className="bac-summary-card">
+              <Typography variant="caption">Cartera (capital) · PAR</Typography>
+              <Typography variant="h6">
+                C$ <Money value={summary.total_portfolio} /> · <Percent value={summary.total_par_pct} />
+              </Typography>
+            </Box>
+          </Tooltip>
           <Box className="bac-summary-card">
-            <Typography variant="caption">Cartera en mora administrada</Typography>
+            <Typography variant="caption">Mora administrada</Typography>
             <Typography variant="h6">C$ <Money value={summary.total_overdue} /></Typography>
           </Box>
         </Box>
@@ -275,11 +320,14 @@ function CollectorProductivityPanel() {
             </Button>
             <Tooltip title="Exportar a Excel">
               <span>
-                <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportExcel} className="bac-btn-muted" disabled={!rows.length} fullWidth>
+                <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportExcel} className="bac-btn-muted" disabled={!visibleRows.length} fullWidth>
                   Exportar
                 </Button>
               </span>
             </Tooltip>
+          </Box>
+          <Box sx={{ mt: 1 }}>
+            <ActivityToggle checked={hideIdle} onChange={setHideIdle} />
           </Box>
         </Box>
       </Box>
@@ -295,24 +343,29 @@ function CollectorProductivityPanel() {
                 <TableCell align="right">Monto recuperado</TableCell>
                 <TableCell align="right">Esperado del período</TableCell>
                 <TableCell align="right">% Efectividad</TableCell>
-                <TableCell align="right">Cartera en mora que administra</TableCell>
+                <TableCell align="right">Créditos activos</TableCell>
+                <TableCell align="right">Cartera (capital)</TableCell>
+                <TableCell align="right">Mora</TableCell>
+                <TableCell align="right">
+                  <Tooltip title={PAR_HELP}><span>PAR</span></Tooltip>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ py: 4 }}>
+                  <TableCell colSpan={10} sx={{ py: 4 }}>
                     <Box sx={{ display: "flex", justifyContent: "center" }}><CircularProgress /></Box>
                   </TableCell>
                 </TableRow>
-              ) : rows.length === 0 ? (
+              ) : visibleRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ color: "var(--bac-muted)", py: 3 }}>
+                  <TableCell colSpan={10} sx={{ color: "var(--bac-muted)", py: 3 }}>
                     {hasQueried ? "No hay cobradores con actividad en ese rango." : "Elige un rango de fecha y presiona Calcular."}
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((r) => (
+                visibleRows.map((r) => (
                   <TableRow key={r.collector_id} hover>
                     <TableCell>{r.collector_name}</TableCell>
                     <TableCell>{r.branch_name ?? "—"}</TableCell>
@@ -320,7 +373,10 @@ function CollectorProductivityPanel() {
                     <TableCell align="right"><Money value={r.collected_amount} /></TableCell>
                     <TableCell align="right"><Money value={r.expected_amount} /></TableCell>
                     <TableCell align="right"><Percent value={r.effectiveness_pct} /></TableCell>
+                    <TableCell align="right">{r.active_loans}</TableCell>
+                    <TableCell align="right"><Money value={r.portfolio_principal} /></TableCell>
                     <TableCell align="right"><Money value={r.overdue_amount} /></TableCell>
+                    <TableCell align="right"><Percent value={r.par_pct} /></TableCell>
                   </TableRow>
                 ))
               )}
