@@ -47,7 +47,8 @@ import CustomerFinancialEvaluationTab from "../Customer/CustomerFinancialEvaluat
 import CustomerChecklist from "../Customer/CustomerCheckList";
 import BAC from "../../styles/bac";
 import LoanExtraFields from "./LoanExtraFields";
-import useLoanForm from "./useLoanForm";
+import useLoanForm, { interestTypeLabel } from "./useLoanForm";
+import InterestRateField from "./InterestRateField";
 import AmountOrPercentageField from "./AmountOrPercentageField";
 
 const fieldSx = {
@@ -170,6 +171,7 @@ const LoanAddWizard = () => {
     evaluationCustomer,
     handleInputChange,
     handleChargeModeChange,
+    canUseFixedInterest,
     handleSubmit,
     handleDialogConfirmation,
     handleCancel,
@@ -525,23 +527,12 @@ const LoanAddWizard = () => {
                   sx={fieldSx}
                 />
 
-                <NumericFormat
-                  customInput={TextField}
-                  label="Tasa de interés mensual"
-                  variant="outlined"
-                  name="interest_rate"
-                  value={loan.interest_rate}
-                  onValueChange={({ value }) => handleInputChange({ target: { name: "interest_rate", value } })}
-                  thousandSeparator
-                  decimalSeparator="."
-                  decimalScale={2}
-                  fixedDecimalScale
-                  error={!!errors.interest_rate}
-                  helperText={errors.interest_rate}
-                  size="small"
-                  fullWidth
+                <InterestRateField
+                  loan={loan}
+                  errors={errors}
+                  handleInputChange={handleInputChange}
+                  canUseFixedInterest={canUseFixedInterest}
                   sx={fieldSx}
-                  InputProps={{ endAdornment: <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>%</InputAdornment> }}
                 />
 
                 <NumericFormat
@@ -783,7 +774,11 @@ const LoanAddWizard = () => {
                     ["Plazo", `${loan.term || 0} meses`],
                     ["Frecuencia de pago", loan.frequency_name || "—"],
                     ["Fecha de vencimiento", loan.due_date || "—"],
-                    ["Tasa de interés", `${Number(loan.interest_rate || 0)}%`],
+                    ["Tasa de interés", `${Number(loan.interest_rate || 0)}% mensual`],
+                    ["Tipo de interés", `${interestTypeLabel(loan.interest_type_id)} (definido por la empresa)`],
+                    ...(loan.interest_input_mode === "FIXED_AMOUNT"
+                      ? [["Interés pactado (monto fijo)", `C$ ${Number(loan.interest_fixed_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`]]
+                      : []),
                     ["Tasa de mora", `${Number(loan.defaulted_rate || 0)}%`],
                     ["Comisión por desembolso", `C$ ${Number(loan.fee || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`],
                     ["Cargos por seguros", `C$ ${Number(loan.insurance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`],

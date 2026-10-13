@@ -25,7 +25,8 @@ const toggleSx = {
   },
 };
 
-const ModeToggle = ({ mode, onChange }) => (
+// Exportado también para el campo de interés (InterestRateField.jsx).
+export const ModeToggle = ({ mode, onChange }) => (
   <ToggleButtonGroup
     size="small"
     exclusive

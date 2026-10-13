@@ -70,6 +70,7 @@ const emptyForm = {
   admin_email: "",
   enabled_modules: null,
   regulatory_type: "IMF_REGULADA",
+  interest_type: "COMPOUND",
 };
 
 // IMF plenamente regulada (Ley 769) vs. Proveedor de Servicio de Empeño y/o
@@ -79,6 +80,15 @@ const REGULATORY_TYPE_OPTIONS = [
   { value: "IMF_REGULADA", label: "IMF Regulada" },
   { value: "PERSONA_NATURAL_PRESTAMISTA", label: "Persona Natural / Prestamista" },
 ];
+
+// Tipo de interés de la empresa (db/license/021_add_tenant_interest_type.js).
+// Se fija SOLO al crearla: la empresa no puede elegirlo por norma y cambiarlo
+// después dejaría créditos de un mismo tenant con reglas distintas.
+const INTEREST_TYPE_OPTIONS = [
+  { value: "COMPOUND", label: "Sobre saldo" },
+  { value: "FLAT", label: "Flat" },
+];
+const interestTypeLabel = (value) => INTEREST_TYPE_OPTIONS.find((opt) => opt.value === value)?.label || "Sobre saldo";
 
 // Módulos exclusivos de IMF regulada — se desmarcan por defecto al crear un
 // tenant "Persona Natural / Prestamista" (el superadmin puede reactivarlos
@@ -245,7 +255,8 @@ export default function TenantsPage() {
   const handleRegulatoryTypeChange = (e) => {
     const value = e.target.value;
     setForm((prev) => {
-      const next = { ...prev, regulatory_type: value };
+      // Persona natural / prestamista cobra interés flat; IMF, sobre saldo.
+      const next = { ...prev, regulatory_type: value, interest_type: value === "PERSONA_NATURAL_PRESTAMISTA" ? "FLAT" : "COMPOUND" };
       if (value === "PERSONA_NATURAL_PRESTAMISTA") {
         const allKeys = availableModules.map((m) => m.key);
         next.enabled_modules = allKeys.filter((k) => !IMF_ONLY_MODULE_KEYS.includes(k));
@@ -286,6 +297,7 @@ export default function TenantsPage() {
       address: row.address || "",
       enabled_modules: row.enabled_modules ?? null,
       regulatory_type: row.regulatory_type || "IMF_REGULADA",
+      interest_type: row.interest_type || "COMPOUND",
     });
     setEditDialogOpen(true);
   };
@@ -615,6 +627,21 @@ export default function TenantsPage() {
                 ))}
               </TextField>
             </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                select
+                label="Tipo de interés"
+                fullWidth
+                size="small"
+                value={form.interest_type}
+                onChange={handleFieldChange("interest_type")}
+                helperText="Aplica a todos los créditos de la empresa. No se puede cambiar después."
+              >
+                {INTEREST_TYPE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
           </Grid>
 
           <Divider sx={{ my: 2 }} />
@@ -760,6 +787,16 @@ export default function TenantsPage() {
                       <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                     ))}
                   </TextField>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label="Tipo de interés"
+                    fullWidth
+                    size="small"
+                    value={interestTypeLabel(editForm.interest_type)}
+                    InputProps={{ readOnly: true }}
+                    helperText="Se fija al crear la empresa; no se puede cambiar"
+                  />
                 </Grid>
               </Grid>
 

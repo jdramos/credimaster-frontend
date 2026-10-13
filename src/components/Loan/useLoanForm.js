@@ -1,11 +1,20 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import useUnsavedChangesWarning from "../../hooks/useUnsavedChangesWarning";
 import dayjs from "dayjs";
 import API from "../../api";
 import { fetchWithCache } from "../../hooks/useCachedFetch";
 import today from "../../functions/today";
 import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+
+// 1 = sobre saldo ('compound'), 2 = flat ('simple') -- mismo mapeo que
+// utils/interestType.js del backend. El tipo lo define la EMPRESA
+// (tenants.interest_type, fijado por el superadmin al crearla); el formulario
+// no lo deja elegir y el backend ignora lo que se mande.
+const interestTypeNameFor = (id) => (Number(id) === 2 ? "simple" : "compound");
+export const interestTypeLabel = (id) => (Number(id) === 2 ? "Flat" : "Sobre saldo");
 
 const url = `/api/loans`;
 const urlGuarantee = `/api/guarantees`;
@@ -30,6 +39,16 @@ export default function useLoanForm() {
   const editGuaranteeIdsRef = useRef(null);
   const { permissions = [], role, userBranches = [] } =
     useContext(UserContext) || {};
+  const { tenant } = useAuth() || {};
+  // Sesiones iniciadas antes de tenants.interest_type no lo traen: se deriva
+  // del régimen, igual que el backend.
+  const defaultInterestTypeId = tenant?.interest_type
+    ? (tenant.interest_type === "FLAT" ? 2 : 1)
+    : (tenant?.regulatory_type === "PERSONA_NATURAL_PRESTAMISTA" ? 2 : 1);
+  // Interés como monto fijo total: solo persona natural / prestamista con
+  // interés flat (mismo criterio que utils/interestType.js del backend).
+  const canUseFixedInterest =
+    tenant?.regulatory_type === "PERSONA_NATURAL_PRESTAMISTA" && defaultInterestTypeId === 2;
   const canCreateLoan = role === 1 || permissions.includes("creditos.insertar");
   const canEditLoan = role === 1 || permissions.includes("creditos.editar");
 
@@ -65,9 +84,13 @@ export default function useLoanForm() {
     other_charges_percentage: "0.00",
     term: 0,
     due_date: today(),
-    interest_type_id: 1,
-    interest_type_name: "compound",
+    interest_type_id: defaultInterestTypeId,
+    interest_type_name: interestTypeNameFor(defaultInterestTypeId),
     interest_rate: "1.00",
+    // RATE = tasa % mensual; FIXED_AMOUNT = interés total del crédito en C$
+    // (solo persona natural flat, ver canUseFixedInterest).
+    interest_input_mode: "RATE",
+    interest_fixed_amount: "",
     defaulted_rate: "0.00",
     frequency_id: "",
     frequency_name: "",
@@ -449,7 +472,10 @@ export default function useLoanForm() {
           fee: Number(loan.fee || 0),
           insurance: Number(loan.insurance || 0),
           other_charges: Number(loan.other_charges || 0),
-          interest_type_name: loan.interest_type_name || "compound",
+          interest_type_id: Number(loan.interest_type_id || defaultInterestTypeId),
+          interest_type_name: interestTypeNameFor(loan.interest_type_id || defaultInterestTypeId),
+          interest_input_mode: loan.interest_input_mode,
+          interest_fixed_amount: Number(loan.interest_fixed_amount || 0),
           frequency_id: loan.frequency_id,
           branch_id: loan.branch_id,
         };
@@ -515,8 +541,24 @@ export default function useLoanForm() {
     loan.fee,
     loan.insurance,
     loan.other_charges,
-    loan.interest_type_name,
+    loan.interest_type_id,
+    defaultInterestTypeId,
+    loan.interest_input_mode,
+    loan.interest_fixed_amount,
   ]);
+
+  // Interés como monto fijo: la tasa mensual equivalente (flat: monto x tasa
+  // x plazo = interés total) se deriva aquí, así validaciones, políticas de
+  // tasa, hoja resumen y TCEA siguen leyendo loan.interest_rate. El backend
+  // la recalcula con precisión completa desde interest_fixed_amount.
+  useEffect(() => {
+    if (loan.interest_input_mode !== "FIXED_AMOUNT") return;
+    const amount = Number(loan.amount) || 0;
+    const term = Number(loan.term) || 0;
+    const fixed = Number(loan.interest_fixed_amount) || 0;
+    const rate = amount > 0 && term > 0 ? ((fixed / (amount * term)) * 100).toFixed(2) : "0.00";
+    setLoan((prev) => (prev.interest_rate === rate ? prev : { ...prev, interest_rate: rate }));
+  }, [loan.interest_input_mode, loan.interest_fixed_amount, loan.amount, loan.term]);
 
   // Cuando comisión, cargos administrativos o deducción se capturan como
   // porcentaje (fee_mode/other_charges_mode/deduction_mode), el monto en
@@ -647,7 +689,9 @@ export default function useLoanForm() {
       nextErrors.term = "El plazo es requerido";
     if (!loan.due_date)
       nextErrors.due_date = "La fecha de vencimiento es requerida";
-    if (!loan.interest_rate || Number(loan.interest_rate) <= 0)
+    if (loan.interest_input_mode === "FIXED_AMOUNT" && !(Number(loan.interest_fixed_amount) > 0))
+      nextErrors.interest_fixed_amount = "Indique el interés total del crédito";
+    else if (!loan.interest_rate || Number(loan.interest_rate) <= 0)
       nextErrors.interest_rate = "La tasa de interés es requerida";
     if (!loan.frequency_id)
       nextErrors.frequency_id = "La frecuencia es requerida";
@@ -691,7 +735,9 @@ export default function useLoanForm() {
       nextErrors.due_date = "La fecha de vencimiento es requerida";
     }
 
-    if (!data.interest_rate || Number(data.interest_rate) <= 0) {
+    if (data.interest_input_mode === "FIXED_AMOUNT" && !(Number(data.interest_fixed_amount) > 0)) {
+      nextErrors.interest_fixed_amount = "Indique el interés total del crédito";
+    } else if (!data.interest_rate || Number(data.interest_rate) <= 0) {
       nextErrors.interest_rate = "La tasa de interés es requerida";
     }
 
@@ -941,8 +987,12 @@ export default function useLoanForm() {
           other_charges_percentage: "0.00",
           term: row.term || 0,
           due_date: row.due_date ? dayjs(row.due_date).format("YYYY-MM-DD") : today(),
-          interest_type_id: row.interest_type_id || 1,
+          // Al editar también rige el tipo de la empresa (el backend lo aplica).
+          interest_type_id: defaultInterestTypeId,
+          interest_type_name: interestTypeNameFor(defaultInterestTypeId),
           interest_rate: String(row.interest_rate ?? "0.00"),
+          interest_input_mode: row.interest_input_mode === "FIXED_AMOUNT" ? "FIXED_AMOUNT" : "RATE",
+          interest_fixed_amount: row.interest_fixed_amount != null ? String(row.interest_fixed_amount) : "",
           defaulted_rate: String(row.defaulted_rate ?? "0.00"),
           frequency_id: row.frequency || "",
           frequency_name: row.frecuency_name || "",
@@ -1060,9 +1110,12 @@ export default function useLoanForm() {
       other_charges: Number(loan.other_charges || 0),
       term: Number(loan.term || 0),
       due_date: dayjs(loan.due_date).format("YYYY-MM-DD"),
-      interest_type_id: Number(loan.interest_type_id || 1),
-      interest_type_name: loan.interest_type_name || "compound",
+      interest_type_id: Number(loan.interest_type_id || defaultInterestTypeId),
+      interest_type_name: interestTypeNameFor(loan.interest_type_id || defaultInterestTypeId),
       interest_rate: Number(loan.interest_rate || 0),
+      interest_input_mode: canUseFixedInterest ? loan.interest_input_mode : "RATE",
+      interest_fixed_amount:
+        canUseFixedInterest && loan.interest_input_mode === "FIXED_AMOUNT" ? Number(loan.interest_fixed_amount || 0) : null,
       defaulted_rate: Number(loan.defaulted_rate || 0),
       frequency_id: loan.frequency_id,
       credit_evaluation_id: loan.credit_evaluation_id
@@ -1244,6 +1297,7 @@ export default function useLoanForm() {
   return {
     canCreateLoan,
     canEditLoan,
+    canUseFixedInterest,
     isEditMode,
     loanId,
     errors,
