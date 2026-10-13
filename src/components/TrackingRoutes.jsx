@@ -41,6 +41,8 @@ const RESULT_LABEL = {
 export default function TrackingRoutes() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [users, setUsers] = useState([]);
+  // Con pagos o gestiones ese día pero sin ruta registrada (no iniciaron su jornada)
+  const [withoutRoute, setWithoutRoute] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [usersError, setUsersError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
@@ -65,11 +67,15 @@ export default function TrackingRoutes() {
     setDetail(null);
     API.get("/api/tracking/day", { params: { date, tz_offset: tzOffset } })
       .then(({ data }) => {
-        if (!cancelled) setUsers(data?.data || []);
+        if (!cancelled) {
+          setUsers(data?.data || []);
+          setWithoutRoute(data?.without_route || []);
+        }
       })
       .catch((err) => {
         if (!cancelled) {
           setUsers([]);
+          setWithoutRoute([]);
           setUsersError(err.response?.data?.message || "No se pudo cargar las rutas del día.");
         }
       })
@@ -236,6 +242,25 @@ export default function TrackingRoutes() {
       </Stack>
 
       {!!usersError && <Alert severity="error">{usersError}</Alert>}
+      {!loadingUsers && withoutRoute.length > 0 && (
+        <Alert severity="warning">
+          <Typography fontWeight={800} variant="body2">
+            {withoutRoute.length === 1
+              ? "1 cobrador con actividad ese día pero sin ruta registrada"
+              : `${withoutRoute.length} cobradores con actividad ese día pero sin ruta registrada`}
+          </Typography>
+          <Typography variant="caption" display="block" sx={{ mb: 0.5 }}>
+            Cobraron o registraron gestiones, pero no iniciaron su jornada (o nunca enviaron puntos).
+          </Typography>
+          {withoutRoute.map((u) => (
+            <Typography key={u.user_id} variant="body2">
+              <b>{u.user_name}</b>
+              {u.branch_name ? ` · ${u.branch_name}` : ""} — {u.payments_count} pago{u.payments_count === 1 ? "" : "s"},{" "}
+              {u.actions_count} gestion{u.actions_count === 1 ? "" : "es"}
+            </Typography>
+          ))}
+        </Alert>
+      )}
       {!loadingUsers && !usersError && users.length === 0 && (
         <Alert severity="info">Nadie registró su ruta ese día.</Alert>
       )}
