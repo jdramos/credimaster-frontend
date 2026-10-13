@@ -114,6 +114,7 @@ const AmlRiskCriteriaConfig = lazy(() => import("./components/Compliance/AmlRisk
 const PicReviewReminders = lazy(() => import("./components/Compliance/PicReviewReminders"));
 const IdentityVerificationReminders = lazy(() => import("./components/Compliance/IdentityVerificationReminders"));
 const WatchlistManagement = lazy(() => import("./components/Compliance/WatchlistManagement"));
+const SanctionsListsPage = lazy(() => import("./components/Compliance/SanctionsListsPage"));
 const AmlAlertsInbox = lazy(() => import("./components/Compliance/AmlAlertsInbox"));
 const RosCasesList = lazy(() => import("./components/Compliance/RosCasesList"));
 const UafReports = lazy(() => import("./components/Compliance/UafReports"));
@@ -771,6 +772,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/cumplimiento/pic" element={<PicReviewReminders />} />
           <Route path="/cumplimiento/verificacion-identidad" element={<IdentityVerificationReminders />} />
           <Route path="/cumplimiento/listas" element={<WatchlistManagement />} />
+          <Route path="/cumplimiento/listas-ofac-onu" element={<SanctionsListsPage />} />
           <Route path="/cumplimiento/alertas" element={<AmlAlertsInbox />} />
           <Route path="/cumplimiento/ros" element={<RosCasesList />} />
           <Route path="/cumplimiento/reportes-uaf" element={<UafReports />} />

@@ -244,8 +244,9 @@ export default function WatchlistManagement() {
           <HelpButton screenKey="cumplimiento.listas" />
         </Box>
         <Typography variant="body2" color="text.secondary" mb={2}>
-          Lista interna administrable (sin acceso a feeds en vivo de OFAC/ONU). Coincidencia simple
-          por nombre — no es un motor de coincidencia difusa real.
+          Las listas OFAC (SDN) y ONU (Consolidada) se sincronizan automáticamente cada día; aquí
+          puede agregar además entradas internas. La coincidencia es por nombre y alias — no es un
+          motor de coincidencia difusa.
         </Typography>
 
         <Stack direction="row" spacing={1} mb={2} alignItems="center" flexWrap="wrap" useFlexGap>

@@ -188,6 +188,7 @@ const menuItems = {
     { label: "Recordatorio PIC", iconName: "FaClipboardList", to: "/cumplimiento/pic", permission: "menu.cumplimiento" },
     { label: "Verificación de Identidad Pendiente", iconName: "FaIdCard", to: "/cumplimiento/verificacion-identidad", permission: "menu.cumplimiento" },
     { label: "Listas de Riesgo", iconName: "FaListUl", to: "/cumplimiento/listas", permission: "menu.cumplimiento" },
+    { label: "Listas OFAC / ONU", iconName: "FaGlobeAmericas", to: "/cumplimiento/listas-ofac-onu", permission: "menu.cumplimiento" },
     { label: "Alertas de Operaciones Inusuales", iconName: "FaExclamationTriangle", to: "/cumplimiento/alertas", permission: "menu.cumplimiento" },
     { label: "Casos ROS", iconName: "FaGavel", to: "/cumplimiento/ros", permission: "menu.cumplimiento" },
     { label: "Reportes a la UAF", iconName: "FaLandmark", to: "/cumplimiento/reportes-uaf", permission: "cumplimiento.uaf.ver" },
