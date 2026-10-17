@@ -18,7 +18,7 @@ jest.mock("@mui/x-data-grid", () => ({
                 {c.renderCell
                   ? c.renderCell({ value: r[c.field], row: r })
                   : c.valueFormatter
-                    ? c.valueFormatter(r[c.field])
+                    ? c.valueFormatter({ value: r[c.field], field: c.field, id: r.id }) // firma v5 (params)
                     : String(r[c.field] ?? "")}
               </td>
             ))}

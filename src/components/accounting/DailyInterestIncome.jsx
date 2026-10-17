@@ -248,9 +248,9 @@ export default function DailyInterestIncome() {
             columns={columns}
             loading={loading}
             hideFooter={view === "date"}
-            pageSizeOptions={view === "customer" ? [25, 50, 100] : undefined}
-            initialState={view === "customer" ? { pagination: { paginationModel: { pageSize: 25 } } } : undefined}
-            disableRowSelectionOnClick
+            rowsPerPageOptions={[25, 50, 100]}
+            initialState={view === "customer" ? { pagination: { pageSize: 25 } } : undefined}
+            disableSelectionOnClick
             sx={{ border: "1px solid #E5E7EB", borderRadius: 2 }}
           />
         </Box>

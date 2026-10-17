@@ -10,8 +10,9 @@ import API from '../api';
 import GenreDialog from '../components/Genre/GenreDialog';
 
 export default function EconomicActivitiesPage() {
+    // GET api/genres devuelve el catálogo completo (arreglo plano, sin paginar/ordenar/buscar),
+    // así que la paginación, el orden y la búsqueda se hacen en el cliente.
     const [rows, setRows] = useState([]);
-    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(0);            // DataGrid usa base 0
     const [pageSize, setPageSize] = useState(10);
     const [sortModel, setSortModel] = useState([{ field: 'id', sort: 'asc' }]);
@@ -26,18 +27,9 @@ export default function EconomicActivitiesPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const sortBy = sortModel[0]?.field || 'id';
-            const sortDir = sortModel[0]?.sort || 'asc';
-            const params = {
-                page: page + 1,       // API espera base 1
-                pageSize,
-                sortBy,
-                sortDir,
-                search
-            };
-            const res = await API.get('api/genres', { params });
-            setRows(res.data || []);
-            setTotal(res.data.total || 0);
+            const res = await API.get('api/genres');
+            const data = res?.data;
+            setRows(Array.isArray(data) ? data : (data?.rows || []));
         } catch (err) {
             console.error(err);
             setSnack({ open: true, severity: 'error', message: 'Error cargando datos' });
@@ -46,7 +38,14 @@ export default function EconomicActivitiesPage() {
         }
     };
 
-    useEffect(() => { fetchData(); }, [page, pageSize, sortModel, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { fetchData(); }, []);
+
+    const filteredRows = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return rows;
+        return rows.filter((r) => String(r.name ?? '').toLowerCase().includes(q));
+    }, [rows, search]);
 
     const columns = useMemo(() => ([
         { field: 'id', headerName: 'ID', width: 90 },
@@ -114,24 +113,22 @@ export default function EconomicActivitiesPage() {
 
                 <div style={{ height: 540, width: '100%' }}>
                     <DataGrid
-                        rows={rows}
+                        rows={filteredRows}
                         columns={columns}
-                        rowCount={total}
                         loading={loading}
                         getRowId={(r) => r.id}
-                        paginationMode="server"
-                        sortingMode="server"
-                        filterMode="server"
-                        paginationModel={{ page, pageSize }}
-                        onPaginationModelChange={(model) => {
-                            setPage(model.page);
-                            setPageSize(model.pageSize);
+                        page={page}
+                        pageSize={pageSize}
+                        onPageChange={(newPage) => setPage(newPage)}
+                        onPageSizeChange={(newPageSize) => {
+                            setPage(0);
+                            setPageSize(newPageSize);
                         }}
-                        pageSizeOptions={[5, 10, 20, 50]}
+                        rowsPerPageOptions={[5, 10, 20, 50]}
 
                         sortModel={sortModel}
                         onSortModelChange={setSortModel}
-                        disableRowSelectionOnClick
+                        disableSelectionOnClick
                     />
                 </div>
             </Paper>

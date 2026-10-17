@@ -329,9 +329,9 @@ export default function CollectionsWorklist() {
             loading={loading}
             getRowId={(r) => r.loan_id}
             density="compact"
-            pageSizeOptions={[25, 50, 100]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-            disableRowSelectionOnClick
+            rowsPerPageOptions={[25, 50, 100]}
+            initialState={{ pagination: { pageSize: 25 } }}
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,

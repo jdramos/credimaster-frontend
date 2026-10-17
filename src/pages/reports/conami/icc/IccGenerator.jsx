@@ -427,13 +427,11 @@ export default function IccGenerator() {
                 <DataGrid
                   rows={rows}
                   columns={columns}
-                  pageSizeOptions={[10, 25, 50, 100]}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
                   initialState={{
-                    pagination: {
-                      paginationModel: { pageSize: 10, page: 0 },
-                    },
+                    pagination: { pageSize: 10, page: 0 },
                   }}
-                  disableRowSelectionOnClick
+                  disableSelectionOnClick
                   sx={{
                     border: "1px solid #D8E2EF",
                     borderRadius: 3,

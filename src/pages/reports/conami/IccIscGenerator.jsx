@@ -229,9 +229,9 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
                 <DataGrid
                   rows={rows}
                   columns={columns}
-                  pageSizeOptions={[10, 25, 50]}
-                  initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-                  disableRowSelectionOnClick
+                  rowsPerPageOptions={[10, 25, 50]}
+                  initialState={{ pagination: { pageSize: 10, page: 0 } }}
+                  disableSelectionOnClick
                   density="compact"
                   sx={{
                     border: "1px solid #D8E2EF", borderRadius: 3,

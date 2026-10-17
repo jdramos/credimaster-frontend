@@ -9,14 +9,11 @@ function Grid(props) {
                 columns={props.columns}
                 autoHeight
                 density="comfortable"
-                autosizeOnMount={true}
-                disableRowSelectionOnClick
+                disableSelectionOnClick
                 initialState={{
-                    pagination: {
-                        paginationModel: { page: 0, pageSize: 5 },
-                    },
+                    pagination: { page: 0, pageSize: 5 },
                 }}
-                pageSizeOptions={[5, 10, 20]}
+                rowsPerPageOptions={[5, 10, 20]}
                 localeText={{
                     columnMenuLabel: 'Menu',
                     columnMenuShowColumns: 'Mostrar columnas',

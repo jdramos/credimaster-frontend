@@ -88,8 +88,8 @@ export default function AgingTab() {
 
       <Box sx={{ height: 560 }}>
         <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(r) => r.provider_id}
-          density="compact" pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 50 } } }} disableRowSelectionOnClick />
+          density="compact" rowsPerPageOptions={[25, 50, 100]}
+          initialState={{ pagination: { pageSize: 50 } }} disableSelectionOnClick />
       </Box>
 
       <Snackbar open={alert.open} autoHideDuration={4000}

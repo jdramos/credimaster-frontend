@@ -363,9 +363,9 @@ export default function SinRiesgoReportPage() {
             columns={runColumns}
             loading={loading}
             getRowId={(row) => row.id}
-            pageSizeOptions={[5, 10, 25]}
-            initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-            disableRowSelectionOnClick
+            rowsPerPageOptions={[5, 10, 25]}
+            initialState={{ pagination: { pageSize: 10, page: 0 } }}
+            disableSelectionOnClick
             sx={{ border: 0, "& .MuiDataGrid-columnHeaders": { bgcolor: BAC.soft, fontWeight: 800 } }}
           />
         </Box>
@@ -389,9 +389,9 @@ export default function SinRiesgoReportPage() {
               rows={findings}
               columns={findingColumns}
               getRowId={(row) => row.id}
-              pageSizeOptions={[5, 10, 25, 50]}
-              initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-              disableRowSelectionOnClick
+              rowsPerPageOptions={[5, 10, 25, 50]}
+              initialState={{ pagination: { pageSize: 10, page: 0 } }}
+              disableSelectionOnClick
               sx={{ border: 0, "& .MuiDataGrid-columnHeaders": { bgcolor: BAC.soft, fontWeight: 800 } }}
             />
           </Box>

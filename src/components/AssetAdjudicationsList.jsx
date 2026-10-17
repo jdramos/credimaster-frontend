@@ -312,9 +312,9 @@ export default function AssetAdjudicationsList() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.id}
-            disableRowSelectionOnClick
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+            disableSelectionOnClick
+            rowsPerPageOptions={[10, 25, 50]}
+            initialState={{ pagination: { pageSize: 25 } }}
           />
         </div>
       </Paper>

@@ -63,7 +63,7 @@ const fmtPublished = (v) => {
 
 const baseColumns = [
   { field: "full_name", headerName: "Nombre", flex: 1, minWidth: 260 },
-  { field: "entry_type", headerName: "Tipo", width: 100, valueFormatter: (v) => (v === "PERSONA" ? "Persona" : "Entidad") },
+  { field: "entry_type", headerName: "Tipo", width: 100, valueFormatter: ({ value }) => (value === "PERSONA" ? "Persona" : "Entidad") },
   {
     field: "programs",
     headerName: "Programa(s)",
@@ -106,7 +106,7 @@ const baseColumns = [
   { field: "nationality", headerName: "Nacionalidad", width: 160 },
   { field: "date_of_birth", headerName: "Fecha de nacimiento", width: 160 },
   { field: "primary_identification", headerName: "Identificación", width: 180 },
-  { field: "listed_on", headerName: "Fecha de inclusión", width: 150, valueFormatter: (v) => fmtDay(v) },
+  { field: "listed_on", headerName: "Fecha de inclusión", width: 150, valueFormatter: ({ value }) => fmtDay(value) },
   {
     field: "source",
     headerName: "Lista",
@@ -442,10 +442,13 @@ export default function BrowseSanctionsListsPanel({ fullPage = false }) {
           getRowId={(row) => row.id}
           paginationMode="server"
           rowCount={total}
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[25, 50, 100, 200]}
-          disableRowSelectionOnClick
+          page={paginationModel.page}
+          pageSize={paginationModel.pageSize}
+          onPageChange={(newPage) => setPaginationModel((p) => ({ ...p, page: newPage }))}
+          onPageSizeChange={(newPageSize) => setPaginationModel({ page: 0, pageSize: newPageSize })}
+          // DataGrid MIT v5 no permite pageSize > 100 (lanza error).
+          rowsPerPageOptions={[25, 50, 100]}
+          disableSelectionOnClick
           onRowClick={(params) => setSelectedId(params.row.id)}
           localeText={{ noRowsLabel: "No hay entradas con esos filtros" }}
           sx={{

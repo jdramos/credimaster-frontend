@@ -148,8 +148,8 @@ export default function AdvancesTab() {
 
       <Box sx={{ height: 540 }}>
         <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(r) => r.id}
-          density="compact" pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }} disableRowSelectionOnClick />
+          density="compact" rowsPerPageOptions={[25, 50, 100]}
+          initialState={{ pagination: { pageSize: 25 } }} disableSelectionOnClick />
       </Box>
 
       <Dialog open={apply.open} onClose={() => setApply({ open: false, advance: null })} maxWidth="sm" fullWidth>

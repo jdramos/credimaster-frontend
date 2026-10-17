@@ -404,11 +404,11 @@ export default function CollectorList() {
               rows={filteredRows}
               columns={columns}
               loading={loading}
-              pageSizeOptions={[10, 25, 50]}
+              rowsPerPageOptions={[10, 25, 50]}
               initialState={{
-                pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                pagination: { pageSize: 10, page: 0 },
               }}
-              disableRowSelectionOnClick
+              disableSelectionOnClick
               getRowId={(row) => row.id}
               localeText={{
                 noRowsLabel: "No hay colectores registrados",

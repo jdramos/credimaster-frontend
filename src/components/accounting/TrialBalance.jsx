@@ -467,13 +467,11 @@ export default function TrialBalance() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.account_id || row.id || row.muc_code}
-            pageSizeOptions={[10, 25, 50, 100]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             initialState={{
-              pagination: {
-                paginationModel: { pageSize: 25, page: 0 },
-              },
+              pagination: { pageSize: 25, page: 0 },
             }}
-            disableRowSelectionOnClick
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,

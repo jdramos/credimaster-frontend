@@ -221,9 +221,9 @@ export default function AmlAlertsInbox() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.id}
-            pageSizeOptions={[10, 25, 50, 100]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25, page: 0 } } }}
-            disableRowSelectionOnClick
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            initialState={{ pagination: { pageSize: 25, page: 0 } }}
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,

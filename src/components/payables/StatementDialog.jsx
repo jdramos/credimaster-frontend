@@ -67,7 +67,7 @@ export default function StatementDialog({ open, onClose, providerId, notify }) {
         {rows.length === 0 && <Alert severity="info">Sin movimientos.</Alert>}
         <Box sx={{ height: 420 }}>
           <DataGrid rows={rows} columns={columns} getRowId={(r) => r.id} density="compact"
-            hideFooter disableRowSelectionOnClick />
+            hideFooter disableSelectionOnClick />
         </Box>
         <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1 }}>
           <Typography variant="subtitle1" fontWeight={800}>Saldo: C$ {money(balance)}</Typography>

@@ -152,9 +152,9 @@ export default function ProvidersList() {
 
         <Box sx={{ height: 560 }}>
           <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(r) => r.id}
-            density="compact" pageSizeOptions={[25, 50, 100]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-            disableRowSelectionOnClick />
+            density="compact" rowsPerPageOptions={[25, 50, 100]}
+            initialState={{ pagination: { pageSize: 25 } }}
+            disableSelectionOnClick />
         </Box>
       </Paper>
 

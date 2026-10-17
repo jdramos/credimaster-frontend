@@ -332,12 +332,10 @@ export default function CreditFileTemplatePage() {
           columns={columns}
           loading={loading}
           getRowId={(row) => row.id}
-          disableRowSelectionOnClick
-          pageSizeOptions={[10, 20, 50]}
+          disableSelectionOnClick
+          rowsPerPageOptions={[10, 20, 50]}
           initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10, page: 0 },
-            },
+            pagination: { pageSize: 10, page: 0 },
           }}
           rowHeight={72}
         />

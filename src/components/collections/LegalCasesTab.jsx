@@ -185,9 +185,9 @@ export default function LegalCasesTab() {
           loading={loading}
           getRowId={(r) => r.id}
           density="compact"
-          pageSizeOptions={[25, 50, 100]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          disableRowSelectionOnClick
+          rowsPerPageOptions={[25, 50, 100]}
+          initialState={{ pagination: { pageSize: 25 } }}
+          disableSelectionOnClick
         />
       </Box>
 

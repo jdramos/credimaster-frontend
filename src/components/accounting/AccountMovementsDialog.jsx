@@ -153,9 +153,9 @@ export default function AccountMovementsDialog({ open, onClose, account, filters
               columns={columns}
               loading={loading}
               getRowId={(row) => row.id || `${row.journal_entry_id}-${row.entry_date}-${row.debit}-${row.credit}`}
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{ pagination: { paginationModel: { pageSize: 25, page: 0 } } }}
-              disableRowSelectionOnClick
+              rowsPerPageOptions={[10, 25, 50]}
+              initialState={{ pagination: { pageSize: 25, page: 0 } }}
+              disableSelectionOnClick
               sx={{
                 border: "1px solid #E5E7EB",
                 borderRadius: 2,

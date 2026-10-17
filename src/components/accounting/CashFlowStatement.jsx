@@ -131,7 +131,7 @@ export default function CashFlowStatement() {
             columns={columns}
             loading={loading}
             hideFooter
-            disableRowSelectionOnClick
+            disableSelectionOnClick
             getRowClassName={(p) => (p.row.total ? "cf-total-row" : "")}
             sx={{
               border: "1px solid #E5E7EB",

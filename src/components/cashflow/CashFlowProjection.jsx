@@ -211,7 +211,7 @@ export default function CashFlowProjection() {
 
         <Box sx={{ height: 520 }}>
           <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(r) => r.id}
-            density="compact" hideFooter={rows.length <= 100} disableRowSelectionOnClick
+            density="compact" hideFooter={rows.length <= 100} disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB", borderRadius: 2,
               "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },

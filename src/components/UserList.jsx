@@ -258,7 +258,7 @@ const UsersList = () => {
                     <DataGrid
                         rows={filteredRows}
                         columns={columns}
-                        pageSize={10}
+                        initialState={{ pagination: { pageSize: 10 } }}
                         rowsPerPageOptions={[5, 10, 20]}
                         loading={loading}
                     />

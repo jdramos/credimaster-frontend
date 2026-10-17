@@ -359,16 +359,14 @@ export default function PromoterList() {
               rows={filteredRows}
               columns={columns}
               loading={loading}
-              pageSizeOptions={[10, 25, 50]}
+              rowsPerPageOptions={[10, 25, 50]}
               initialState={{
                 pagination: {
-                  paginationModel: {
                     pageSize: 10,
-                    page: 0,
+                    page: 0
                   },
-                },
               }}
-              disableRowSelectionOnClick
+              disableSelectionOnClick
               getRowId={(row) => row.id}
               localeText={{
                 noRowsLabel: "No hay promotores registrados",

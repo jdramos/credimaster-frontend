@@ -287,11 +287,11 @@ export default function RiskList() {
               rows={rows}
               columns={columns}
               loading={loading}
-              pageSizeOptions={[10, 25, 50]}
+              rowsPerPageOptions={[10, 25, 50]}
               initialState={{
-                pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                pagination: { pageSize: 10, page: 0 },
               }}
-              disableRowSelectionOnClick
+              disableSelectionOnClick
               getRowId={(r) => r.id}
               sx={{
                 border: 0,

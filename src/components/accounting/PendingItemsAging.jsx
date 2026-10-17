@@ -232,7 +232,7 @@ export default function PendingItemsAging() {
                       columns={columns}
                       getRowId={(row) => `${row.entry_no}-${row.entry_date}-${row.amount}`}
                       loading={loading}
-                      disableRowSelectionOnClick
+                      disableSelectionOnClick
                       hideFooter={account.items.length <= 10}
                       sx={{
                         border: "1px solid #E5E7EB",

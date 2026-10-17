@@ -170,6 +170,8 @@ export default function CustomerList() {
       {
         field: "customer_code",
         headerName: "Código",
+        // El backend solo ordena por id / customer_name / identification.
+        sortable: false,
         width: 130,
       },
       {
@@ -203,6 +205,8 @@ export default function CustomerList() {
       {
         field: "risk_level",
         headerName: "Riesgo LA/FT/FP",
+        // El backend solo ordena por id / customer_name / identification.
+        sortable: false,
         width: 140,
         renderCell: (params) => {
           const cfg = RISK_CHIP[params.value];
@@ -213,6 +217,8 @@ export default function CustomerList() {
       {
         field: "customer_type",
         headerName: "Tipo",
+        // El backend solo ordena por id / customer_name / identification.
+        sortable: false,
         width: 110,
         renderCell: (params) => {
           if (!params.value || params.value === "DEUDOR") return null;
@@ -223,6 +229,8 @@ export default function CustomerList() {
       {
         field: "is_frozen",
         headerName: "Inmovilización",
+        // El backend solo ordena por id / customer_name / identification.
+        sortable: false,
         width: 140,
         renderCell: (params) =>
           params.value === 1 || params.value === true ? (
@@ -566,9 +574,15 @@ export default function CustomerList() {
             loading={loading}
             paginationMode="server"
             sortingMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 20, 50, 100]}
+            page={paginationModel.page}
+            pageSize={paginationModel.pageSize}
+            onPageChange={(newPage) =>
+              setPaginationModel((prev) => ({ ...prev, page: newPage }))
+            }
+            onPageSizeChange={(newPageSize) =>
+              setPaginationModel({ page: 0, pageSize: newPageSize })
+            }
+            rowsPerPageOptions={[5, 10, 20, 50, 100]}
             sortModel={sortModel}
             onSortModelChange={(model) => {
               setPaginationModel((prev) => ({
@@ -577,7 +591,7 @@ export default function CustomerList() {
               }));
               setSortModel(model);
             }}
-            disableRowSelectionOnClick
+            disableSelectionOnClick
             density="compact"
             localeText={{
               noRowsLabel: "No hay clientes para mostrar",

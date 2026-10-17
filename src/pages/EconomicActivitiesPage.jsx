@@ -136,16 +136,18 @@ export default function EconomicActivitiesPage() {
 						paginationMode="server"
 						sortingMode="server"
 						filterMode="server"
-						paginationModel={{ page, pageSize }}
-						onPaginationModelChange={(model) => {
-							setPage(model.page);
-							setPageSize(model.pageSize);
+						page={page}
+						pageSize={pageSize}
+						onPageChange={(newPage) => setPage(newPage)}
+						onPageSizeChange={(newPageSize) => {
+							setPage(0);
+							setPageSize(newPageSize);
 						}}
-						pageSizeOptions={[5, 10, 20, 50]}
+						rowsPerPageOptions={[5, 10, 20, 50]}
 
 						sortModel={sortModel}
 						onSortModelChange={setSortModel}
-						disableRowSelectionOnClick
+						disableSelectionOnClick
 					/>
 				</div>
 			</Paper>

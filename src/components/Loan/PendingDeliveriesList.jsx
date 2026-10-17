@@ -233,9 +233,9 @@ export default function PendingDeliveriesList() {
           columns={columns}
           loading={loading}
           density="compact"
-          disableRowSelectionOnClick
-          pageSizeOptions={[10, 25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+          disableSelectionOnClick
+          rowsPerPageOptions={[10, 25, 50]}
+          initialState={{ pagination: { pageSize: 25 } }}
         />
       </Box>
 

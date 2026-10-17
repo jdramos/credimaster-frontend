@@ -403,11 +403,11 @@ export default function IccReportPage() {
             columns={runColumns}
             loading={loading}
             getRowId={(row) => row.id}
-            pageSizeOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 25]}
             initialState={{
-              pagination: { paginationModel: { pageSize: 10, page: 0 } },
+              pagination: { pageSize: 10, page: 0 },
             }}
-            disableRowSelectionOnClick
+            disableSelectionOnClick
             sx={{
               border: 0,
               "& .MuiDataGrid-columnHeaders": {
@@ -444,11 +444,11 @@ export default function IccReportPage() {
               rows={errors}
               columns={errorColumns}
               getRowId={(row) => row.id}
-              pageSizeOptions={[5, 10, 25, 50]}
+              rowsPerPageOptions={[5, 10, 25, 50]}
               initialState={{
-                pagination: { paginationModel: { pageSize: 10, page: 0 } },
+                pagination: { pageSize: 10, page: 0 },
               }}
-              disableRowSelectionOnClick
+              disableSelectionOnClick
               sx={{
                 border: 0,
                 "& .MuiDataGrid-columnHeaders": {

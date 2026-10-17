@@ -155,7 +155,7 @@ const SinRiesgoReport = () => {
                     <DataGrid
                         rows={filteredRows}
                         columns={columns}
-                        pageSize={10}
+                        initialState={{ pagination: { pageSize: 10 } }}
                         rowsPerPageOptions={[10, 25, 50, 100]}
                         checkboxSelection
                         disableSelectionOnClick
