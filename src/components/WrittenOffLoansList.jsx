@@ -8,6 +8,7 @@ import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import { printWrittenOffLoansReport } from "../reports/writtenOffLoansReport";
+import WriteoffRecoveriesDialog from "./WriteoffRecoveriesDialog";
 
 const currency = (value) =>
   `C$ ${Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -21,7 +22,8 @@ const normalizeLoanResponse = (resp) => {
 };
 
 export default function WrittenOffLoansList() {
-  const { user } = useContext(UserContext);
+  const { user, permissions = [], role } = useContext(UserContext) || {};
+  const canRegisterRecovery = role === 1 || permissions.includes("creditos.saneados.recuperar");
   const { tenant } = useAuth();
 
   const [rows, setRows] = useState([]);
@@ -34,6 +36,8 @@ export default function WrittenOffLoansList() {
   const [selectedLoanGuarantees, setSelectedLoanGuarantees] = useState([]);
   const [selectedClient, setSelectedClient] = useState({ id: null, identification: null });
   const [loadingLoanDetails, setLoadingLoanDetails] = useState(false);
+  // { loan, startWithForm } — ventana de recuperaciones del crédito saneado.
+  const [recoveryTarget, setRecoveryTarget] = useState(null);
 
   const fetchData = async (searchValue) => {
     try {
@@ -88,6 +92,7 @@ export default function WrittenOffLoansList() {
   };
 
   const totalWrittenOff = rows.reduce((sum, r) => sum + Number(r.writeoff_original_amount || 0), 0);
+  const totalRecovered = rows.reduce((sum, r) => sum + Number(r.recovered_amount || 0), 0);
 
   const buildCompany = () => ({
     commercial_name: tenant?.commercial_name || tenant?.name || "",
@@ -128,6 +133,12 @@ export default function WrittenOffLoansList() {
       valueFormatter: (params) => currency(params.value),
     },
     {
+      field: "recovered_amount",
+      headerName: "Recuperado",
+      width: 140,
+      valueFormatter: (params) => currency(params.value),
+    },
+    {
       field: "writeoff_date",
       headerName: "Fecha de saneamiento",
       width: 170,
@@ -138,6 +149,36 @@ export default function WrittenOffLoansList() {
       headerName: "Fecha de desembolso",
       width: 170,
       valueFormatter: (params) => formatDate(params.value),
+    },
+    {
+      field: "actions",
+      headerName: "Recuperaciones",
+      width: 250,
+      sortable: false,
+      filterable: false,
+      disableExport: true,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={1}>
+          {canRegisterRecovery && (
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => setRecoveryTarget({ loan: params.row, startWithForm: true })}
+              sx={{ textTransform: "none" }}
+            >
+              Registrar recuperación
+            </Button>
+          )}
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setRecoveryTarget({ loan: params.row, startWithForm: false })}
+            sx={{ textTransform: "none" }}
+          >
+            Historial
+          </Button>
+        </Stack>
+      ),
     },
   ];
 
@@ -178,6 +219,10 @@ export default function WrittenOffLoansList() {
             <Typography component="span" fontWeight={800} color="text.primary">
               {currency(totalWrittenOff)}
             </Typography>
+            {" "}— Recuperado:{" "}
+            <Typography component="span" fontWeight={800} color="success.main">
+              {currency(totalRecovered)}
+            </Typography>
           </Typography>
         </Box>
 
@@ -193,10 +238,10 @@ export default function WrittenOffLoansList() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.id}
-            slots={{ toolbar: GridToolbar }}
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{ pagination: { paginationModel: { pageSize: 25, page: 0 } } }}
-            disableRowSelectionOnClick
+            components={{ Toolbar: GridToolbar }}
+            rowsPerPageOptions={[10, 25, 50]}
+            initialState={{ pagination: { pageSize: 25, page: 0 } }}
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,
@@ -205,6 +250,16 @@ export default function WrittenOffLoansList() {
           />
         </Box>
       </Paper>
+
+      {recoveryTarget && (
+        <WriteoffRecoveriesDialog
+          open
+          loan={recoveryTarget.loan}
+          startWithForm={recoveryTarget.startWithForm}
+          onClose={() => setRecoveryTarget(null)}
+          onChanged={() => fetchData(search)}
+        />
+      )}
 
       {loanModalOpen && selectedLoan && (
         <LoanDetailsModal
