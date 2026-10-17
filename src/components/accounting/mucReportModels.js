@@ -7,6 +7,17 @@ const amount = (rows, prefixes = [], subtract = []) => rows.reduce((total, row) 
   return total;
 }, 0);
 
+// Patrimonio por su movimiento real (haber - debe), sin depender de la
+// naturaleza configurada en el catálogo: 3802 "Pérdidas acumuladas" y 3902
+// "Pérdida del ejercicio" figuran como ACREEDORAS en el catálogo del MUC
+// cargado, así que su saldo ya viene negativo; restarlas (como si fueran
+// deudoras) convertía una pérdida en utilidad y descuadraba el balance.
+const equityAmount = (rows, prefixes = []) => rows.reduce((total, item) => {
+  const current = code(item);
+  if (!prefixes.some((prefix) => current.startsWith(prefix.replace(/[^0-9]/g, "")))) return total;
+  return total + (String(item.nature || "").toUpperCase() === "DEBIT" ? -balance(item) : balance(item));
+}, 0);
+
 const row = (label, current, previous, options = {}) => ({ label, current, previous, ...options });
 const section = (label) => row(label, "", "", { section: true });
 
@@ -43,8 +54,9 @@ export const buildMucFormA = (currentRows = [], previousRows = [], currentYtdRow
   data.push(section("PATRIMONIO"));
   const equityStart = data.length;
   [["Capital social / Aportes", ["3101", "3102"]], ["Capital adicional / Aporte adicional", ["3201", "3202"]],
-    ["Ajustes al patrimonio", ["3401"]], ["Reservas", ["3501"]], ["Resultados acumulados", ["3801"], ["3802"]]]
+    ["Ajustes al patrimonio", ["3401"]], ["Reservas", ["3501"]]]
     .forEach(([label, plus, minus]) => { const [c, p] = value(plus, minus); data.push(row(label, c, p)); });
+  data.push(row("Resultados acumulados", equityAmount(currentRows, ["3801", "3802"]), equityAmount(previousRows, ["3801", "3802"])));
   // "Resultado del ejercicio" = resultado ya cerrado formalmente (3901/3902,
   // solo existe tras Cierre de Ejercicio) + resultado del período todavía
   // abierto (ingresos clase 4 menos gastos clase 5, netos del impuesto sobre
@@ -58,7 +70,7 @@ export const buildMucFormA = (currentRows = [], previousRows = [], currentYtdRow
   // de Resultados corrido para el año en curso. Se resta 6201 (Impuesto
   // sobre la Renta) para que "Resultado del ejercicio" sea neto de impuesto
   // en ambos formularios (Forma A y Forma B ya lo hacía así).
-  const [closedC, closedP] = value(["3901"], ["3902"]);
+  const [closedC, closedP] = [equityAmount(currentRows, ["3901", "3902"]), equityAmount(previousRows, ["3901", "3902"])];
   const openResultC = amount(currentYtdRows, ["4"]) - amount(currentYtdRows, ["5"]) - amount(currentYtdRows, ["6201"]);
   const openResultP = amount(previousYtdRows, ["4"]) - amount(previousYtdRows, ["5"]) - amount(previousYtdRows, ["6201"]);
   data.push(row("Resultado del ejercicio", closedC + openResultC, closedP + openResultP));

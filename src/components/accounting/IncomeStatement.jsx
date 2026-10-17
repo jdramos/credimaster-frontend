@@ -9,6 +9,8 @@ import {
   FormControlLabel,
   Paper,
   Snackbar,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
@@ -20,13 +22,25 @@ import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormB } from "./mucReportModels";
+import MucFormTable from "./MucFormTable";
+
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const formatAmount = (v) => (typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v);
 
 export default function IncomeStatement() {
   const [rows, setRows] = useState([]);
   const [allRows, setAllRows] = useState([]);
   const [previousRows, setPreviousRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ from_date: "", to_date: "", branch_id: "" });
+  // Año en curso por omisión: sin fechas, la columna del año anterior repetía
+  // los montos actuales.
+  const [filters, setFilters] = useState({ from_date: `${today().slice(0, 4)}-01-01`, to_date: today(), branch_id: "" });
+  // Vista principal: Forma B del MUC (igual que el reporte impreso).
+  const [view, setView] = useState("form");
+  const [generated, setGenerated] = useState({ from: "", to: "" });
   const [branchName, setBranchName] = useState("Todas");
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
   const [alert, setAlert] = useState({
@@ -42,12 +56,14 @@ export default function IncomeStatement() {
     try {
       setLoading(true);
 
-      const params = {};
+      // Sin el asiento de Cierre de Ejercicio: un año ya cerrado debe seguir
+      // mostrando sus ingresos y gastos (el cierre los deja en cero).
+      const params = { exclude_closing: "1" };
       if (filters.from_date) params.start_date = filters.from_date;
       if (filters.to_date) params.end_date = filters.to_date;
       if (filters.branch_id) params.branch_id = filters.branch_id;
 
-      const previousParams = {};
+      const previousParams = { exclude_closing: "1" };
       if (filters.from_date) previousParams.start_date = `${Number(filters.from_date.slice(0, 4)) - 1}${filters.from_date.slice(4)}`;
       if (filters.to_date) previousParams.end_date = `${Number(filters.to_date.slice(0, 4)) - 1}${filters.to_date.slice(4)}`;
       if (filters.branch_id) previousParams.branch_id = filters.branch_id;
@@ -80,6 +96,7 @@ export default function IncomeStatement() {
       const rawPrevious = previousRes.data?.data || [];
       const previousData = rawPrevious.filter((row) => row.is_movement);
 
+      setGenerated({ from: filters.from_date, to: filters.to_date });
       setAllRows(data);
       setRows(filtered);
       setPreviousRows(previousData);
@@ -167,15 +184,20 @@ export default function IncomeStatement() {
     [],
   );
 
+  // Mismas columnas y filas en pantalla y en el reporte impreso.
+  const formColumns = [
+    { field: "label", label: "Concepto" },
+    { field: "current", label: generated.to ? generated.to.slice(0, 4) : "Actual", numeric: true, format: formatAmount },
+    { field: "previous", label: generated.to ? String(Number(generated.to.slice(0, 4)) - 1) : "Anterior", numeric: true, format: formatAmount },
+  ];
+  const formRows = useMemo(() => (allRows.length ? buildMucFormB(allRows, previousRows) : []), [allRows, previousRows]);
+
   const printReport = () => printAccountingReport({
     title: "Estado de Resultados",
     subtitle: `Forma B - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
-    period: `Del ${filters.from_date || "inicio"} al ${filters.to_date || "corte"}`,
-    columns: [
-      { field: "label", label: "Concepto" },
-      { field: "current", label: filters.to_date?.slice(0, 4) || "Actual", numeric: true, format: (v) => typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2 }) : v },
-      { field: "previous", label: filters.to_date ? String(Number(filters.to_date.slice(0, 4)) - 1) : "Anterior", numeric: true, format: (v) => typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2 }) : v },
-    ], rows: buildMucFormB(allRows, previousRows),
+    period: `Del ${generated.from || "inicio"} al ${generated.to || "corte"}`,
+    columns: formColumns,
+    rows: formRows,
   });
 
   return (
@@ -248,17 +270,6 @@ export default function IncomeStatement() {
           <ReportSignaturesDialog />
         </Box>
 
-        <FormControlLabel
-          sx={{ mb: 1 }}
-          control={
-            <Checkbox
-              size="small"
-              checked={onlyWithBalance}
-              onChange={(e) => setOnlyWithBalance(e.target.checked)}
-            />
-          }
-          label="Solo cuentas con saldo"
-        />
 
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
@@ -281,6 +292,33 @@ export default function IncomeStatement() {
           />
         </Box>
 
+        <Tabs value={view} onChange={(_e, v) => setView(v)} sx={{ mb: 1.5, borderBottom: 1, borderColor: "divider" }}>
+          <Tab value="form" label="Forma B (modelo CONAMI)" sx={{ textTransform: "none", fontWeight: 700 }} />
+          <Tab value="detail" label="Detalle por cuenta" sx={{ textTransform: "none", fontWeight: 700 }} />
+        </Tabs>
+
+        {view === "form" && (
+          <MucFormTable
+            caption="Estado de Resultados - Forma B"
+            columns={formColumns}
+            rows={formRows}
+            emptyText={loading ? "Generando…" : "Elija el período y presione Generar."}
+          />
+        )}
+
+        {view === "detail" && (
+        <>
+        <FormControlLabel
+          sx={{ mb: 1 }}
+          control={
+            <Checkbox
+              size="small"
+              checked={onlyWithBalance}
+              onChange={(e) => setOnlyWithBalance(e.target.checked)}
+            />
+          }
+          label="Solo cuentas con saldo"
+        />
         <Box sx={{ height: 620 }}>
           <DataGrid
             rows={
@@ -297,11 +335,11 @@ export default function IncomeStatement() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.account_id || row.id || row.muc_code}
-            pageSizeOptions={[10, 25, 50, 100]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             initialState={{
-              pagination: { paginationModel: { pageSize: 25, page: 0 } },
+              pagination: { pageSize: 25, page: 0 },
             }}
-            disableRowSelectionOnClick
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,
@@ -312,6 +350,8 @@ export default function IncomeStatement() {
             }}
           />
         </Box>
+        </>
+        )}
       </Paper>
 
       <Snackbar

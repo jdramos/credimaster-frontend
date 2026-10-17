@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import HelpButton from "../help/HelpButton";
-import { Alert, Box, Button, Chip, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, Paper, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import API from "../../api";
@@ -9,6 +9,7 @@ import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormC } from "./mucReportModels";
+import MucFormTable from "./MucFormTable";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -24,6 +25,9 @@ export default function EquityChanges() {
   const [totals, setTotals] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // Vista principal: Forma C del MUC (igual que el reporte impreso).
+  const [view, setView] = useState("form");
+  const [generatedYear, setGeneratedYear] = useState("");
 
   const generate = async () => {
     try {
@@ -38,6 +42,7 @@ export default function EquityChanges() {
         API.get("/api/accounting/reports/equity-changes", { params: filters }),
         API.get("/api/accounting/reports/equity-changes", { params: previousFilters }),
       ]);
+      setGeneratedYear(filters.end_date.slice(0, 4));
       setRows(response.data?.data || []);
       setPreviousRows(previousResponse.data?.data || []);
       setTotals(response.data?.totals || {});
@@ -57,19 +62,27 @@ export default function EquityChanges() {
     { field: "closing_balance", headerName: "Saldo final", width: 155, valueFormatter: (p) => money(p.value) },
   ], []);
 
+  // Mismas columnas y filas en pantalla y en el reporte impreso.
+  const formColumns = [
+    { field: "label", label: "(*)" },
+    { field: "capital", label: "Capital social o Aporte", numeric: true, format: money },
+    { field: "additional", label: "Capital o Aporte adicional", numeric: true, format: money },
+    { field: "adjustments", label: "Ajustes al patrimonio", numeric: true, format: money },
+    { field: "reserves", label: "Reservas", numeric: true, format: money },
+    { field: "results", label: "Resultados acumulados", numeric: true, format: money },
+    { field: "total", label: "Total", numeric: true, format: money },
+  ];
+  const formRows = useMemo(
+    () => (rows.length ? buildMucFormC(rows, previousRows, generatedYear) : []),
+    [rows, previousRows, generatedYear],
+  );
+
   const printReport = () => printAccountingReport({
     title: "Estado de Cambios en el Patrimonio",
     subtitle: `Forma C - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.start_date} al ${filters.end_date}`,
-    columns: [
-      { field: "label", label: "(*)" },
-      { field: "capital", label: "Capital social o Aporte", numeric: true, format: money },
-      { field: "additional", label: "Capital o Aporte adicional", numeric: true, format: money },
-      { field: "adjustments", label: "Ajustes al patrimonio", numeric: true, format: money },
-      { field: "reserves", label: "Reservas", numeric: true, format: money },
-      { field: "results", label: "Resultados acumulados", numeric: true, format: money },
-      { field: "total", label: "Total", numeric: true, format: money },
-    ], rows: buildMucFormC(rows, previousRows, filters.end_date.slice(0, 4)),
+    columns: formColumns,
+    rows: formRows,
   });
 
   return (
@@ -102,9 +115,22 @@ export default function EquityChanges() {
           <Chip color="warning" label={`Disminuciones: C$ ${money(totals.period_debit)}`} />
           <Chip color="primary" label={`Saldo final: C$ ${money(totals.closing_balance)}`} />
         </Stack>
-        <Box sx={{ height: 620 }}>
-          <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(row) => row.account_id} pageSizeOptions={[10, 25, 50]} disableRowSelectionOnClick />
-        </Box>
+        <Tabs value={view} onChange={(_e, v) => setView(v)} sx={{ mb: 1.5, borderBottom: 1, borderColor: "divider" }}>
+          <Tab value="form" label="Forma C (modelo CONAMI)" sx={{ textTransform: "none", fontWeight: 700 }} />
+          <Tab value="detail" label="Detalle por cuenta" sx={{ textTransform: "none", fontWeight: 700 }} />
+        </Tabs>
+        {view === "form" ? (
+          <MucFormTable
+            caption="Estado de Cambios en el Patrimonio - Forma C"
+            columns={formColumns}
+            rows={formRows}
+            emptyText={loading ? "Generando…" : "Elija el período y presione Generar."}
+          />
+        ) : (
+          <Box sx={{ height: 620 }}>
+            <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(row) => row.account_id} rowsPerPageOptions={[10, 25, 50]} disableSelectionOnClick />
+          </Box>
+        )}
       </Paper>
     </Box>
   );

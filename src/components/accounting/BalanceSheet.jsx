@@ -9,6 +9,8 @@ import {
   FormControlLabel,
   Paper,
   Snackbar,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
@@ -20,6 +22,13 @@ import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormA } from "./mucReportModels";
+import MucFormTable from "./MucFormTable";
+
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const formatAmount = (v) => (typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v);
 
 export default function BalanceSheet() {
   const [rows, setRows] = useState([]);
@@ -27,10 +36,16 @@ export default function BalanceSheet() {
   const [previousRows, setPreviousRows] = useState([]);
   const [ytdRows, setYtdRows] = useState([]);
   const [previousYtdRows, setPreviousYtdRows] = useState([]);
-  const [filters, setFilters] = useState({ to_date: "", branch_id: "" });
+  // Con fecha de corte por omisión: sin ella la columna del año anterior
+  // repetía los saldos actuales.
+  const [filters, setFilters] = useState({ to_date: today(), branch_id: "" });
+  // Vista principal: Forma A del MUC (igual que el reporte impreso); el
+  // detalle por cuenta queda en su propia pestaña.
+  const [view, setView] = useState("form");
   const [branchName, setBranchName] = useState("Todas");
   const [onlyWithBalance, setOnlyWithBalance] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [generatedDate, setGeneratedDate] = useState("");
   const [alert, setAlert] = useState({
     open: false,
     severity: "success",
@@ -114,6 +129,7 @@ export default function BalanceSheet() {
       const rawYtd = ytdRes.data?.data || [];
       const rawPreviousYtd = previousYtdRes.data?.data || [];
 
+      setGeneratedDate(filters.to_date);
       setAllRows(data);
       setRows(filtered);
       setPreviousRows(previousData);
@@ -219,15 +235,23 @@ export default function BalanceSheet() {
     },
   ];
 
+  // Mismas columnas y filas en pantalla y en el reporte impreso.
+  const formColumns = [
+    { field: "label", label: "Concepto" },
+    { field: "current", label: generatedDate ? generatedDate.slice(0, 4) : "Actual", numeric: true, format: formatAmount },
+    { field: "previous", label: generatedDate ? String(Number(generatedDate.slice(0, 4)) - 1) : "Anterior", numeric: true, format: formatAmount },
+  ];
+  const formRows = useMemo(
+    () => (allRows.length ? buildMucFormA(allRows, previousRows, ytdRows, previousYtdRows) : []),
+    [allRows, previousRows, ytdRows, previousYtdRows],
+  );
+
   const printReport = () => printAccountingReport({
     title: "Estado de Situación Financiera",
     subtitle: `Forma A - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
-    period: `Al ${filters.to_date || "fecha de corte"}`,
-    columns: [
-      { field: "label", label: "Concepto" },
-      { field: "current", label: filters.to_date?.slice(0, 4) || "Actual", numeric: true, format: (v) => typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2 }) : v },
-      { field: "previous", label: filters.to_date ? String(Number(filters.to_date.slice(0, 4)) - 1) : "Anterior", numeric: true, format: (v) => typeof v === "number" ? v.toLocaleString("es-NI", { minimumFractionDigits: 2 }) : v },
-    ], rows: buildMucFormA(allRows, previousRows, ytdRows, previousYtdRows),
+    period: `Al ${generatedDate || "fecha de corte"}`,
+    columns: formColumns,
+    rows: formRows,
   });
 
   const displayRows = onlyWithBalance
@@ -299,17 +323,6 @@ export default function BalanceSheet() {
           <ReportSignaturesDialog />
         </Box>
 
-        <FormControlLabel
-          sx={{ mb: 1 }}
-          control={
-            <Checkbox
-              size="small"
-              checked={onlyWithBalance}
-              onChange={(e) => setOnlyWithBalance(e.target.checked)}
-            />
-          }
-          label="Solo cuentas con saldo"
-        />
 
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
@@ -334,6 +347,33 @@ export default function BalanceSheet() {
           />
         </Box>
 
+        <Tabs value={view} onChange={(_e, v) => setView(v)} sx={{ mb: 1.5, borderBottom: 1, borderColor: "divider" }}>
+          <Tab value="form" label="Forma A (modelo CONAMI)" sx={{ textTransform: "none", fontWeight: 700 }} />
+          <Tab value="detail" label="Detalle por cuenta" sx={{ textTransform: "none", fontWeight: 700 }} />
+        </Tabs>
+
+        {view === "form" && (
+          <MucFormTable
+            caption="Estado de Situación Financiera - Forma A"
+            columns={formColumns}
+            rows={formRows}
+            emptyText={loading ? "Generando…" : "Elija la fecha de corte y presione Generar."}
+          />
+        )}
+
+        {view === "detail" && (
+        <>
+        <FormControlLabel
+          sx={{ mb: 1 }}
+          control={
+            <Checkbox
+              size="small"
+              checked={onlyWithBalance}
+              onChange={(e) => setOnlyWithBalance(e.target.checked)}
+            />
+          }
+          label="Solo cuentas con saldo"
+        />
         <Box sx={{ height: 620 }}>
           <DataGrid
             rows={
@@ -354,11 +394,11 @@ export default function BalanceSheet() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.account_id || row.id || row.muc_code}
-            pageSizeOptions={[10, 25, 50, 100]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             initialState={{
-              pagination: { paginationModel: { pageSize: 25, page: 0 } },
+              pagination: { pageSize: 25, page: 0 },
             }}
-            disableRowSelectionOnClick
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,
@@ -369,6 +409,8 @@ export default function BalanceSheet() {
             }}
           />
         </Box>
+        </>
+        )}
       </Paper>
 
       <Snackbar
