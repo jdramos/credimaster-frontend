@@ -27,6 +27,7 @@ import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = `/api/accounting/journal`;
+const EMPTY_FILTERS = { from_date: "", to_date: "", search: "", branch_id: "" };
 
 export default function JournalList() {
   const { permissions = [], role } = useContext(UserContext) || {};
@@ -41,12 +42,14 @@ export default function JournalList() {
   const [voidTarget, setVoidTarget] = useState(null);
   const [voidDate, setVoidDate] = useState("");
   const [voiding, setVoiding] = useState(false);
-  const [filters, setFilters] = useState({
-    from_date: "",
-    to_date: "",
-    search: "",
-    branch_id: "",
-  });
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // Filtros efectivamente consultados: se aplican al pulsar "Buscar"/Enter,
+  // y la paginación (servidor) siempre pagina sobre estos.
+  const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
+  const [rowCount, setRowCount] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [alert, setAlert] = useState({
     open: false,
@@ -58,44 +61,62 @@ export default function JournalList() {
     setAlert({ open: true, severity, message });
   };
 
-  const fetchJournal = async () => {
-    try {
-      setLoading(true);
-
-      const params = {};
-      if (filters.from_date) params.from_date = filters.from_date;
-      if (filters.to_date) params.to_date = filters.to_date;
-      if (filters.search.trim()) params.search = filters.search.trim();
-      if (filters.branch_id) params.branch_id = filters.branch_id;
-
-      const res = await API.get(API_URL, { params });
-
-      const data = Array.isArray(res.data)
-        ? res.data
-        : Array.isArray(res.data?.data)
-          ? res.data.data
-          : Array.isArray(res.data?.data?.rows)
-            ? res.data.data.rows
-            : [];
-
-      setRows(data);
-    } catch (error) {
-      showAlert(
-        error.response?.data?.message ||
-          error.response?.data?.error ||
-          error.message ||
-          "Error cargando libro diario",
-        "error",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchJournal();
+    const controller = new AbortController();
+
+    const load = async () => {
+      try {
+        setLoading(true);
+
+        const params = { page: page + 1, limit: pageSize };
+        if (appliedFilters.from_date) params.from_date = appliedFilters.from_date;
+        if (appliedFilters.to_date) params.to_date = appliedFilters.to_date;
+        if (appliedFilters.search.trim()) params.search = appliedFilters.search.trim();
+        if (appliedFilters.branch_id) params.branch_id = appliedFilters.branch_id;
+
+        const res = await API.get(API_URL, { params, signal: controller.signal });
+
+        const data = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+            ? res.data.data
+            : Array.isArray(res.data?.data?.rows)
+              ? res.data.data.rows
+              : [];
+
+        setRows(data);
+        setRowCount(Number(res.data?.pagination?.total ?? data.length) || 0);
+      } catch (error) {
+        if (error.name === "CanceledError" || controller.signal.aborted) return;
+        showAlert(
+          error.response?.data?.message ||
+            error.response?.data?.error ||
+            error.message ||
+            "Error cargando libro diario",
+          "error",
+        );
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [appliedFilters, page, pageSize, reloadKey]);
+
+  // Recarga con los filtros/página actuales (tras crear, editar o anular).
+  const fetchJournal = () => setReloadKey((k) => k + 1);
+
+  // Aplica los filtros escritos y vuelve a la primera página.
+  const applyFilters = () => {
+    if (filters.from_date && filters.to_date && filters.from_date > filters.to_date) {
+      showAlert("La fecha 'Desde' no puede ser posterior a 'Hasta'.", "warning");
+      return;
+    }
+    setPage(0);
+    setAppliedFilters({ ...filters });
+  };
 
   const openVoid = (entry) => {
     setVoidTarget(entry);
@@ -347,13 +368,13 @@ export default function JournalList() {
               setFilters((prev) => ({ ...prev, search: e.target.value }))
             }
             onKeyDown={(e) => {
-              if (e.key === "Enter") fetchJournal();
+              if (e.key === "Enter") applyFilters();
             }}
           />
 
           <Button
             variant="outlined"
-            onClick={fetchJournal}
+            onClick={applyFilters}
             sx={{ borderRadius: 2, textTransform: "none" }}
           >
             Buscar
@@ -366,13 +387,17 @@ export default function JournalList() {
             columns={columns}
             loading={loading}
             getRowId={(row) => row.id}
-            pageSizeOptions={[10, 25, 50, 100]}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 25, page: 0 },
-              },
+            paginationMode="server"
+            rowCount={rowCount}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={(newPage) => setPage(newPage)}
+            onPageSizeChange={(newPageSize) => {
+              setPage(0);
+              setPageSize(newPageSize);
             }}
-            disableRowSelectionOnClick
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            disableSelectionOnClick
             sx={{
               border: "1px solid #E5E7EB",
               borderRadius: 2,
