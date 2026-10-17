@@ -1,0 +1,753 @@
+{
+ "ok": true,
+ "data": {
+  "summary": {
+   "installments": 72,
+   "due_installments": 28,
+   "paid_installments": 20,
+   "overdue_installments": 8,
+   "on_time_pct": 57.14,
+   "within_7_pct": 75,
+   "max_days_late": 105,
+   "avg_days_late_when_late": 3.25,
+   "rating": "MALO",
+   "loans": 2,
+   "disbursed_loans": 2,
+   "active_loans": 1,
+   "paid_off_loans": 0,
+   "written_off_loans": 1,
+   "in_process_loans": 0,
+   "rejected_loans": 0,
+   "total_disbursed": 133396,
+   "current_balance": 30298.18,
+   "current_days_late": 0,
+   "customer_since": "2025-03-31",
+   "months_as_customer": 18
+  },
+  "collections": {
+   "actions": 0,
+   "promises": 0,
+   "promises_kept": 0,
+   "promises_broken": 0,
+   "last_action_date": null
+  },
+  "loans": [
+   {
+    "id": 689,
+    "credit_code": "689",
+    "status": "WRITTEN_OFF",
+    "branch_name": "Sucursal Central Managua",
+    "promoter_name": "Esmeralda Carrión Estrada",
+    "collector_name": "Byron Sandino Arróliga",
+    "request_date": "2025-05-04",
+    "disbursement_date": "2025-05-08",
+    "cancellation_date": null,
+    "writeoff_date": "2025-10-02",
+    "amount": 46769,
+    "term": "24.00",
+    "frequency": "Catorcenal",
+    "interest_rate": 3.1,
+    "balance": 0,
+    "writeoff_amount": 45384.02,
+    "classification": null,
+    "current_days_late": 0,
+    "last_payment_date": "2025-06-10",
+    "behavior": {
+     "installments": 48,
+     "due_installments": 10,
+     "paid_installments": 2,
+     "overdue_installments": 8,
+     "on_time_pct": 10,
+     "within_7_pct": 30,
+     "max_days_late": 105,
+     "avg_days_late_when_late": 5,
+     "rating": "MALO"
+    },
+    "installments": [
+     {
+      "number": 1,
+      "due_date": "2025-05-22",
+      "paid_date": "2025-05-22",
+      "amount": 1378.72,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 2,
+      "due_date": "2025-06-05",
+      "paid_date": "2025-06-10",
+      "amount": 1378.72,
+      "state": "PAID",
+      "days_late": 5,
+      "bucket": "LATE_7"
+     },
+     {
+      "number": 3,
+      "due_date": "2025-06-19",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 105,
+      "bucket": "LATE_MORE"
+     },
+     {
+      "number": 4,
+      "due_date": "2025-07-03",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 91,
+      "bucket": "LATE_MORE"
+     },
+     {
+      "number": 5,
+      "due_date": "2025-07-17",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 77,
+      "bucket": "LATE_MORE"
+     },
+     {
+      "number": 6,
+      "due_date": "2025-07-31",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 63,
+      "bucket": "LATE_MORE"
+     },
+     {
+      "number": 7,
+      "due_date": "2025-08-14",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 49,
+      "bucket": "LATE_MORE"
+     },
+     {
+      "number": 8,
+      "due_date": "2025-08-28",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 35,
+      "bucket": "LATE_MORE"
+     },
+     {
+      "number": 9,
+      "due_date": "2025-09-11",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 21,
+      "bucket": "LATE_30"
+     },
+     {
+      "number": 10,
+      "due_date": "2025-09-25",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "OVERDUE",
+      "days_late": 7,
+      "bucket": "LATE_7"
+     },
+     {
+      "number": 11,
+      "due_date": "2025-10-09",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 12,
+      "due_date": "2025-10-23",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 13,
+      "due_date": "2025-11-06",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 14,
+      "due_date": "2025-11-20",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 15,
+      "due_date": "2025-12-04",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 16,
+      "due_date": "2025-12-18",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 17,
+      "due_date": "2026-01-02",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 18,
+      "due_date": "2026-01-15",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 19,
+      "due_date": "2026-01-29",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 20,
+      "due_date": "2026-02-12",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 21,
+      "due_date": "2026-02-26",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 22,
+      "due_date": "2026-03-12",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 23,
+      "due_date": "2026-03-26",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 24,
+      "due_date": "2026-04-09",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 25,
+      "due_date": "2026-04-23",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 26,
+      "due_date": "2026-05-07",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 27,
+      "due_date": "2026-05-21",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 28,
+      "due_date": "2026-06-04",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 29,
+      "due_date": "2026-06-18",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 30,
+      "due_date": "2026-07-02",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 31,
+      "due_date": "2026-07-16",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 32,
+      "due_date": "2026-07-30",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 33,
+      "due_date": "2026-08-13",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 34,
+      "due_date": "2026-08-27",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 35,
+      "due_date": "2026-09-10",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 36,
+      "due_date": "2026-09-24",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 37,
+      "due_date": "2026-10-08",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 38,
+      "due_date": "2026-10-22",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 39,
+      "due_date": "2026-11-05",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 40,
+      "due_date": "2026-11-19",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 41,
+      "due_date": "2026-12-03",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 42,
+      "due_date": "2026-12-17",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 43,
+      "due_date": "2026-12-31",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 44,
+      "due_date": "2027-01-14",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 45,
+      "due_date": "2027-01-28",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 46,
+      "due_date": "2027-02-11",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 47,
+      "due_date": "2027-02-25",
+      "paid_date": null,
+      "amount": 1378.72,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     },
+     {
+      "number": 48,
+      "due_date": "2027-03-11",
+      "paid_date": null,
+      "amount": 978.9,
+      "state": "WRITTEN_OFF",
+      "days_late": 0,
+      "bucket": "WRITTEN_OFF"
+     }
+    ]
+   },
+   {
+    "id": 904,
+    "credit_code": "904",
+    "status": "DISBURSED",
+    "branch_name": "Sucursal Central Managua",
+    "promoter_name": "Esmeralda Carrión Estrada",
+    "collector_name": "Douglas Palacios Fonseca",
+    "request_date": "2025-03-27",
+    "disbursement_date": "2025-03-31",
+    "cancellation_date": null,
+    "writeoff_date": null,
+    "amount": 86627,
+    "term": "24.00",
+    "frequency": "Mensual",
+    "interest_rate": 3.3,
+    "balance": 30298.18,
+    "writeoff_amount": null,
+    "classification": "A",
+    "current_days_late": 0,
+    "last_payment_date": "2026-10-01",
+    "behavior": {
+     "installments": 24,
+     "due_installments": 18,
+     "paid_installments": 18,
+     "overdue_installments": 0,
+     "on_time_pct": 83.33,
+     "within_7_pct": 100,
+     "max_days_late": 5,
+     "avg_days_late_when_late": 2.67,
+     "rating": "BUENO"
+    },
+    "installments": [
+     {
+      "number": 1,
+      "due_date": "2025-04-30",
+      "paid_date": "2025-04-30",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 2,
+      "due_date": "2025-05-31",
+      "paid_date": "2025-05-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 3,
+      "due_date": "2025-06-30",
+      "paid_date": "2025-06-30",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 4,
+      "due_date": "2025-07-31",
+      "paid_date": "2025-07-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 5,
+      "due_date": "2025-09-01",
+      "paid_date": "2025-09-01",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 6,
+      "due_date": "2025-09-30",
+      "paid_date": "2025-09-30",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 7,
+      "due_date": "2025-10-31",
+      "paid_date": "2025-10-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 8,
+      "due_date": "2025-12-01",
+      "paid_date": "2025-12-01",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 9,
+      "due_date": "2025-12-31",
+      "paid_date": "2026-01-02",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 2,
+      "bucket": "LATE_7"
+     },
+     {
+      "number": 10,
+      "due_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 11,
+      "due_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 12,
+      "due_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 13,
+      "due_date": "2026-04-30",
+      "paid_date": "2026-04-30",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 14,
+      "due_date": "2026-06-01",
+      "paid_date": "2026-06-06",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 5,
+      "bucket": "LATE_7"
+     },
+     {
+      "number": 15,
+      "due_date": "2026-06-30",
+      "paid_date": "2026-06-30",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 16,
+      "due_date": "2026-07-31",
+      "paid_date": "2026-07-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 17,
+      "due_date": "2026-08-31",
+      "paid_date": "2026-08-31",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 0,
+      "bucket": "ON_TIME"
+     },
+     {
+      "number": 18,
+      "due_date": "2026-09-30",
+      "paid_date": "2026-10-01",
+      "amount": 5365.19,
+      "state": "PAID",
+      "days_late": 1,
+      "bucket": "LATE_7"
+     },
+     {
+      "number": 19,
+      "due_date": "2026-10-31",
+      "paid_date": null,
+      "amount": 5365.19,
+      "state": "FUTURE",
+      "days_late": 0,
+      "bucket": "FUTURE"
+     },
+     {
+      "number": 20,
+      "due_date": "2026-11-30",
+      "paid_date": null,
+      "amount": 5365.19,
+      "state": "FUTURE",
+      "days_late": 0,
+      "bucket": "FUTURE"
+     },
+     {
+      "number": 21,
+      "due_date": "2026-12-31",
+      "paid_date": null,
+      "amount": 5365.19,
+      "state": "FUTURE",
+      "days_late": 0,
+      "bucket": "FUTURE"
+     },
+     {
+      "number": 22,
+      "due_date": "2027-02-01",
+      "paid_date": null,
+      "amount": 5365.19,
+      "state": "FUTURE",
+      "days_late": 0,
+      "bucket": "FUTURE"
+     },
+     {
+      "number": 23,
+      "due_date": "2027-03-01",
+      "paid_date": null,
+      "amount": 5365.19,
+      "state": "FUTURE",
+      "days_late": 0,
+      "bucket": "FUTURE"
+     },
+     {
+      "number": 24,
+      "due_date": "2027-03-31",
+      "paid_date": null,
+      "amount": 5365.28,
+      "state": "FUTURE",
+      "days_late": 0,
+      "bucket": "FUTURE"
+     }
+    ]
+   }
+  ]
+ }
+}

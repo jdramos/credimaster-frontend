@@ -47,6 +47,8 @@ import CustomerReferencesTab from "./CustomerReferencesTab";
 import CustomerChecklist from "./CustomerCheckList";
 import CustomerFinancialEvaluationTab from "./CustomerFinancialEvaluationTab";
 import CustomerAmlCompliance from "./CustomerAmlCompliance";
+import CustomerCreditHistoryTab from "./CustomerCreditHistoryTab";
+import HistoryIcon from "@mui/icons-material/History";
 import ConfirmDialog from "../ConfirmDialog";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
@@ -966,6 +968,10 @@ const CustomerForm = () => {
                 iconPosition="start"
                 label="Cumplimiento PLA-FT"
               />
+              {/* Historial crediticio: solo para un cliente ya registrado. */}
+              {customer.id && (
+                <Tab icon={<HistoryIcon fontSize="small" />} iconPosition="start" label="Historial crediticio" />
+              )}
             </Tabs>
           </Box>
 
@@ -1055,6 +1061,13 @@ const CustomerForm = () => {
                 mode={internalMode}
               />
             </TabPanel>
+
+            {customer.id && (
+              <TabPanel value={activeTab} index={8}>
+                {/* Se consulta solo al entrar a la pestaña. */}
+                {activeTab === 8 && <CustomerCreditHistoryTab customerId={customer.id} />}
+              </TabPanel>
+            )}
           </Box>
 
           <Divider />
