@@ -8,6 +8,7 @@ import compareFixture from "./__fixtures__/financialIndicators.tn01.compare.json
 
 jest.mock("../../api", () => ({ get: jest.fn(), post: jest.fn() }));
 jest.mock("../help/HelpButton", () => () => null);
+jest.mock("../../reports/financialIndicatorsSummaryReport", () => ({ printFinancialIndicatorsSummary: jest.fn() }));
 // recharts usa ResizeObserver, que jsdom no trae.
 jest.mock("recharts", () => {
   const Mock = ({ children }) => <div>{children}</div>;
@@ -84,6 +85,18 @@ describe("FinancialIndicators", () => {
     expect(within(row).getByText("0.00%")).toBeTruthy();
     // No se guarda nada.
     expect(API.post).not.toHaveBeenCalled();
+  });
+
+  test("Imprimir manda a imprimir el resumen ejecutivo con los datos en pantalla", async () => {
+    const { printFinancialIndicatorsSummary } = require("../../reports/financialIndicatorsSummaryReport");
+    renderAs({ role: 2, permissions: ["contabilidad.ver"], user: { full_name: "Ana Pérez" } });
+    await screen.findByText(/Resumen ejecutivo/);
+    fireEvent.click(screen.getByRole("button", { name: "Imprimir" }));
+    expect(printFinancialIndicatorsSummary).toHaveBeenCalledTimes(1);
+    const [{ data, user }] = printFinancialIndicatorsSummary.mock.calls[0];
+    expect(data.period).toBe("2026-08");
+    expect(data.indicators).toHaveLength(28);
+    expect(user.full_name).toBe("Ana Pérez");
   });
 
   test("sin permiso de contabilidad no aparece el botón para cargar el reporte", async () => {

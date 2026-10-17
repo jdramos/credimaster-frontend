@@ -9,6 +9,7 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import PrintIcon from "@mui/icons-material/Print";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
@@ -16,6 +17,8 @@ import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip, ReferenceLin
 import * as XLSX from "xlsx";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { printFinancialIndicatorsSummary } from "../../reports/financialIndicatorsSummaryReport";
 
 // Indicadores financieros en el formato del reporte de la CONAMI, calculados
 // desde la contabilidad (backend: GET /api/accounting/financial-indicators),
@@ -207,7 +210,8 @@ function IndicatorRow({ ind, series, comparing }) {
 
 export default function FinancialIndicators() {
   const months = useMemo(() => lastMonths(24), []);
-  const { role, permissions } = useContext(UserContext) || {};
+  const { role, permissions, user } = useContext(UserContext) || {};
+  const { tenant } = useAuth() || {};
   const canUpload = role === 1 || (permissions || []).includes("contabilidad.cuentas.gestionar");
   // Período vacío = el backend usa el corte del último reporte de la CONAMI cargado.
   const [period, setPeriod] = useState("");
@@ -266,6 +270,20 @@ export default function FinancialIndicators() {
   );
   const comparing = Boolean(data?.compare_institution);
 
+  // Resumen ejecutivo + tabla de indicadores, listo para imprimir o guardar como PDF.
+  const printSummary = () => {
+    if (!data) return;
+    const company = {
+      commercial_name: tenant?.commercial_name || tenant?.name || "",
+      legal_name: tenant?.legal_name || tenant?.company_name || "",
+      tax_id: tenant?.tax_id || tenant?.ruc || "",
+      address: tenant?.address || "",
+      phone: tenant?.phone || "",
+      logo_url: tenant?.logo_url || "",
+    };
+    printFinancialIndicatorsSummary({ company, user, data });
+  };
+
   const exportExcel = () => {
     if (!data) return;
     const rows = data.indicators.map((i) => {
@@ -301,7 +319,9 @@ export default function FinancialIndicators() {
       [data.sector ? `Comparado con el reporte de la CONAMI de ${periodLabel(data.sector.period)} (${data.sector.institutions_count} instituciones)` : "Sin reporte del sector"],
       ...(data.compare_institution ? [[`Comparación con: ${data.compare_institution}`]] : []),
       [],
+      ...(data.summary.overview ? [["Introducción", data.summary.overview]] : []),
       ...data.summary.paragraphs.map((p) => [p.pillar, p.text]),
+      ...(data.summary.conclusion ? [["Conclusión", data.summary.conclusion]] : []),
       [],
       ["Fortalezas", data.summary.strengths.join("; ")],
       ["Alertas", data.summary.alerts.join("; ")],
@@ -363,6 +383,9 @@ export default function FinancialIndicators() {
                 </Tooltip>
               </>
             )}
+            <Button variant="outlined" startIcon={<PrintIcon />} onClick={printSummary} disabled={!data || loading} sx={{ textTransform: "none" }}>
+              Imprimir
+            </Button>
             <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={exportExcel} disabled={!data} sx={{ textTransform: "none" }}>
               Excel
             </Button>
@@ -422,12 +445,14 @@ export default function FinancialIndicators() {
                 </Stack>
               </Stack>
               <Stack spacing={1.25}>
+                {data.summary.overview && <Typography fontSize={13.5} sx={{ lineHeight: 1.6 }}>{data.summary.overview}</Typography>}
                 {data.summary.paragraphs.map((p) => (
                   <Box key={p.pillar}>
                     <Typography fontSize={12} fontWeight={800} color="#0057B8" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>{p.pillar}</Typography>
                     <Typography fontSize={13.5} sx={{ lineHeight: 1.6 }}>{p.text}</Typography>
                   </Box>
                 ))}
+                {data.summary.conclusion && <Typography fontSize={13.5} fontWeight={700} sx={{ lineHeight: 1.6 }}>{data.summary.conclusion}</Typography>}
               </Stack>
               <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mt: 2 }}>
                 <Box sx={{ flex: 1 }}>
