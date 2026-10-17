@@ -53,6 +53,7 @@ import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import KpiCard from "./KpiCard";
+import ManagementDashboard from "./ManagementDashboard";
 import BAC from "../../styles/bac";
 import { UserContext } from "../../contexts/UserContext";
 import {
@@ -169,12 +170,18 @@ function SectionHeader({ icon: Icon, title, subtitle, action }) {
   );
 }
 
+// Mensaje del backend (p. ej. 403 "No tiene acceso a la sucursal
+// seleccionada.") o uno genérico.
+const apiErrorMessage = (error, fallback) =>
+  error?.response?.data?.message || fallback;
+
 export default function PortfolioDashboard() {
   const { role, permissions = [] } = useContext(UserContext) || {};
   const canView = role === 1 || permissions.includes("balances.ver");
 
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [loadError, setLoadError] = useState("");
   const [catalogs, setCatalogs] = useState({
     branches: [],
     promoters: [],
@@ -243,12 +250,14 @@ export default function PortfolioDashboard() {
       setCatalogs(res?.data || {});
     } catch (error) {
       console.error(error);
+      setLoadError(apiErrorMessage(error, "No se pudieron cargar los filtros del dashboard."));
     }
   };
 
   const loadDashboard = async () => {
     try {
       setLoading(true);
+      setLoadError("");
 
       const [summaryRes, previousRes, monthRes, agingRes, branchRes, riskRes] =
         await Promise.all([
@@ -269,6 +278,14 @@ export default function PortfolioDashboard() {
       setLastUpdated(dayjs());
     } catch (error) {
       console.error("loadDashboard error:", error);
+      // Sin datos viejos en pantalla: lo mostrado no correspondería al filtro.
+      setSummary(null);
+      setPreviousSummary(null);
+      setPortfolioByMonth([]);
+      setAging([]);
+      setBranchBreakdown([]);
+      setRiskBreakdown([]);
+      setLoadError(apiErrorMessage(error, "No se pudo cargar el dashboard de saldos."));
     } finally {
       setLoading(false);
     }
@@ -292,6 +309,9 @@ export default function PortfolioDashboard() {
       setDetailTotal(res?.total || 0);
     } catch (error) {
       console.error("loadDetail error:", error);
+      setDetailRows([]);
+      setDetailTotal(0);
+      setLoadError((prev) => prev || apiErrorMessage(error, "No se pudo cargar el detalle de saldos."));
     }
   };
 
@@ -521,6 +541,12 @@ export default function PortfolioDashboard() {
           )}
         </Stack>
       </Box>
+
+      {loadError && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} onClose={() => setLoadError("")}>
+          {loadError}
+        </Alert>
+      )}
 
       <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
         <SectionHeader icon={FilterAltIcon} title="Filtros" />
@@ -779,6 +805,9 @@ export default function PortfolioDashboard() {
               />
             </Grid>
           </Grid>
+
+          {/* Indicadores de flujo del período: clientes, colocación, recuperación, saneamientos. */}
+          <ManagementDashboard params={params} reloadKey={lastUpdated ? lastUpdated.valueOf() : 0} />
 
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} lg={8}>

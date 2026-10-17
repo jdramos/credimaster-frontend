@@ -1,0 +1,334 @@
+{
+ "period": "2026-09",
+ "period_start": "2026-09-01",
+ "cut_date": "2026-09-30",
+ "is_partial": false,
+ "previous_period": "2026-08",
+ "has_accounting_data": true,
+ "portfolio": {
+  "gross": 9463812.73,
+  "gross_prev": 8635189.03,
+  "gross_year_start": 0,
+  "alive_loans": 165,
+  "alive_loans_prev": 147,
+  "mora": 642855.62,
+  "mora_prev": 642855.62,
+  "restructured": 361624.7,
+  "provisions": 0,
+  "provisions_prev": 0
+ },
+ "placement": {
+  "loans": 23,
+  "amount": 1542972,
+  "average": 67085.74,
+  "new_loans": 6,
+  "new_amount": 448840,
+  "recurrent_loans": 17,
+  "recurrent_amount": 1094132,
+  "prev_amount": 1757206,
+  "prev_loans": 22,
+  "goal_amount": 1800000,
+  "goal_loans": 26,
+  "achievement": 85.72,
+  "ytd_amount": 12424715,
+  "ytd_loans": 171,
+  "ytd_goal": 13051000,
+  "ytd_achievement": 95.2,
+  "by_branch": [
+   {
+    "branch_id": 1,
+    "name": "Sucursal Central Managua",
+    "amount": 345460,
+    "loans": 5,
+    "goal": 500000,
+    "achievement": 69.09
+   },
+   {
+    "branch_id": 2,
+    "name": "Sucursal León",
+    "amount": 454427,
+    "loans": 8,
+    "goal": 470000,
+    "achievement": 96.69
+   },
+   {
+    "branch_id": 3,
+    "name": "Sucursal Estelí",
+    "amount": 743085,
+    "loans": 10,
+    "goal": 830000,
+    "achievement": 89.53
+   }
+  ],
+  "top_promoters": [
+   {
+    "name": "Promotor 2 - Sucursal Estelí",
+    "loans": 5,
+    "amount": 408085,
+    "new_customers": 1
+   },
+   {
+    "name": "Promotor 2 - Sucursal León",
+    "loans": 6,
+    "amount": 383996,
+    "new_customers": 1
+   },
+   {
+    "name": "Promotor 1 - Sucursal Estelí",
+    "loans": 5,
+    "amount": 335000,
+    "new_customers": 2
+   }
+  ]
+ },
+ "collections": {
+  "payments": 216,
+  "loans": 138,
+  "total": 965631.91,
+  "principal": 714348.3,
+  "interest": 239556.75,
+  "late_interest": 0,
+  "charges": 11726.86,
+  "expected": 1065283.45,
+  "efficiency": 89.54,
+  "prev_total": 857343.39,
+  "prev_efficiency": 87.89
+ },
+ "customers": {
+  "active": 102,
+  "inactive": 1,
+  "new": 6,
+  "recurrent": 16,
+  "registered": 0,
+  "ended": 5,
+  "became_inactive": 1,
+  "retention_rate": 80,
+  "active_prev": 97,
+  "new_ytd": 103
+ },
+ "write_offs": {
+  "period_loans": 0,
+  "period_amount": 0,
+  "total_loans": 1,
+  "total_amount": 47056.16,
+  "recoveries_available": true,
+  "recoveries": 0,
+  "recovered_loans": 0,
+  "recovered_amount": 0,
+  "recovered_principal": 0
+ },
+ "results": {
+  "income_ytd": 1176703.23,
+  "expense_ytd": 2042862.23,
+  "net_ytd": -866159,
+  "income_month": 262929.81,
+  "expense_month": 270327.65,
+  "net_month": -7397.84,
+  "financial_income_ytd": 1161703.23
+ },
+ "balance": {
+  "assets": 13302630.44,
+  "liabilities": 168789.44,
+  "financial_liabilities": 0,
+  "equity": 13133841,
+  "paid_in_capital": 14000000,
+  "cash": 2797812.13
+ },
+ "budget": {
+  "id": 4,
+  "name": "2026",
+  "has_lines": true,
+  "income_month_budget": 262500,
+  "income_month_actual": 262929.81,
+  "expense_month_budget": 294633,
+  "expense_month_actual": 270327.65,
+  "income_ytd_budget": 1182500,
+  "income_ytd_actual": 1161703.23,
+  "expense_ytd_budget": 2190064,
+  "expense_ytd_actual": 2027612.23,
+  "overruns": [
+   {
+    "name": "ALQUILERES DE INMUEBLES",
+    "muc_code": "5404.05",
+    "budgeted_ytd": 192000,
+    "actual_ytd": 203529.6,
+    "excess": 11529.6,
+    "pct": 106.01
+   },
+   {
+    "name": "MANTENIMIENTO Y REPARACION DE VEHICULOS",
+    "muc_code": "5403.07",
+    "budgeted_ytd": 24000,
+    "actual_ytd": 26849.1,
+    "excess": 2849.1,
+    "pct": 111.87
+   },
+   {
+    "name": "SERVICIOS DE LIMPIEZA",
+    "muc_code": "5402.04",
+    "budgeted_ytd": 24000,
+    "actual_ytd": 25290,
+    "excess": 1290,
+    "pct": 105.38
+   }
+  ]
+ },
+ "indicators": {
+  "roa": {
+   "value": -6.51,
+   "previous": -6.46,
+   "level": "DEBIL",
+   "sector_median": 2.57
+  },
+  "roe": {
+   "value": -6.59,
+   "previous": -6.53,
+   "level": "DEBIL",
+   "sector_median": 6.07
+  },
+  "self_sufficiency": {
+   "value": 75.82,
+   "previous": 76.06,
+   "level": "DEBIL",
+   "sector_median": 98
+  },
+  "portfolio_yield": {
+   "value": 16.37,
+   "previous": 15.61,
+   "level": "DEBIL",
+   "sector_median": 34.38
+  },
+  "mora": {
+   "value": 6.79,
+   "previous": 7.44,
+   "level": "OBSERVACION",
+   "sector_median": 7.31
+  },
+  "restructured": {
+   "value": 3.82,
+   "previous": 3.11,
+   "level": "DEBIL",
+   "sector_median": 0
+  },
+  "cash_to_assets": {
+   "value": 21.03,
+   "previous": 27.32,
+   "level": null,
+   "sector_median": 10.79
+  },
+  "liabilities_to_assets": {
+   "value": 1.27,
+   "previous": 1.13,
+   "level": "FUERTE",
+   "sector_median": 72.09
+  },
+  "personnel_cost": {
+   "value": 14.29,
+   "previous": 13.52,
+   "level": "FAVORABLE",
+   "sector_median": 19.85
+  },
+  "mora_to_equity": {
+   "value": 4.89,
+   "previous": 4.89,
+   "level": "FAVORABLE",
+   "sector_median": 8.81
+  }
+ },
+ "sector": {
+  "period": "2026-08-31",
+  "institutions_count": 80
+ },
+ "narrative": {
+  "salutation": "Estimados miembros de la Junta Directiva:",
+  "opening": [
+   "Presentamos a su consideración el informe de gestión de Microfinanciera Demo, S.A. correspondiente al mes de septiembre de 2026. En él resumimos la evolución de la cartera, la colocación frente a las metas aprobadas, la recuperación, los resultados financieros y la ejecución del presupuesto, y al final incluimos las recomendaciones de la Gerencia."
+  ],
+  "highlights": [
+   "Septiembre cerró con resultados que vale la pena destacar: la cartera creció 9.6% hasta C$9.46 millones; se colocaron C$1.54 millones (85.7% de la meta del mes); y la mora bajó a 6.79%.",
+   "En balance, el crecimiento de la cartera y la reducción de la mora avanzaron de forma favorable, mientras que la rentabilidad sigue siendo el principal frente de trabajo de la Gerencia, ya que la operación todavía no alcanza el punto de equilibrio."
+  ],
+  "sections": [
+   {
+    "key": "portfolio",
+    "title": "Cartera de créditos",
+    "paragraphs": [
+     "Al 30 de septiembre de 2026 la cartera bruta asciende a C$9.46 millones, distribuida en 165 créditos vigentes de 102 clientes activos. Respecto al cierre de agosto creció 9.6%, es decir, C$829 mil adicionales, un ritmo de crecimiento sólido.",
+     "Toda la cartera actual se ha construido durante este año, lo que conviene tener presente al leer los indicadores de rentabilidad, que todavía reflejan la etapa de arranque.",
+     "El saldo promedio por cliente es de C$93 mil."
+    ]
+   },
+   {
+    "key": "placement",
+    "title": "Colocación y cumplimiento de metas",
+    "paragraphs": [
+     "En el mes se desembolsaron 23 créditos por un total de C$1.54 millones, con un monto promedio de C$67 mil por operación. De ellos, 6 correspondieron a clientes nuevos (C$449 mil) y 17 a renovaciones de clientes que ya trabajaban con la institución (C$1.09 millones).",
+     "Esto representa el 85.7% de la meta mensual de C$1.80 millones, por lo que quedaron pendientes de colocar C$257 mil.",
+     "En el acumulado del año se han colocado C$12.42 millones en 171 créditos, equivalentes al 95.2% de la meta acumulada a la fecha (C$13.05 millones).",
+     "Frente a agosto, la colocación disminuyó 12.2%.",
+     "Por sucursal, Sucursal León fue la de mejor desempeño, con 96.7% de su meta, mientras que Sucursal Central Managua se quedó en 69.1%.",
+     "Destaca el trabajo de Promotor 2 - Sucursal Estelí, con 5 créditos por C$408 mil y 1 cliente nuevo incorporado."
+    ]
+   },
+   {
+    "key": "collections",
+    "title": "Recuperación y cobranza",
+    "paragraphs": [
+     "En el mes se recuperaron C$966 mil mediante 216 pagos: C$714 mil de capital, C$240 mil de intereses y C$12 mil de comisiones, seguros y otros cargos.",
+     "Las cuotas que vencían en el período sumaban C$1.07 millones entre capital e intereses, de modo que la eficiencia de cobro fue de 89.5%; es un nivel aceptable, aunque con espacio de mejora.",
+     "En agosto la eficiencia había sido de 87.9%, por lo que mejoró 1.7 puntos."
+    ]
+   },
+   {
+    "key": "quality",
+    "title": "Calidad de la cartera y provisiones",
+    "paragraphs": [
+     "La cartera en mora (vencida y en cobro judicial) suma C$643 mil, equivalente al 6.79% de la cartera bruta, una mejora de 0.7 puntos frente a agosto (7.44%).",
+     "Como referencia, la mediana de las instituciones de microfinanzas según el reporte de indicadores de la CONAMI de agosto de 2026 (80 instituciones) es de 7.31%, de modo que nuestra mora se ubica por debajo de la mayoría del sector.",
+     "La cartera reestructurada o prorrogada representa 3.82% de la cartera (C$362 mil).",
+     "A la fecha de corte no se registran provisiones contables para esta cartera, situación que debe regularizarse para que los estados financieros reflejen el riesgo real."
+    ]
+   },
+   {
+    "key": "results",
+    "title": "Resultados financieros y ejecución presupuestaria",
+    "paragraphs": [
+     "Al cierre de septiembre, los ingresos acumulados del año suman C$1.18 millones y los gastos C$2.04 millones, lo que deja una pérdida acumulada de C$866 mil.",
+     "Solo en septiembre el resultado fue negativo en C$7,398 (ingresos de C$263 mil frente a gastos de C$270 mil).",
+     "Esta pérdida es propia de la etapa de crecimiento en que se encuentra la institución: la cartera se ha formado durante el año y los ingresos que genera todavía no alcanzan a cubrir la estructura de personal y operación.",
+     "En relación con el presupuesto aprobado, en el acumulado del año los ingresos alcanzaron el 98.2% de lo presupuestado y los gastos se ejecutaron al 92.6%. Para esas partidas, el resultado real es C$142 mil mejor que el presupuestado.",
+     "Las partidas de gasto con mayor desviación sobre el presupuesto son alquileres de inmuebles (6% por encima), mantenimiento y reparación de vehículos (12% por encima) y servicios de limpieza (5% por encima).",
+     "La autosuficiencia operativa —ingresos financieros anualizados frente a los gastos— es de 75.8%, mientras que la mediana del sector es de 98.0%; alcanzar el 100% es el objetivo inmediato para que la operación se sostenga por sí misma.",
+     "El rendimiento anualizado de la cartera (16.4%) todavía es bajo frente a la mediana del sector (34.4%), en parte porque la mayor parte de la cartera es reciente y aún no ha generado un año completo de intereses."
+    ]
+   },
+   {
+    "key": "position",
+    "title": "Posición financiera",
+    "paragraphs": [
+     "Los activos totales suman C$13.30 millones, financiados en 98.7% con patrimonio (C$13.13 millones) y en 1.3% con pasivos (C$169 mil).",
+     "La institución no tiene obligaciones financieras con terceros: su crecimiento se ha financiado íntegramente con capital de los socios. Esto le da una solvencia muy holgada, pero también limita la rentabilidad sobre el patrimonio y el ritmo al que puede crecer la cartera.",
+     "Los fondos disponibles ascienden a C$2.80 millones y representan el 21.0% de los activos (mediana del sector: 10.8%). Es una liquidez holgada; parte de esos recursos podría colocarse en cartera para mejorar el rendimiento de los activos."
+    ]
+   },
+   {
+    "key": "customers",
+    "title": "Clientes",
+    "paragraphs": [
+     "Cerramos el mes con 102 clientes activos, 5 más que en agosto. Durante el mes se incorporaron 6 clientes nuevos y 16 clientes renovaron su crédito.",
+     "De los 5 clientes que terminaron de pagar su crédito en el mes, 4 volvieron a tomar uno nuevo, una retención de 80%, que refleja la buena relación con nuestra clientela.",
+     "Además, hay un cliente que ya trabajó con la institución y hoy no tiene crédito vigente; es una oportunidad de colocación con un cliente de historial conocido."
+    ]
+   }
+  ],
+  "recommendations": [
+   "Fortalecer la cobranza: recordatorios antes del vencimiento, visita el mismo día en que una cuota cae en atraso y seguimiento semanal, con un responsable asignado, de los créditos con más de 30 días de mora.",
+   "Reforzar la colocación, en especial en Sucursal Central Managua, revisando con cada promotor su cartera de prospectos y la atención a los clientes que terminan de pagar.",
+   "Regularizar el registro contable de las provisiones de cartera conforme a la clasificación de riesgo de cada crédito.",
+   "Mantener una disciplina estricta en la ejecución del gasto y priorizar el crecimiento de cartera productiva, que es lo que permitirá alcanzar el punto de equilibrio.",
+   "Revisar las partidas que superan el presupuesto (alquileres de inmuebles, mantenimiento y reparación de vehículos y servicios de limpieza) y definir si se trata de un desvío puntual o si el presupuesto debe ajustarse.",
+   "Aprovechar la liquidez disponible para acelerar la colocación, manteniendo una reserva prudente para los desembolsos y gastos de los próximos meses."
+  ],
+  "closing": "Quedamos a disposición de la Junta Directiva para ampliar cualquier aspecto de este informe o atender las consultas que estimen convenientes."
+ }
+}

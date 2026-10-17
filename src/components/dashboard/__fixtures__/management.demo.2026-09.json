@@ -1,0 +1,261 @@
+{
+ "ok": true,
+ "data": {
+  "current": {
+   "range": {
+    "from": "2026-09-01",
+    "to": "2026-09-30"
+   },
+   "customers": {
+    "active": 102,
+    "inactive": 1,
+    "new": 6,
+    "recurrent": 16,
+    "registered": 0,
+    "ended": 5,
+    "became_inactive": 1,
+    "retention_rate": 80
+   },
+   "disbursements": {
+    "loans": 23,
+    "amount": 1542972,
+    "average": 67085.74,
+    "new_loans": 6,
+    "new_amount": 448840,
+    "recurrent_loans": 17,
+    "recurrent_amount": 1094132
+   },
+   "collections": {
+    "payments": 216,
+    "loans": 138,
+    "total": 965631.91,
+    "principal": 714348.3,
+    "interest": 239556.75,
+    "late_interest": 0,
+    "charges": 11726.86,
+    "expected": 1065283.45,
+    "efficiency": 89.54
+   },
+   "paid_off": {
+    "loans": 5
+   },
+   "write_offs": {
+    "period_loans": 0,
+    "period_amount": 0,
+    "total_loans": 1,
+    "total_amount": 47056.16,
+    "recoveries_available": true,
+    "recoveries": 0,
+    "recovered_loans": 0,
+    "recovered_amount": 0,
+    "recovered_principal": 0
+   }
+  },
+  "previous": {
+   "range": {
+    "from": "2026-08-02",
+    "to": "2026-08-31"
+   },
+   "customers": {
+    "active": 97,
+    "inactive": 0,
+    "new": 12,
+    "recurrent": 10,
+    "registered": 0,
+    "ended": 0,
+    "became_inactive": 0,
+    "retention_rate": null
+   },
+   "disbursements": {
+    "loans": 22,
+    "amount": 1757206,
+    "average": 79873,
+    "new_loans": 12,
+    "new_amount": 884046,
+    "recurrent_loans": 10,
+    "recurrent_amount": 873160
+   },
+   "collections": {
+    "payments": 186,
+    "loans": 118,
+    "total": 844750.82,
+    "principal": 624396.92,
+    "interest": 210043.12,
+    "late_interest": 0,
+    "charges": 10310.78,
+    "expected": 947171.3,
+    "efficiency": 88.1
+   },
+   "paid_off": {
+    "loans": 0
+   },
+   "write_offs": {
+    "period_loans": 1,
+    "period_amount": 47056.16,
+    "total_loans": 1,
+    "total_amount": 47056.16,
+    "recoveries_available": true,
+    "recoveries": 0,
+    "recovered_loans": 0,
+    "recovered_amount": 0,
+    "recovered_principal": 0
+   }
+  },
+  "placement_goal": null,
+  "trend": [
+   {
+    "period": "2025-10",
+    "disbursed_amount": 0,
+    "disbursed_loans": 0,
+    "new_customers": 0,
+    "collected_amount": 0
+   },
+   {
+    "period": "2025-11",
+    "disbursed_amount": 0,
+    "disbursed_loans": 0,
+    "new_customers": 0,
+    "collected_amount": 0
+   },
+   {
+    "period": "2025-12",
+    "disbursed_amount": 0,
+    "disbursed_loans": 0,
+    "new_customers": 0,
+    "collected_amount": 0
+   },
+   {
+    "period": "2026-01",
+    "disbursed_amount": 0,
+    "disbursed_loans": 0,
+    "new_customers": 0,
+    "collected_amount": 0
+   },
+   {
+    "period": "2026-02",
+    "disbursed_amount": 207834,
+    "disbursed_loans": 3,
+    "new_customers": 3,
+    "collected_amount": 0
+   },
+   {
+    "period": "2026-03",
+    "disbursed_amount": 2460334,
+    "disbursed_loans": 32,
+    "new_customers": 28,
+    "collected_amount": 60899.35
+   },
+   {
+    "period": "2026-04",
+    "disbursed_amount": 2197441,
+    "disbursed_loans": 29,
+    "new_customers": 23,
+    "collected_amount": 301358.68
+   },
+   {
+    "period": "2026-05",
+    "disbursed_amount": 1109978,
+    "disbursed_loans": 17,
+    "new_customers": 11,
+    "collected_amount": 452825.3
+   },
+   {
+    "period": "2026-06",
+    "disbursed_amount": 1770961,
+    "disbursed_loans": 26,
+    "new_customers": 14,
+    "collected_amount": 593986.11
+   },
+   {
+    "period": "2026-07",
+    "disbursed_amount": 1377989,
+    "disbursed_loans": 19,
+    "new_customers": 6,
+    "collected_amount": 757285.39
+   },
+   {
+    "period": "2026-08",
+    "disbursed_amount": 1757206,
+    "disbursed_loans": 22,
+    "new_customers": 12,
+    "collected_amount": 857343.39
+   },
+   {
+    "period": "2026-09",
+    "disbursed_amount": 1542972,
+    "disbursed_loans": 23,
+    "new_customers": 6,
+    "collected_amount": 965631.91
+   }
+  ],
+  "top_promoters": [
+   {
+    "id": 38,
+    "name": "Promotor 2 - Sucursal Estelí",
+    "loans": 5,
+    "amount": 408085,
+    "new_customers": 1
+   },
+   {
+    "id": 36,
+    "name": "Promotor 2 - Sucursal León",
+    "loans": 6,
+    "amount": 383996,
+    "new_customers": 1
+   },
+   {
+    "id": 37,
+    "name": "Promotor 1 - Sucursal Estelí",
+    "loans": 5,
+    "amount": 335000,
+    "new_customers": 2
+   },
+   {
+    "id": 33,
+    "name": "Promotor 1 - Sucursal Central Managua",
+    "loans": 3,
+    "amount": 297912,
+    "new_customers": 0
+   },
+   {
+    "id": 35,
+    "name": "Promotor 1 - Sucursal León",
+    "loans": 2,
+    "amount": 70431,
+    "new_customers": 2
+   }
+  ],
+  "top_collectors": [
+   {
+    "id": 32,
+    "name": "Cobrador 2 - Sucursal Estelí",
+    "payments": 52,
+    "amount": 275237.67
+   },
+   {
+    "id": 31,
+    "name": "Cobrador 1 - Sucursal Estelí",
+    "payments": 45,
+    "amount": 191467.12
+   },
+   {
+    "id": 27,
+    "name": "Cobrador 1 - Sucursal Central Managua",
+    "payments": 41,
+    "amount": 171996.5
+   },
+   {
+    "id": 29,
+    "name": "Cobrador 1 - Sucursal León",
+    "payments": 30,
+    "amount": 149599.4
+   },
+   {
+    "id": 30,
+    "name": "Cobrador 2 - Sucursal León",
+    "payments": 27,
+    "amount": 111509.75
+   }
+  ]
+ }
+}
