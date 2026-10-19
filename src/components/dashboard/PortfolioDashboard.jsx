@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import HelpButton from "../help/HelpButton";
 import {
   Box,
@@ -9,14 +10,10 @@ import {
   MenuItem,
   Button,
   CircularProgress,
-  Divider,
   Chip,
   Stack,
   Alert,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -34,8 +31,6 @@ import {
 } from "recharts";
 import dayjs from "dayjs";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import DownloadIcon from "@mui/icons-material/Download";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -63,7 +58,6 @@ import {
   getBalancesFastAging,
   getBalancesFastPortfolioByBranch,
   getBalancesFastRiskBreakdown,
-  getBalancesDetail,
 } from "../../api/dashboardBalances";
 
 // Paleta validada con el skill dataviz (scripts/validate_palette.js) contra
@@ -178,6 +172,7 @@ const apiErrorMessage = (error, fallback) =>
 export default function PortfolioDashboard() {
   const { role, permissions = [] } = useContext(UserContext) || {};
   const canView = role === 1 || permissions.includes("balances.ver");
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -205,12 +200,6 @@ export default function PortfolioDashboard() {
   const [aging, setAging] = useState([]);
   const [branchBreakdown, setBranchBreakdown] = useState([]);
   const [riskBreakdown, setRiskBreakdown] = useState([]);
-
-  const [detailRows, setDetailRows] = useState([]);
-  const [detailTotal, setDetailTotal] = useState(0);
-  const [detailPage, setDetailPage] = useState(0);
-  const [detailPageSize, setDetailPageSize] = useState(25);
-  const [detailBucket, setDetailBucket] = useState("");
 
   const params = useMemo(
     () => ({
@@ -296,30 +285,6 @@ export default function PortfolioDashboard() {
     }
   };
 
-  const loadDetail = async ({
-    page = detailPage,
-    pageSize = detailPageSize,
-    overdue_bucket = detailBucket,
-  } = {}) => {
-    try {
-      const res = await getBalancesDetail({
-        ...params,
-        overdue_bucket: overdue_bucket || undefined,
-        latest_only: true,
-        page: page + 1,
-        pageSize,
-      });
-
-      setDetailRows(res?.data || []);
-      setDetailTotal(res?.total || 0);
-    } catch (error) {
-      console.error("loadDetail error:", error);
-      setDetailRows([]);
-      setDetailTotal(0);
-      setLoadError((prev) => prev || apiErrorMessage(error, "No se pudo cargar el detalle de saldos."));
-    }
-  };
-
   useEffect(() => {
     if (!canView) return;
     loadCatalogs();
@@ -329,11 +294,6 @@ export default function PortfolioDashboard() {
   useEffect(() => {
     if (!canView) return;
     loadDashboard();
-    loadDetail({
-      page: 0,
-      pageSize: detailPageSize,
-      overdue_bucket: detailBucket,
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canView]);
 
@@ -356,111 +316,8 @@ export default function PortfolioDashboard() {
   };
 
   const handleApplyFilters = async () => {
-    setDetailPage(0);
     await loadDashboard();
-    await loadDetail({
-      page: 0,
-      pageSize: detailPageSize,
-      overdue_bucket: detailBucket,
-    });
   };
-
-  const handleAgingClick = async (data) => {
-    const bucket = data?.bucket;
-
-    const map = {
-      "Al día": "current",
-      "1-15": "1-15",
-      "16-30": "16-30",
-      "31-60": "31-60",
-      "61-90": "61-90",
-      "90+": "90+",
-    };
-
-    const selected = map[bucket] || "";
-    setDetailBucket(selected);
-    setDetailPage(0);
-    await loadDetail({
-      page: 0,
-      pageSize: detailPageSize,
-      overdue_bucket: selected,
-    });
-  };
-
-  const exportToExcel = () => {
-    const exportRows = detailRows.map((row) => ({
-      Fecha: row.date,
-      Crédito: row.loan_id,
-      Cliente: row.customer_identification,
-      Sucursal: row.branch_name,
-      Promotor: row.promoter_name,
-      Vendedor: row.vendor_name,
-      Cobrador: row.collector_name,
-      Cuota: row.payment_number,
-      Capital: Number(row.capital_balance || 0),
-      Interés: Number(row.interest_balance || 0),
-      Seguro: Number(row.insurance_balance || 0),
-      Comisión: Number(row.fee_balance || 0),
-      Otros: Number(row.other_charges_balance || 0),
-      SaldoTotal: Number(row.total_balance || 0),
-      DiasMora: Number(row.defaulted_days || 0),
-      CapitalVencido: Number(row.defaulted_capital || 0),
-      InteresVencido: Number(row.defaulted_interest || 0),
-      Riesgo: row.provission_code,
-      ProvisionPorcentaje: Number(row.provission_percentage || 0),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(exportRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Saldos");
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    const blob = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-
-    saveAs(blob, `balances_detail_${dayjs().format("YYYYMMDD_HHmmss")}.xlsx`);
-  };
-
-  const columns = [
-    { field: "date", headerName: "Fecha", width: 110 },
-    { field: "loan_id", headerName: "Crédito", width: 100 },
-    { field: "customer_identification", headerName: "Cliente", width: 160 },
-    { field: "branch_name", headerName: "Sucursal", width: 140 },
-    { field: "promoter_name", headerName: "Promotor", width: 140 },
-    { field: "vendor_name", headerName: "Vendedor", width: 140 },
-    { field: "collector_name", headerName: "Cobrador", width: 140 },
-    {
-      field: "capital_balance",
-      headerName: "Capital",
-      width: 130,
-      valueFormatter: ({ value }) => formatCurrency(value),
-    },
-    {
-      field: "interest_balance",
-      headerName: "Interés",
-      width: 130,
-      valueFormatter: ({ value }) => formatCurrency(value),
-    },
-    {
-      field: "total_balance",
-      headerName: "Saldo Total",
-      width: 150,
-      valueFormatter: ({ value }) => formatCurrency(value),
-    },
-    { field: "defaulted_days", headerName: "Días Mora", width: 110 },
-    { field: "provission_code", headerName: "Riesgo", width: 90 },
-    {
-      field: "provission_percentage",
-      headerName: "% Prov.",
-      width: 110,
-      valueFormatter: ({ value }) => `${Number(value || 0).toFixed(2)}%`,
-    },
-  ];
 
   // "Mora" es el monto REALMENTE atrasado (capital+interés vencidos), no el
   // saldo completo de cualquier crédito con una cuota atrasada -- ese
@@ -680,24 +537,16 @@ export default function PortfolioDashboard() {
               Aplicar filtros
             </Button>
 
-            <Button variant="outlined" onClick={exportToExcel} startIcon={<DownloadIcon />}>
-              Exportar Excel
-            </Button>
-
             <Button
               variant="text"
-              startIcon={<RestartAltIcon />}
-              onClick={async () => {
-                setDetailBucket("");
-                setDetailPage(0);
-                await loadDetail({
-                  page: 0,
-                  pageSize: detailPageSize,
-                  overdue_bucket: "",
-                });
+              startIcon={<TableChartIcon />}
+              onClick={() => {
+                const qs = new URLSearchParams({ date: filters.date_to });
+                if (filters.branch_id) qs.set("branch_id", filters.branch_id);
+                navigate(`/saldos?${qs.toString()}`);
               }}
             >
-              Limpiar drill-down
+              Ver detalle por crédito
             </Button>
           </Grid>
 
@@ -911,7 +760,7 @@ export default function PortfolioDashboard() {
                 <SectionHeader
                   icon={DonutLargeIcon}
                   title="Aging de cartera"
-                  subtitle="Clic en una barra para ver el detalle"
+                  subtitle="Saldo por días de atraso al corte"
                 />
                 <ResponsiveContainer width="100%" height="85%">
                   <BarChart data={aging} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -923,8 +772,6 @@ export default function PortfolioDashboard() {
                       dataKey="total_balance"
                       name="Saldo"
                       radius={[0, 6, 6, 0]}
-                      cursor="pointer"
-                      onClick={handleAgingClick}
                     >
                       {aging.map((entry) => (
                         <Cell
@@ -993,51 +840,6 @@ export default function PortfolioDashboard() {
               </Paper>
             </Grid>
           </Grid>
-
-          <Paper sx={{ p: 2, borderRadius: 3 }}>
-            <SectionHeader
-              icon={TableChartIcon}
-              title="Detalle operativo de saldos"
-              subtitle={
-                detailBucket
-                  ? `1 fila por crédito (saldo más reciente) · Filtro aging: ${detailBucket} · ${detailTotal} registros`
-                  : `1 fila por crédito (saldo más reciente) · ${detailTotal} registros`
-              }
-            />
-
-            <Divider sx={{ mb: 2 }} />
-
-            <Box sx={{ height: 550, width: "100%" }}>
-              <DataGrid
-                rows={detailRows}
-                columns={columns}
-                getRowId={(row) => row.id}
-                paginationMode="server"
-                rowCount={detailTotal}
-                page={detailPage}
-                pageSize={detailPageSize}
-                onPageChange={(newPage) => {
-                  setDetailPage(newPage);
-                  loadDetail({
-                    page: newPage,
-                    pageSize: detailPageSize,
-                    overdue_bucket: detailBucket,
-                  });
-                }}
-                onPageSizeChange={(newPageSize) => {
-                  setDetailPageSize(newPageSize);
-                  setDetailPage(0);
-                  loadDetail({
-                    page: 0,
-                    pageSize: newPageSize,
-                    overdue_bucket: detailBucket,
-                  });
-                }}
-                rowsPerPageOptions={[25, 50, 100]}
-                disableSelectionOnClick
-              />
-            </Box>
-          </Paper>
         </>
       )}
     </Box>

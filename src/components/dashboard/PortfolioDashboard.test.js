@@ -1,5 +1,6 @@
 import React from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import PortfolioDashboard from "./PortfolioDashboard";
 import { UserContext } from "../../contexts/UserContext";
 import * as api from "../../api/dashboardBalances";
@@ -11,11 +12,9 @@ jest.mock("../../api/dashboardBalances", () => ({
   getBalancesFastAging: jest.fn(),
   getBalancesFastPortfolioByBranch: jest.fn(),
   getBalancesFastRiskBreakdown: jest.fn(),
-  getBalancesDetail: jest.fn(),
 }));
 jest.mock("./ManagementDashboard", () => () => null);
 jest.mock("../help/HelpButton", () => () => null);
-jest.mock("@mui/x-data-grid", () => ({ DataGrid: () => null }));
 // recharts usa ResizeObserver, que jsdom no trae.
 jest.mock("recharts", () => {
   const Mock = ({ children }) => <div>{children}</div>;
@@ -25,10 +24,17 @@ jest.mock("recharts", () => {
 
 const renderAs = (user) =>
   render(
-    <UserContext.Provider value={user}>
-      <PortfolioDashboard />
-    </UserContext.Provider>,
+    <MemoryRouter>
+      <UserContext.Provider value={user}>
+        <PortfolioDashboard />
+      </UserContext.Provider>
+    </MemoryRouter>,
   );
+
+const SaldosProbe = () => {
+  const { search } = useLocation();
+  return <div data-testid="saldos-search">{search}</div>;
+};
 
 const USER = { role: 3, permissions: ["balances.ver"] };
 
@@ -44,7 +50,6 @@ describe("PortfolioDashboard: alcance de sucursales", () => {
     api.getBalancesFastAging.mockResolvedValue({ ok: true, data: [] });
     api.getBalancesFastPortfolioByBranch.mockResolvedValue({ ok: true, data: [] });
     api.getBalancesFastRiskBreakdown.mockResolvedValue({ ok: true, data: [] });
-    api.getBalancesDetail.mockResolvedValue({ ok: true, data: [], total: 0 });
   });
 
   test("el selector de sucursal ofrece solo las sucursales que devuelve el backend", async () => {
@@ -62,10 +67,29 @@ describe("PortfolioDashboard: alcance de sucursales", () => {
       response: { status: 403, data: { ok: false, message: "No tiene acceso a la sucursal seleccionada." } },
     });
     api.getBalancesFastSummary.mockRejectedValue(forbidden);
-    api.getBalancesDetail.mockRejectedValue(forbidden);
     jest.spyOn(console, "error").mockImplementation(() => {});
     renderAs(USER);
     expect(await screen.findByText("No tiene acceso a la sucursal seleccionada.")).toBeTruthy();
     console.error.mockRestore();
+  });
+
+  test("Ver detalle por crédito abre Saldos con el mismo corte y sucursal", async () => {
+    render(
+      <MemoryRouter initialEntries={["/dashboard/saldos"]}>
+        <UserContext.Provider value={USER}>
+          <Routes>
+            <Route path="/dashboard/saldos" element={<PortfolioDashboard />} />
+            <Route path="/saldos" element={<SaldosProbe />} />
+          </Routes>
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+    await screen.findByText(/^Actualizado/);
+    fireEvent.mouseDown(screen.getByLabelText("Sucursal"));
+    fireEvent.click(within(await screen.findByRole("listbox")).getByText("Sucursal León"));
+    fireEvent.click(screen.getByRole("button", { name: /Ver detalle por crédito/ }));
+    const params = new URLSearchParams((await screen.findByTestId("saldos-search")).textContent);
+    expect(params.get("date")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(params.get("branch_id")).toBe("2");
   });
 });

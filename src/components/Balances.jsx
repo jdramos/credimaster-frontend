@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import HelpButton from "./help/HelpButton";
 import {
   Box,
@@ -56,7 +57,12 @@ const money = (value) =>
 const CustomerBalanceViewer = () => {
   const [vendors, setVendors] = useState([]);
 
-  const [selectedBranch, setSelectedBranch] = useState("");
+  // El dashboard de saldos abre esta pantalla con ?date=YYYY-MM-DD&branch_id=N
+  // ("Ver detalle por crédito") para mostrar el mismo corte y sucursal.
+  const [searchParams] = useSearchParams();
+  const urlDate = searchParams.get("date");
+
+  const [selectedBranch, setSelectedBranch] = useState(searchParams.get("branch_id") || "");
   const [selectedVendor, setSelectedVendor] = useState("");
 
   const [stmtOpen, setStmtOpen] = useState(false);
@@ -365,6 +371,12 @@ const CustomerBalanceViewer = () => {
   useEffect(() => {
     if (didAutoSelectDate.current) return;
     didAutoSelectDate.current = true;
+
+    const urlIdx = urlDate ? allDates.indexOf(urlDate) : -1;
+    if (urlIdx >= 0) {
+      setCurrentIndex(urlIdx);
+      return;
+    }
 
     API.get(`/api/balances/available-balance-dates`, { params: { balance_type: balanceType } })
       .then((res) => {
