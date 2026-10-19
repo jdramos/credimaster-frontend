@@ -174,7 +174,12 @@ export default function BalancesDashboardPro() {
 
       const [summaryRes, monthRes, agingRes] = await Promise.all([
         getBalancesFastSummary(params),
-        getBalancesFastPortfolioByMonth(params),
+        // La evolución muestra siempre los 12 meses hasta la fecha final,
+        // aunque el filtro del dashboard sea de un solo mes.
+        getBalancesFastPortfolioByMonth({
+          ...params,
+          date_from: dayjs(params.date_to || undefined).subtract(11, "month").startOf("month").format("YYYY-MM-DD"),
+        }),
         getBalancesFastAging(params),
       ]);
 
@@ -650,7 +655,7 @@ export default function BalancesDashboardPro() {
                 <SectionHeader
                   icon={ShowChartIcon}
                   title="Evolución de cartera"
-                  subtitle="Cartera total, mora y provisión por mes"
+                  subtitle="Cartera total, mora y provisión de los últimos 12 meses"
                 />
                 <ResponsiveContainer width="100%" height="85%">
                   <LineChart data={portfolioByMonth}>
