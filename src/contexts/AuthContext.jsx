@@ -3,10 +3,15 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { UserContext } from "./UserContext";
 import API from "../api";
+import { getTrustedDeviceToken, saveTrustedDeviceToken } from "../api/mfa";
 
 const AuthContext = createContext();
 
 const url = "/api/login";
+
+// Respuestas 401 del primer paso que NO son un error: la contraseña fue
+// correcta pero falta el segundo factor (ver LoginController.mfaPendingResponse).
+const MFA_STEP_CODES = new Set(["MFA_REQUIRED", "MFA_ENROLL_REQUIRED"]);
 
 const getStoredToken = () => {
   const flatToken = localStorage.getItem("token");
@@ -93,70 +98,90 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Guarda la sesión que devuelve el backend (login de un paso o el segundo
+  // paso de 2FA, que responden exactamente lo mismo).
+  const establishSession = (data) => {
+    const {
+      type,
+      token,
+      permissions,
+      role_id,
+      department_id,
+      branches,
+      user_id,
+      user_name,
+      full_name,
+      tenant,
+    } = data;
+
+    const session = {
+      type: type || "TENANT",
+      token,
+      permissions: permissions || [],
+      role_id,
+      department_id,
+      branches: branches || [],
+      user_id,
+      user_name,
+      full_name,
+      tenant,
+    };
+
+    const userToStore = {
+      id: user_id,
+      user_name,
+      full_name,
+      role_id,
+      tenant,
+    };
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("session", JSON.stringify(session));
+    localStorage.setItem("user", JSON.stringify(userToStore));
+
+    setToken(token);
+    setTenant(tenant || null);
+    setSessionType(session.type);
+    setAuthUser(userToStore);
+    hydrateUserContext(session);
+    setIsAuthenticated(true);
+
+    return { ok: true, type: session.type };
+  };
+
   const login = async (username, password) => {
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("session");
       localStorage.removeItem("user");
 
+      const trustedDeviceToken = getTrustedDeviceToken(username);
       const res = await API.post(url, {
         username,
         password,
+        ...(trustedDeviceToken ? { trusted_device_token: trustedDeviceToken } : {}),
       });
 
-      const {
-        type,
-        token,
-        permissions,
-        role_id,
-        department_id,
-        branches,
-        user_id,
-        user_name,
-        full_name,
-        tenant,
-        message,
-      } = res.data;
-
-      if (!token) {
-        toast.error(message || "Usuario o contraseña incorrectos");
+      if (!res.data?.token) {
+        toast.error(res.data?.message || "Usuario o contraseña incorrectos");
         return false;
       }
 
-      const session = {
-        type: type || "TENANT",
-        token,
-        permissions: permissions || [],
-        role_id,
-        department_id,
-        branches: branches || [],
-        user_id,
-        user_name,
-        full_name,
-        tenant,
-      };
-
-      const userToStore = {
-        id: user_id,
-        user_name,
-        full_name,
-        role_id,
-        tenant,
-      };
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("session", JSON.stringify(session));
-      localStorage.setItem("user", JSON.stringify(userToStore));
-
-      setToken(token);
-      setTenant(tenant || null);
-      setSessionType(session.type);
-      setAuthUser(userToStore);
-      hydrateUserContext(session);
-      setIsAuthenticated(true);
-
-      return { ok: true, type: session.type };
+      return establishSession(res.data);
     } catch (err) {
+      const data = err.response?.data;
+      if (err.response?.status === 401 && MFA_STEP_CODES.has(data?.code) && data?.mfa_token) {
+        return {
+          mfa: {
+            mode: data.code === "MFA_ENROLL_REQUIRED" ? "enroll" : "verify",
+            mfa_token: data.mfa_token,
+            full_name: data.full_name,
+            remember_device_days: data.remember_device_days ?? 0,
+            username,
+          },
+        };
+      }
+
       console.error(err);
 
       const message =
@@ -167,6 +192,13 @@ export const AuthProvider = ({ children }) => {
       toast.error(message);
       return false;
     }
+  };
+
+  // Cierra el segundo paso de 2FA: guarda la sesión y, si el usuario pidió
+  // recordar el equipo, el token para saltarse el código las próximas veces.
+  const completeMfaLogin = (data, username) => {
+    if (data?.trusted_device_token) saveTrustedDeviceToken(username, data.trusted_device_token);
+    return establishSession(data);
   };
 
   const logout = () => {
@@ -199,6 +231,7 @@ export const AuthProvider = ({ children }) => {
           isSuperAdmin: sessionType === "SUPERADMIN",
           user: authUser,
           login,
+          completeMfaLogin,
           logout,
         }}
       >

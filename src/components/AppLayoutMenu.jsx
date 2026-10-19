@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   AppBar,
   Avatar,
@@ -46,6 +46,7 @@ import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import StarBorderRoundedIcon from "@mui/icons-material/StarBorderRounded";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -477,6 +478,7 @@ export default function AppLayoutMenu({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
+  const navigate = useNavigate();
   const { tenant } = useAuth();
 
   // enabled_modules null/undefined = todos habilitados (tenant sin
@@ -1247,6 +1249,16 @@ export default function AppLayoutMenu({
         <MenuItem onClick={handleOpenPasswordDialog}>
           <LockOutlinedIcon sx={{ mr: 1.2, fontSize: 18 }} />
           Cambiar contraseña
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            setUserMenuAnchor(null);
+            navigate("/seguridad");
+          }}
+        >
+          <SecurityRoundedIcon sx={{ mr: 1.2, fontSize: 18 }} />
+          Seguridad (verificación en dos pasos)
         </MenuItem>
 
         <MenuItem

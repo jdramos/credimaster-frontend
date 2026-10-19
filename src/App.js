@@ -182,6 +182,7 @@ const ExchangeRatesManager = lazy(() => import("./components/ExchangeRatesManage
 const PreprintedSignatureManager = lazy(() => import("./components/PreprintedSignatureManager"));
 const InstitutionalLegalDataManager = lazy(() => import("./components/InstitutionalLegalDataManager"));
 const CompanyProfileManager = lazy(() => import("./components/CompanyProfileManager"));
+const SecurityPage = lazy(() => import("./pages/SecurityPage"));
 const ProvisionConfigManager = lazy(() => import("./components/ProvisionConfigManager"));
 const LoanAdjustments = lazy(() => import("./components/LoanAdjustments"));
 const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
@@ -264,6 +265,7 @@ function SuperAdminRoutes() {
           <Route path="/soporte" element={<SupportAdminPage />} />
           <Route path="/facturas" element={<InvoicesAdminPage />} />
           <Route path="/ayuda" element={<ScreenHelpAdminPage />} />
+          <Route path="/seguridad" element={<SecurityPage platform />} />
         </Routes>
       </Suspense>
     </SuperAdminLayout>
@@ -847,6 +849,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/cumplimiento/firma-preimpresa" element={<PageContainer><PreprintedSignatureManager /></PageContainer>} />
           <Route path="/configuracion/datos-legales-imf" element={<PageContainer><InstitutionalLegalDataManager /></PageContainer>} />
           <Route path="/configuracion/perfil-empresa" element={<PageContainer><CompanyProfileManager /></PageContainer>} />
+          <Route path="/seguridad" element={<PageContainer><SecurityPage /></PageContainer>} />
           <Route path="/configuracion/provision-cartera" element={<PageContainer><ProvisionConfigManager /></PageContainer>} />
           <Route path="/creditos/notas" element={<PageContainer><LoanAdjustments /></PageContainer>} />
 

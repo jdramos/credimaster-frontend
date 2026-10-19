@@ -8,6 +8,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import HeadsetMicIcon from "@mui/icons-material/HeadsetMic";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
 import { useLocation, useNavigate } from "react-router-dom";
 
 // Shell del módulo superadmin. Barra superior con navegación entre las
@@ -23,6 +24,7 @@ export default function SuperAdminLayout({ children, onLogout }) {
     { label: "Facturas", to: "/superadmin/facturas", icon: <ReceiptLongIcon /> },
     { label: "Soporte", to: "/superadmin/soporte", icon: <HeadsetMicIcon /> },
     { label: "Ayuda de pantallas", to: "/superadmin/ayuda", icon: <HelpOutlineIcon /> },
+    { label: "Seguridad", to: "/superadmin/seguridad", icon: <SecurityRoundedIcon /> },
   ];
 
   const isActive = (to) =>

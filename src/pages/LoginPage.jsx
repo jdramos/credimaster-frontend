@@ -26,9 +26,13 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import MfaCodeStep from "../components/security/MfaCodeStep";
+import MfaEnrollPanel from "../components/security/MfaEnrollPanel";
+import RecoveryCodesPanel from "../components/security/RecoveryCodesPanel";
+import { startLoginEnrollment, confirmLoginEnrollment } from "../api/mfa";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, completeMfaLogin } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -37,6 +41,11 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+
+  // Segundo paso de 2FA: { mode: 'verify' | 'enroll', mfa_token, ... }.
+  const [mfa, setMfa] = useState(null);
+  // Tras configurar 2FA en el login: sesión lista + códigos por mostrar.
+  const [enrolledLogin, setEnrolledLogin] = useState(null);
 
   const [sessionDialog, setSessionDialog] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
@@ -58,7 +67,10 @@ export default function LoginPage() {
 
     try {
       const result = await login(username.trim(), password);
-      if (result) {
+      if (result?.mfa) {
+        setMfa(result.mfa);
+        setPassword("");
+      } else if (result) {
         navigate(result.type === "SUPERADMIN" ? "/superadmin" : "/");
       } else {
         setError(
@@ -74,6 +86,52 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const goHome = (type) => navigate(type === "SUPERADMIN" ? "/superadmin" : "/");
+
+  const backToPassword = () => {
+    setMfa(null);
+    setEnrolledLogin(null);
+    setError(null);
+  };
+
+  const finishMfaLogin = (data) => {
+    const result = completeMfaLogin(data, mfa?.username);
+    goHome(result?.type);
+  };
+
+  let mfaContent = null;
+  if (enrolledLogin) {
+    mfaContent = (
+      <RecoveryCodesPanel
+        codes={enrolledLogin.recovery_codes}
+        doneLabel="Entrar a CrediMaster"
+        onDone={() => finishMfaLogin(enrolledLogin)}
+      />
+    );
+  } else if (mfa?.mode === "verify") {
+    mfaContent = (
+      <MfaCodeStep
+        mfaToken={mfa.mfa_token}
+        fullName={mfa.full_name}
+        rememberDays={mfa.remember_device_days}
+        onVerified={finishMfaLogin}
+        onCancel={backToPassword}
+      />
+    );
+  } else if (mfa?.mode === "enroll") {
+    mfaContent = (
+      <MfaEnrollPanel
+        intro="Su usuario requiere verificación en dos pasos. Configúrela ahora para entrar; solo toma un minuto."
+        rememberDays={mfa.remember_device_days}
+        start={() => startLoginEnrollment(mfa.mfa_token)}
+        confirm={(code, remember) => confirmLoginEnrollment({ mfa_token: mfa.mfa_token, code, remember_device: remember })}
+        onEnrolled={setEnrolledLogin}
+        onCancel={backToPassword}
+        cancelLabel="Volver al inicio de sesión"
+      />
+    );
+  }
 
   return (
     <Box
@@ -137,6 +195,8 @@ export default function LoginPage() {
         </Box>
 
         <CardContent sx={{ p: 3 }}>
+          {mfaContent || (
+          <>
           <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
             Iniciar sesión
           </Typography>
@@ -244,6 +304,8 @@ export default function LoginPage() {
               inusual, contacte al administrador.
             </Typography>
           </Box>
+          </>
+          )}
         </CardContent>
       </Card>
 
