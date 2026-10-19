@@ -65,11 +65,11 @@ const getPaymentPercent = (row) => {
 };
 
 const columns = [
-  { accessorKey: "id", header: "Crédito nro.", size: 10 },
-  { accessorKey: "customer_id", header: "Código Cliente", size: 10 },
-  { accessorKey: "customer_identification", header: "Cédula", size: 50 },
-  { accessorKey: "customer_name", header: "Nombre del cliente", size: 80 },
-  { accessorKey: "date", header: "Fecha solicitud", size: 150 },
+  { accessorKey: "id", header: "Crédito nro.", size: 100 },
+  { accessorKey: "customer_id", header: "Código Cliente", size: 100 },
+  { accessorKey: "customer_identification", header: "Cédula", size: 150 },
+  { accessorKey: "customer_name", header: "Nombre del cliente", size: 240, wrap: true },
+  { accessorKey: "date", header: "Fecha solicitud", size: 130 },
   {
     accessorKey: "amount",
     header: "Monto solicitado",
@@ -82,7 +82,7 @@ const columns = [
     size: 150,
     number: true,
   },
-  { accessorKey: "approval_status", header: "Estado aprobación", size: 100 },
+  { accessorKey: "approval_status", header: "Estado aprobación", size: 160 },
   {
     accessorKey: "payment_progress",
     header: "% Pago",

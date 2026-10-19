@@ -622,9 +622,17 @@ function LoanListDataTable({
 
   const canEditPending = role === 1 || permissions.includes("creditos.editar");
 
+  // Ancho mínimo de cada columna (col.size, en px): los textos no se parten en
+  // varias líneas (salvo las marcadas con wrap, como el nombre del cliente) y,
+  // si la ventana es angosta, la tabla se desplaza horizontalmente en vez de
+  // apretar las columnas.
+  const ACTIONS_WIDTH = 170;
+  const cellSx = (col) => ({ minWidth: col.size || 100, whiteSpace: col.wrap ? "normal" : "nowrap" });
+  const tableMinWidth = columns.reduce((total, col) => total + (col.size || 100), ACTIONS_WIDTH);
+
   return (
-    <TableContainer component={Paper}>
-      <Table size="small">
+    <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+      <Table size="small" sx={{ minWidth: tableMinWidth }}>
         <TableHead>
           <TableRow>
             {columns.map((col, index) => {
@@ -632,7 +640,7 @@ function LoanListDataTable({
               const active = sortable && sortBy === col.accessorKey;
 
               return (
-                <TableCell key={index}>
+                <TableCell key={index} sx={cellSx(col)}>
                   {sortable ? (
                     <TableSortLabel
                       active={active}
@@ -647,7 +655,7 @@ function LoanListDataTable({
                 </TableCell>
               );
             })}
-            <TableCell>
+            <TableCell sx={{ minWidth: ACTIONS_WIDTH, whiteSpace: "nowrap" }}>
               <strong>Acciones</strong>
             </TableCell>
           </TableRow>
@@ -684,13 +692,13 @@ function LoanListDataTable({
             return (
               <TableRow key={row.id ?? rowIndex} hover>
                 {columns.map((col, colIndex) => (
-                  <TableCell key={colIndex}>
+                  <TableCell key={colIndex} sx={cellSx(col)}>
                     {renderCell(col, row[col.accessorKey], row)}
                   </TableCell>
                 ))}
 
-                <TableCell>
-                  <Box display="flex" gap={1} flexWrap="wrap">
+                <TableCell sx={{ minWidth: ACTIONS_WIDTH }}>
+                  <Box display="flex" gap={0.5} flexWrap="nowrap" alignItems="center">
                     {/* =========================================
         BORRADOR
     ========================================= */}
