@@ -148,7 +148,7 @@ const CreditPolicyManager = () => {
             <Table sx={{ mt: 2 }}>
                 <TableHead>
                     <TableRow>
-                        <TableCell>Clave</TableCell>
+                        
                         <TableCell>Nombre</TableCell>
                         <TableCell>Valor</TableCell>
                         <TableCell>Tipo</TableCell>
@@ -159,7 +159,7 @@ const CreditPolicyManager = () => {
                 <TableBody>
                     {policies.map((p) => (
                         <TableRow key={p.policy_key}>
-                            <TableCell>{p.policy_key}</TableCell>
+                            
                             <TableCell>{p.policy_name}</TableCell>
                             <TableCell>{p.policy_value}</TableCell>
                             <TableCell>{p.policy_type}</TableCell>
