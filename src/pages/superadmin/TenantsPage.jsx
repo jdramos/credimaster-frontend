@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -40,6 +40,8 @@ import ProvinceSelect from "../../components/ProvinceSelect";
 import MunicipalitySelect from "../../components/MunicipalitySelect";
 import SanctionsFeedSyncPanel from "./SanctionsFeedSyncPanel";
 import ConamiIndicatorsPanel from "./ConamiIndicatorsPanel";
+import { MfaPolicyPanel } from "../SecurityPage";
+import { getTenantMfaPolicy, updateTenantMfaPolicy } from "../../api/mfa";
 
 const PROVINCES_CATALOG_URL = "/api/superadmin/catalogs/provinces";
 const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
@@ -138,6 +140,14 @@ const getBillingStatus = (row) => {
   if (diffDays <= 7) return { label: `Vence en ${diffDays}d`, color: "warning" };
   return { label: "Al día", color: "success" };
 };
+
+// Política de verificación en dos pasos de la empresa que se edita (se guarda
+// aparte, con su propio botón, igual que en Seguridad de la empresa).
+function TenantMfaPolicySection({ tenantId }) {
+  const loadPolicy = useCallback(() => getTenantMfaPolicy(tenantId), [tenantId]);
+  const savePolicy = useCallback((policy) => updateTenantMfaPolicy(tenantId, policy), [tenantId]);
+  return <MfaPolicyPanel loadPolicy={loadPolicy} savePolicy={savePolicy} asSuperadmin />;
+}
 
 export default function TenantsPage() {
   const navigate = useNavigate();
@@ -837,6 +847,15 @@ export default function TenantsPage() {
                   />
                 ))}
               </FormGroup>
+
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" fontWeight={800}>
+                Verificación en dos pasos
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Se guarda por separado con "Guardar política"; no depende del botón "Guardar cambios".
+              </Typography>
+              {editTenant && <TenantMfaPolicySection key={editTenant.id} tenantId={editTenant.id} />}
             </>
           )}
         </DialogContent>

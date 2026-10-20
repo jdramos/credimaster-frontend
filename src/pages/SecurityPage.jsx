@@ -378,16 +378,19 @@ export function MyMfaPanel({ platform = false }) {
   );
 }
 
-// Política de la empresa (solo tenants).
-export function MfaPolicyPanel() {
+// Política de la empresa. La usa el administrador de la empresa (Seguridad)
+// y el superadmin (Empresas > Editar), que pasa loadPolicy/savePolicy de esa
+// empresa y asSuperadmin para los textos.
+export function MfaPolicyPanel({ loadPolicy = getMfaPolicy, savePolicy = updateMfaPolicy, asSuperadmin = false }) {
   const [policy, setPolicy] = useState(null);
   const [form, setForm] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const data = await getMfaPolicy();
+      const data = await loadPolicy();
       setPolicy(data);
       setForm({
         enabled: data.enabled,
@@ -397,7 +400,7 @@ export function MfaPolicyPanel() {
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo cargar la política."));
     }
-  }, []);
+  }, [loadPolicy]);
 
   useEffect(() => {
     load();
@@ -423,12 +426,13 @@ export function MfaPolicyPanel() {
 
   const save = async () => {
     setSaving(true);
+    setResult(null);
     try {
-      await updateMfaPolicy(form);
-      toast.success("Política de verificación en dos pasos guardada");
+      await savePolicy(form);
+      setResult({ severity: "success", message: "Política de verificación en dos pasos guardada." });
       load();
     } catch (err) {
-      toast.error(apiErrorMessage(err, "No se pudo guardar la política."));
+      setResult({ severity: "error", message: apiErrorMessage(err, "No se pudo guardar la política.") });
     } finally {
       setSaving(false);
     }
@@ -439,12 +443,14 @@ export function MfaPolicyPanel() {
       <CardContent>
         {!policy.server_configured && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Falta configurar la llave de cifrado (TOTP_ENC_KEY) en el servidor. Contacte a soporte.
+            Falta configurar la llave de cifrado (TOTP_ENC_KEY) en el servidor.{asSuperadmin ? "" : " Contacte a soporte."}
           </Alert>
         )}
         {(!policy.tables_ready || !policy.license_columns_ready) && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            Falta aplicar la actualización de base de datos de 2FA para su empresa. Contacte a soporte.
+            {asSuperadmin
+              ? "Falta aplicar la migración de 2FA en la base de esta empresa (20261019_01_create_user_mfa)."
+              : "Falta aplicar la actualización de base de datos de 2FA para su empresa. Contacte a soporte."}
           </Alert>
         )}
 
@@ -491,10 +497,16 @@ export function MfaPolicyPanel() {
           sx={{ mt: 2, width: 280 }}
         />
 
-        {form.enabled && (
+        {form.enabled && !asSuperadmin && (
           <Alert severity="info" sx={{ mt: 2 }}>
             Si su propio rol queda como obligatorio y aún no configuró la verificación, se le pedirá en su próximo inicio de
             sesión. Puede configurarla ahora en “Mi cuenta”.
+          </Alert>
+        )}
+
+        {result && (
+          <Alert severity={result.severity} sx={{ mt: 2 }} onClose={() => setResult(null)}>
+            {result.message}
           </Alert>
         )}
 

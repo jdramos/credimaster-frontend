@@ -32,6 +32,10 @@ export const revokeAllTrustedDevices = async (platform) => (await API.delete(`${
 export const getMfaPolicy = async () => (await API.get("/api/security/mfa/policy")).data.data;
 export const updateMfaPolicy = async (policy) => (await API.put("/api/security/mfa/policy", policy)).data;
 export const getMfaUsers = async () => (await API.get("/api/security/mfa/users")).data.data;
+// Superadmin: política 2FA de una empresa (Empresas > Editar).
+export const getTenantMfaPolicy = async (tenantId) => (await API.get(`/api/superadmin/tenants/${tenantId}/mfa-policy`)).data.data;
+export const updateTenantMfaPolicy = async (tenantId, policy) =>
+  (await API.put(`/api/superadmin/tenants/${tenantId}/mfa-policy`, policy)).data;
 export const resetUserMfa = async (userId, reason) => (await API.post(`/api/security/mfa/users/${userId}/reset`, { reason })).data;
 
 // "Recordar este equipo": el token (firmado y revocable en el servidor) se
