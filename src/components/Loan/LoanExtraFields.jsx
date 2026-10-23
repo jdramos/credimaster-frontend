@@ -14,11 +14,14 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 const toStr = (value) =>
   value === null || value === undefined || value === "" ? "" : String(value);
 
+// lockedFields: campos que fija el producto financiero (tipo NGRC, tipo de
+// crédito CONAMI, moneda); se muestran de solo lectura.
 const LoanExtraFields = ({
   formData,
   handleChange,
   catalogs = {},
   errors = {},
+  lockedFields = [],
 }) => {
   const {
     tiposCredito = [],
@@ -58,7 +61,8 @@ const LoanExtraFields = ({
         })
       }
       error={!!errors[name]}
-      helperText={errors[name] || ""}
+      helperText={errors[name] || (lockedFields.includes(name) ? "Definido por el producto" : "")}
+      disabled={lockedFields.includes(name)}
       InputLabelProps={{ shrink: true }}
     >
       <MenuItem value="">Seleccione</MenuItem>

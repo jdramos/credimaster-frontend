@@ -11,8 +11,9 @@ import HelpButton from "./help/HelpButton";
 const OPEN_END_DAYS = 99999;
 
 // Espejo de la validación del backend (loanClassificationsController.js),
-// solo para avisar mientras se escribe; el backend es quien decide.
-const validateRows = (rows) => {
+// solo para avisar mientras se escribe; el backend es quien decide. Los
+// mínimos de la norma solo se exigen a una empresa normada por la CONAMI.
+const validateRows = (rows, enforceNorm = true) => {
   const errors = {};
   let prevMax = -1;
   let prevPct = -1;
@@ -25,10 +26,10 @@ const validateRows = (rows) => {
 
     if (!isLast) {
       if (!Number.isInteger(maxDays) || maxDays < prevMax + 1) rowErrors.push(`Debe ser ≥ ${prevMax + 1}`);
-      else if (r.ngrc && maxDays > r.ngrc.max_days) rowErrors.push(`Norma: máx. ${r.ngrc.max_days} días`);
+      else if (enforceNorm && r.ngrc && maxDays > r.ngrc.max_days) rowErrors.push(`Norma: máx. ${r.ngrc.max_days} días`);
     }
     if (!Number.isFinite(pct) || pct < 0 || pct > 100) rowErrors.push("Entre 0 y 100");
-    else if (r.ngrc && pct < r.ngrc.provision_percentage) rowErrors.push(`Norma: mín. ${r.ngrc.provision_percentage}%`);
+    else if (enforceNorm && r.ngrc && pct < r.ngrc.provision_percentage) rowErrors.push(`Norma: mín. ${r.ngrc.provision_percentage}%`);
     else if (pct < prevPct) rowErrors.push("Menor que la categoría anterior");
 
     if (rowErrors.length) errors[r.classification] = rowErrors.join(" · ");
@@ -50,8 +51,17 @@ const withDerivedMinDays = (rows) => {
   });
 };
 
+const matchesNorm = (rows) =>
+  rows.every((r) =>
+    !r.ngrc ||
+    (Number(r.provision_percentage) === r.ngrc.provision_percentage &&
+      (r.classification === "E" || Number(r.max_days) === r.ngrc.max_days)));
+
 export default function ProvisionConfigManager() {
   const [groups, setGroups] = useState([]);
+  // Normada por la CONAMI: la tabla es la de la NGRC y no se edita (solo se
+  // puede restablecer a esos valores). No normada: se edita libremente.
+  const [regulated, setRegulated] = useState(true);
   const [tab, setTab] = useState(0);
   const [drafts, setDrafts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -64,7 +74,8 @@ export default function ProvisionConfigManager() {
     setLoading(true);
     try {
       const { data } = await API.get("/api/loan-classifications");
-      const list = Array.isArray(data) ? data : [];
+      const list = Array.isArray(data) ? data : Array.isArray(data?.groups) ? data.groups : [];
+      setRegulated(Array.isArray(data) ? true : data?.regulated !== false);
       setGroups(list);
       setDrafts(Object.fromEntries(list.map((g) => [g.id, g.rows.map((r) => ({ ...r }))])));
     } catch (err) {
@@ -84,7 +95,8 @@ export default function ProvisionConfigManager() {
 
   const group = groups[tab];
   const rows = useMemo(() => withDerivedMinDays(group ? drafts[group.id] || [] : []), [group, drafts]);
-  const errors = useMemo(() => validateRows(rows), [rows]);
+  const errors = useMemo(() => validateRows(rows, regulated), [rows, regulated]);
+  const savedMatchesNorm = group ? matchesNorm(group.rows) : true;
   const dirty = group && JSON.stringify(drafts[group.id]) !== JSON.stringify(group.rows);
 
   const setField = (letter, field, value) => {
@@ -95,11 +107,11 @@ export default function ProvisionConfigManager() {
     }));
   };
 
-  const save = async () => {
+  const save = async (sourceRows = rows) => {
     setSaving(true);
     setServerErrors([]);
     try {
-      const payload = rows.map((r) => ({
+      const payload = sourceRows.map((r) => ({
         classification: r.classification,
         max_days: r.classification === "E" ? OPEN_END_DAYS : Number(r.max_days),
         provision_percentage: Number(r.provision_percentage),
@@ -114,6 +126,15 @@ export default function ProvisionConfigManager() {
       setSaving(false);
     }
   };
+
+  // Normada con valores distintos de la norma (p. ej. venía de no normada):
+  // se guarda directamente la tabla de la NGRC.
+  const applyNorm = () =>
+    save(group.rows.map((r) => ({
+      ...r,
+      max_days: r.ngrc?.max_days ?? r.max_days,
+      provision_percentage: r.ngrc?.provision_percentage ?? r.provision_percentage,
+    })));
 
   const resetToNorm = () => {
     setServerErrors([]);
@@ -136,8 +157,10 @@ export default function ProvisionConfigManager() {
           <HelpButton screenKey="configuracion.provision_cartera" />
         </Stack>
         <Typography color="text.secondary">
-          Rangos de días de mora y % de provisión por categoría de riesgo (NGRC, Art. 30-33). Puede ser más conservador
-          que la norma — clasificar antes o provisionar más — pero nunca menos.
+          Rangos de días de mora y % de provisión por categoría de riesgo.
+          {regulated
+            ? " Su empresa está normada por la CONAMI: se aplican los valores de la NGRC (Art. 30-33) y no se pueden modificar."
+            : " Su empresa no está normada por la CONAMI: puede ajustar los rangos y porcentajes; los valores de la NGRC se muestran como referencia."}
         </Typography>
       </Box>
 
@@ -166,7 +189,7 @@ export default function ProvisionConfigManager() {
                       <TableCell>Días desde</TableCell>
                       <TableCell>Días hasta</TableCell>
                       <TableCell>% provisión</TableCell>
-                      <TableCell>Mínimo de la norma</TableCell>
+                      <TableCell>{regulated ? "Valor de la norma" : "Referencia de la norma"}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -183,6 +206,7 @@ export default function ProvisionConfigManager() {
                           ) : (
                             <TextField
                               size="small" type="number" value={r.max_days}
+                              disabled={regulated}
                               onChange={(e) => setField(r.classification, "max_days", e.target.value)}
                               error={Boolean(errors[r.classification])}
                             />
@@ -191,6 +215,7 @@ export default function ProvisionConfigManager() {
                         <TableCell sx={{ width: 150 }}>
                           <TextField
                             size="small" type="number" value={r.provision_percentage}
+                            disabled={regulated}
                             inputProps={{ step: "0.01", min: 0, max: 100 }}
                             onChange={(e) => setField(r.classification, "provision_percentage", e.target.value)}
                             error={Boolean(errors[r.classification])}
@@ -221,17 +246,32 @@ export default function ProvisionConfigManager() {
                 diferencia de provisión se contabiliza como ajuste. Quedan registrados en la bitácora de auditoría.
               </Alert>
 
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button variant="text" onClick={resetToNorm} disabled={saving}>Usar valores de la norma</Button>
-                <Button
-                  variant="contained"
-                  startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
-                  disabled={saving || !dirty || Object.keys(errors).length > 0}
-                  onClick={save}
-                >
-                  Guardar {group?.name}
-                </Button>
-              </Stack>
+              {regulated ? (
+                !savedMatchesNorm && (
+                  <Alert
+                    severity="warning"
+                    action={
+                      <Button color="inherit" size="small" onClick={applyNorm} disabled={saving}>
+                        Aplicar valores de la norma
+                      </Button>
+                    }
+                  >
+                    Esta tabla tiene valores distintos de la NGRC. Como su empresa está normada, debe usar los de la norma.
+                  </Alert>
+                )
+              ) : (
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Button variant="text" onClick={resetToNorm} disabled={saving}>Usar valores de la norma</Button>
+                  <Button
+                    variant="contained"
+                    startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveRoundedIcon />}
+                    disabled={saving || !dirty || Object.keys(errors).length > 0}
+                    onClick={() => save()}
+                  >
+                    Guardar {group?.name}
+                  </Button>
+                </Stack>
+              )}
             </Stack>
           </CardContent>
         </Card>

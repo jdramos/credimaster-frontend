@@ -25,6 +25,8 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import LockIcon from "@mui/icons-material/Lock";
+import GroupIcon from "@mui/icons-material/Group";
+import RegisterCashiersDialog from "./RegisterCashiersDialog";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 
@@ -56,6 +58,7 @@ export default function CashRegistersList() {
   const [alert, setAlert] = useState({ open: false, severity: "success", message: "" });
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [cashiersTarget, setCashiersTarget] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -170,6 +173,14 @@ export default function CashRegistersList() {
     },
     { field: "opening_balance", headerName: "Saldo apertura", width: 140, renderCell: (p) => `${p.row.currency_symbol || "C$"} ${money(p.value)}` },
     {
+      field: "assigned_cashiers",
+      headerName: "Cajeros",
+      width: 200,
+      sortable: false,
+      valueGetter: (p) => (p.row.assigned_cashiers || []).map((a) => a.name).join(", "),
+      renderCell: (p) => p.value || <Typography variant="body2" color="text.secondary">Cualquiera de la sucursal</Typography>,
+    },
+    {
       field: "status",
       headerName: "Estado",
       width: 120,
@@ -178,11 +189,18 @@ export default function CashRegistersList() {
     {
       field: "actions",
       headerName: "Acciones",
-      width: 110,
+      width: 140,
       sortable: false,
       filterable: false,
       renderCell: (params) => (
         <Box sx={{ display: "flex", gap: 0.5 }}>
+          {canManageRegisters && params.row.status === "ACTIVA" && (
+            <Tooltip title="Cajeros asignados">
+              <IconButton size="small" onClick={() => setCashiersTarget(params.row)}>
+                <GroupIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
           {canManageRegisters && (
             <Tooltip title="Editar">
               <IconButton size="small" onClick={() => handleOpenEdit(params.row)}>
@@ -325,6 +343,18 @@ export default function CashRegistersList() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <RegisterCashiersDialog
+        open={!!cashiersTarget}
+        register={cashiersTarget}
+        onClose={() => setCashiersTarget(null)}
+        onSaved={(data) => {
+          setCashiersTarget(null);
+          const names = (data?.assigned || []).map((a) => a.name).join(", ");
+          setAlert({ open: true, severity: "success", message: names ? `Cajeros asignados: ${names}` : "La caja quedó libre para cualquier cajero de la sucursal" });
+          fetchRegisters();
+        }}
+      />
 
       <Snackbar open={alert.open} autoHideDuration={5000} onClose={() => setAlert((p) => ({ ...p, open: false }))} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
         <Alert severity={alert.severity} onClose={() => setAlert((p) => ({ ...p, open: false }))}>{alert.message}</Alert>

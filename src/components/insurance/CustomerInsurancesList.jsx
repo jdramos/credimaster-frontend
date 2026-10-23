@@ -118,8 +118,10 @@ export default function CustomerInsurancesList() {
     setCustomerLoans([]);
     if (!value) return;
     try {
-      const res = await API.get(`/api/loans/customer/${value.id}`);
-      setCustomerLoans(Array.isArray(res?.data) ? res.data : []);
+      // Créditos desembolsados con saldo (no depende de que el día esté
+      // abierto, a diferencia de /api/loans/customer/:id de la pantalla de cobro).
+      const res = await API.get(`/api/loans/customer/${value.id}/active-summary`);
+      setCustomerLoans(Array.isArray(res?.data?.loans) ? res.data.loans : []);
     } catch {
       setCustomerLoans([]);
     }
@@ -360,11 +362,13 @@ export default function CustomerInsurancesList() {
                   onChange={(e) => setForm((f) => ({ ...f, loan_id: e.target.value }))}
                   disabled={!form.customer_id || customerLoans.length === 0}
                   SelectProps={{ native: true }}
+                  InputLabelProps={{ shrink: true }}
+                  helperText={form.customer_id && customerLoans.length === 0 ? "El cliente no tiene créditos activos" : undefined}
                 >
                   <option value="">Sin ligar a un crédito</option>
                   {customerLoans.map((l) => (
                     <option key={l.id} value={l.id}>
-                      #{l.id} — C$ {money(l.approved_amount)}
+                      {l.credit_code || `#${l.id}`} — C$ {money(l.approved_amount || l.amount)}
                     </option>
                   ))}
                 </TextField>

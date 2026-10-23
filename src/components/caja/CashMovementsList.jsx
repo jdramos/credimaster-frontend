@@ -36,6 +36,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import { printCashRegisterStatementReport } from "../../reports/cashRegisterStatementReport";
 import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
@@ -65,6 +66,7 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 
 export default function CashMovementsList() {
   const { tenant } = useAuth();
+  const [searchParams] = useSearchParams();
   const [cashRegisters, setCashRegisters] = useState([]);
   const [cashRegisterId, setCashRegisterId] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -104,11 +106,22 @@ export default function CashMovementsList() {
   const showAlert = (message, severity = "error") => setAlert({ open: true, severity, message });
 
   useEffect(() => {
-    API.get("/api/caja/registers", { params: { status: "ACTIVA" } }).then((res) => setCashRegisters(res.data?.data || [])).catch(() => {});
+    API.get("/api/caja/registers", { params: { status: "ACTIVA" } }).then((res) => {
+      const list = res.data?.data || [];
+      setCashRegisters(list);
+      // "Mi caja" llega con ?register=<id> para registrar en la caja del turno.
+      const preselected = list.find((c) => String(c.id) === searchParams.get("register"));
+      if (preselected) {
+        setCashRegisterId(preselected.id);
+        setStartDate(String(preselected.opening_date).slice(0, 10));
+      }
+    }).catch(() => {});
     API.get(`/api/accounting/accounts?is_active=1`).then((res) => {
       const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
       setAccounts(list.filter((a) => Number(a.is_movement) === 1));
     }).catch(() => {});
+    // Solo al montar: la preselección por ?register= no debe repetirse.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedCashRegister = useMemo(

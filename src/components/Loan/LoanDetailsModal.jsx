@@ -82,6 +82,7 @@ import AssetAdjudicationModal from "../AssetAdjudicationModal";
 import ApprovalConfirmationDialog from "./ApprovalConfirmationDialog";
 import { printLoanApplicationReport } from "../../reports/loanApplicationReport";
 import { printCommitteeMinutesReport } from "../../reports/committeeMinutesReport";
+import { writeSandboxedDocument } from "../../reports/safeDocument";
 
 dayjs.extend(utc);
 
@@ -381,17 +382,13 @@ const LoanDetailsModal = ({
         },
       );
 
-      const blob = new Blob([response.data], {
-        type: "text/html;charset=utf-8",
-      });
-
-      const url = window.URL.createObjectURL(blob);
-
-      window.open(url, "_blank");
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 10000);
+      // En un iframe sandboxed sin scripts (ver reports/safeDocument.js): el
+      // HTML incluye nombres y datos que capturan los usuarios, y un blob: URL
+      // abierto en pestaña comparte el origen de la app (y su localStorage).
+      const html = await new Blob([response.data]).text();
+      const win = window.open("", "_blank");
+      if (!win) throw new Error("El navegador bloqueó la ventana del documento.");
+      writeSandboxedDocument(win, html, { autoPrint: false });
     } catch (error) {
       console.error(error);
       setSnackbar({

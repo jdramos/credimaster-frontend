@@ -39,6 +39,7 @@ import { useAuth } from "../contexts/AuthContext";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primereact/resources/primereact.css";
+import { writeSandboxedDocument } from "../reports/safeDocument";
 
 dayjs.extend(customParseFormat);
 
@@ -316,12 +317,7 @@ const CustomerBalanceViewer = () => {
 
     const w = window.open("", "_blank");
 
-    w.document.write(html);
-    w.document.close();
-
-    setTimeout(() => {
-      w.print();
-    }, 500);
+    writeSandboxedDocument(w, html);
   };
 
   const handlePrintReport = () => {

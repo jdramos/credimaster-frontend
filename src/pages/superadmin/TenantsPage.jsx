@@ -73,6 +73,7 @@ const emptyForm = {
   admin_email: "",
   enabled_modules: null,
   regulatory_type: "IMF_REGULADA",
+  conami_regulated: true,
   interest_type: "COMPOUND",
 };
 
@@ -82,6 +83,15 @@ const emptyForm = {
 const REGULATORY_TYPE_OPTIONS = [
   { value: "IMF_REGULADA", label: "IMF Regulada" },
   { value: "PERSONA_NATURAL_PRESTAMISTA", label: "Persona Natural / Prestamista" },
+];
+
+// Inscrita en la CONAMI (normada) o no (db/license/031). Una sociedad que
+// presta puede no estar inscrita. No apaga ningún módulo: decide si la
+// empresa puede editar los parámetros de las normas (p. ej. la tabla de
+// clasificación y provisión). Normada: valores de la norma, sin editar.
+const REGULATED_OPTIONS = [
+  { value: "1", label: "Sí, inscrita en la CONAMI" },
+  { value: "0", label: "No inscrita (parámetros editables)" },
 ];
 
 // Tipo de interés de la empresa (db/license/021_add_tenant_interest_type.js).
@@ -96,7 +106,7 @@ const interestTypeLabel = (value) => INTEREST_TYPE_OPTIONS.find((opt) => opt.val
 // Módulos exclusivos de IMF regulada — se desmarcan por defecto al crear un
 // tenant "Persona Natural / Prestamista" (el superadmin puede reactivarlos
 // manualmente si ese tenant en particular sí los necesita).
-const IMF_ONLY_MODULE_KEYS = ["icc", "isc", "sinriesgo", "risk_classification_ngrc"];
+const IMF_ONLY_MODULE_KEYS = ["icc", "isc", "sinriesgo", "risk_classification_ngrc", "it_risk"];
 
 // Slugifica el código de empresa a un nombre de base de datos válido
 // (mismo patrón que valida el backend: minúsculas, dígitos, guión bajo).
@@ -279,19 +289,29 @@ export default function TenantsPage() {
   // creación — el superadmin puede volver a marcarlos manualmente después.
   // No se replica este efecto en "Editar Empresa" (más abajo) a propósito:
   // reclasificar un tenant ya existente no debe pisar módulos ya elegidos.
+  // Módulos por defecto: sin los exclusivos de IMF si es persona natural /
+  // prestamista. Estar o no normada no cambia los módulos.
+  const presetModules = (regulatoryType) => {
+    if (regulatoryType === "PERSONA_NATURAL_PRESTAMISTA") {
+      return availableModules.map((m) => m.key).filter((k) => !IMF_ONLY_MODULE_KEYS.includes(k));
+    }
+    return null;
+  };
+
   const handleRegulatoryTypeChange = (e) => {
     const value = e.target.value;
-    setForm((prev) => {
+    setForm((prev) => ({
+      ...prev,
+      regulatory_type: value,
       // Persona natural / prestamista cobra interés flat; IMF, sobre saldo.
-      const next = { ...prev, regulatory_type: value, interest_type: value === "PERSONA_NATURAL_PRESTAMISTA" ? "FLAT" : "COMPOUND" };
-      if (value === "PERSONA_NATURAL_PRESTAMISTA") {
-        const allKeys = availableModules.map((m) => m.key);
-        next.enabled_modules = allKeys.filter((k) => !IMF_ONLY_MODULE_KEYS.includes(k));
-      } else {
-        next.enabled_modules = null;
-      }
-      return next;
-    });
+      interest_type: value === "PERSONA_NATURAL_PRESTAMISTA" ? "FLAT" : "COMPOUND",
+      enabled_modules: presetModules(value),
+    }));
+  };
+
+  const handleRegulatedChange = (e) => {
+    const regulated = e.target.value === "1";
+    setForm((prev) => ({ ...prev, conami_regulated: regulated }));
   };
 
   // enabled_modules === null significa "todos habilitados". Al desmarcar un
@@ -324,6 +344,7 @@ export default function TenantsPage() {
       address: row.address || "",
       enabled_modules: row.enabled_modules ?? null,
       regulatory_type: row.regulatory_type || "IMF_REGULADA",
+      conami_regulated: row.conami_regulated === undefined || row.conami_regulated === null ? true : !!row.conami_regulated,
       interest_type: row.interest_type || "COMPOUND",
     });
     setEditDialogOpen(true);
@@ -499,6 +520,17 @@ export default function TenantsPage() {
     },
     { field: "plan_code", headerName: "Plan", width: 100 },
     {
+      field: "conami_regulated",
+      headerName: "CONAMI",
+      width: 120,
+      renderCell: (params) =>
+        params.value === 0 || params.value === false ? (
+          <Chip size="small" variant="outlined" label="No normada" />
+        ) : (
+          <Chip size="small" color="primary" variant="outlined" label="Normada" />
+        ),
+    },
+    {
       field: "enabled_modules",
       headerName: "Módulos",
       width: 220,
@@ -651,6 +683,21 @@ export default function TenantsPage() {
                 helperText="Determina qué reportes CONAMI vienen habilitados por defecto"
               >
                 {REGULATORY_TYPE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                select
+                label="¿Normada por la CONAMI?"
+                fullWidth
+                size="small"
+                value={form.conami_regulated ? "1" : "0"}
+                onChange={handleRegulatedChange}
+                helperText={form.conami_regulated ? "Usa los valores de las normas; no se pueden editar" : "Podrá editar los parámetros de las normas (p. ej. provisiones)"}
+              >
+                {REGULATED_OPTIONS.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                 ))}
               </TextField>
@@ -812,6 +859,21 @@ export default function TenantsPage() {
                     helperText="Cambiarlo no toca los módulos ya configurados abajo"
                   >
                     {REGULATORY_TYPE_OPTIONS.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    select
+                    label="¿Normada por la CONAMI?"
+                    fullWidth
+                    size="small"
+                    value={editForm.conami_regulated ? "1" : "0"}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, conami_regulated: e.target.value === "1" }))}
+                    helperText={editForm.conami_regulated ? "Parámetros de las normas sin editar" : "Parámetros de las normas editables"}
+                  >
+                    {REGULATED_OPTIONS.map((opt) => (
                       <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                     ))}
                   </TextField>

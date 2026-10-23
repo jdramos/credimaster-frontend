@@ -67,6 +67,7 @@ const PromoterList = lazy(() => import("./components/PromoterList"));
 const PromoterAdd = lazy(() => import("./components/PromoterAdd"));
 const PromoterEdit = lazy(() => import("./components/PromoterEdit"));
 const CustomerList = lazy(() => import("./components/Customer/CustomerList"));
+const InactiveCustomers = lazy(() => import("./components/Customer/InactiveCustomers"));
 const UserAdd = lazy(() => import("./components/UserAdd"));
 const AddApproverForm = lazy(() => import("./components/ApproverAddForm"));
 const ApproverList = lazy(() => import("./components/ApproverList"));
@@ -137,6 +138,16 @@ const ObligacionesList = lazy(() => import("./components/obligations/Obligacione
 const InsuranceProvidersList = lazy(() => import("./components/insurance/InsuranceProvidersList"));
 const InsuranceProductsList = lazy(() => import("./components/insurance/InsuranceProductsList"));
 const CustomerInsurancesList = lazy(() => import("./components/insurance/CustomerInsurancesList"));
+const InsuranceSettlements = lazy(() => import("./components/insurance/InsuranceSettlements"));
+const ItDashboard = lazy(() => import("./components/it/ItDashboard"));
+const ItHelpdesk = lazy(() => import("./components/it/ItHelpdesk"));
+const ItAssets = lazy(() => import("./components/it/ItAssets"));
+const ItLicenses = lazy(() => import("./components/it/ItLicenses"));
+const ItMaintenances = lazy(() => import("./components/it/ItMaintenances"));
+const ItBackups = lazy(() => import("./components/it/ItBackups"));
+const ItContracts = lazy(() => import("./components/it/ItContracts"));
+const ItRiskIncidents = lazy(() => import("./components/itRisk/ItRiskIncidents"));
+const ItRiskAssessments = lazy(() => import("./components/itRisk/ItRiskAssessments"));
 const BudgetsList = lazy(() => import("./components/budget/BudgetsList"));
 const BudgetAccountLinesEditor = lazy(() => import("./components/budget/BudgetAccountLinesEditor"));
 const BudgetPlacementGoalsEditor = lazy(() => import("./components/budget/BudgetPlacementGoalsEditor"));
@@ -150,6 +161,9 @@ const DepartmentBudgetApprovalInbox = lazy(() => import("./components/budget/Dep
 const CashRegistersList = lazy(() => import("./components/caja/CashRegistersList"));
 const CashMovementsList = lazy(() => import("./components/caja/CashMovementsList"));
 const CollectorArqueosList = lazy(() => import("./components/caja/CollectorArqueosList"));
+const MyCashSession = lazy(() => import("./components/caja/MyCashSession"));
+const CashSessionsList = lazy(() => import("./components/caja/CashSessionsList"));
+const InstitutionRatesPage = lazy(() => import("./components/caja/InstitutionRatesPage"));
 const EmployeesList = lazy(() => import("./components/hr/EmployeesList"));
 const HrConfigPanel = lazy(() => import("./components/hr/HrConfigPanel"));
 const EmployeeRecurringItemsList = lazy(() => import("./components/hr/EmployeeRecurringItemsList"));
@@ -184,6 +198,7 @@ const InstitutionalLegalDataManager = lazy(() => import("./components/Institutio
 const CompanyProfileManager = lazy(() => import("./components/CompanyProfileManager"));
 const SecurityPage = lazy(() => import("./pages/SecurityPage"));
 const ProvisionConfigManager = lazy(() => import("./components/ProvisionConfigManager"));
+const LoanProductsManager = lazy(() => import("./components/loanProducts/LoanProductsManager"));
 const LoanAdjustments = lazy(() => import("./components/LoanAdjustments"));
 const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
 const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
@@ -405,6 +420,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <CustomerList />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/clientes/inactivos"
+            element={
+              <PageContainer>
+                <InactiveCustomers />
               </PageContainer>
             }
           />
@@ -784,6 +807,15 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/cumplimiento/informe-mensual" element={<AmlMonthlyReport />} />
           <Route path="/cumplimiento/oficial-cumplimiento" element={<ComplianceOfficerHistory />} />
           <Route path="/cumplimiento/productos" element={<ProductRiskAssessments />} />
+          <Route path="/ti" element={<ItDashboard />} />
+          <Route path="/ti/mesa-de-ayuda" element={<ItHelpdesk />} />
+          <Route path="/ti/activos" element={<ItAssets />} />
+          <Route path="/ti/licencias" element={<ItLicenses />} />
+          <Route path="/ti/mantenimientos" element={<ItMaintenances />} />
+          <Route path="/ti/respaldos" element={<ItBackups />} />
+          <Route path="/ti/contratos" element={<ItContracts />} />
+          <Route path="/ti/riesgo/incidentes" element={<ItRiskIncidents />} />
+          <Route path="/ti/riesgo/autoevaluacion" element={<ItRiskAssessments />} />
           <Route path="/adjudicaciones" element={<AssetAdjudicationsList />} />
           <Route path="/contabilidad/notas-eeff" element={<FinancialStatementNotes />} />
           <Route path="/contabilidad/indicadores-financieros" element={<FinancialIndicators />} />
@@ -795,6 +827,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/obligaciones" element={<ObligacionesList />} />
           <Route path="/seguros/aseguradoras" element={<InsuranceProvidersList />} />
           <Route path="/seguros/tipos" element={<InsuranceProductsList />} />
+          <Route path="/seguros/liquidaciones" element={<InsuranceSettlements />} />
           <Route path="/seguros" element={<CustomerInsurancesList />} />
           <Route path="/presupuesto" element={<BudgetsList />} />
           <Route path="/presupuesto/:id/cuentas" element={<BudgetAccountLinesEditor />} />
@@ -812,6 +845,9 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/caja/cajas" element={<CashRegistersList />} />
           <Route path="/caja/movimientos" element={<CashMovementsList />} />
           <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
+          <Route path="/caja/mi-caja" element={<MyCashSession />} />
+          <Route path="/caja/turnos" element={<CashSessionsList />} />
+          <Route path="/caja/tipo-cambio" element={<InstitutionRatesPage />} />
           <Route path="/rrhh/dashboard" element={<HrDashboard />} />
           <Route path="/rrhh/organigrama" element={<OrgChart />} />
           <Route path="/rrhh/contratos-por-vencer" element={<ContractReminders />} />
@@ -832,6 +868,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/contabilidad/contabilizar" element={<PostingRuns />} />
           <Route path="/contabilidad/mapeos" element={<AccountMappingsManager />} />
           <Route path="/contabilidad/partidas-pendientes" element={<PendingItemsAging />} />
+          <Route path="/contabilidad/integracion" element={<AccountReconciliation />} />
           <Route path="/contabilidad/conciliacion" element={<AccountReconciliation />} />
           <Route path="/conami/icc" element={<IccGenerator />} />
           <Route path="/conami/isc" element={<IscGenerator />} />
@@ -851,6 +888,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/configuracion/perfil-empresa" element={<PageContainer><CompanyProfileManager /></PageContainer>} />
           <Route path="/seguridad" element={<PageContainer><SecurityPage /></PageContainer>} />
           <Route path="/configuracion/provision-cartera" element={<PageContainer><ProvisionConfigManager /></PageContainer>} />
+          <Route path="/configuracion/productos-financieros" element={<PageContainer><LoanProductsManager /></PageContainer>} />
           <Route path="/creditos/notas" element={<PageContainer><LoanAdjustments /></PageContainer>} />
 
           <Route

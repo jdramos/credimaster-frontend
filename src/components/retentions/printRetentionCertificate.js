@@ -1,3 +1,4 @@
+import { writeSandboxedDocument } from "../../reports/safeDocument";
 // Genera e imprime la Constancia de Retención (documento formal que el agente
 // retenedor entrega al proveedor/persona retenida). Abre una ventana con el
 // HTML y dispara la impresión.
@@ -91,11 +92,9 @@ export function printRetentionCertificate({ company = {}, provider = {}, period,
       <div class="line">${companyName}<br/>Agente Retenedor</div>
     </div>
 
-    <script>window.onload = function(){ window.print(); };</script>
   </body></html>`;
 
   const w = window.open("", "_blank");
   if (!w) return;
-  w.document.write(html);
-  w.document.close();
+  writeSandboxedDocument(w, html);
 }

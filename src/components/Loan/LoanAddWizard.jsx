@@ -26,6 +26,7 @@ import StepLabel from "@mui/material/StepLabel";
 import "react-toastify/dist/ReactToastify.css";
 import ConfirmDialog from "../ConfirmDialog";
 import CustomerSelect from "../Customer/CustomerSelect";
+import ReprestamoAlert from "./ReprestamoAlert";
 import PromoterSelect from "../PromoterSelect";
 import CollectorSelect from "../CollectorSelect";
 import { NumericFormat } from "react-number-format";
@@ -74,6 +75,7 @@ const STEPS = ["Datos del crédito", "Garantías y documentos", "Confirmar"];
 const STEP_FIELDS = [
   [
     "branch_id",
+    "product_id",
     "customer_id",
     "requestDate",
     "amount",
@@ -106,6 +108,21 @@ const stepForField = (field) => {
 
 const money = (value) =>
   `C$ ${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Resumen corto de los límites del producto elegido (bajo el selector).
+const productLimitsText = (p) => {
+  const range = (min, max, fmt) => {
+    if (min == null && max == null) return null;
+    if (min != null && max != null) return `${fmt(min)}–${fmt(max)}`;
+    return min != null ? `desde ${fmt(min)}` : `hasta ${fmt(max)}`;
+  };
+  const parts = [
+    range(p.min_amount, p.max_amount, (v) => money(v)),
+    range(p.min_term_months, p.max_term_months, (v) => `${Number(v)} m`),
+    range(p.min_interest_rate, p.max_interest_rate, (v) => `${Number(v)}%`),
+  ].filter(Boolean);
+  return parts.length ? `Límites: ${parts.join(" · ")}` : "Sin límites propios: rigen las políticas de crédito";
+};
 
 const RiskIndicator = ({ label, value, hint, bad = false }) => (
   <Box
@@ -149,6 +166,11 @@ const LoanAddWizard = () => {
     selectedGuarantorIds,
     toggleGuarantorSelection,
     getPolicy,
+    productsEnabled,
+    availableProducts,
+    selectedProduct,
+    lockedFields,
+    handleProductChange,
     amortizationTable,
     installment,
     snackbarOpen,
@@ -163,6 +185,7 @@ const LoanAddWizard = () => {
     showCustomerDocs,
     setShowCustomerDocs,
     activeLoansSummary,
+    represtamoEligibility,
     evaluationViewForm,
     setEvaluationViewForm,
     evaluationModalOpen,
@@ -334,6 +357,8 @@ const LoanAddWizard = () => {
                 Paso 1 de 3 — Cliente, monto y condiciones
               </Typography>
 
+              <ReprestamoAlert eligibility={represtamoEligibility} />
+
               <Box
                 sx={{
                   display: "grid",
@@ -372,6 +397,30 @@ const LoanAddWizard = () => {
                     <Typography variant="caption" color="error">{errors.branch_id}</Typography>
                   )}
                 </Box>
+
+                {productsEnabled && (
+                  <Box sx={fieldSx}>
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      name="product_id"
+                      label="Producto financiero"
+                      value={loan.product_id || ""}
+                      onChange={(e) => handleProductChange(e.target.value)}
+                      error={!!errors.product_id}
+                      helperText={errors.product_id || (selectedProduct ? productLimitsText(selectedProduct) : "Define condiciones y límites del crédito")}
+                      inputProps={{ "data-testid": "product-select" }}
+                    >
+                      <MenuItem value="">Seleccione un producto</MenuItem>
+                      {availableProducts.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>
+                          {p.code} — {p.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                )}
 
                 <Box sx={fieldSx}>
                   <CustomerSelect
@@ -505,6 +554,7 @@ const LoanAddWizard = () => {
                     name="frequency_id"
                     value={loan.frequency_id}
                     onChange={handleInputChange}
+                    allowedTags={selectedProduct?.allowed_frequencies}
                   />
                   {!!errors.frequency_id && (
                     <Typography variant="caption" color="error">{errors.frequency_id}</Typography>
@@ -626,6 +676,7 @@ const LoanAddWizard = () => {
                 handleChange={handleInputChange}
                 catalogs={catalogs}
                 errors={errors}
+                lockedFields={lockedFields}
               />
             </>
           )}
@@ -752,6 +803,8 @@ const LoanAddWizard = () => {
               <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 2 }}>
                 Paso 3 de 3 — Resumen y tabla de amortización
               </Typography>
+
+              <ReprestamoAlert eligibility={represtamoEligibility} />
 
               <Paper
                 elevation={0}

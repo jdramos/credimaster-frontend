@@ -148,6 +148,8 @@ const PreviewTab = () => {
             id="custom-report-preview-iframe"
             title="Vista previa del reporte"
             srcDoc={html}
+            // Sin allow-scripts: el HTML del reporte incluye datos que escriben usuarios.
+            sandbox="allow-same-origin allow-modals"
             style={{
               width: "100%",
               minHeight: "1000px",

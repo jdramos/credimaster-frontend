@@ -8,6 +8,15 @@ import { fetchWithCache } from "../../hooks/useCachedFetch";
 import today from "../../functions/today";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
+import {
+  productViolations as computeProductViolations,
+  productPrefill,
+  insurancePremium,
+  frequenciesOf,
+  lockedFieldsFor,
+  lockedValues,
+  productAllowsBranch,
+} from "../loanProducts/loanProductLimits";
 
 // 1 = sobre saldo ('compound'), 2 = flat ('simple') -- mismo mapeo que
 // utils/interestType.js del backend. El tipo lo define la EMPRESA
@@ -69,6 +78,8 @@ export default function useLoanForm() {
     customer_name: "",
     requestDate: today(),
     branch_id: "",
+    // Producto financiero (obligatorio cuando la empresa tiene productos).
+    product_id: "",
     vendor_id: "",
     promoter_id: "",
     amount: "1.00",
@@ -229,6 +240,7 @@ export default function useLoanForm() {
   const [docSummary, setDocSummary] = useState(null);
   const [showCustomerDocs, setShowCustomerDocs] = useState(false);
   const [activeLoansSummary, setActiveLoansSummary] = useState(null);
+  const [represtamoEligibility, setReprestamoEligibility] = useState(null);
   const [evaluationViewForm, setEvaluationViewForm] = useState({});
 
   const showSnackbar = (message, severity = "success") => {
@@ -303,6 +315,100 @@ export default function useLoanForm() {
 
     fetchPolicies();
   }, []);
+
+  // Productos financieros (Configuración → Productos financieros). Si la
+  // empresa no los tiene habilitados, el formulario funciona como antes.
+  const [products, setProducts] = useState([]);
+  const [productsRegulated, setProductsRegulated] = useState(true);
+  useEffect(() => {
+    API.get("/api/loan-products", { params: { active: isEditMode ? undefined : 1 } })
+      .then(({ data }) => {
+        setProducts(Array.isArray(data?.data) ? data.data : []);
+        setProductsRegulated(data?.regulated !== false);
+      })
+      .catch(() => setProducts([]));
+  }, [isEditMode]);
+
+  const productsEnabled = products.some((p) => p.status === "ACTIVE");
+  const selectedProduct = useMemo(
+    () => products.find((p) => String(p.id) === String(loan.product_id)) || null,
+    [products, loan.product_id],
+  );
+  const availableProducts = useMemo(
+    () =>
+      products.filter(
+        (p) =>
+          String(p.id) === String(loan.product_id) ||
+          (p.status === "ACTIVE" && productAllowsBranch(p, loan.branch_id)),
+      ),
+    [products, loan.branch_id, loan.product_id],
+  );
+  const productViolations = useMemo(
+    () => computeProductViolations(selectedProduct, loan),
+    [selectedProduct, loan],
+  );
+  const hasProductViolations = Object.keys(productViolations).length > 0;
+  const lockedFields = useMemo(() => lockedFieldsFor(selectedProduct), [selectedProduct]);
+
+  // Si solo hay un producto disponible en la sucursal, se preselecciona.
+  useEffect(() => {
+    if (isEditMode || loan.product_id) return;
+    const offered = products.filter((p) => p.status === "ACTIVE" && productAllowsBranch(p, loan.branch_id));
+    if (offered.length === 1) handleProductChange(offered[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, loan.branch_id, isEditMode]);
+
+  // Elegir el producto prellena sus condiciones y fija tipo NGRC, tipo de
+  // crédito CONAMI y moneda; el usuario ajusta dentro de los límites.
+  const handleProductChange = async (productId) => {
+    const product = products.find((p) => String(p.id) === String(productId)) || null;
+    setLoan((prev) => ({ ...prev, product_id: productId || "", ...productPrefill(product, prev) }));
+
+    const allowed = frequenciesOf(product);
+    if (!allowed.length) return;
+    try {
+      const frecuencies = (await fetchWithCache("/api/frecuencies")) || [];
+      setLoan((prev) => {
+        if (allowed.includes(String(prev.frequency_id || "").toUpperCase())) return prev;
+        const f = frecuencies.find((x) => String(x.tag).toUpperCase() === allowed[0]);
+        if (!f) return prev;
+        return {
+          ...prev,
+          frequency_id: f.tag,
+          frequency_name: f.name,
+          id_periodo_cobro_interes: f.id,
+          id_periodo_cobro_principal: f.id,
+        };
+      });
+    } catch {
+      // La frecuencia queda como estaba; la validación la marca.
+    }
+  };
+
+  // El seguro del producto se calcula sobre el monto.
+  useEffect(() => {
+    const premium = insurancePremium(selectedProduct, loan.amount);
+    if (premium === null) return;
+    const value = premium.toFixed(2);
+    setLoan((prev) => (prev.insurance === value ? prev : { ...prev, insurance: value }));
+  }, [selectedProduct, loan.amount]);
+
+  // Los campos que fija el producto no se pueden cambiar (p. ej. los
+  // catálogos CONAMI cargan después con sus valores por defecto).
+  useEffect(() => {
+    const locked = lockedValues(selectedProduct);
+    const keys = Object.keys(locked);
+    if (!keys.length) return;
+    setLoan((prev) =>
+      keys.every((k) => String(prev[k]) === String(locked[k])) ? prev : { ...prev, ...locked },
+    );
+  }, [selectedProduct, loan.id_tipo_agrupacion_credito, loan.id_tipo_credito, loan.id_moneda]);
+
+  // El límite propio del producto sobrescribe la política general, salvo en
+  // una empresa normada (ahí rigen ambos), igual que el backend.
+  const productOverrides = (field) =>
+    Boolean(selectedProduct) && !productsRegulated &&
+    selectedProduct[field] !== null && selectedProduct[field] !== undefined;
 
   useEffect(() => {
     const fetchCustomerChecklist = async () => {
@@ -459,7 +565,9 @@ export default function useLoanForm() {
         !loan.due_date ||
         loan.other_charges === "";
 
-      if (isMissingRequiredData) {
+      // Fuera de los límites del producto: el backend rechazaría la vista
+      // previa; el error ya se muestra en el campo.
+      if (isMissingRequiredData || hasProductViolations) {
         setAmortizationTable([]);
         setInstallment(null);
         return;
@@ -483,6 +591,8 @@ export default function useLoanForm() {
           interest_fixed_amount: Number(loan.interest_fixed_amount || 0),
           frequency_id: loan.frequency_id,
           branch_id: loan.branch_id,
+          product_id: loan.product_id || null,
+          defaulted_rate: Number(loan.defaulted_rate || 0),
         };
 
         const response = await API.post(`${url}/amortization`, payload);
@@ -550,6 +660,9 @@ export default function useLoanForm() {
     defaultInterestTypeId,
     loan.interest_input_mode,
     loan.interest_fixed_amount,
+    loan.product_id,
+    loan.defaulted_rate,
+    hasProductViolations,
   ]);
 
   // Interés como monto fijo: la tasa mensual equivalente (flat: monto x tasa
@@ -703,6 +816,11 @@ export default function useLoanForm() {
     if (!loan.credit_evaluation_id)
       nextErrors.credit_evaluation_id =
         "Debe seleccionar una evaluación financiera";
+    if (productsEnabled && !loan.product_id)
+      nextErrors.product_id = "Seleccione el producto financiero";
+    Object.entries(productViolations).forEach(([field, message]) => {
+      if (!nextErrors[field]) nextErrors[field] = message;
+    });
 
     setErrors(nextErrors);
     return nextErrors;
@@ -775,6 +893,7 @@ export default function useLoanForm() {
     }
 
     if (
+      !productOverrides("max_interest_rate") &&
       getPolicy("max_interest_rate") &&
       Number(data.interest_rate) * 12 > Number(getPolicy("max_interest_rate"))
     ) {
@@ -789,6 +908,7 @@ export default function useLoanForm() {
     }
 
     if (
+      !productOverrides("max_term_months") &&
       getPolicy("max_term_months") &&
       Number(data.term) > Number(getPolicy("max_term_months"))
     ) {
@@ -796,6 +916,7 @@ export default function useLoanForm() {
     }
 
     if (
+      !productOverrides("min_term_months") &&
       getPolicy("min_term_months") &&
       Number(data.term) < Number(getPolicy("min_term_months"))
     ) {
@@ -822,6 +943,14 @@ export default function useLoanForm() {
     ) {
       nextErrors.defaulted_rate = "La tasa de mora excede el máximo permitido";
     }
+
+    if (productsEnabled && !data.product_id) {
+      nextErrors.product_id = "Seleccione el producto financiero";
+    }
+    // Los límites del producto bloquean (mismo criterio que el backend).
+    Object.entries(computeProductViolations(selectedProduct, data)).forEach(([field, message]) => {
+      nextErrors[field] = message;
+    });
 
     if (getPolicy("min_collateral_coverage") && Number(selectedGuaranteeValue) > 0) {
       const cobertura =
@@ -977,6 +1106,7 @@ export default function useLoanForm() {
           customer_name: row.customer_name || "",
           requestDate: row.date ? dayjs(row.date).format("YYYY-MM-DD") : today(),
           branch_id: row.branch_id || "",
+          product_id: row.product_id || "",
           vendor_id: row.vendor_id || "",
           promoter_id: row.promoter_id || "",
           amount: String(row.amount ?? "0.00"),
@@ -1045,6 +1175,54 @@ export default function useLoanForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loanId]);
 
+  // /creditos/agregar?customerId=X (p. ej. "Nueva solicitud" desde Clientes
+  // inactivos): precarga el cliente como si se hubiera elegido en el selector.
+  const prefillCustomerId = searchParams.get("customerId");
+  useEffect(() => {
+    if (isEditMode || !prefillCustomerId) return undefined;
+    let cancelled = false;
+    API.get(`/api/customers/${prefillCustomerId}`)
+      .then(({ data }) => {
+        const c = data?.data?.customer;
+        if (cancelled || !c) return;
+        handleInputChange({
+          target: {
+            name: "customer_id",
+            value: c.id,
+            customer_identification: c.identification || "",
+            customer_name: c.customer_name || "",
+            conami_id_actividad_economica: c.conami_id_actividad_economica || "",
+          },
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillCustomerId, isEditMode]);
+
+  // Política de represtamo: si el cliente no es apto (peor atraso sobre el
+  // límite o créditos saneados) se alerta; el backend envía la solicitud a
+  // Comité de Crédito. Clientes sin historial son aptos.
+  useEffect(() => {
+    if (!loan.customer_id) {
+      setReprestamoEligibility(null);
+      return undefined;
+    }
+    let cancelled = false;
+    API.get(`${url}/customer/${loan.customer_id}/represtamo-eligibility`)
+      .then(({ data }) => {
+        if (!cancelled) setReprestamoEligibility(data?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setReprestamoEligibility(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loan.customer_id]);
+
   const handleInputChange = (e, selectedOption = null) => {
     const {
       name,
@@ -1106,6 +1284,7 @@ export default function useLoanForm() {
       customer_identification: loan.customer_identification || "",
       requestDate: dayjs(loan.requestDate).format("YYYY-MM-DD"),
       branch_id: Number(loan.branch_id),
+      product_id: loan.product_id ? Number(loan.product_id) : null,
       vendor_id: loan.vendor_id ? Number(loan.vendor_id) : null,
       promoter_id: loan.promoter_id ? Number(loan.promoter_id) : null,
       amount: Number(loan.amount || 0),
@@ -1325,6 +1504,12 @@ export default function useLoanForm() {
     clearGuaranteeSelection,
     getPolicy,
     handleChargeModeChange,
+    productsEnabled,
+    availableProducts,
+    selectedProduct,
+    productViolations,
+    lockedFields,
+    handleProductChange,
     amortizationTable,
     installment,
     snackbarOpen,
@@ -1339,6 +1524,7 @@ export default function useLoanForm() {
     showCustomerDocs,
     setShowCustomerDocs,
     activeLoansSummary,
+    represtamoEligibility,
     evaluationViewForm,
     setEvaluationViewForm,
     evaluationModalOpen,

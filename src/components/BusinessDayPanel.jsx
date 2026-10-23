@@ -21,6 +21,8 @@ import {
   List,
   ListItem,
   ListItemText,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import LockIcon from "@mui/icons-material/Lock";
@@ -29,6 +31,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import BranchSelect from "./BranchSelect";
+import BusinessDayAllBranches from "./BusinessDayAllBranches";
 import HelpButton from "./help/HelpButton";
 import API from "../api";
 
@@ -52,6 +55,8 @@ function formatDate(value) {
 // antes eran dos menús separados ("Crear saldos" y "Cierre del día")
 // para que no haga falta saber que hay que pasar por los dos.
 const BusinessDayPanel = () => {
+  // "one": una sucursal (flujo de siempre); "all": varias o todas a la vez.
+  const [scope, setScope] = useState("one");
   const [branchId, setBranchId] = useState("");
   const [branchName, setBranchName] = useState("");
 
@@ -204,7 +209,7 @@ const BusinessDayPanel = () => {
   };
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 700, margin: "auto", mt: 5 }}>
+    <Box sx={{ width: "100%", maxWidth: scope === "all" ? 900 : 700, margin: "auto", mt: 5 }}>
       <Typography variant="h5" gutterBottom textAlign="center" sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5 }}>
         Día Operativo
         <HelpButton screenKey="dia-operativo" />
@@ -223,6 +228,24 @@ const BusinessDayPanel = () => {
         el saldo del día también lo abre o lo cierra: es un solo paso.
       </Typography>
 
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          color="primary"
+          value={scope}
+          onChange={(_, v) => v && setScope(v)}
+          disabled={submitting}
+        >
+          <ToggleButton value="one" sx={{ textTransform: "none", fontWeight: 700 }}>Una sucursal</ToggleButton>
+          <ToggleButton value="all" sx={{ textTransform: "none", fontWeight: 700 }}>Todas las sucursales</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      {scope === "all" && <BusinessDayAllBranches />}
+
+      {scope === "one" && (
+      <>
       <FormControl fullWidth sx={{ mb: 3 }}>
         <BranchSelect
           size="lg"
@@ -376,6 +399,8 @@ const BusinessDayPanel = () => {
             </Accordion>
           </Stack>
         </Paper>
+      )}
+      </>
       )}
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>

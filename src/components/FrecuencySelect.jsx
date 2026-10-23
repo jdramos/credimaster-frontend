@@ -14,7 +14,13 @@ const FrecuencySelect = (props) => {
   const { data: rawData, error: fetchApiError } = useCachedFetch(url);
   const loadError = fetchApiError ? "Hubo un error al cargar los datos" : null;
 
-  const frecuency = useMemo(() => (Array.isArray(rawData) ? rawData : []), [rawData]);
+  // allowedTags (opcional): frecuencias que permite el producto financiero.
+  const allowedKey = Array.isArray(props.allowedTags) ? props.allowedTags.join(",") : "";
+  const frecuency = useMemo(() => {
+    const all = Array.isArray(rawData) ? rawData : [];
+    const allowed = allowedKey ? allowedKey.split(",") : [];
+    return allowed.length ? all.filter((f) => allowed.includes(String(f.tag).toUpperCase())) : all;
+  }, [rawData, allowedKey]);
 
   const defaultOption = frecuency.find((f) => f.default === "Y");
   const selectedOption =

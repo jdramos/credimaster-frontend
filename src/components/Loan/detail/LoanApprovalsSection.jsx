@@ -75,6 +75,11 @@ const LoanApprovalsSection = ({
         </>
       }
     >
+      {Boolean(loanData?.requires_committee) && loanData?.committee_reason && (
+        <Alert severity={String(loanData.committee_reason).includes("represtamo") ? "warning" : "info"} sx={{ mb: 1 }}>
+          <strong>Va a Comité de Crédito porque:</strong> {loanData.committee_reason}
+        </Alert>
+      )}
       {Boolean(loanData?.requires_committee) && isReadOnly && (
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
           <Button

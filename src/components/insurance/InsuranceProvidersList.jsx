@@ -17,6 +17,9 @@ import {
   DialogActions,
   Grid,
   MenuItem,
+  InputAdornment,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
@@ -35,6 +38,8 @@ const emptyForm = {
   phone: "",
   email: "",
   address: "",
+  commission_rate: "",
+  is_default: false,
   status: "ACTIVA",
 };
 
@@ -84,6 +89,8 @@ export default function InsuranceProvidersList() {
       phone: row.phone || "",
       email: row.email || "",
       address: row.address || "",
+      commission_rate: row.commission_rate ?? "",
+      is_default: Number(row.is_default) === 1,
       status: row.status,
     });
     setDialogOpen(true);
@@ -104,6 +111,8 @@ export default function InsuranceProvidersList() {
         phone: form.phone || null,
         email: form.email || null,
         address: form.address || null,
+        commission_rate: form.commission_rate === "" ? null : Number(form.commission_rate),
+        is_default: form.is_default,
         status: form.status,
       };
 
@@ -131,6 +140,18 @@ export default function InsuranceProvidersList() {
       { field: "contact_name", headerName: "Contacto", width: 180, renderCell: (p) => p.value || "—" },
       { field: "phone", headerName: "Teléfono", width: 130, renderCell: (p) => p.value || "—" },
       { field: "email", headerName: "Correo", width: 200, renderCell: (p) => p.value || "—" },
+      {
+        field: "commission_rate",
+        headerName: "% comisión",
+        width: 110,
+        renderCell: (p) => (p.value === null || p.value === undefined ? "—" : `${Number(p.value).toFixed(2)}%`),
+      },
+      {
+        field: "is_default",
+        headerName: "Póliza colectiva",
+        width: 140,
+        renderCell: (p) => (Number(p.value) === 1 ? <Chip size="small" color="primary" variant="outlined" label="Por defecto" /> : "—"),
+      },
       {
         field: "status",
         headerName: "Estado",
@@ -285,6 +306,33 @@ export default function InsuranceProvidersList() {
                 value={form.address}
                 onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
               />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="% de comisión sobre primas"
+                helperText="Lo que la aseguradora reconoce a la institución"
+                value={form.commission_rate}
+                onChange={(e) => setForm((f) => ({ ...f, commission_rate: e.target.value }))}
+                InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                inputProps={{ min: 0, max: 100, step: "0.01" }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={form.is_default}
+                    onChange={(e) => setForm((f) => ({ ...f, is_default: e.target.checked }))}
+                  />
+                }
+                label="Póliza colectiva por defecto"
+              />
+              <Typography variant="caption" color="text.secondary" display="block">
+                Recibe las primas cobradas en cuotas de créditos sin seguro contratado registrado.
+              </Typography>
             </Grid>
           </Grid>
         </DialogContent>

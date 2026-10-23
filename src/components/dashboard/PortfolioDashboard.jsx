@@ -661,7 +661,11 @@ export default function PortfolioDashboard() {
           </Grid>
 
           {/* Indicadores de flujo del período: clientes, colocación, recuperación, saneamientos. */}
-          <ManagementDashboard params={params} reloadKey={lastUpdated ? lastUpdated.valueOf() : 0} />
+          <ManagementDashboard
+            params={params}
+            reloadKey={lastUpdated ? lastUpdated.valueOf() : 0}
+            products={catalogs.products || []}
+          />
 
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} lg={8}>

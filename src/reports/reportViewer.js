@@ -1,3 +1,5 @@
+import { writeSandboxedDocument } from "./safeDocument";
+
 export const openReport = (html, autoPrint = true) => {
   const reportWindow = window.open("", "_blank");
 
@@ -36,15 +38,6 @@ export const openBlankReportWindow = () => {
 export const writeReportToWindow = (reportWindow, html, autoPrint = true) => {
   if (!reportWindow || reportWindow.closed) return;
 
-  reportWindow.document.open();
-  reportWindow.document.write(html);
-  reportWindow.document.close();
-
-  reportWindow.onload = () => {
-    reportWindow.focus();
-
-    if (autoPrint) {
-      reportWindow.print();
-    }
-  };
+  // Contenido en iframe sandboxed (sin scripts): ver reports/safeDocument.js.
+  writeSandboxedDocument(reportWindow, html, { autoPrint });
 };

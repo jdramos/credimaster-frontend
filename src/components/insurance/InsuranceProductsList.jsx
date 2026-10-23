@@ -38,6 +38,7 @@ const emptyForm = {
   benefits: "",
   premium_type: "FIJO",
   premium_value: "",
+  commission_rate: "",
   status: "ACTIVO",
 };
 
@@ -101,6 +102,7 @@ export default function InsuranceProductsList() {
       benefits: row.benefits || "",
       premium_type: row.premium_type,
       premium_value: row.premium_value,
+      commission_rate: row.commission_rate ?? "",
       status: row.status,
     });
     setDialogOpen(true);
@@ -129,6 +131,8 @@ export default function InsuranceProductsList() {
         benefits: form.benefits || null,
         premium_type: form.premium_type,
         premium_value: Number(form.premium_value || 0),
+        // Vacío = usa el % de comisión de la aseguradora.
+        commission_rate: form.commission_rate === "" ? null : Number(form.commission_rate),
         status: form.status,
       };
 
@@ -162,6 +166,18 @@ export default function InsuranceProductsList() {
           p.row.premium_type === "PORCENTAJE_MONTO"
             ? `${money(p.value)}% del monto`
             : `C$ ${money(p.value)}`,
+      },
+      {
+        field: "commission_rate",
+        headerName: "% comisión",
+        width: 150,
+        renderCell: (p) => {
+          if (p.value !== null && p.value !== undefined) return `${money(p.value)}%`;
+          if (p.row.provider_commission_rate !== null && p.row.provider_commission_rate !== undefined) {
+            return `${money(p.row.provider_commission_rate)}% (aseguradora)`;
+          }
+          return "—";
+        },
       },
       {
         field: "status",
@@ -318,6 +334,19 @@ export default function InsuranceProductsList() {
                   startAdornment: form.premium_type === "FIJO" ? <InputAdornment position="start">C$</InputAdornment> : undefined,
                   endAdornment: form.premium_type === "PORCENTAJE_MONTO" ? <InputAdornment position="end">%</InputAdornment> : undefined,
                 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="% de comisión"
+                helperText="Vacío = el de la aseguradora"
+                value={form.commission_rate}
+                onChange={(e) => setForm((f) => ({ ...f, commission_rate: e.target.value }))}
+                InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                inputProps={{ min: 0, max: 100, step: "0.01" }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>

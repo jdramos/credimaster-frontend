@@ -85,6 +85,23 @@ const placementTable = (d) => {
     </table>`;
 };
 
+// Cartera por producto financiero (d.products, del auxiliar de cartera).
+const productsTable = (d) => {
+  const rows = (d.products?.rows || []).filter((r) => r.portfolio.capital || r.placement.loans || r.previous?.capital);
+  if (!rows.length) return "";
+  const t = d.products.totals;
+  return `
+    <div class="annex-title">Cartera por producto</div>
+    <table class="report-table annex">
+      <thead><tr><th>Producto</th><th class="right">Cartera</th><th class="right">Particip.</th><th class="right">Var. vs ${esc(monthYear(d.previous_period))}</th><th class="right">En riesgo</th><th class="right">PAR 30</th><th class="right">Colocado</th><th class="right">Créditos</th></tr></thead>
+      <tbody>
+        ${rows.map((r) => `<tr><td>${esc(r.code ? `${r.code} — ${r.name}` : r.name)}</td><td class="right">${money(r.portfolio.capital)}</td><td class="right">${pct(r.portfolio.share)}</td><td class="right">${variation(r.portfolio.capital, r.previous?.capital)}</td><td class="right">${pct(r.portfolio.overdue_pct, 2)}</td><td class="right">${pct(r.portfolio.par30_pct, 2)}</td><td class="right">${money(r.placement.amount)}</td><td class="right">${int(r.placement.loans)}</td></tr>`).join("")}
+        <tr class="total"><td>Total</td><td class="right">${money(t.portfolio.capital)}</td><td class="right">100.0%</td><td class="right">${variation(t.portfolio.capital, t.previous?.capital)}</td><td class="right">${pct(t.portfolio.overdue_pct, 2)}</td><td class="right">${pct(t.portfolio.par30_pct, 2)}</td><td class="right">${money(t.placement.amount)}</td><td class="right">${int(t.placement.loans)}</td></tr>
+      </tbody>
+    </table>
+    <div class="small">Saldo de capital según el auxiliar de cartera al último cierre del mes de cada sucursal; puede diferir de la cartera bruta contable. En riesgo (PAR 1): capital de créditos con al menos un día de atraso, distinto de la mora contable.</div>`;
+};
+
 const resultsTable = (d) => {
   const r = d.results;
   const b = d.budget?.has_lines ? d.budget : null;
@@ -193,6 +210,7 @@ export const buildBoardReportHtml = ({ company = {}, user = {}, data, signer = {
         <div class="annex-title">Cifras principales</div>
         ${keyFiguresTable(data)}
         ${placementTable(data)}
+        ${productsTable(data)}
         ${resultsTable(data)}
         ${indicatorsTable(data)}
         <div class="report-footer">Generado desde CrediMaster el ${dayjs().format("DD/MM/YYYY HH:mm")}</div>

@@ -248,8 +248,9 @@ const CreditPolicyManager = () => {
                             decimalSeparator="."
                             decimalScale={2}
 
-                            prefix={newPolicy.policy_type === 'percentage' ? '' : 'C$ '}
-                            suffix={newPolicy.policy_type === 'percentage' ? '%' : ''}
+                            // Políticas en días (p. ej. represtamo_max_dias_atraso) no son montos.
+                            prefix={newPolicy.policy_type === 'percentage' || /_dias/.test(newPolicy.policy_key) ? '' : 'C$ '}
+                            suffix={newPolicy.policy_type === 'percentage' ? '%' : /_dias/.test(newPolicy.policy_key) ? ' días' : ''}
                             label="Valor"
                             name="policy_value"
                             value={newPolicy.policy_value}

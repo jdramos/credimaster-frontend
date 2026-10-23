@@ -91,6 +91,8 @@ const LoanInfo = ({
   refreshKey,
   paymentPreview = null,
   paymentAmount = 0,
+  // Desde "Mi caja": créditos de todas las sucursales (ver PaymentForm).
+  cashSessionMode = false,
 }) => {
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -110,7 +112,7 @@ const LoanInfo = ({
         setLoading(true);
         setLoadError("");
 
-        const res = await API.get(`/api/loans/customer/${clientId}`);
+        const res = await API.get(`/api/loans/customer/${clientId}`, cashSessionMode ? { params: { cash_session: 1 } } : undefined);
 
         const validLoans = Array.isArray(res.data)
           ? res.data.filter((l) => Number(l?.id) > 0)
@@ -145,7 +147,7 @@ const LoanInfo = ({
     return () => {
       mounted = false;
     };
-  }, [clientId, loanId, refreshKey]);
+  }, [clientId, loanId, refreshKey, cashSessionMode]);
 
   const totals = useMemo(() => {
     if (!loan || Object.keys(loan).length === 0) return null;

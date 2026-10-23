@@ -190,7 +190,11 @@ const PaymentForm = ({
   };
 
   const handleClientChange = (e) => {
-    const clientId = e?.target?.value || e?.identification || e?.id || e || "";
+    // CustomerSelect avisa con un evento { target: { value } }; al borrar el
+    // cliente value llega vacío y no hay que caer al objeto del evento.
+    const clientId = e && typeof e === "object"
+      ? (e.target ? e.target.value : e.id) || ""
+      : e || "";
 
     setForm((prev) => ({
       ...prev,

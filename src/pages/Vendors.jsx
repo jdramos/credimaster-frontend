@@ -6,7 +6,7 @@ function Branches() {
 	const [data, setData] = useState([]); // State to store fetched data
 	const [error, setError] = useState(null); // State for error handling
 	const url = process.env.REACT_APP_API_BASE_URL + '/api/vendors';
-	const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxLCJuYW1lIjoiamRyYW1vcyIsInJvbCI6MX0sImlhdCI6MTY5MjQ4NjczNX0.efud7zyOTL5Im56rwjF_gBoUovXlAx3Se3tfOmW-Vv0'
+	const token = localStorage.getItem('token')
 	const headers = { Authorization: token };
 
 	useEffect(() => {

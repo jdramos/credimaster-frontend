@@ -91,8 +91,14 @@ const GuaranteePhotosDialog = ({ open, onClose, guaranteeId, guaranteeLabel = ""
     }
   };
 
+  // Con fotos el diálogo se agranda: una sola foto se ve casi a pantalla
+  // completa, dos van lado a lado y desde tres en cuadrícula de tres columnas.
+  const hasPhotos = !loading && photos.length > 0;
+  const cols = photos.length >= 3 ? 3 : Math.max(photos.length, 1);
+  const imageHeight = photos.length === 1 ? "65vh" : photos.length === 2 ? 340 : 220;
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth={hasPhotos ? "lg" : "sm"} fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <PhotoCameraBackIcon color="primary" />
@@ -119,7 +125,7 @@ const GuaranteePhotosDialog = ({ open, onClose, guaranteeId, guaranteeLabel = ""
         ) : photos.length === 0 ? (
           <Alert severity="info">Esta garantía no tiene fotos adjuntas.</Alert>
         ) : (
-          <ImageList cols={3} gap={8}>
+          <ImageList cols={cols} gap={12} sx={{ m: 0 }}>
             {photos.map((photo) => (
               <ImageListItem key={photo.id}>
                 <a href={photo.url} target="_blank" rel="noreferrer">
@@ -127,7 +133,14 @@ const GuaranteePhotosDialog = ({ open, onClose, guaranteeId, guaranteeLabel = ""
                     src={photo.url}
                     alt={photo.file_name || "Foto de garantía"}
                     loading="lazy"
-                    style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 4 }}
+                    style={{
+                      width: "100%",
+                      height: imageHeight,
+                      objectFit: photos.length === 1 ? "contain" : "cover",
+                      background: photos.length === 1 ? "#f3f4f6" : undefined,
+                      borderRadius: 6,
+                      display: "block",
+                    }}
                   />
                 </a>
                 {canDelete && (

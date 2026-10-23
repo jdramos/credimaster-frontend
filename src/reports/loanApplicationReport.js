@@ -2,6 +2,7 @@
 import dayjs from "dayjs";
 import { buildHeader } from "./reportHeader";
 import { reportStyles } from "./reportStyles";
+import { writeSandboxedDocument } from "./safeDocument";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("es-NI", {
@@ -168,12 +169,5 @@ export const printLoanApplicationReport = ({
     return;
   }
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
+  writeSandboxedDocument(printWindow, html);
 };

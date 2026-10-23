@@ -30,7 +30,9 @@ import API from "../../api";
 // lanzarlo. Cada evaluación arranca en DRAFT con un checklist copiado de la
 // plantilla activa; se aprueba cuando todos los ítems obligatorios quedan
 // OK o NA.
-const emptyForm = { product_name: "", description: "", channel: "" };
+// loan_product_id liga la evaluación a un producto financiero real
+// (Configuración → Productos financieros); sin nombre, se usa el del producto.
+const emptyForm = { product_name: "", description: "", channel: "", loan_product_id: "" };
 
 const ITEM_STATUSES = [
   { value: "PENDING", label: "Pendiente" },
@@ -160,12 +162,17 @@ export default function ProductRiskAssessments() {
     }
   };
 
+  const [loanProducts, setLoanProducts] = useState([]);
+
   useEffect(() => {
     loadAssessments();
+    API.get("/api/loan-products")
+      .then(({ data }) => setLoanProducts(Array.isArray(data?.data) ? data.data : []))
+      .catch(() => setLoanProducts([]));
   }, []);
 
   const handleCreate = async () => {
-    if (!form.product_name.trim()) {
+    if (!form.product_name.trim() && !form.loan_product_id) {
       showAlert("El nombre del producto/servicio es obligatorio", "error");
       return;
     }
@@ -194,6 +201,21 @@ export default function ProductRiskAssessments() {
         </Typography>
 
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          {loanProducts.length > 0 && (
+            <TextField
+              select
+              label="Producto financiero"
+              size="small"
+              value={form.loan_product_id}
+              onChange={(e) => setForm({ ...form, loan_product_id: e.target.value })}
+              sx={{ minWidth: 220 }}
+            >
+              <MenuItem value="">Otro (servicio, canal o tecnología)</MenuItem>
+              {loanProducts.map((p) => (
+                <MenuItem key={p.id} value={p.id}>{p.code} — {p.name}</MenuItem>
+              ))}
+            </TextField>
+          )}
           <TextField
             label="Producto/servicio/canal"
             size="small"
@@ -227,6 +249,7 @@ export default function ProductRiskAssessments() {
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Stack direction="row" spacing={2} alignItems="center" sx={{ width: "100%" }}>
               <Typography sx={{ fontWeight: 700, flexGrow: 1 }}>{a.product_name}</Typography>
+              {a.loan_product && <Chip label={`Producto ${a.loan_product.code}`} size="small" color="primary" variant="outlined" />}
               {a.channel && <Chip label={a.channel} size="small" variant="outlined" />}
               <Chip
                 label={a.status === "APPROVED" ? "Aprobada" : "Borrador"}

@@ -45,3 +45,32 @@ describe("Informe de gestión a la Junta Directiva (impresión)", () => {
     expect(build()).not.toContain("Comentarios adicionales");
   });
 });
+
+describe("Informe a la Junta: cartera por producto en el anexo", () => {
+  const product = (id, code, name, capital, share, prev) => ({
+    product_id: id, code, name, status: "ACTIVE",
+    portfolio: { loans: 5, capital, share, overdue_pct: 3.25, par30_pct: 1.1 },
+    placement: { loans: 2, amount: 40000 },
+    previous: { capital: prev },
+  });
+  const build = (products) =>
+    buildBoardReportHtml({ company: {}, data: { ...data, products }, signer: {}, reportDate: "2026-10-16" });
+
+  test("tabla por producto con participación, variación y nota del auxiliar", () => {
+    const html = build({
+      rows: [product(1, "MIC", "Microcrédito", 900000, 90, 800000), product(2, "PER", "Personales", 100000, 10, 0), { ...product(3, "HIP", "Hipotecario", 0, 0, 0), placement: { loans: 0, amount: 0 } }],
+      totals: { portfolio: { capital: 1000000, overdue_pct: 3.25, par30_pct: 1.1 }, placement: { amount: 80000, loans: 4 }, previous: { capital: 800000 } },
+    });
+    expect(html).toContain("Cartera por producto");
+    expect(html).toContain("MIC — Microcrédito");
+    expect(html).toContain("+12.5%");
+    expect(html).toContain("+25.0%");
+    expect(html).not.toContain("HIP — Hipotecario"); // sin cartera ni colocación
+    expect(html).toContain("auxiliar de cartera");
+    expect(html).not.toMatch(/undefined|NaN/);
+  });
+
+  test("sin productos financieros no hay tabla", () => {
+    expect(build(null)).not.toContain("Cartera por producto");
+  });
+});

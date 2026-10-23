@@ -54,6 +54,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import * as FaIcons from "react-icons/fa";
 import BrandMark from "./BrandMark";
 import BusinessDayAlert from "./BusinessDayAlert";
+import ItRiskDeadlineAlert from "./itRisk/ItRiskDeadlineAlert";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
@@ -70,6 +71,7 @@ const SECTION_MODULE_KEY = {
   obligations: "obligations",
   budget: "budget",
   insurance: "insurance",
+  it: "it",
 };
 
 const emptyPasswordForm = { currentPassword: "", newPassword: "", confirmPassword: "" };
@@ -82,6 +84,7 @@ const sectionLabels = {
   dashboard: "Dashboard",
   main: "Catálogos",
   management: "Operaciones",
+  config: "Configuración",
   users: "Usuarios y permisos",
   queries: "Consultas",
   conami_tables: "Tablas CONAMI",
@@ -94,6 +97,7 @@ const sectionLabels = {
   insurance: "SEGUROS",
   reports: "Reportes",
   compliance: "CUMPLIMIENTO LA/FT/FP",
+  it: "GESTIÓN DE TI",
   support: "Soporte",
 };
 
@@ -118,28 +122,11 @@ const menuItems = {
     },
     { label: "Pagos", iconName: "FaCashRegister", to: "/pagos", permission: "menu.pagos" },
     { label: "Cobranza", iconName: "FaHandshake", to: "/cobranza", permission: "cobranza.ver" },
+    { label: "Clientes inactivos", iconName: "FaUserClock", to: "/clientes/inactivos", permission: "clientes.inactivos.ver" },
     { label: "Rutas del día", iconName: "FaRoute", to: "/cobranza/rutas", permission: "rastreo.ver" },
     
     { label: "Día operativo", iconName: "FaLock", to: "/cierre-del-dia" },
     { label: "Notas de crédito/débito", iconName: "FaFileInvoiceDollar", to: "/creditos/notas", permission: "creditos.ver" },
-    {
-      label: "Políticas crédito",
-      iconName: "FaFileSignature",
-      to: "/creditos/politicas",
-      permission: "menu.politicas_credito",
-    },
-    {
-      label: "Evaluación financiera (config.)",
-      iconName: "FaFileSignature",
-      to: "/creditos/evaluacion-financiera/configuracion",
-      permission: "clientes.evaluacion.configuracion.gestionar",
-    },
-    {
-      label: "Notificaciones",
-      iconName: "FaBell",
-      to: "/notificaciones",
-      permission: "configuracion.ver",
-    },
     {
       label: "Documentos crédito",
       iconName: "FaFileAlt",
@@ -157,17 +144,6 @@ const menuItems = {
     },
     { label: "Reclamos", iconName: "FaExclamationCircle", to: "/reclamos" },
     { label: "Adjudicaciones de Bienes", iconName: "FaGavel", to: "/adjudicaciones" },
-  ],
-  users: [
-    { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
-    { label: "Tipos de cambio", iconName: "FaExchangeAlt", to: "/configuracion/tipos-cambio", permission: "configuracion.tipos_cambio.gestionar" },
-    { label: "Datos legales de la IMF", iconName: "FaGavel", to: "/configuracion/datos-legales-imf", permission: "configuracion.datos_legales_imf.gestionar" },
-    { label: "Perfil de la empresa", iconName: "FaBuilding", to: "/configuracion/perfil-empresa", permission: "configuracion.editar" },
-    { label: "Provisión de cartera", iconName: "FaPercentage", to: "/configuracion/provision-cartera", permission: "creditos.provision.configurar", moduleKey: "risk_classification_ngrc" },
-    { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },
-    { label: "Roles", iconName: "FaUserShield", to: "/roles", permission: "menu.roles" },
-    { label: "Permisos", iconName: "FaKey", to: "/permisos" },
-    { label: "Aprobadores", iconName: "FaUserCheck", to: "/aprobadores" },
   ],
   queries: [
     { label: "Saldos", iconName: "FaChartBar", to: "/saldos", permission: "menu.balances" },
@@ -201,6 +177,20 @@ const menuItems = {
     { label: "Oficial de Cumplimiento", iconName: "FaUserShield", to: "/cumplimiento/oficial-cumplimiento", permission: "menu.cumplimiento" },
     { label: "Riesgo de Nuevos Productos", iconName: "FaFlask", to: "/cumplimiento/productos", permission: "menu.cumplimiento" },
     { label: "Firma Pre-Impresa en Contratos", iconName: "FaSignature", to: "/cumplimiento/firma-preimpresa", permission: "cumplimiento.firma_preimpresa.gestionar" },
+  ],
+  // Gestión de TI (módulo "it", todas las empresas). La mesa de ayuda no pide
+  // permiso: cualquier usuario reporta. El riesgo tecnológico de la Norma
+  // CD-CONAMI-017-01AGO21-2014 solo aparece con el módulo "it_risk" (IMF).
+  it: [
+    { label: "Tablero de TI", iconName: "FaTachometerAlt", to: "/ti", permission: "ti.ver" },
+    { label: "Mesa de ayuda", iconName: "FaHeadset", to: "/ti/mesa-de-ayuda" },
+    { label: "Inventario de activos", iconName: "FaDesktop", to: "/ti/activos", permission: "ti.ver" },
+    { label: "Licencias de software", iconName: "FaKey", to: "/ti/licencias", permission: "ti.ver" },
+    { label: "Mantenimientos", iconName: "FaTools", to: "/ti/mantenimientos", permission: "ti.ver" },
+    { label: "Respaldos", iconName: "FaDatabase", to: "/ti/respaldos", permission: "ti.ver" },
+    { label: "Proveedores y contratos de TI", iconName: "FaFileSignature", to: "/ti/contratos", permission: "ti.ver" },
+    { label: "Incidentes de TI (Art. 28)", iconName: "FaExclamationCircle", to: "/ti/riesgo/incidentes", permission: "riesgo_tecnologico.ver", moduleKey: "it_risk" },
+    { label: "Autoevaluación de riesgo TI (Art. 16)", iconName: "FaClipboardCheck", to: "/ti/riesgo/autoevaluacion", permission: "riesgo_tecnologico.ver", moduleKey: "it_risk" },
   ],
   conami_tables: [
     {
@@ -313,9 +303,9 @@ const menuItems = {
       permission: "menu.contabilidad",
     },
     {
-      label: "Conciliación de Cuentas",
+      label: "Integración de cuentas",
       iconName: "FaBalanceScaleRight",
-      to: "/contabilidad/conciliacion",
+      to: "/contabilidad/integracion",
       permission: "menu.contabilidad",
     },
     { label: "Retenciones (DGI)", iconName: "FaFileInvoiceDollar", to: "/retenciones", permission: "retenciones.ver" },
@@ -331,6 +321,9 @@ const menuItems = {
   ],
 
   caja: [
+    { label: "Mi caja", iconName: "FaMoneyBillWave", to: "/caja/mi-caja", permission: "caja.turnos.operar" },
+    { label: "Turnos de caja", iconName: "FaUserClock", to: "/caja/turnos", permission: "caja.turnos.supervisar" },
+    { label: "Tipo de cambio", iconName: "FaDollarSign", to: "/caja/tipo-cambio", permission: "menu.caja" },
     { label: "Cajas", iconName: "FaCashRegister", to: "/caja/cajas", permission: "menu.caja" },
     { label: "Movimientos", iconName: "FaExchangeAlt", to: "/caja/movimientos", permission: "menu.caja" },
     { label: "Arqueo de Cobradores", iconName: "FaClipboardCheck", to: "/caja/arqueos", permission: "menu.caja" },
@@ -355,6 +348,7 @@ const menuItems = {
     { label: "Seguros Contratados", iconName: "FaShieldAlt", to: "/seguros", permission: "menu.seguros" },
     { label: "Tipos de Seguro", iconName: "FaFileContract", to: "/seguros/tipos", permission: "menu.seguros" },
     { label: "Aseguradoras", iconName: "FaBuilding", to: "/seguros/aseguradoras", permission: "menu.seguros" },
+    { label: "Liquidación de Seguros", iconName: "FaFileInvoiceDollar", to: "/seguros/liquidaciones", permission: "menu.seguros" },
   ],
 
   rrhh: [
@@ -419,6 +413,26 @@ const menuItems = {
       iconName: "",
       permission: "menu.reportes",
     },
+  ],
+
+  // Configuración de la empresa y de sus productos (antes mezclada en
+  // "Usuarios y permisos" y en "Operaciones").
+  config: [
+    { label: "Perfil de la empresa", iconName: "FaBuilding", to: "/configuracion/perfil-empresa", permission: "configuracion.editar" },
+    { label: "Datos legales de la IMF", iconName: "FaGavel", to: "/configuracion/datos-legales-imf", permission: "configuracion.datos_legales_imf.gestionar" },
+    { label: "Políticas de crédito", iconName: "FaFileSignature", to: "/creditos/politicas", permission: "menu.politicas_credito" },
+    { label: "Productos financieros", iconName: "FaBoxes", to: "/configuracion/productos-financieros", permission: "configuracion.productos.ver" },
+    { label: "Evaluación financiera", iconName: "FaFileSignature", to: "/creditos/evaluacion-financiera/configuracion", permission: "clientes.evaluacion.configuracion.gestionar" },
+    { label: "Provisión de cartera", iconName: "FaPercentage", to: "/configuracion/provision-cartera", permission: "creditos.provision.configurar", moduleKey: "risk_classification_ngrc" },
+    { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
+    { label: "Tipos de cambio", iconName: "FaExchangeAlt", to: "/configuracion/tipos-cambio", permission: "configuracion.tipos_cambio.gestionar" },
+    { label: "Notificaciones", iconName: "FaBell", to: "/notificaciones", permission: "configuracion.ver" },
+  ],
+  users: [
+    { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },
+    { label: "Roles", iconName: "FaUserShield", to: "/roles", permission: "menu.roles" },
+    { label: "Permisos", iconName: "FaKey", to: "/permisos" },
+    { label: "Aprobadores", iconName: "FaUserCheck", to: "/aprobadores" },
   ],
 
   // Sin "permission" a propósito: cualquier usuario autenticado puede abrir
@@ -525,6 +539,7 @@ export default function AppLayoutMenu({
     dashboard: true,
     main: true,
     management: true,
+    config: false,
     users: false,
     queries: false,
     conami_tables: false,
@@ -1082,6 +1097,8 @@ export default function AppLayoutMenu({
           </Box>
 
           <BusinessDayAlert />
+
+          {isSectionEnabled("it") && (enabledModules === null || enabledModules.includes("it_risk")) && hasPermission("riesgo_tecnologico.ver") && <ItRiskDeadlineAlert />}
 
           <GlobalSearch />
 

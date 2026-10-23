@@ -32,6 +32,40 @@ const MODIFICATION_TYPES = [
   { value: "REFINANCIAMIENTO", label: "Refinanciamiento" },
 ];
 
+// Condiciones que se muestran en la nota del formulario. Deben coincidir con
+// lo que valida el backend (api/loan/loanModificationController.js:
+// validateProrroga / validateRefinanciamiento / validateReestructuracion).
+const MODIFICATION_CONDITIONS = {
+  PRORROGA: {
+    title: "Condiciones para una prórroga",
+    items: [
+      "Plazo adicional de hasta 6 meses.",
+      "No cambia el monto, la tasa ni la frecuencia de pago; solo se corre el calendario de cuotas.",
+      "La dificultad de pago debe deberse a una causa externa y transitoria, documentada en la justificación.",
+      "Debe verificarse que el cliente conserva capacidad de pago, sin desviación de fondos y sin incumplimiento del contrato ni de las orientaciones técnicas.",
+      "Al aplicarse, el crédito pasa a cartera prorrogada.",
+    ],
+  },
+  REESTRUCTURACION: {
+    title: "Condiciones para una reestructuración",
+    items: [
+      "Corresponde cuando la capacidad de pago del cliente se deterioró y hay que cambiar plazo, tasa o cuotas.",
+      "Requiere análisis de riesgo previo y demostrar capacidad de pago con las nuevas condiciones.",
+      "Debe confirmarse que no hubo desviación de fondos.",
+      "La cobertura de la garantía debe mantenerse, o la posición de recuperación debe mejorar.",
+      "Al aplicarse, el crédito pasa a cartera reestructurada.",
+    ],
+  },
+  REFINANCIAMIENTO: {
+    title: "Condiciones para un refinanciamiento",
+    items: [
+      "Solo para créditos vigentes con clasificación de riesgo A (NGRC, Art. 26.11 y 43).",
+      "Si la capacidad de pago del cliente se deterioró, no corresponde refinanciar sino reestructurar.",
+      "Debe indicarse el nuevo plazo y la nueva tasa.",
+    ],
+  },
+};
+
 const initialForm = {
   modification_type: "PRORROGA",
   extension_months: "",
@@ -644,6 +678,25 @@ export default function LoanModificationModal({
         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>
           Validaciones normativas
         </Typography>
+
+        {MODIFICATION_CONDITIONS[form.modification_type] && (
+          <Alert severity="info" sx={{ mb: 2 }} data-testid="modification-conditions">
+            <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              {MODIFICATION_CONDITIONS[form.modification_type].title}
+            </Typography>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {MODIFICATION_CONDITIONS[form.modification_type].items.map((item) => (
+                <Typography component="li" variant="body2" key={item}>
+                  {item}
+                </Typography>
+              ))}
+            </Box>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              La solicitud queda pendiente hasta que la aprueben; solo entonces se aplica y se genera la nueva tabla de
+              amortización. No procede para créditos cancelados, rechazados o sin saldo.
+            </Typography>
+          </Alert>
+        )}
 
         {form.modification_type === "PRORROGA" && renderChecksProrroga()}
         {form.modification_type === "REESTRUCTURACION" &&

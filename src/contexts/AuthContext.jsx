@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { UserContext } from "./UserContext";
 import API from "../api";
 import { getTrustedDeviceToken, saveTrustedDeviceToken } from "../api/mfa";
+import { invalidateCache } from "../hooks/useCachedFetch";
 
 const AuthContext = createContext();
 
@@ -182,7 +183,9 @@ export const AuthProvider = ({ children }) => {
         };
       }
 
-      console.error(err);
+      // No se imprime el error completo: el objeto de axios incluye la
+      // configuración de la petición (con la contraseña en el body).
+      console.error("Error al iniciar sesión:", err.response?.status || err.message);
 
       const message =
         err.response?.data?.message ||
@@ -202,6 +205,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Cierra también la sesión en el servidor (best-effort): sin esto el JWT
+    // robado de un equipo seguía sirviendo hasta 8 h después de "Cerrar
+    // sesión". El token se captura antes de limpiar el almacenamiento.
+    const currentToken = getStoredToken();
+    if (currentToken && sessionType !== "SUPERADMIN") {
+      API.post("/api/session/logout", null, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      }).catch(() => {});
+    }
+    // Los catálogos cacheados (sucursales, cuentas, roles...) son del usuario
+    // y empresa que cerró sesión: no deben verse en el siguiente login.
+    invalidateCache();
+
     setToken(null);
     setIsAuthenticated(false);
     setTenant(null);

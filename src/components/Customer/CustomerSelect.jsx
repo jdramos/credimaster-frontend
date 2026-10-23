@@ -77,7 +77,9 @@ const CustomerSelect = (props) => {
   );
 
   useEffect(() => {
-    const value = props.value ?? props.selected ?? "";
+    const rawValue = props.value ?? props.selected ?? "";
+    // Solo un id (número o texto); cualquier otra cosa se trata como vacío.
+    const value = typeof rawValue === "object" ? "" : rawValue;
 
     if (!value) {
       setSelectedCustomer(null);

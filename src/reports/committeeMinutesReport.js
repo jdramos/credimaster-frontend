@@ -2,6 +2,7 @@
 import dayjs from "dayjs";
 import { buildHeader } from "./reportHeader";
 import { reportStyles } from "./reportStyles";
+import { writeSandboxedDocument } from "./safeDocument";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("es-NI", {
@@ -82,6 +83,10 @@ export const printCommitteeMinutesReport = ({
             <div class="value">${dateText(resolutionDate)}</div>
           </div>
         </div>
+        ${loan.committee_reason ? `<div class="field" style="margin-top:8px">
+            <div class="label">Motivo de remisión a Comité</div>
+            <div class="value">${text(loan.committee_reason)}</div>
+          </div>` : ""}
       </div>
 
       <div class="section">
@@ -156,12 +161,5 @@ export const printCommitteeMinutesReport = ({
     return;
   }
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-
-  printWindow.onload = () => {
-    printWindow.focus();
-    printWindow.print();
-  };
+  writeSandboxedDocument(printWindow, html);
 };

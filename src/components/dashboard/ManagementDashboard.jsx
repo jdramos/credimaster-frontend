@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
-  Alert, Box, Button, CircularProgress, Grid, ToggleButton, ToggleButtonGroup, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography,
+  Alert, Box, Button, CircularProgress, Grid, MenuItem, TextField, ToggleButton, ToggleButtonGroup, LinearProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography,
 } from "@mui/material";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis } from "recharts";
 import dayjs from "dayjs";
@@ -20,6 +20,7 @@ import BAC from "../../styles/bac";
 import { getManagementDashboard } from "../../api/dashboardBalances";
 import { UserContext } from "../../contexts/UserContext";
 import BoardReportDialog from "./BoardReportDialog";
+import ProductPerformanceSection from "./ProductPerformanceSection";
 
 // Tablero gerencial: indicadores de FLUJO del período (clientes nuevos e
 // inactivos, colocación, recuperación, cancelaciones, saneamientos, meta) que
@@ -159,8 +160,11 @@ function RankingTable({ title, rows, columns }) {
   );
 }
 
-export default function ManagementDashboard({ params, reloadKey }) {
+// products: catálogo de productos financieros (filtro propio del tablero; las
+// tarjetas de saldo del dashboard no se filtran por producto).
+export default function ManagementDashboard({ params, reloadKey, products = [] }) {
   const [state, setState] = useState({ loading: true, data: null, error: "" });
+  const [productId, setProductId] = useState("");
   const [boardOpen, setBoardOpen] = useState(false);
   const [compare, setCompare] = useState(loadCompare);
   const { role, permissions = [] } = useContext(UserContext) || {};
@@ -178,6 +182,7 @@ export default function ManagementDashboard({ params, reloadKey }) {
       branch_id: params.branch_id,
       promoter_id: params.promoter_id,
       collector_id: params.collector_id,
+      product_id: productId || undefined,
       compare,
     })
       .then((res) => !cancelled && setState({ loading: false, data: res?.data || null, error: "" }))
@@ -188,7 +193,7 @@ export default function ManagementDashboard({ params, reloadKey }) {
     // Se recarga al aplicar filtros (reloadKey) o al cambiar la comparación,
     // no con cada cambio en los campos de fecha.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reloadKey, compare]);
+  }, [reloadKey, compare, productId]);
 
   const changeCompare = (_e, value) => {
     if (!value) return;
@@ -218,11 +223,12 @@ export default function ManagementDashboard({ params, reloadKey }) {
   const noPreviousData = !p.disbursements.loans && !p.collections.payments && !p.customers.active;
   const chartData = trend.map((t) => ({ ...t, label: monthLabel(t.period) }));
   const goalPct = goal?.achievement;
+  const productName = productId ? products.find((x) => String(x.id) === String(productId)) : null;
 
   return (
     <Paper sx={{ p: 2.5, borderRadius: 3, mb: 3, position: "relative" }} data-testid="management-dashboard">
       {state.loading && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, right: 0, borderRadius: "12px 12px 0 0" }} />}
-      <Stack direction="row" spacing={1.2} alignItems="center">
+      <Stack direction="row" spacing={1.2} alignItems="center" flexWrap="wrap" useFlexGap>
         <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: BAC.soft, color: BAC.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <InsightsIcon sx={{ fontSize: 18 }} />
         </Box>
@@ -232,6 +238,24 @@ export default function ManagementDashboard({ params, reloadKey }) {
             Movimiento del {day(c.range.from)} al {day(c.range.to)}
           </Typography>
         </Box>
+        {products.length > 0 && (
+          <TextField
+            select
+            size="small"
+            label="Producto"
+            value={productId}
+            onChange={(e) => setProductId(e.target.value)}
+            sx={{ minWidth: 170 }}
+            SelectProps={{ displayEmpty: true }}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ "aria-label": "Producto" }}
+          >
+            <MenuItem value="">Todos los productos</MenuItem>
+            {products.map((x) => (
+              <MenuItem key={x.id} value={String(x.id)}>{x.code} — {x.name}{x.status === "INACTIVE" ? " (inactivo)" : ""}</MenuItem>
+            ))}
+          </TextField>
+        )}
         <Stack alignItems="flex-end" spacing={0.25}>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>Comparar con</Typography>
@@ -254,6 +278,11 @@ export default function ManagementDashboard({ params, reloadKey }) {
         )}
       </Stack>
       {boardOpen && <BoardReportDialog open={boardOpen} onClose={() => setBoardOpen(false)} />}
+      {productName && (
+        <Alert severity="info" sx={{ mt: 1.5, py: 0, borderRadius: 2 }}>
+          Indicadores gerenciales del producto {productName.code} — {productName.name}. Las tarjetas de saldo de arriba son del total de la cartera.
+        </Alert>
+      )}
       {noPreviousData && (
         <Alert severity="info" sx={{ mt: 1.5, py: 0, borderRadius: 2 }}>
           No hay movimientos en el período de comparación ({compareRangeText}), por eso las tarjetas no muestran variación.
@@ -321,7 +350,7 @@ export default function ManagementDashboard({ params, reloadKey }) {
               <StatCard
                 title="Meta de colocación"
                 value={goal ? pct(goalPct ?? 0) : "—"}
-                detail={goal ? `${money(goal.actual_amount)} de ${money(goal.target_amount)}` : "sin presupuesto activo con metas para estos meses"}
+                detail={goal ? `${money(goal.actual_amount)} de ${money(goal.target_amount)}` : productId ? "las metas del presupuesto no se desglosan por producto" : "sin presupuesto activo con metas para estos meses"}
                 icon={FlagIcon}
                 color={!goal ? "primary" : goalPct >= 100 ? "success" : goalPct >= 80 ? "warning" : "error"}
               />
@@ -416,6 +445,16 @@ export default function ManagementDashboard({ params, reloadKey }) {
             </Grid>
           </Grid>
         </Grid>
+        {state.data.by_product && (
+          <Grid item xs={12}>
+            <GroupTitle hint="cartera al corte y movimiento del período">Desempeño por producto</GroupTitle>
+            <ProductPerformanceSection
+              data={state.data.by_product}
+              selectedProductId={productId}
+              compareTitle={`vs. ${comparison.label} (${compareRangeText})`}
+            />
+          </Grid>
+        )}
       </Grid>
 
       <Grid container spacing={2} sx={{ mt: 1 }}>
