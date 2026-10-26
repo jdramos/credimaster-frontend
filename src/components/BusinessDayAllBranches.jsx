@@ -160,6 +160,7 @@ export default function BusinessDayAllBranches() {
               {branches.map((b) => {
                 const st = statuses[b.id];
                 const isOpen = st?.pending_action === "OPEN";
+                const isDayDone = st?.pending_action === "NONE";
                 const res = results[b.id];
                 return (
                   <TableRow key={b.id} hover>
@@ -186,9 +187,9 @@ export default function BusinessDayAllBranches() {
                       ) : st ? (
                         <Chip
                           size="small"
-                          icon={isOpen ? <LockIcon /> : <LockOpenIcon />}
-                          label={isOpen ? "Por abrir" : "Abierto"}
-                          color={isOpen ? "default" : "success"}
+                          icon={isOpen || isDayDone ? <LockIcon /> : <LockOpenIcon />}
+                          label={isDayDone ? "Día cerrado" : isOpen ? "Por abrir" : "Abierto"}
+                          color={isOpen || isDayDone ? "default" : "success"}
                           sx={{ fontWeight: 700 }}
                         />
                       ) : null}

@@ -33,6 +33,21 @@ describe("Día operativo de varias sucursales", () => {
     API.get.mockImplementation((url) => Promise.resolve({ data: STATUS[url.split("/").pop()] }));
   });
 
+  test("una sucursal que ya cerró hoy no se ofrece para aperturar", async () => {
+    API.get.mockImplementation((url) =>
+      Promise.resolve({
+        data: url.endsWith("/1")
+          ? { pending_action: "NONE", pending_date: "2026-10-27" }
+          : STATUS[url.split("/").pop()],
+      }),
+    );
+    renderPanel();
+
+    expect(await screen.findByText("Día cerrado")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /Aperturar \(0\)/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Cerrar \(2\)/ })).toBeTruthy();
+  });
+
   test("solo procesa las sucursales marcadas que tienen ese paso pendiente", async () => {
     API.post.mockResolvedValue({ data: { day_closed: true, loans_processed: 55 } });
     renderPanel();

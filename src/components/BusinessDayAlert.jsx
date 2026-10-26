@@ -16,6 +16,7 @@ const describe = (st) => {
   const date = dayjs(st.pending_date).format("DD/MM/YYYY");
   if (st.pending_action === "CLOSE" && st.is_backlog) return `Día no aperturado (falta cerrar el ${date})`;
   if (st.pending_action === "OPEN" && st.is_backlog) return `Día no aperturado (pendiente desde el ${date})`;
+  if (st.pending_action === "NONE") return "Día cerrado";
   return "Día no aperturado";
 };
 

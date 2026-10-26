@@ -112,6 +112,8 @@ const BusinessDayPanel = () => {
   };
 
   const isOpenAction = status?.pending_action === "OPEN";
+  // Hoy ya se cerró: no hay apertura ni cierre pendiente hasta mañana.
+  const isDayDone = status?.pending_action === "NONE";
   const balanceType = isOpenAction ? "INITIAL" : "FINAL";
 
   const getCurrentTime = () => new Date().toLocaleTimeString("es-ES", { hour12: false });
@@ -295,19 +297,23 @@ const BusinessDayPanel = () => {
             >
               <Box>
                 <Typography fontWeight={800}>
-                  Día pendiente · {formatDate(status.pending_date)}
+                  {isDayDone
+                    ? `Próximo día · ${formatDate(status.pending_date)}`
+                    : `Día pendiente · ${formatDate(status.pending_date)}`}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {isOpenAction
+                  {isDayDone
+                    ? "El día de hoy ya está cerrado. El próximo día se podrá aperturar a partir de esa fecha."
+                    : isOpenAction
                     ? "Falta generar el saldo inicial y aperturar este día."
                     : "Este día está abierto — falta generar el saldo final y hacer el cierre."}
                 </Typography>
               </Box>
               <Chip
-                icon={isOpenAction ? <LockIcon /> : <LockOpenIcon />}
-                label={isOpenAction ? "Por abrir" : "Abierto"}
+                icon={isDayDone || isOpenAction ? <LockIcon /> : <LockOpenIcon />}
+                label={isDayDone ? "Día cerrado" : isOpenAction ? "Por abrir" : "Abierto"}
                 size="small"
-                color={isOpenAction ? "default" : "success"}
+                color={isDayDone || isOpenAction ? "default" : "success"}
                 sx={{ fontWeight: 700 }}
               />
             </Stack>
@@ -331,6 +337,7 @@ const BusinessDayPanel = () => {
             </Box>
 
             <Stack direction="row" spacing={2} justifyContent="center" sx={{ pt: 1 }}>
+              {!isDayDone && (
               <Button
                 variant="contained"
                 color={isOpenAction ? "success" : "error"}
@@ -352,6 +359,7 @@ const BusinessDayPanel = () => {
                   ? `Generar saldo inicial y aperturar ${formatDate(status.pending_date)}`
                   : `Generar saldo final y cerrar ${formatDate(status.pending_date)}`}
               </Button>
+              )}
               <Button
                 variant="outlined"
                 startIcon={<RefreshIcon />}
@@ -375,6 +383,7 @@ const BusinessDayPanel = () => {
               </Box>
             )}
 
+            {!isDayDone && (
             <Accordion elevation={0} sx={{ border: "1px solid #E5E7EB", "&:before": { display: "none" } }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="body2" color="text.secondary">
@@ -397,6 +406,7 @@ const BusinessDayPanel = () => {
                 </Button>
               </AccordionDetails>
             </Accordion>
+            )}
           </Stack>
         </Paper>
       )}
