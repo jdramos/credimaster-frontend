@@ -53,6 +53,7 @@ import ConfirmDialog from "../ConfirmDialog";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { isModuleEnabled } from "../../utils/moduleAccess";
 import { printCustomerProfileReport } from "../../reports/customerProfileReport";
 
 const TabPanel = ({ children, value, index }) => (
@@ -102,6 +103,9 @@ const normalizeCustomerForApi = (customer, isEmployee) => ({
 const CustomerForm = () => {
   const { user } = useContext(UserContext);
   const { tenant } = useAuth();
+  // La pestaña de cumplimiento PLA-FT (y su validación PEP) solo existe con
+  // el módulo de cumplimiento.
+  const amlEnabled = isModuleEnabled(tenant?.enabled_modules, "compliance");
   const company = {
     commercial_name: tenant?.commercial_name || tenant?.name || "",
     legal_name: tenant?.legal_name || tenant?.company_name || "",
@@ -963,14 +967,17 @@ const CustomerForm = () => {
                 iconPosition="start"
                 label="Documentos"
               />
-              <Tab
-                icon={getTabIcon(7, <GavelIcon fontSize="small" />)}
-                iconPosition="start"
-                label="Cumplimiento PLA-FT"
-              />
+              {amlEnabled && (
+                <Tab
+                  value={7}
+                  icon={getTabIcon(7, <GavelIcon fontSize="small" />)}
+                  iconPosition="start"
+                  label="Cumplimiento PLA-FT"
+                />
+              )}
               {/* Historial crediticio: solo para un cliente ya registrado. */}
               {customer.id && (
-                <Tab icon={<HistoryIcon fontSize="small" />} iconPosition="start" label="Historial crediticio" />
+                <Tab value={8} icon={<HistoryIcon fontSize="small" />} iconPosition="start" label="Historial crediticio" />
               )}
             </Tabs>
           </Box>
@@ -1053,14 +1060,16 @@ const CustomerForm = () => {
               />
             </TabPanel>
 
-            <TabPanel value={activeTab} index={7}>
-              <CustomerAmlCompliance
-                ref={amlRef}
-                customer={customer}
-                setCustomer={setCustomer}
-                mode={internalMode}
-              />
-            </TabPanel>
+            {amlEnabled && (
+              <TabPanel value={activeTab} index={7}>
+                <CustomerAmlCompliance
+                  ref={amlRef}
+                  customer={customer}
+                  setCustomer={setCustomer}
+                  mode={internalMode}
+                />
+              </TabPanel>
+            )}
 
             {customer.id && (
               <TabPanel value={activeTab} index={8}>

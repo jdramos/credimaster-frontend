@@ -36,6 +36,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Link as RouterLink } from "react-router-dom";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { isModuleEnabled } from "../../utils/moduleAccess";
 import API from "../../api";
 import HelpButton from "../help/HelpButton";
 import { printPicReport } from "../../reports/picReport";
@@ -98,7 +99,10 @@ export default function CustomerList() {
   const canCreate = role === 1 || permissions.includes("clientes.insertar");
   const canEdit = role === 1 || permissions.includes("clientes.editar");
   const canView = role === 1 || permissions.includes("clientes.ver");
-  const canPrintPic = role === 1 || permissions.includes("cumplimiento.matriz_riesgo.ver");
+  // Sin el módulo de cumplimiento LA/FT no hay riesgo, PIC ni verificación de
+  // identidad que mostrar.
+  const amlEnabled = isModuleEnabled(tenant?.enabled_modules, "compliance");
+  const canPrintPic = amlEnabled && (role === 1 || permissions.includes("cumplimiento.matriz_riesgo.ver"));
 
   const showSnack = useCallback((type, msg) => {
     setSnack({ type, msg });
@@ -181,13 +185,15 @@ export default function CustomerList() {
         renderCell: (params) => (
           <Stack direction="row" spacing={0.5} alignItems="center">
             <span>{params.value}</span>
-            <Tooltip title={params.row.identity_verified_at ? "Identidad verificada" : "Identidad sin verificar"}>
-              {params.row.identity_verified_at ? (
-                <CheckCircleIcon fontSize="small" sx={{ color: "#2E7D32" }} />
-              ) : (
-                <ErrorOutlineIcon fontSize="small" sx={{ color: "#ED6C02" }} />
-              )}
-            </Tooltip>
+            {amlEnabled && (
+              <Tooltip title={params.row.identity_verified_at ? "Identidad verificada" : "Identidad sin verificar"}>
+                {params.row.identity_verified_at ? (
+                  <CheckCircleIcon fontSize="small" sx={{ color: "#2E7D32" }} />
+                ) : (
+                  <ErrorOutlineIcon fontSize="small" sx={{ color: "#ED6C02" }} />
+                )}
+              </Tooltip>
+            )}
           </Stack>
         ),
       },
@@ -330,8 +336,9 @@ export default function CustomerList() {
           </Stack>
         ),
       },
-    ],
+    ].filter((col) => amlEnabled || col.field !== "risk_level"),
     [
+      amlEnabled,
       canEdit,
       canView,
       canPrintPic,

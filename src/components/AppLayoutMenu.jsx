@@ -58,13 +58,16 @@ import ItRiskDeadlineAlert from "./itRisk/ItRiskDeadlineAlert";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
+import { blockedModuleForPath, isModuleEnabled, MODULE_LABELS } from "../utils/moduleAccess";
 
 // Secciones del menú respaldadas por un módulo opcional habilitable por
 // tenant desde superadmin (ver api/superadmin/moduleRegistry.js — la
 // "key" de cada módulo ahí DEBE coincidir con el valor aquí). Una sección
-// sin entrada en este mapa (main, management, accounting, etc.) es parte
-// del producto base y nunca se oculta.
+// sin entrada en este mapa (main, management, queries, etc.) es parte del
+// paquete básico "Cartera y Cobranza" y nunca se oculta.
 const SECTION_MODULE_KEY = {
+  accounting: "accounting",
+  compliance: "compliance",
   banks: "banks",
   caja: "caja",
   rrhh: "hr",
@@ -366,7 +369,7 @@ const menuItems = {
     { label: "Reportes RRHH", iconName: "FaChartBar", to: "/rrhh/reportes", permission: "menu.rrhh" },
     { label: "Organigrama", iconName: "FaSitemap", to: "/rrhh/organigrama", permission: "menu.rrhh" },
     { label: "Contratos por Vencer", iconName: "FaFileContract", to: "/rrhh/contratos-por-vencer", permission: "menu.rrhh" },
-    { label: "Conozca a su Empleado", iconName: "FaUserShield", to: "/rrhh/conozca-su-empleado", permission: "menu.rrhh" },
+    { label: "Conozca a su Empleado", iconName: "FaUserShield", to: "/rrhh/conozca-su-empleado", permission: "menu.rrhh", moduleKey: "compliance" },
     // Autoservicio: sin "permission" a propósito — el rol "Empleado" no
     // tiene (ni debe tener) menu.rrhh, pero sí debe ver su propia pantalla
     // de vacaciones (mismo criterio que el backend, que tampoco exige
@@ -501,9 +504,11 @@ export default function AppLayoutMenu({
   const isSectionEnabled = (section) => {
     const moduleKey = SECTION_MODULE_KEY[section];
     if (!moduleKey) return true;
-    if (enabledModules === null) return true;
-    return Array.isArray(enabledModules) && enabledModules.includes(moduleKey);
+    return isModuleEnabled(enabledModules, moduleKey);
   };
+  // Pantalla de un módulo que la empresa no tiene (enlace guardado, favorito
+  // o URL escrita a mano): se muestra un aviso en vez de la pantalla.
+  const blockedModule = blockedModuleForPath(location.pathname, enabledModules);
 
   const userCtx = useContext(UserContext) || {};
 
@@ -644,15 +649,19 @@ export default function AppLayoutMenu({
 
   const isCompact = !isMobile && !drawerOpen;
 
+  const visibleRecentScreens = recentScreens.filter((screen) => !blockedModuleForPath(screen.to, enabledModules));
+
   const favoritesSection = useMemo(() => {
     if (!favorites?.length) return [];
 
-    return favorites.map((f) => ({
-      label: f.label,
-      to: f.route,
-      iconName: f.icon || "FaStar",
-    }));
-  }, [favorites]);
+    return favorites
+      .filter((f) => !blockedModuleForPath(f.route, enabledModules))
+      .map((f) => ({
+        label: f.label,
+        to: f.route,
+        iconName: f.icon || "FaStar",
+      }));
+  }, [favorites, enabledModules]);
 
   // Solo items que declaran "permission" quedan sujetos a este filtro — el
   // resto del menú sigue visible para cualquier usuario autenticado, igual
@@ -1155,7 +1164,7 @@ export default function AppLayoutMenu({
           transition: "all .2s ease",
         }}
       >
-        {recentScreens.length > 0 && (
+        {visibleRecentScreens.length > 0 && (
           <Box
             sx={{
               position: "sticky",
@@ -1178,7 +1187,7 @@ export default function AppLayoutMenu({
               </Typography>
             </Stack>
 
-            {recentScreens.map((screen) => (
+            {visibleRecentScreens.map((screen) => (
               <Chip
                 key={screen.to}
                 component={NavLink}
@@ -1199,7 +1208,16 @@ export default function AppLayoutMenu({
           </Box>
         )}
 
-        <Box sx={{ p: { xs: 1.5, md: 2 } }}>{children}</Box>
+        <Box sx={{ p: { xs: 1.5, md: 2 } }}>
+          {blockedModule ? (
+            <Alert severity="info" data-testid="module-disabled-notice">
+              El módulo {MODULE_LABELS[blockedModule] || blockedModule} no está incluido en el plan de su empresa.
+              Si lo necesita, contacte a su administrador.
+            </Alert>
+          ) : (
+            children
+          )}
+        </Box>
       </Box>
 
       <KeyboardShortcuts

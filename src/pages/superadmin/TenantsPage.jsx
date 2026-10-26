@@ -17,9 +17,6 @@ import {
   Divider,
   CircularProgress,
   Tooltip,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
   MenuItem,
   IconButton,
   Table,
@@ -42,6 +39,8 @@ import SanctionsFeedSyncPanel from "./SanctionsFeedSyncPanel";
 import ConamiIndicatorsPanel from "./ConamiIndicatorsPanel";
 import { MfaPolicyPanel } from "../SecurityPage";
 import { getTenantMfaPolicy, updateTenantMfaPolicy } from "../../api/mfa";
+import ModulePackagePicker from "./ModulePackagePicker";
+import { applyPackage, effectiveModules, withDependencies } from "./modulePackages";
 
 const PROVINCES_CATALOG_URL = "/api/superadmin/catalogs/provinces";
 const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
@@ -71,6 +70,7 @@ const emptyForm = {
   admin_password: "",
   admin_full_name: "",
   admin_email: "",
+  module_package: "IMF_REGULADA",
   enabled_modules: null,
   regulatory_type: "IMF_REGULADA",
   conami_regulated: true,
@@ -86,9 +86,9 @@ const REGULATORY_TYPE_OPTIONS = [
 ];
 
 // Inscrita en la CONAMI (normada) o no (db/license/031). Una sociedad que
-// presta puede no estar inscrita. No apaga ningún módulo: decide si la
-// empresa puede editar los parámetros de las normas (p. ej. la tabla de
-// clasificación y provisión). Normada: valores de la norma, sin editar.
+// presta puede no estar inscrita. Decide si la empresa puede editar los
+// parámetros de las normas (p. ej. la tabla de clasificación y provisión) y
+// vuelve obligatorios los módulos regulatorios (ver ModulePackagePicker).
 const REGULATED_OPTIONS = [
   { value: "1", label: "Sí, inscrita en la CONAMI" },
   { value: "0", label: "No inscrita (parámetros editables)" },
@@ -171,6 +171,9 @@ export default function TenantsPage() {
   const [dbNameEdited, setDbNameEdited] = useState(false);
 
   const [availableModules, setAvailableModules] = useState([]);
+  // Catálogo completo de GET /api/superadmin/modules: módulos, paquetes,
+  // dependencias y obligatorios de una empresa normada.
+  const [moduleCatalog, setModuleCatalog] = useState({ modules: [], packages: [], dependencies: {}, regulated_required: [] });
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTenant, setEditTenant] = useState(null);
@@ -208,6 +211,12 @@ export default function TenantsPage() {
     try {
       const res = await API.get(MODULES_URL);
       setAvailableModules(res.data?.data || []);
+      setModuleCatalog({
+        modules: res.data?.data || [],
+        packages: res.data?.packages || [],
+        dependencies: res.data?.dependencies || {},
+        regulated_required: res.data?.regulated_required || [],
+      });
     } catch (error) {
       console.error(error);
     }
@@ -291,11 +300,23 @@ export default function TenantsPage() {
   // reclasificar un tenant ya existente no debe pisar módulos ya elegidos.
   // Módulos por defecto: sin los exclusivos de IMF si es persona natural /
   // prestamista. Estar o no normada no cambia los módulos.
-  const presetModules = (regulatoryType) => {
-    if (regulatoryType === "PERSONA_NATURAL_PRESTAMISTA") {
-      return availableModules.map((m) => m.key).filter((k) => !IMF_ONLY_MODULE_KEYS.includes(k));
-    }
-    return null;
+  // Solo ajusta los módulos si la empresa va en el paquete completo (IMF
+  // regulada); en un paquete menor esos módulos ya no vienen.
+  const presetModules = (regulatoryType, prev) => {
+    if (prev.module_package !== "IMF_REGULADA") return prev.enabled_modules;
+    const base = applyPackage("IMF_REGULADA", moduleCatalog);
+    const modules = regulatoryType === "PERSONA_NATURAL_PRESTAMISTA"
+      ? effectiveModules(base, moduleCatalog).filter((k) => !IMF_ONLY_MODULE_KEYS.includes(k))
+      : base;
+    return withRegulatedModules(modules, prev.conami_regulated);
+  };
+
+  // Una empresa normada debe tener los módulos regulatorios: al marcarla se
+  // agregan solos (con sus dependencias).
+  const withRegulatedModules = (modules, regulated) => {
+    if (!regulated) return modules;
+    const next = withDependencies(modules, moduleCatalog, { conamiRegulated: true });
+    return next.length === moduleCatalog.modules.length ? null : next;
   };
 
   const handleRegulatoryTypeChange = (e) => {
@@ -305,29 +326,17 @@ export default function TenantsPage() {
       regulatory_type: value,
       // Persona natural / prestamista cobra interés flat; IMF, sobre saldo.
       interest_type: value === "PERSONA_NATURAL_PRESTAMISTA" ? "FLAT" : "COMPOUND",
-      enabled_modules: presetModules(value),
+      enabled_modules: presetModules(value, prev),
     }));
   };
 
   const handleRegulatedChange = (e) => {
     const regulated = e.target.value === "1";
-    setForm((prev) => ({ ...prev, conami_regulated: regulated }));
+    setForm((prev) => ({ ...prev, conami_regulated: regulated, enabled_modules: withRegulatedModules(prev.enabled_modules, regulated) }));
   };
 
-  // enabled_modules === null significa "todos habilitados". Al desmarcar un
-  // módulo por primera vez, se expande null al listado completo de claves
-  // conocidas para poder representar la exclusión.
-  const isModuleChecked = (modulesValue, key) => modulesValue === null || modulesValue.includes(key);
-
-  const toggleModule = (modulesValue, key) => {
-    const allKeys = availableModules.map((m) => m.key);
-    const current = modulesValue === null ? allKeys : modulesValue;
-    const next = current.includes(key) ? current.filter((k) => k !== key) : [...current, key];
-    return next.length === allKeys.length ? null : next;
-  };
-
-  const handleToggleModule = (key) => {
-    setForm((prev) => ({ ...prev, enabled_modules: toggleModule(prev.enabled_modules, key) }));
+  const handleModulesChange = ({ module_package, enabled_modules }) => {
+    setForm((prev) => ({ ...prev, module_package, enabled_modules }));
   };
 
   const handleOpenEdit = (row) => {
@@ -342,7 +351,9 @@ export default function TenantsPage() {
       phone: row.phone || "",
       email: row.email || "",
       address: row.address || "",
+      module_package: row.module_package || "IMF_REGULADA",
       enabled_modules: row.enabled_modules ?? null,
+      accounting_since: row.accounting_since || "",
       regulatory_type: row.regulatory_type || "IMF_REGULADA",
       conami_regulated: row.conami_regulated === undefined || row.conami_regulated === null ? true : !!row.conami_regulated,
       interest_type: row.interest_type || "COMPOUND",
@@ -355,9 +366,17 @@ export default function TenantsPage() {
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleToggleEditModule = (key) => {
-    setEditForm((prev) => ({ ...prev, enabled_modules: toggleModule(prev.enabled_modules, key) }));
+  const handleEditModulesChange = ({ module_package, enabled_modules }) => {
+    setEditForm((prev) => ({ ...prev, module_package, enabled_modules }));
   };
+
+  // ¿La empresa empieza a llevar contabilidad con este cambio? (sube de
+  // paquete): se pide la fecha de corte contable.
+  const editStartsAccounting =
+    !!editTenant &&
+    !!editForm &&
+    !effectiveModules(editTenant.enabled_modules ?? null, moduleCatalog).includes("accounting") &&
+    effectiveModules(editForm.enabled_modules, moduleCatalog).includes("accounting");
 
   const handleSubmitEdit = async () => {
     if (!editTenant || !editForm) return;
@@ -367,7 +386,11 @@ export default function TenantsPage() {
     }
     try {
       setSavingEdit(true);
-      await API.put(`${TENANTS_URL}/${editTenant.id}`, editForm);
+      const { accounting_since: accountingSince, ...payload } = editForm;
+      await API.put(`${TENANTS_URL}/${editTenant.id}`, {
+        ...payload,
+        ...(editStartsAccounting && accountingSince ? { accounting_since: accountingSince } : {}),
+      });
       showAlert(`Empresa "${editForm.legal_name}" actualizada`);
       setEditDialogOpen(false);
       await fetchTenants();
@@ -519,6 +542,15 @@ export default function TenantsPage() {
       },
     },
     { field: "plan_code", headerName: "Plan", width: 100 },
+    {
+      field: "module_package",
+      headerName: "Paquete",
+      width: 160,
+      renderCell: (params) => {
+        const pkg = moduleCatalog.packages.find((p) => p.key === params.value);
+        return <Chip size="small" variant="outlined" label={pkg?.label || params.value || "IMF regulada"} />;
+      },
+    },
     {
       field: "conami_regulated",
       headerName: "CONAMI",
@@ -778,23 +810,15 @@ export default function TenantsPage() {
 
           <Divider sx={{ my: 2 }} />
           <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
-            Módulos habilitados
+            Paquete y módulos
           </Typography>
-          <FormGroup row>
-            {availableModules.map((mod) => (
-              <FormControlLabel
-                key={mod.key}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={isModuleChecked(form.enabled_modules, mod.key)}
-                    onChange={() => handleToggleModule(mod.key)}
-                  />
-                }
-                label={mod.label}
-              />
-            ))}
-          </FormGroup>
+          <ModulePackagePicker
+            catalog={moduleCatalog}
+            modulePackage={form.module_package}
+            enabledModules={form.enabled_modules}
+            conamiRegulated={form.conami_regulated}
+            onChange={handleModulesChange}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} disabled={saving} sx={{ textTransform: "none" }}>
@@ -870,7 +894,14 @@ export default function TenantsPage() {
                     fullWidth
                     size="small"
                     value={editForm.conami_regulated ? "1" : "0"}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, conami_regulated: e.target.value === "1" }))}
+                    onChange={(e) => {
+                      const regulated = e.target.value === "1";
+                      setEditForm((prev) => ({
+                        ...prev,
+                        conami_regulated: regulated,
+                        enabled_modules: withRegulatedModules(prev.enabled_modules, regulated),
+                      }));
+                    }}
                     helperText={editForm.conami_regulated ? "Parámetros de las normas sin editar" : "Parámetros de las normas editables"}
                   >
                     {REGULATED_OPTIONS.map((opt) => (
@@ -892,23 +923,28 @@ export default function TenantsPage() {
 
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
-                Módulos habilitados
+                Paquete y módulos
               </Typography>
-              <FormGroup row>
-                {availableModules.map((mod) => (
-                  <FormControlLabel
-                    key={mod.key}
-                    control={
-                      <Checkbox
-                        size="small"
-                        checked={isModuleChecked(editForm.enabled_modules, mod.key)}
-                        onChange={() => handleToggleEditModule(mod.key)}
-                      />
-                    }
-                    label={mod.label}
-                  />
-                ))}
-              </FormGroup>
+              {editTenant?.accounting_since && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Contabiliza desde {editTenant.accounting_since} (fecha de corte).
+                </Typography>
+              )}
+              <ModulePackagePicker
+                catalog={moduleCatalog}
+                modulePackage={editForm.module_package}
+                enabledModules={editForm.enabled_modules}
+                conamiRegulated={editForm.conami_regulated}
+                onChange={handleEditModulesChange}
+                accountingCutover={
+                  editStartsAccounting
+                    ? {
+                        value: editForm.accounting_since || new Date().toISOString().slice(0, 10),
+                        onChange: (value) => setEditForm((prev) => ({ ...prev, accounting_since: value })),
+                      }
+                    : null
+                }
+              />
 
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" fontWeight={800}>

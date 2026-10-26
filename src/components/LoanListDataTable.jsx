@@ -25,6 +25,9 @@ import {
   Typography,
   Stack,
   Autocomplete,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
 } from "@mui/material";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import EditIcon from "@mui/icons-material/Edit";
@@ -48,6 +51,9 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import API from "../api";
+import { loanApi } from "../api/loanApi";
+import { useAuth } from "../contexts/AuthContext";
+import { isModuleEnabled } from "../utils/moduleAccess";
 
 const urlGuarantee = `/api/guarantees`;
 
@@ -69,6 +75,12 @@ function LoanListDataTable({
   setSortOrder,
 }) {
   const { permissions, role, user } = useContext(UserContext);
+  const { tenant } = useAuth() || {};
+  // Sin Caja ni Bancos (paquete Cartera y Cobranza) no existe la pantalla
+  // "Desembolsar créditos": el crédito aprobado se desembolsa desde aquí,
+  // indicando solo la forma (ver resolveDisbursementSource en el backend).
+  const directDisbursement =
+    !isModuleEnabled(tenant?.enabled_modules, "caja") && !isModuleEnabled(tenant?.enabled_modules, "banks");
   const navigate = useNavigate();
   const currentUserId = user?.id ?? null;
 
@@ -99,6 +111,7 @@ function LoanListDataTable({
   const [disburseLoading, setDisburseLoading] = useState(false);
   const [deliveryAgents, setDeliveryAgents] = useState([]);
   const [deliveryAgentId, setDeliveryAgentId] = useState(null);
+  const [disburseMethod, setDisburseMethod] = useState("EFECTIVO");
 
   const [returnRemittanceLoading, setReturnRemittanceLoading] = useState(false);
 
@@ -307,6 +320,7 @@ function LoanListDataTable({
 
       setSelectedDisburseLoan(loanData);
       setDeliveryAgentId(currentUserId);
+      setDisburseMethod("EFECTIVO");
       setDisburseDialogOpen(true);
 
       try {
@@ -366,10 +380,17 @@ function LoanListDataTable({
     try {
       setDisburseLoading(true);
 
-      await API.post(`/api/loans/${selectedDisburseLoan.id}/disburse`, {
-        disbursed_by: currentUserId,
-        delivery_agent_id: deliveryAgentId,
-      });
+      if (directDisbursement && !selectedDisburseLoan.disbursement_method) {
+        await loanApi.createRemittance(selectedDisburseLoan.id, {
+          disbursement_method: disburseMethod,
+          delivery_agent_id: deliveryAgentId,
+        });
+      } else {
+        await API.post(`/api/loans/${selectedDisburseLoan.id}/disburse`, {
+          disbursed_by: currentUserId,
+          delivery_agent_id: deliveryAgentId,
+        });
+      }
 
       openSnack("Crédito desembolsado correctamente.", "success");
       handleCloseDisburseDialog();
@@ -848,7 +869,7 @@ function LoanListDataTable({
                         {canDisburse && canDisburseRow && (
                           <Tooltip
                             title={
-                              row.disbursement_method
+                              row.disbursement_method || directDisbursement
                                 ? "Desembolsar crédito"
                                 : "Primero debe elegir la forma de desembolso"
                             }
@@ -858,7 +879,7 @@ function LoanListDataTable({
                                 size="small"
                                 color="info"
                                 onClick={() => handleOpenDisburseDialog(row)}
-                                disabled={!row.disbursement_method}
+                                disabled={!row.disbursement_method && !directDisbursement}
                               >
                                 <AccountBalanceWalletIcon fontSize="small" />
                               </IconButton>
@@ -1132,6 +1153,19 @@ function LoanListDataTable({
             Esta acción marcará el crédito como desembolsado y generará su plan
             final según las condiciones aprobadas.
           </Typography>
+
+          {directDisbursement && !selectedDisburseLoan?.disbursement_method && (
+            <RadioGroup
+              row
+              value={disburseMethod}
+              onChange={(e) => setDisburseMethod(e.target.value)}
+              sx={{ mb: 2 }}
+            >
+              <FormControlLabel value="EFECTIVO" control={<Radio />} label="Efectivo" />
+              <FormControlLabel value="TRANSFERENCIA" control={<Radio />} label="Transferencia" />
+              <FormControlLabel value="CHEQUE" control={<Radio />} label="Cheque" />
+            </RadioGroup>
+          )}
 
           <Autocomplete
             options={deliveryAgents}

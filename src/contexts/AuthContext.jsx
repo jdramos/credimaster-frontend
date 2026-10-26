@@ -1,8 +1,8 @@
 // src/contexts/AuthContext.js
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { UserContext } from "./UserContext";
-import API from "../api";
+import API, { MODULE_DISABLED_EVENT } from "../api";
 import { getTrustedDeviceToken, saveTrustedDeviceToken } from "../api/mfa";
 import { invalidateCache } from "../hooks/useCachedFetch";
 
@@ -150,6 +150,47 @@ export const AuthProvider = ({ children }) => {
     return { ok: true, type: session.type };
   };
 
+  // Módulos vigentes de la empresa: el login los trae, pero el superadmin
+  // puede cambiar el paquete en cualquier momento. Se releen al cargar, al
+  // volver a la pestaña y cuando una ruta responde MODULE_DISABLED, y se
+  // guardan en la sesión para que el menú no parpadee al recargar.
+  const lastModulesRefresh = useRef(0);
+  const refreshTenantModules = useCallback(async () => {
+    lastModulesRefresh.current = Date.now();
+    try {
+      const res = await API.get("/api/session/modules");
+      const modules = res.data?.data;
+      if (!modules) return;
+      setTenant((prev) => {
+        const next = { ...(prev || {}), ...modules };
+        try {
+          const session = JSON.parse(localStorage.getItem("session") || "null");
+          if (session) localStorage.setItem("session", JSON.stringify({ ...session, tenant: next }));
+        } catch {
+          // Sesión ilegible: el próximo login la reescribe.
+        }
+        return next;
+      });
+    } catch {
+      // Sin red o sesión vencida: se queda lo que había (el interceptor de
+      // API ya maneja la sesión vencida).
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || sessionType === "SUPERADMIN") return undefined;
+    refreshTenantModules();
+    const onFocus = () => {
+      if (Date.now() - lastModulesRefresh.current > 30 * 1000) refreshTenantModules();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener(MODULE_DISABLED_EVENT, refreshTenantModules);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(MODULE_DISABLED_EVENT, refreshTenantModules);
+    };
+  }, [isAuthenticated, sessionType, refreshTenantModules]);
+
   const login = async (username, password) => {
     try {
       localStorage.removeItem("token");
@@ -249,6 +290,7 @@ export const AuthProvider = ({ children }) => {
           login,
           completeMfaLogin,
           logout,
+          refreshTenantModules,
         }}
       >
         {children}

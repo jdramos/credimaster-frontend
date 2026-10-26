@@ -9,6 +9,8 @@ const API = axios.create({
   },
 });
 
+export const MODULE_DISABLED_EVENT = "credimaster:module-disabled";
+
 let isLoggingOut = false;
 
 const logoutExpiredSession = (message) => {
@@ -92,6 +94,12 @@ API.interceptors.response.use(
       logoutExpiredSession(
         isSessionReplaced ? "Tu sesión se cerró porque se inició sesión en otro equipo." : undefined,
       );
+    }
+
+    // Ruta de un módulo que la empresa ya no tiene (el superadmin cambió el
+    // paquete): AuthContext relee los módulos y el menú se ajusta solo.
+    if (error.response?.status === 403 && data?.code === "MODULE_DISABLED") {
+      window.dispatchEvent(new CustomEvent(MODULE_DISABLED_EVENT, { detail: data.module }));
     }
 
     return Promise.reject(error);
