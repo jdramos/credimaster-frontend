@@ -4,6 +4,8 @@ import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import API from "../api";
 import HelpButton from "./help/HelpButton";
+import { useAuth } from "../contexts/AuthContext";
+import { isConamiRegulated } from "../utils/moduleAccess";
 
 const FIELDS = [
   "representative_name",
@@ -23,6 +25,10 @@ const FIELDS = [
 const emptyForm = () => Object.fromEntries(FIELDS.map((f) => [f, ""]));
 
 export default function InstitutionalLegalDataManager() {
+  // Una empresa no normada no tiene resolución CONAMI: esos campos no se
+  // muestran (se conservan tal cual si ya tenían valor).
+  const { tenant } = useAuth() || {};
+  const conamiRegulated = isConamiRegulated(tenant);
   const [form, setForm] = useState(emptyForm());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -116,17 +122,21 @@ export default function InstitutionalLegalDataManager() {
                 </Grid>
               </Grid>
 
-              <Divider />
+              {conamiRegulated && (
+                <>
+                  <Divider />
 
-              <Typography variant="h6" fontWeight={800}>Resolución CONAMI</Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Número de resolución" size="small" placeholder="Resolución No. CD-CONAMI-XXX-XXXXX-XXXX" value={form.conami_resolution_number} onChange={set("conami_resolution_number")} />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField fullWidth label="Gaceta Diario Oficial" size="small" placeholder="Número y fecha de publicación" value={form.conami_gazette_data} onChange={set("conami_gazette_data")} />
-                </Grid>
-              </Grid>
+                  <Typography variant="h6" fontWeight={800}>Resolución CONAMI</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField fullWidth label="Número de resolución" size="small" placeholder="Resolución No. CD-CONAMI-XXX-XXXXX-XXXX" value={form.conami_resolution_number} onChange={set("conami_resolution_number")} />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField fullWidth label="Gaceta Diario Oficial" size="small" placeholder="Número y fecha de publicación" value={form.conami_gazette_data} onChange={set("conami_gazette_data")} />
+                    </Grid>
+                  </Grid>
+                </>
+              )}
 
               <Divider />
 

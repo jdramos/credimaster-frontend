@@ -28,10 +28,23 @@ export const PATH_MODULES = [
   ["/ti/riesgo", "it_risk"],
   ["/reports/conami/icc", "icc"],
   ["/reports/conami/sinriesgo", "sinriesgo"],
+  ["/sinriesgos", "sinriesgo"],
   ["/configuracion/provision-cartera", "risk_classification_ngrc"],
+  ["/provisiones", "risk_classification_ngrc"],
 ];
 
 const matchesPrefix = (pathname, prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`);
+
+// ¿La empresa está normada por la CONAMI? (tenants.conami_regulated). Si no
+// se sabe, se asume que sí: es lo que tenían todas las empresas antes.
+export const isConamiRegulated = (tenant) =>
+  !(tenant?.conami_regulated === false || tenant?.conami_regulated === 0);
+
+// Pantallas que solo tienen sentido para una empresa normada por la CONAMI.
+export const REGULATED_ONLY_PATHS = ["/conami/tablas"];
+
+export const isRegulatedOnlyPath = (pathname) =>
+  REGULATED_ONLY_PATHS.some((prefix) => matchesPrefix(pathname, prefix));
 
 // Primer módulo apagado que exige la ruta, o null si se puede abrir.
 export const blockedModuleForPath = (pathname, enabledModules) => {

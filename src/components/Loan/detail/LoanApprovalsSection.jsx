@@ -36,6 +36,7 @@ const LoanApprovalsSection = ({
   userId,
   isFormConsistentlyValid,
   isComplianceValid,
+  conamiRegulated = true,
   actionLoading,
   onRequestApprove,
   onReject,
@@ -126,7 +127,9 @@ const LoanApprovalsSection = ({
                 const approveTooltip = !isFormConsistentlyValid
                   ? "Corrige monto, plazo, tasa o valor de garantías"
                   : !isComplianceValid
-                    ? "Faltan requisitos de cumplimiento CONAMI"
+                    ? conamiRegulated
+                      ? "Faltan requisitos de cumplimiento CONAMI"
+                      : "Faltan requisitos para aprobar"
                     : "Aprobar solicitud";
 
                 return (

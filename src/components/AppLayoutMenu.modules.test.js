@@ -13,8 +13,10 @@ jest.mock("./KeyboardShortcuts", () => ({ __esModule: true, default: () => null,
 jest.mock("./BusinessDayAlert", () => () => null);
 jest.mock("./itRisk/ItRiskDeadlineAlert", () => () => null);
 
-const renderMenu = (enabledModules, path = "/") => {
-  useAuth.mockReturnValue({ tenant: { enabled_modules: enabledModules, legal_name: "Prestamos SA" } });
+const renderMenu = (enabledModules, path = "/", { conamiRegulated = true } = {}) => {
+  useAuth.mockReturnValue({
+    tenant: { enabled_modules: enabledModules, legal_name: "Prestamos SA", conami_regulated: conamiRegulated },
+  });
   return render(
     <MemoryRouter initialEntries={[path]}>
       <UserContext.Provider value={{ role: 1, permissions: [], favorites: [], user: 1, fullName: "Ana" }}>
@@ -59,6 +61,27 @@ describe("Menú según los módulos de la empresa", () => {
     renderMenu([], "/pagos");
     expect(screen.getByTestId("screen")).toBeTruthy();
     expect(screen.queryByTestId("module-disabled-notice")).toBeNull();
+  });
+});
+
+describe("Empresa no normada por la CONAMI", () => {
+  it("no ve Tablas CONAMI, Provisiones NGRC ni el reporte Sin Riesgo", () => {
+    renderMenu([], "/", { conamiRegulated: false });
+    expect(screen.queryAllByText("Tablas CONAMI")).toHaveLength(0);
+    expect(screen.queryAllByText("Provisiones")).toHaveLength(0);
+    expect(screen.queryAllByText("Sin riesgo")).toHaveLength(0);
+  });
+
+  it("una empresa normada con todos los módulos sí los ve", () => {
+    renderMenu(null, "/", { conamiRegulated: true });
+    expect(screen.getAllByText("Tablas CONAMI").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Provisiones").length).toBeGreaterThan(0);
+  });
+
+  it("la URL de las tablas CONAMI muestra un aviso", () => {
+    renderMenu(null, "/conami/tablas", { conamiRegulated: false });
+    expect(screen.getByTestId("module-disabled-notice").textContent).toContain("normadas por la CONAMI");
+    expect(screen.queryByTestId("screen")).toBeNull();
   });
 });
 

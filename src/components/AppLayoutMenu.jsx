@@ -58,7 +58,13 @@ import ItRiskDeadlineAlert from "./itRisk/ItRiskDeadlineAlert";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
-import { blockedModuleForPath, isModuleEnabled, MODULE_LABELS } from "../utils/moduleAccess";
+import {
+  blockedModuleForPath,
+  isConamiRegulated,
+  isModuleEnabled,
+  isRegulatedOnlyPath,
+  MODULE_LABELS,
+} from "../utils/moduleAccess";
 
 // Secciones del menú respaldadas por un módulo opcional habilitable por
 // tenant desde superadmin (ver api/superadmin/moduleRegistry.js — la
@@ -162,8 +168,8 @@ const menuItems = {
       to: "/creditos/productividad",
       permission: "creditos.productividad.ver",
     },
-    { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones" },
-    { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos" },
+    { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones", moduleKey: "risk_classification_ngrc" },
+    { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos", moduleKey: "sinriesgo" },
     { label: "Cartera saneada", iconName: "FaFileInvoiceDollar", to: "/cartera-saneada" },
     { label: "Reporte de Garantías", iconName: "FaLock", to: "/garantias/reporte", permission: "menu.garantias" },
   ],
@@ -501,7 +507,10 @@ export default function AppLayoutMenu({
   // enabled_modules null/undefined = todos habilitados (tenant sin
   // restricción explícita, o token viejo emitido antes de esta función).
   const enabledModules = tenant?.enabled_modules ?? null;
+  // Una empresa no normada por la CONAMI no ve las tablas de la CONAMI.
+  const conamiRegulated = isConamiRegulated(tenant);
   const isSectionEnabled = (section) => {
+    if (section === "conami_tables" && !conamiRegulated) return false;
     const moduleKey = SECTION_MODULE_KEY[section];
     if (!moduleKey) return true;
     return isModuleEnabled(enabledModules, moduleKey);
@@ -509,6 +518,7 @@ export default function AppLayoutMenu({
   // Pantalla de un módulo que la empresa no tiene (enlace guardado, favorito
   // o URL escrita a mano): se muestra un aviso en vez de la pantalla.
   const blockedModule = blockedModuleForPath(location.pathname, enabledModules);
+  const blockedByRegulation = !conamiRegulated && isRegulatedOnlyPath(location.pathname);
 
   const userCtx = useContext(UserContext) || {};
 
@@ -1213,6 +1223,10 @@ export default function AppLayoutMenu({
             <Alert severity="info" data-testid="module-disabled-notice">
               El módulo {MODULE_LABELS[blockedModule] || blockedModule} no está incluido en el plan de su empresa.
               Si lo necesita, contacte a su administrador.
+            </Alert>
+          ) : blockedByRegulation ? (
+            <Alert severity="info" data-testid="module-disabled-notice">
+              Esta pantalla es solo para empresas normadas por la CONAMI.
             </Alert>
           ) : (
             children

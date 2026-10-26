@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { UserContext } from "../../../contexts/UserContext";
 import { useAuth } from "../../../contexts/AuthContext";
+import { isConamiRegulated } from "../../../utils/moduleAccess";
 import QuickPaymentModal from "../QuickPaymentModal";
 import LoanModificationSection from "../LoanModificationSection";
 import AssetAdjudicationModal from "../../AssetAdjudicationModal";
@@ -266,6 +267,7 @@ const LoanDetailsModal = ({
                   financialEvaluation={financialEvaluation}
                   clientId={clientId}
                   loanId={loanId}
+                  conamiRegulated={isConamiRegulated(tenant)}
                 />
 
                 <LoanApprovalsSection
@@ -277,6 +279,7 @@ const LoanDetailsModal = ({
                   userId={userId}
                   isFormConsistentlyValid={isFormConsistentlyValid}
                   isComplianceValid={isComplianceValid}
+                  conamiRegulated={isConamiRegulated(tenant)}
                   actionLoading={actionLoading}
                   onRequestApprove={(approvalId) => {
                     setSelectedApprovalId(approvalId);
