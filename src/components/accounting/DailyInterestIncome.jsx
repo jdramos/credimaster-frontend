@@ -39,6 +39,9 @@ export default function DailyInterestIncome() {
   const [rows, setRows] = useState([]);
   const [totals, setTotals] = useState(EMPTY_TOTALS);
   const [missingAmount, setMissingAmount] = useState(0);
+  // Empresa no normada: el interés se reconoce al cobrarse, no se devenga.
+  const [interestBasis, setInterestBasis] = useState("ACCRUED");
+  const interestLabel = interestBasis === "COLLECTED" ? "Intereses cobrados" : "Devengo normal";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -51,6 +54,7 @@ export default function DailyInterestIncome() {
       setRows(response.data?.data || []);
       setTotals({ ...EMPTY_TOTALS, ...(response.data?.totals || {}) });
       setMissingAmount(response.data?.missing_amount || 0);
+      setInterestBasis(response.data?.interest_basis || "ACCRUED");
     } catch (requestError) {
       setError(requestError.response?.data?.message || "No se pudo generar el reporte");
     } finally {
@@ -77,23 +81,23 @@ export default function DailyInterestIncome() {
     if (view === "customer") {
       return rows.slice(0, 15).map((r) => ({
         name: r.credit_code || r.customer_name?.slice(0, 18) || `Cliente ${r.customer_id ?? ""}`,
-        "Devengo normal": r.interest_accrual,
+        [interestLabel]: r.interest_accrual,
         "Interés moratorio": r.default_interest,
         "Comisiones": r.fee_income,
       }));
     }
     return rows.map((r) => ({
       name: r.entry_date.slice(5),
-      "Devengo normal": r.interest_accrual,
+      [interestLabel]: r.interest_accrual,
       "Interés moratorio": r.default_interest,
       "Comisiones": r.fee_income,
     }));
-  }, [rows, view]);
+  }, [rows, view, interestLabel]);
 
   const dateColumns = useMemo(() => [
     { field: "entry_date", headerName: "Fecha", width: 130 },
     {
-      field: "interest_accrual", headerName: "Devengo normal", width: 160, type: "number",
+      field: "interest_accrual", headerName: interestLabel, width: 160, type: "number",
       valueFormatter: (p) => money(p.value),
     },
     {
@@ -112,13 +116,13 @@ export default function DailyInterestIncome() {
       field: "insurance", headerName: "Seguros (no es ingreso)", width: 190, type: "number",
       valueFormatter: (p) => money(p.value),
     },
-  ], []);
+  ], [interestLabel]);
 
   const customerColumns = useMemo(() => [
     { field: "customer_name", headerName: "Cliente", flex: 1, minWidth: 220 },
     { field: "credit_code", headerName: "Crédito", width: 120 },
     {
-      field: "interest_accrual", headerName: "Devengo normal", width: 160, type: "number",
+      field: "interest_accrual", headerName: interestLabel, width: 160, type: "number",
       valueFormatter: (p) => money(p.value),
     },
     {
@@ -133,24 +137,24 @@ export default function DailyInterestIncome() {
       field: "total", headerName: "Total", width: 160, type: "number",
       renderCell: (p) => <span style={{ fontWeight: 700 }}>{money(p.value)}</span>,
     },
-  ], []);
+  ], [interestLabel]);
 
   const columns = view === "customer" ? customerColumns : dateColumns;
 
   const printReport = () => printAccountingReport({
     title: view === "customer" ? "Ingresos por Intereses y Comisiones por Cliente" : "Ingresos Diarios por Intereses, Comisiones y Seguros",
-    subtitle: `${view === "customer" ? "Detalle por cliente" : "Devengo diario"} contabilizado · Sucursal: ${branchName || "Todas"}`,
+    subtitle: `${view === "customer" ? "Detalle por cliente" : interestBasis === "COLLECTED" ? "Ingreso diario" : "Devengo diario"} contabilizado · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.start_date} al ${filters.end_date}`,
     columns: view === "customer" ? [
       { field: "customer_name", label: "Cliente" },
       { field: "credit_code", label: "Crédito" },
-      { field: "interest_accrual", label: "Devengo normal", numeric: true, format: money },
+      { field: "interest_accrual", label: interestLabel, numeric: true, format: money },
       { field: "default_interest", label: "Interés moratorio", numeric: true, format: money },
       { field: "fee_income", label: "Comisiones", numeric: true, format: money },
       { field: "total", label: "Total", numeric: true, format: money },
     ] : [
       { field: "entry_date", label: "Fecha" },
-      { field: "interest_accrual", label: "Devengo normal", numeric: true, format: money },
+      { field: "interest_accrual", label: interestLabel, numeric: true, format: money },
       { field: "default_interest", label: "Interés moratorio", numeric: true, format: money },
       { field: "fee_income", label: "Comisiones", numeric: true, format: money },
       { field: "total", label: "Total ingresos", numeric: true, format: money },
@@ -212,7 +216,7 @@ export default function DailyInterestIncome() {
 
         {rows.length > 0 && (
           <Stack direction="row" spacing={3} sx={{ mb: 2 }} flexWrap="wrap">
-            <Typography variant="body2"><b>Devengo normal:</b> C$ {money(totals.interest_accrual)}</Typography>
+            <Typography variant="body2"><b>{interestLabel}:</b> C$ {money(totals.interest_accrual)}</Typography>
             <Typography variant="body2"><b>Interés moratorio:</b> C$ {money(totals.default_interest)}</Typography>
             <Typography variant="body2"><b>Comisiones:</b> C$ {money(totals.fee_income)}</Typography>
             <Typography variant="body2"><b>Total ingresos:</b> C$ {money(totals.total)}</Typography>
@@ -234,7 +238,7 @@ export default function DailyInterestIncome() {
                 <YAxis tick={{ fontSize: 11 }} />
                 <RechartsTooltip formatter={(value) => `C$ ${money(value)}`} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="Devengo normal" stackId="a" fill="#1565c0" radius={[0, 0, 0, 0]} />
+                <Bar dataKey={interestLabel} stackId="a" fill="#1565c0" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Interés moratorio" stackId="a" fill="#c62828" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="Comisiones" stackId="a" fill="#2e7d32" radius={[4, 4, 0, 0]} />
               </BarChart>

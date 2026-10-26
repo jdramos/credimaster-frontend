@@ -727,7 +727,9 @@ export default function TenantsPage() {
                 size="small"
                 value={form.conami_regulated ? "1" : "0"}
                 onChange={handleRegulatedChange}
-                helperText={form.conami_regulated ? "Usa los valores de las normas; no se pueden editar" : "Podrá editar los parámetros de las normas (p. ej. provisiones)"}
+                helperText={form.conami_regulated
+                  ? "Usa los valores de las normas; no se pueden editar. Después no podrá pasar a no normada."
+                  : "Podrá editar los parámetros de las normas (p. ej. provisiones); el interés se reconoce al cobrarse"}
               >
                 {REGULATED_OPTIONS.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -902,7 +904,12 @@ export default function TenantsPage() {
                         enabled_modules: withRegulatedModules(prev.enabled_modules, regulated),
                       }));
                     }}
-                    helperText={editForm.conami_regulated ? "Parámetros de las normas sin editar" : "Parámetros de las normas editables"}
+                    // Una normada no pasa a no normada (el backend también lo rechaza):
+                    // ya contabilizó su interés al devengarse.
+                    disabled={editTenant?.conami_regulated === undefined || editTenant?.conami_regulated === null || !!editTenant?.conami_regulated}
+                    helperText={editForm.conami_regulated
+                      ? "Parámetros de las normas sin editar. Una empresa normada no puede pasar a no normada."
+                      : "Parámetros editables; el interés se reconoce al cobrarse"}
                   >
                     {REGULATED_OPTIONS.map((opt) => (
                       <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
