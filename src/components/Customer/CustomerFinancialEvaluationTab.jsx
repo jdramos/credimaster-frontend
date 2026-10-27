@@ -967,6 +967,14 @@ export default function CustomerFinancialEvaluationTab({
           </Alert>
         )}
 
+        {/* Cliente nuevo: todavía no existe, así que la evaluación no se puede
+            guardar sola (el backend exige customer_id). Se guarda junto con el
+            cliente al presionar Guardar (financial_evaluation en el POST). */}
+        {!customerId && !readOnly ? (
+          <Alert severity="info" sx={{ py: 0 }}>
+            La evaluación se guardará junto con el cliente al presionar "Guardar". Después podrá registrar nuevas versiones desde aquí.
+          </Alert>
+        ) : (
         <Box display="flex" justifyContent="flex-end">
           <Button
             variant="contained"
@@ -990,6 +998,7 @@ export default function CustomerFinancialEvaluationTab({
                 : "Guardar evaluación"}
           </Button>
         </Box>
+        )}
       </Stack>
     </Paper>
   );
