@@ -29,10 +29,14 @@ const CustomerBusinessTab = forwardRef(
       isEmployee,
       setIsEmployee,
       mode,
+      conamiRegulated = true,
     },
     ref,
   ) => {
     const disabled = mode === "show";
+    // Empresa no normada: los datos laborales / del negocio son opcionales
+    // (ver utils/customerRequiredFields.js).
+    const star = (text) => (conamiRegulated ? `${text} *` : text);
 
     // helpers
     const isEmpty = (v) =>
@@ -47,7 +51,7 @@ const CustomerBusinessTab = forwardRef(
         (typeof value === "string" && value.trim() === "");
       setErrors((prev) => ({
         ...prev,
-        [name]: empty ? "Este campo es requerido" : "",
+        [name]: empty && conamiRegulated ? "Este campo es requerido" : "",
       }));
     };
 
@@ -120,7 +124,9 @@ const CustomerBusinessTab = forwardRef(
         ]);
 
         // ✅ Requeridos del tab (solo los editables)
-        const required = employee
+        const required = !conamiRegulated
+          ? []
+          : employee
           ? [
               "economic_activity",
               "conami_id_actividad_economica",
@@ -317,7 +323,7 @@ const CustomerBusinessTab = forwardRef(
                     <TextField
                       fullWidth
                       size="small"
-                      label="Profesión / Oficio *"
+                      label={star("Profesión / Oficio")}
                       name="occupation"
                       value={customer.occupation ?? ""}
                       onChange={handleInputChange}
@@ -331,7 +337,7 @@ const CustomerBusinessTab = forwardRef(
                     <TextField
                       fullWidth
                       size="small"
-                      label="Empresa *"
+                      label={star("Empresa")}
                       name="company"
                       value={customer.company ?? ""}
                       onChange={handleInputChange}
@@ -344,7 +350,7 @@ const CustomerBusinessTab = forwardRef(
                   <Grid item xs={12} md={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
-                        label="Fecha de ingreso *"
+                        label={star("Fecha de ingreso")}
                         value={customer.job_start_day ?? null}
                         onChange={(newValue) =>
                           handleInputChange({
@@ -368,7 +374,7 @@ const CustomerBusinessTab = forwardRef(
                       customInput={TextField}
                       fullWidth
                       size="small"
-                      label="Salario mensual *"
+                      label={star("Salario mensual")}
                       name="monthly_salary"
                       value={customer.monthly_salary ?? 0}
                       onValueChange={(values) => {
@@ -432,7 +438,7 @@ const CustomerBusinessTab = forwardRef(
                     <TextField
                       fullWidth
                       size="small"
-                      label="Nombre del negocio *"
+                      label={star("Nombre del negocio")}
                       name="business_name"
                       value={customer.business_name ?? ""}
                       onChange={handleInputChange}
@@ -445,7 +451,7 @@ const CustomerBusinessTab = forwardRef(
                   <Grid item xs={12} md={6}>
                     <BusinessTypeSelect
                       editing
-                      label="Tipo de negocio *"
+                      label={star("Tipo de negocio")}
                       selected={customer.business_type_id}
                       name="business_type_id"
                       onChange={handleInputChange}
@@ -463,7 +469,7 @@ const CustomerBusinessTab = forwardRef(
                     <TextField
                       fullWidth
                       size="small"
-                      label="Dirección del negocio *"
+                      label={star("Dirección del negocio")}
                       name="business_address"
                       value={customer.business_address ?? ""}
                       onChange={handleInputChange}
@@ -477,7 +483,7 @@ const CustomerBusinessTab = forwardRef(
                     <TextField
                       fullWidth
                       size="small"
-                      label="Teléfono del negocio *"
+                      label={star("Teléfono del negocio")}
                       name="business_telephone"
                       value={customer.business_telephone ?? ""}
                       onChange={handleInputChange}
@@ -492,7 +498,7 @@ const CustomerBusinessTab = forwardRef(
                       customInput={TextField}
                       fullWidth
                       size="small"
-                      label="Inventario *"
+                      label={star("Inventario")}
                       name="business_inventory"
                       value={customer.business_inventory ?? 0}
                       onValueChange={(values) => {
@@ -517,7 +523,7 @@ const CustomerBusinessTab = forwardRef(
                       customInput={TextField}
                       fullWidth
                       size="small"
-                      label="Cuentas por cobrar *"
+                      label={star("Cuentas por cobrar")}
                       name="business_receivables"
                       value={customer.business_receivables ?? 0}
                       onValueChange={(values) => {
@@ -542,7 +548,7 @@ const CustomerBusinessTab = forwardRef(
                       customInput={TextField}
                       fullWidth
                       size="small"
-                      label="Ingresos mensuales *"
+                      label={star("Ingresos mensuales")}
                       name="business_monthly_income"
                       value={customer.business_monthly_income ?? 0}
                       onValueChange={(values) => {

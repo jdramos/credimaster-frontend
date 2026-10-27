@@ -1,15 +1,16 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { TextField, Divider, Box, Grid } from '@mui/material';
 import DividerChip from "../DividerChip";
+import { requiredCustomerFields } from "../../utils/customerRequiredFields";
 
-const CustomerReferencesTab = forwardRef(({ customer, setCustomer, errors, setErrors, mode }, ref) => {
+const CustomerReferencesTab = forwardRef(({ customer, setCustomer, errors, setErrors, mode, conamiRegulated = true }, ref) => {
     useImperativeHandle(ref, () => ({
         validate: () => {
             let valid = true;
             const newErrors = {};
 
 
-            const fields = [
+            const fields = requiredCustomerFields([
                 "reference_name",
                 "reference_telephone",
                 "reference_known_time",
@@ -18,7 +19,7 @@ const CustomerReferencesTab = forwardRef(({ customer, setCustomer, errors, setEr
                 "reference2_telephone",
                 "reference2_known_time",
                 "reference2_relationship",
-            ];
+            ], conamiRegulated);
 
             fields.forEach(field => {
                 if (!customer[field]) {

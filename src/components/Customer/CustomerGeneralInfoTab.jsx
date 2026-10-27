@@ -8,6 +8,7 @@ import MunicipalitySelect from "../MunicipalitySelect";
 import GenreSelect from "../Genre/GenreSelect";
 import EstadoCivilSelect from "../conami/EstadoCivilSelect";
 import TipoDocumentoSelect from "../TipoDocumentoSelect";
+import { requiredCustomerFields, requiredCustomerLabel } from "../../utils/customerRequiredFields";
 
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -58,10 +59,12 @@ const CustomerGeneralInfoTab = forwardRef(
       isEmployee,
       setIsEmployee,
       mode,
+      conamiRegulated = true,
     },
     ref,
   ) => {
     const disabled = mode === "show";
+    const lbl = (text, field) => requiredCustomerLabel(text, field, conamiRegulated);
 
     const isEmpty = (v) =>
       v === null ||
@@ -77,7 +80,7 @@ const CustomerGeneralInfoTab = forwardRef(
           Number(c.marital_status_id) === 3 ||
           Number(c.marital_status_id) === 4;
 
-        const required = [
+        const required = requiredCustomerFields([
           "customer_name",
           "public_name",
           "genre_id",
@@ -95,7 +98,7 @@ const CustomerGeneralInfoTab = forwardRef(
           "birth_date",
           "nationality_id",
           "cellphone",
-        ];
+        ], conamiRegulated);
 
         const newErrors = {};
         let ok = true;
@@ -126,7 +129,7 @@ const CustomerGeneralInfoTab = forwardRef(
           }
         }
 
-        if (!isSingle) {
+        if (!isSingle && conamiRegulated) {
           const spouseRequired = [
             "spouse_name",
             "spouse_telephone",
@@ -241,7 +244,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={6}>
                 <TextField
                   name="customer_name"
-                  label="Nombre y apellidos *"
+                  label={lbl("Nombre y apellidos", "customer_name")}
                   value={customer?.customer_name || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.customer_name)}
@@ -255,7 +258,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={6}>
                 <TextField
                   name="public_name"
-                  label="Nombre conocido públicamente *"
+                  label={lbl("Nombre conocido públicamente", "public_name")}
                   value={customer?.public_name || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.public_name)}
@@ -268,6 +271,7 @@ const CustomerGeneralInfoTab = forwardRef(
 
               <Grid item xs={12} md={4}>
                 <GenreSelect
+                  label={lbl("Género", "genre_id")}
                   value={customer?.genre_id || ""}
                   onChange={(val) =>
                     handleInputChange({
@@ -297,7 +301,7 @@ const CustomerGeneralInfoTab = forwardRef(
                     }
                     editing={!disabled}
                     disabled={disabled}
-                    required
+                    required={conamiRegulated}
                     error={Boolean(errors.marital_status_id)}
                     helperText={errors.marital_status_id || ""}
                   />
@@ -307,7 +311,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <TextField
                   name="cellphone"
-                  label="Celular *"
+                  label={lbl("Celular", "cellphone")}
                   value={customer?.cellphone || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.cellphone)}
@@ -392,7 +396,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={3}>
                 <TipoDocumentoSelect
                   name="identity_type"
-                  label="Tipo de identificación *"
+                  label={lbl("Tipo de identificación", "identity_type")}
                   value={customer?.identity_type ?? ""}
                   onChange={handleInputChange}
                   disabled={disabled}
@@ -405,7 +409,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={3}>
                 <TextField
                   name="identification"
-                  label="Número de identificación *"
+                  label={lbl("Número de identificación", "identification")}
                   value={customer?.identification || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.identification)}
@@ -419,7 +423,7 @@ const CustomerGeneralInfoTab = forwardRef(
 
               <Grid item xs={12} md={3}>
                 <DatePicker
-                  label="Fecha de emisión *"
+                  label={lbl("Fecha de emisión", "identity_issue_date")}
                   value={customer?.identity_issue_date || null}
                   onChange={(newValue) =>
                     handleInputChange({
@@ -444,7 +448,7 @@ const CustomerGeneralInfoTab = forwardRef(
 
               <Grid item xs={12} md={3}>
                 <DatePicker
-                  label="Fecha de vencimiento *"
+                  label={lbl("Fecha de vencimiento", "identity_expiration_date")}
                   value={customer?.identity_expiration_date || null}
                   onChange={(newValue) =>
                     handleInputChange({
@@ -470,7 +474,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <CountrySelect
                   name="identity_issue_country"
-                  label="País de emisión *"
+                  label={lbl("País de emisión", "identity_issue_country")}
                   value={customer?.identity_issue_country}
                   selected={customer?.identity_issue_country}
                   onChange={handleInputChange}
@@ -484,7 +488,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <CountrySelect
                   name="birth_country_id"
-                  label="País de nacimiento *"
+                  label={lbl("País de nacimiento", "birth_country_id")}
                   value={customer?.birth_country_id}
                   selected={customer?.birth_country_id}
                   onChange={handleInputChange}
@@ -498,7 +502,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <CountrySelect
                   name="nationality_id"
-                  label="Nacionalidad *"
+                  label={lbl("Nacionalidad", "nationality_id")}
                   value={customer?.nationality_id}
                   selected={customer?.nationality_id}
                   onChange={handleInputChange}
@@ -511,7 +515,7 @@ const CustomerGeneralInfoTab = forwardRef(
 
               <Grid item xs={12} md={3}>
                 <DatePicker
-                  label="Fecha de nacimiento *"
+                  label={lbl("Fecha de nacimiento", "birth_date")}
                   value={customer?.birth_date || null}
                   onChange={(newValue) =>
                     handleInputChange({
@@ -544,7 +548,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12}>
                 <TextField
                   name="home_address"
-                  label="Dirección del hogar *"
+                  label={lbl("Dirección del hogar", "home_address")}
                   value={customer?.home_address || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.home_address)}
@@ -560,7 +564,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <CountrySelect
                   name="residence_country_id"
-                  label="País de residencia *"
+                  label={lbl("País de residencia", "residence_country_id")}
                   value={customer?.residence_country_id ?? ""}
                   selected={customer?.residence_country_id ?? ""}
                   onChange={handleInputChange}
@@ -574,7 +578,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <ProvinceSelect
                   name="province_id"
-                  label="Departamento *"
+                  label={lbl("Departamento", "province_id")}
                   selected={customer?.province_id}
                   onChange={handleInputChange}
                   editing={!disabled}
@@ -587,7 +591,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={4}>
                 <MunicipalitySelect
                   name="municipality_id"
-                  label="Municipio *"
+                  label={lbl("Municipio", "municipality_id")}
                   value={customer?.municipality_id ?? ""}
                   provinceId={customer?.province_id ?? ""}
                   onChange={handleInputChange}
@@ -605,6 +609,8 @@ const CustomerGeneralInfoTab = forwardRef(
             subtitle={
               isSingle
                 ? "No requerido para estado civil soltero, divorciado o viudo."
+                : !conamiRegulated
+                ? "Información básica del cónyuge (opcional)."
                 : "Información básica del cónyuge."
             }
           >
@@ -612,7 +618,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={6}>
                 <TextField
                   name="spouse_name"
-                  label={isSingle ? "Nombre" : "Nombre *"}
+                  label={isSingle || !conamiRegulated ? "Nombre" : "Nombre *"}
                   value={customer?.spouse_name || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.spouse_name)}
@@ -626,7 +632,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={3}>
                 <TextField
                   name="spouse_telephone"
-                  label={isSingle ? "Teléfono" : "Teléfono *"}
+                  label={isSingle || !conamiRegulated ? "Teléfono" : "Teléfono *"}
                   value={customer?.spouse_telephone || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.spouse_telephone)}
@@ -640,7 +646,7 @@ const CustomerGeneralInfoTab = forwardRef(
               <Grid item xs={12} md={3}>
                 <TextField
                   name="spouse_position"
-                  label={isSingle ? "Ocupación" : "Ocupación *"}
+                  label={isSingle || !conamiRegulated ? "Ocupación" : "Ocupación *"}
                   value={customer?.spouse_position || ""}
                   onChange={handleInputChange}
                   error={Boolean(errors.spouse_position)}

@@ -53,7 +53,7 @@ import ConfirmDialog from "../ConfirmDialog";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { isModuleEnabled } from "../../utils/moduleAccess";
+import { isConamiRegulated, isModuleEnabled } from "../../utils/moduleAccess";
 import { printCustomerProfileReport } from "../../reports/customerProfileReport";
 
 const TabPanel = ({ children, value, index }) => (
@@ -106,6 +106,8 @@ const CustomerForm = () => {
   // La pestaña de cumplimiento PLA-FT (y su validación PEP) solo existe con
   // el módulo de cumplimiento.
   const amlEnabled = isModuleEnabled(tenant?.enabled_modules, "compliance");
+  // Empresa no normada: la ficha del cliente queda casi toda opcional.
+  const conamiRegulated = isConamiRegulated(tenant);
   const company = {
     commercial_name: tenant?.commercial_name || tenant?.name || "",
     legal_name: tenant?.legal_name || tenant?.company_name || "",
@@ -995,6 +997,7 @@ const CustomerForm = () => {
                 notRequiredFields={notRequiredFields}
                 setNotRequiredFields={setNotRequiredFields}
                 mode={internalMode}
+                conamiRegulated={conamiRegulated}
               />
             </TabPanel>
 
@@ -1010,6 +1013,7 @@ const CustomerForm = () => {
                 notRequiredFields={notRequiredFields}
                 setNotRequiredFields={setNotRequiredFields}
                 mode={internalMode}
+                conamiRegulated={conamiRegulated}
               />
             </TabPanel>
 
@@ -1038,6 +1042,7 @@ const CustomerForm = () => {
                 errors={errors}
                 setErrors={setErrors}
                 mode={internalMode}
+                conamiRegulated={conamiRegulated}
               />
             </TabPanel>
 
