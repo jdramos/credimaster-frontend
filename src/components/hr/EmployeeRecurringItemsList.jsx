@@ -38,6 +38,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportMoney } from "../common/reportFormat";
 
 const API_URL = "/api/hr/recurring-items";
 
@@ -320,6 +322,29 @@ export default function EmployeeRecurringItemsList({ kind }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [canManage]);
 
+  const STATUS_TEXT = { ACTIVO: "Activo", FINALIZADO: "Finalizado" };
+  const buildReport = () => ({
+    title: labelPlural,
+    columns: [
+      { field: "employee_name", label: "Empleado" },
+      { field: "concept_name", label: "Tipo" },
+      { label: "Descripción", value: (r) => r.description || "" },
+      { field: "schedule_type", label: "Modalidad", format: (v) => (v === "CUOTAS" ? "Cuotas" : "Fijo") },
+      { field: "installment_amount", label: "Monto", numeric: true, format: reportMoney },
+      { field: "start_date", label: "Vigente desde", format: reportDate },
+      { label: "Avance", value: (r) => (r.schedule_type === "CUOTAS" ? `${r.paid_installments} de ${r.num_installments}` : "—") },
+      {
+        label: "Saldo", numeric: true,
+        value: (r) => (r.schedule_type === "CUOTAS" ? r.balance : null),
+        format: (v) => (v === null || v === undefined ? "—" : reportMoney(v)),
+      },
+      { field: "status", label: "Estado", format: (v) => STATUS_TEXT[v] || "Anulado" },
+    ],
+    rows,
+    orientation: "landscape",
+    fileName: isIncome ? "ingresos_recurrentes" : "deducciones_recurrentes",
+  });
+
   const estimatedCuota = form.principal && form.num_installments > 0
     ? Number(form.principal) / Number(form.num_installments)
     : null;
@@ -350,6 +375,7 @@ export default function EmployeeRecurringItemsList({ kind }) {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchRows}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

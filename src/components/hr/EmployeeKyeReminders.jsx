@@ -5,6 +5,8 @@ import { Alert, Box, Button, Chip, Paper, Snackbar, Typography } from "@mui/mate
 import { DataGrid } from "@mui/x-data-grid";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportInteger } from "../common/reportFormat";
 
 // "Conozca a su Empleado" pendiente: empleados activos con al menos una
 // verificación obligatoria del checklist todavía en PENDING (ver
@@ -63,10 +65,23 @@ export default function EmployeeKyeReminders() {
     },
   ];
 
+  const buildReport = () => ({
+    title: "Conozca a su Empleado — Pendientes",
+    subtitle: "Empleados activos con verificaciones pendientes (Art. 30 CD-CONAMI-070-01OCT07-2025)",
+    columns: [
+      { field: "full_name", label: "Empleado" },
+      { field: "position", label: "Puesto" },
+      { field: "hire_date", label: "Fecha de contratación", format: reportDate },
+      { field: "pending_count", label: "Verificaciones pendientes", numeric: true, format: reportInteger },
+    ],
+    rows,
+    fileName: "conozca_su_empleado_pendientes",
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", mb: 1 }}>
           <PersonSearchIcon sx={{ color: "#B45309" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
@@ -80,6 +95,8 @@ export default function EmployeeKyeReminders() {
               (Art. 30 CD-CONAMI-070-01OCT07-2025)
             </Typography>
           </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Box sx={{ height: 500 }}>

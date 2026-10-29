@@ -6,10 +6,13 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ItFormDialog from "./ItFormDialog";
 import { VoidDialog } from "../itRisk/ItIncidentDetailDialog";
 import { Field, PageHeader, StateChip } from "./ItCommon";
-import { BASE, errorMessage, fmtDate, fmtDateTime, options, useItCatalog, useItLookups, useItPermissions } from "./itShared";
+import {
+  BASE, errorMessage, fileDate, fmtDate, fmtDateTime, options, stateText, useItCatalog, useItLookups, useItPermissions,
+} from "./itShared";
 
 // Respaldos (Art. 11 num. 7 de la norma CONAMI de riesgo tecnológico): plan
 // de cada respaldo y bitácora de respaldos y pruebas de restauración.
@@ -163,10 +166,30 @@ export default function ItBackups() {
   const activeRows = (rows || []).filter((r) => Number(r.is_active));
   const noOffsite = activeRows.length > 0 && !activeRows.some((r) => r.state.offsite_ok);
 
+  const buildReport = () => ({
+    title: "Plan de respaldos",
+    orientation: "landscape",
+    columns: [
+      { field: "name", label: "Respaldo" },
+      { field: "scope", label: "Alcance" },
+      { field: "frequency", label: "Frecuencia", format: (v) => catalog?.backup_frequencies?.[v] || v },
+      { label: "Dónde", value: (j) => `${catalog?.backup_storage?.[j.storage] || j.storage || ""}${Number(j.encrypted) ? " · cifrado" : ""}` },
+      { label: "Último respaldo", value: (j) => [stateText(j.state.backup, BACKUP_LABEL[j.state.backup]), j.state.last_backup_at ? fmtDateTime(j.state.last_backup_at) : ""].filter(Boolean).join(" · ") },
+      { label: "Restauración", value: (j) => stateText(j.state.restore, RESTORE_LABEL[j.state.restore]) },
+      { field: "responsible", label: "Responsable" },
+      { field: "is_active", label: "Activo", format: (v) => (Number(v) ? "Sí" : "No") },
+    ],
+    rows: rows || [],
+    fileName: `respaldos_ti_${fileDate()}`,
+  });
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <PageHeader title="Respaldos" subtitle="Plan de respaldos, bitácora y pruebas periódicas de restauración (Art. 11 num. 7)." helpKey="ti.respaldos"
-        actions={[canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nuevo respaldo</Button>]} />
+        actions={[
+          <ReportExportButtons key="r" report={buildReport} disabled={!rows?.length} />,
+          canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nuevo respaldo</Button>,
+        ]} />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {noOffsite && <Alert severity="warning" sx={{ mb: 2 }}>Ningún respaldo activo se guarda fuera del sitio (Art. 11 num. 7.4).</Alert>}
       <Paper variant="outlined" sx={{ overflowX: "auto" }}>

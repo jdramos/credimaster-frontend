@@ -40,6 +40,8 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import KpiCard from "../dashboard/KpiCard";
 import { getBudgetTracking } from "../../api/budget";
 import { getDashboardCatalogs } from "../../api/dashboardBalances";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportPercent, reportFilters } from "../common/reportFormat";
 
 const MONTHS = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -119,6 +121,59 @@ export default function BudgetTrackingDashboard() {
     ? Math.round((data.summary.total_placement_actual_month / data.summary.total_placement_target_month) * 100)
     : 0;
 
+  // Reporte de ejecución presupuestaria: resumen del mes y las dos tablas.
+  const buildReport = () => {
+    const section = (concept) => ({ section: true, concept });
+    const amount = (field) => (r) => (r[field] === null || r[field] === undefined ? null : Number(r[field]));
+    const fmt = (v) => (v === null || v === undefined ? "" : reportMoney(v));
+    const rows = [
+      section("Resumen del mes"),
+      {
+        concept: "Presupuesto operativo (total)",
+        month_plan: data.summary.total_budgeted_month, month_actual: data.summary.total_actual_month, pct: consumedPct,
+      },
+      {
+        concept: "Colocación de cartera (total)",
+        month_plan: data.summary.total_placement_target_month, month_actual: data.summary.total_placement_actual_month, pct: placementPct,
+      },
+      { concept: `Cuentas en alerta: ${data.summary.accounts_in_alert || 0}` },
+      section("Presupuesto operativo vs real (por cuenta MUC)"),
+      ...data.accounts.map((a) => ({
+        concept: `${a.muc_code} ${a.account_name || ""}`, type: a.account_type,
+        month_plan: a.budgeted_month, month_actual: a.actual_month, ytd_plan: a.budgeted_ytd, ytd_actual: a.actual_ytd,
+        pct: a.variance_pct, status: a.status,
+      })),
+      section("Colocación de cartera vs meta (por sucursal)"),
+      ...data.placement.map((p) => ({
+        concept: p.branch_name,
+        month_plan: p.target_month, month_actual: p.actual_month, ytd_plan: p.target_ytd, ytd_actual: p.actual_ytd,
+        pct: p.variance_pct, status: p.status,
+      })),
+    ];
+    return {
+      title: "Ejecución presupuestaria",
+      subtitle: reportFilters([
+        ["Presupuesto", data.budget ? `${data.budget.name} (${data.budget.year_no})` : ""],
+        ["Sucursal (colocación)", branchId ? branches.find((b) => String(b.id) === String(branchId))?.name : "Todas"],
+      ]),
+      period: `${MONTHS[month - 1]} ${data.budget?.year_no || ""}`,
+      orientation: "landscape",
+      fileName: `ejecucion_presupuestaria_${data.budget?.year_no || ""}_${String(month).padStart(2, "0")}`,
+      sheetName: "Ejecución",
+      columns: [
+        { field: "concept", label: "Cuenta / sucursal" },
+        { field: "type", label: "Tipo" },
+        { label: "Presup. / meta mes", value: amount("month_plan"), numeric: true, format: fmt },
+        { label: "Real mes", value: amount("month_actual"), numeric: true, format: fmt },
+        { label: "Presup. / meta YTD", value: amount("ytd_plan"), numeric: true, format: fmt },
+        { label: "Real YTD", value: amount("ytd_actual"), numeric: true, format: fmt },
+        { label: "% del mes", value: amount("pct"), numeric: true, format: reportPercent },
+        { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v || "" },
+      ],
+      rows,
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Breadcrumbs sx={{ mb: 1.5 }}>
@@ -170,6 +225,7 @@ export default function BudgetTrackingDashboard() {
           <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={load}>
             Actualizar
           </Button>
+          <ReportExportButtons report={buildReport} disabled={!data || loading} />
         </Stack>
       </Paper>
 

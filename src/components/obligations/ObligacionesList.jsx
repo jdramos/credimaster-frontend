@@ -33,6 +33,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import BlockIcon from "@mui/icons-material/Block";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportPercent, reportDate } from "../common/reportFormat";
 
 const API_URL = "/api/obligations";
 
@@ -233,6 +235,33 @@ export default function ObligacionesList() {
     },
   ], []);
 
+  const buildReport = () => {
+    const sum = (field) => rows.reduce((acc, r) => acc + Number(r[field] || 0), 0);
+    return {
+      title: "Obligaciones financieras",
+      orientation: "landscape",
+      fileName: "obligaciones_financieras",
+      sheetName: "Obligaciones",
+      columns: [
+        { field: "id_obligacion", label: "Obligación" },
+        { field: "financiador_name", label: "Financiador" },
+        { label: "Cuenta contable", value: (r) => (r.gl_muc_code ? `${r.gl_muc_code} - ${r.gl_account_name || ""}` : "") },
+        { label: "Monto aprobado", value: (r) => Number(r.mto_aprobado || 0), numeric: true, format: reportMoney },
+        { label: "Saldo", value: (r) => Number(r.current_balance || 0), numeric: true, format: reportMoney },
+        { label: "Tasa", value: (r) => Number(r.tasa_contrato || 0), numeric: true, format: reportPercent },
+        { field: "fecha_vcto", label: "Vencimiento", format: reportDate },
+        { field: "status", label: "Estado", format: (v) => (v === "ACTIVA" ? "Activa" : "Cancelada") },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length} obligaciones)`, colspan: 3 },
+        { value: reportMoney(sum("mto_aprobado")), raw: sum("mto_aprobado"), numeric: true },
+        { value: reportMoney(sum("current_balance")), raw: sum("current_balance"), numeric: true },
+        { value: "", colspan: 3 },
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -257,6 +286,7 @@ export default function ObligacionesList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchObligaciones}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

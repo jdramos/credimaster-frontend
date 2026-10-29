@@ -17,6 +17,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", {
@@ -105,6 +106,40 @@ export default function PendingItemsAging() {
     },
   ];
 
+  // Una sección por cuenta transitoria con sus partidas y subtotal.
+  const buildReport = () => {
+    const reportRows = [];
+    (data?.accounts || []).forEach((account) => {
+      reportRows.push({ section: true, entry_date: `${account.muc_code} — ${account.account_name}` });
+      account.items.forEach((item) => reportRows.push(item));
+      reportRows.push({
+        total: true,
+        description: `Subtotal ${account.muc_code} (vencido: ${money(account.overdue_balance)})`,
+        amount: account.open_balance,
+      });
+    });
+    return {
+      title: "Antigüedad de Partidas Pendientes",
+      subtitle: `Cuentas transitorias 1909/2901 · Plazo: ${data?.deadline_days ?? filters.deadline_days} días`,
+      period: `Al ${data?.as_of_date || filters.as_of_date || new Date().toISOString().slice(0, 10)}`,
+      fileName: `partidas_pendientes_${data?.as_of_date || filters.as_of_date || "hoy"}`,
+      columns: [
+        { field: "entry_date", label: "Fecha" },
+        { field: "entry_no", label: "Comprobante" },
+        { field: "description", label: "Descripción" },
+        { field: "amount", label: "Monto pendiente", numeric: true, format: (v) => (v === undefined ? "" : money(v)) },
+        { field: "age_days", label: "Antigüedad (días)", numeric: true },
+        { label: "Estado", value: (r) => (r.section || r.total ? "" : r.overdue ? "Vencida" : "En plazo") },
+      ],
+      rows: reportRows,
+      totals: [
+        { value: `Saldo pendiente total (vencido: ${money(data?.summary?.overdue_balance)})`, colspan: 3 },
+        { value: money(data?.summary?.open_balance), numeric: true, raw: Number(data?.summary?.open_balance || 0) },
+        { value: `Más antigua: ${data?.summary?.oldest_age_days ?? 0} días`, colspan: 2 },
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper
@@ -143,7 +178,7 @@ export default function PendingItemsAging() {
           sx={{
             mb: 2,
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "200px 200px 130px" },
+            gridTemplateColumns: { xs: "1fr", md: "200px 200px 130px auto" },
             gap: 1,
           }}
         >
@@ -176,6 +211,10 @@ export default function PendingItemsAging() {
           >
             Generar
           </Button>
+
+          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+            <ReportExportButtons report={buildReport} disabled={!data?.accounts?.length} sx={{ borderRadius: 2 }} />
+          </Box>
         </Box>
 
         {data && (

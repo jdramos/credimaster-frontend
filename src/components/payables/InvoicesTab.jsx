@@ -13,6 +13,8 @@ import PostAddIcon from "@mui/icons-material/PostAdd";
 import API from "../../api";
 import PaymentDialog from "./PaymentDialog";
 import StatementDialog from "./StatementDialog";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney } from "../common/reportFormat";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateStr = (v) => (v ? String(v).slice(0, 10) : "");
@@ -36,6 +38,8 @@ export default function InvoicesTab() {
   const [accounts, setAccounts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [filters, setFilters] = useState({ provider_id: "", status: "", open: false });
+  // Filtros con que se cargaron las filas actuales (para el reporte).
+  const [loadedFilters, setLoadedFilters] = useState(filters);
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -72,6 +76,7 @@ export default function InvoicesTab() {
       const res = await API.get("/api/payables/invoices", { params });
       setRows(res.data?.data || []);
       setSummary(res.data?.summary || { count: 0, amount: 0, balance: 0 });
+      setLoadedFilters(filters);
     } catch (e) {
       notify(e.response?.data?.message || "Error cargando facturas", "error");
     } finally { setLoading(false); }
@@ -271,6 +276,39 @@ export default function InvoicesTab() {
     },
   ], [providers]);
 
+  const buildReport = () => {
+    const retention = rows.reduce((s, r) => s + Number(r.retention_amount || 0), 0);
+    const provider = providers.find((p) => String(p.id) === String(loadedFilters.provider_id));
+    return {
+      title: "Facturas de Proveedores",
+      subtitle: reportFilters([
+        ["Proveedor", provider?.name],
+        ["Estado", loadedFilters.status ? STATUS[loadedFilters.status]?.[0] : ""],
+      ]),
+      fileName: "facturas_proveedores",
+      orientation: "landscape",
+      columns: [
+        { field: "provider_name", label: "Proveedor" },
+        { field: "document_number", label: "Factura", format: (v) => v || "—" },
+        { field: "document_date", label: "Fecha", format: dateStr },
+        { field: "due_date", label: "Vence", format: (v) => dateStr(v) || "—" },
+        { field: "amount", label: "Monto", numeric: true, format: reportMoney },
+        { field: "retention_amount", label: "Retención", numeric: true, format: reportMoney },
+        { field: "balance", label: "Saldo", numeric: true, format: reportMoney },
+        { field: "days_old", label: "Días", numeric: true },
+        { field: "status", label: "Estado", format: (v) => STATUS[v]?.[0] || v || "" },
+      ],
+      rows,
+      totals: [
+        { value: `Facturas: ${summary.count}`, colspan: 4 },
+        { value: reportMoney(summary.amount), numeric: true, raw: Number(summary.amount || 0) },
+        { value: reportMoney(retention), numeric: true, raw: retention },
+        { value: reportMoney(summary.balance), numeric: true, raw: Number(summary.balance || 0) },
+        { value: "", colspan: 2 },
+      ],
+    };
+  };
+
   return (
     <Box>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ mb: 2 }} flexWrap="wrap" alignItems="center">
@@ -286,6 +324,7 @@ export default function InvoicesTab() {
           <MenuItem value="PAID">Pagadas</MenuItem>
         </TextField>
         <Button variant="outlined" onClick={fetchRows} sx={{ textTransform: "none" }}>Buscar</Button>
+        <ReportExportButtons report={buildReport} disabled={!rows.length} />
         <Box sx={{ flex: 1 }} />
         <Button variant="outlined" startIcon={<PaymentsIcon />} onClick={() => setPaymentOpen(true)}
           sx={{ textTransform: "none" }}>

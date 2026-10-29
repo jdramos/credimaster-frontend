@@ -37,6 +37,8 @@ import { exportToExcel } from "./hrExcelExport";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import dayjs from "dayjs";
 import EmployeeDetailDialog from "./EmployeeDetailDialog";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 
 const API_URL = "/api/hr/employees";
 
@@ -419,6 +421,23 @@ export default function EmployeesList() {
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
   ], []);
 
+  // Mismas columnas y filas que "Exportar Excel".
+  const buildReport = () => ({
+    title: "Empleados",
+    columns: [
+      { field: "full_name", label: "Nombre" },
+      { label: "Puesto", value: (r) => r.position_title || r.position || "" },
+      { label: "Departamento", value: (r) => r.department_name || "" },
+      { label: "Sucursal", value: (r) => r.branch_name || "" },
+      { label: "Jefe inmediato", value: (r) => r.supervisor_name || "" },
+      { field: "base_salary", label: "Salario base", numeric: true, format: reportMoney },
+      { field: "status", label: "Estado", format: (v) => (v === "ACTIVO" ? "Activo" : "Inactivo") },
+    ],
+    rows,
+    orientation: "landscape",
+    fileName: `empleados_${dayjs().format("YYYYMMDD")}`,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -465,6 +484,7 @@ export default function EmployeesList() {
             >
               Exportar Excel
             </Button>
+            <ReportExportButtons excel={false} report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

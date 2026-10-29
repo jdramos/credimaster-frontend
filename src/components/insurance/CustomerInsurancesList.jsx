@@ -28,6 +28,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportPeriod } from "../common/reportFormat";
 
 const API_URL = "/api/insurance";
 const PRODUCTS_URL = "/api/insurance/products";
@@ -266,6 +268,35 @@ export default function CustomerInsurancesList() {
     [canCancel],
   );
 
+  const STATUS_LABEL = { ACTIVO: "Activo", CANCELADO: "Cancelado" };
+  const buildReport = () => ({
+    title: "Seguros contratados",
+    subtitle: `Registros: ${rows.length} · Activos: ${activeCount}`,
+    period: reportPeriod(periodStart?.format("YYYY-MM-DD"), periodEnd?.format("YYYY-MM-DD")),
+    orientation: "landscape",
+    fileName: "seguros_contratados",
+    sheetName: "Seguros",
+    columns: [
+      { field: "customer_name", label: "Cliente" },
+      { field: "credit_code", label: "Crédito", format: (v) => v || "—" },
+      { field: "provider_name", label: "Aseguradora" },
+      { field: "product_name", label: "Tipo de seguro" },
+      { field: "coverage_type", label: "Cobertura" },
+      { field: "benefits", label: "Beneficios" },
+      { field: "policy_number", label: "N° póliza", format: (v) => v || "—" },
+      { label: "Prima", value: (r) => Number(r.premium_amount || 0), numeric: true, format: reportMoney },
+      { field: "start_date", label: "Inicio vigencia", format: (v) => (v ? dayjs(v).format("DD/MM/YYYY") : "—") },
+      { field: "end_date", label: "Fin vigencia", format: (v) => (v ? dayjs(v).format("DD/MM/YYYY") : "—") },
+      { field: "status", label: "Estado", format: (v) => STATUS_LABEL[v] || "Vencido" },
+    ],
+    rows,
+    totals: [
+      { value: "Total primas", colspan: 7 },
+      { value: reportMoney(totalPremiums), raw: totalPremiums, numeric: true },
+      { value: "", colspan: 3 },
+    ],
+  });
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ p: 2 }}>
@@ -295,6 +326,7 @@ export default function CustomerInsurancesList() {
               <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchInsurances}>
                 Actualizar
               </Button>
+              <ReportExportButtons report={buildReport} disabled={!rows.length} />
             </Box>
           </Box>
 

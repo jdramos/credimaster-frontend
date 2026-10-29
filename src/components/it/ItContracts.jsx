@@ -5,11 +5,16 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 import ItFormDialog from "./ItFormDialog";
 import ItAttachments from "./ItAttachments";
 import { VoidDialog } from "../itRisk/ItIncidentDetailDialog";
 import { Field, PageHeader, StateChip } from "./ItCommon";
-import { BASE, CRITICALITY_COLORS, daysText, errorMessage, fmtDate, money, options, useItCatalog, useItLookups, useItPermissions } from "./itShared";
+import {
+  BASE, CRITICALITY_COLORS, daysText, errorMessage, fileDate, fmtDate, money, options, stateText, useItCatalog, useItLookups,
+  useItPermissions,
+} from "./itShared";
 
 // Contratos con proveedores de TI (Art. 13 de la norma CONAMI de riesgo
 // tecnológico): vigencia, renovación y cláusulas mínimas.
@@ -167,10 +172,31 @@ export default function ItContracts() {
     setDetailId(data.id);
   };
 
+  const buildReport = () => ({
+    title: "Proveedores y contratos de TI",
+    orientation: "landscape",
+    columns: [
+      { field: "provider_name", label: "Proveedor" },
+      { field: "contract_number", label: "N° contrato" },
+      { field: "contract_type", label: "Servicio", format: (v) => catalog?.contract_types?.[v] || v },
+      { field: "criticality", label: "Criticidad", format: (v) => catalog?.criticality?.[v] || v },
+      { label: "Vence", value: (c) => (c.end_date ? `${fmtDate(c.end_date)} (${daysText(c.state.days_left)})` : "Indefinido") },
+      { label: "Estado", value: (c) => stateText(c.state.status) },
+      { label: "Cláusulas Art. 13", value: (c) => (c.state.clause_gaps ? `${c.state.clause_gaps} por confirmar` : "Completas") },
+      { field: "amount", label: "Monto", numeric: true, format: (v) => (v == null || v === "" ? "—" : reportMoney(v)) },
+      { field: "currency", label: "Moneda" },
+    ],
+    rows: rows || [],
+    fileName: `contratos_ti_${fileDate()}`,
+  });
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <PageHeader title="Proveedores y contratos de TI" subtitle="Vigencias, renovaciones y cláusulas mínimas que exige el Art. 13 de la norma CONAMI de riesgo tecnológico." helpKey="ti.contratos"
-        actions={[canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nuevo contrato</Button>]} />
+        actions={[
+          <ReportExportButtons key="r" report={buildReport} disabled={!rows?.length} />,
+          canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nuevo contrato</Button>,
+        ]} />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Paper variant="outlined" sx={{ overflowX: "auto" }}>
         <Table size="small">

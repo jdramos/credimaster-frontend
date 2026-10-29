@@ -40,6 +40,8 @@ import { useSearchParams } from "react-router-dom";
 import { printCashRegisterStatementReport } from "../../reports/cashRegisterStatementReport";
 import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportDate, reportPeriod } from "../common/reportFormat";
 
 const SOURCE_LABELS = {
   CAJA: "Caja",
@@ -176,6 +178,35 @@ export default function CashMovementsList() {
   };
 
   const currencySymbol = statement?.cash_register?.currency_symbol || selectedCashRegister?.currency_symbol || "C$";
+
+  // Excel del estado de cuenta de la caja: mismas columnas que la impresión.
+  const buildStatementReport = () => ({
+    title: "Estado de cuenta de caja",
+    subtitle: `${statement.cash_register?.name || ""} · Moneda: ${currencySymbol}`,
+    period: reportPeriod(statement.start_date, statement.end_date),
+    orientation: "landscape",
+    fileName: `movimientos_caja_${statement.start_date}_${statement.end_date}`,
+    sheetName: "Movimientos",
+    columns: [
+      { field: "entry_date", label: "Fecha", format: reportDate },
+      { field: "entry_no", label: "Comprobante" },
+      { label: "Origen", value: (r) => (r.source_module ? SOURCE_LABELS[r.source_module] || r.source_module : "") },
+      { field: "description", label: "Descripción" },
+      { label: "Débito", value: (r) => (r.opening ? null : Number(r.debit || 0)), numeric: true, format: (v) => (Number(v) > 0 ? reportMoney(v) : "") },
+      { label: "Crédito", value: (r) => (r.opening ? null : Number(r.credit || 0)), numeric: true, format: (v) => (Number(v) > 0 ? reportMoney(v) : "") },
+      { label: "Saldo", value: (r) => Number(r.balance || 0), numeric: true, format: reportMoney },
+    ],
+    rows: [
+      { opening: true, section: true, entry_date: statement.start_date, description: "SALDO INICIAL", balance: statement.opening_balance },
+      ...(statement.movements || []),
+    ],
+    totals: [
+      { value: "Totales del período", colspan: 4 },
+      { value: reportMoney(statement.total_debit), raw: Number(statement.total_debit || 0), numeric: true },
+      { value: reportMoney(statement.total_credit), raw: Number(statement.total_credit || 0), numeric: true },
+      { value: reportMoney(statement.closing_balance), raw: Number(statement.closing_balance || 0), numeric: true },
+    ],
+  });
 
   // ==========================================
   // NUEVO MOVIMIENTO (ingreso/egreso manual)
@@ -321,6 +352,7 @@ export default function CashMovementsList() {
           <Button variant="outlined" startIcon={<PrintIcon />} disabled={!statement} onClick={handlePrint} sx={{ textTransform: "none" }}>
             Imprimir
           </Button>
+          <ReportExportButtons print={false} report={buildStatementReport} disabled={!statement} />
         </Stack>
 
         {statement && (

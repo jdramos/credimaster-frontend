@@ -43,6 +43,8 @@ import { numberToWords } from "./numberToWords";
 import { printBankAccountStatementReport } from "../../reports/bankAccountStatementReport";
 import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportDate, reportPeriod } from "../common/reportFormat";
 
 const CHECKS_URL = "/api/banks/checks";
 const DEPOSITS_URL = "/api/banks/deposits";
@@ -189,6 +191,38 @@ export default function BankMovementsList() {
   };
 
   const currencySymbol = statement?.bank_account?.currency_symbol || selectedBankAccount?.currency_symbol || "C$";
+
+  // Excel del estado de cuenta: mismas columnas que la impresión.
+  const buildStatementReport = () => {
+    const account = statement.bank_account || {};
+    return {
+      title: "Estado de cuenta bancaria",
+      subtitle: `${account.bank_name || ""} - ${account.account_alias || ""}${account.account_number ? ` (${account.account_number})` : ""}`,
+      period: reportPeriod(statement.start_date, statement.end_date),
+      orientation: "landscape",
+      fileName: `movimientos_bancarios_${statement.start_date}_${statement.end_date}`,
+      sheetName: "Movimientos",
+      columns: [
+        { field: "entry_date", label: "Fecha", format: reportDate },
+        { field: "entry_no", label: "Comprobante" },
+        { label: "Origen", value: (r) => (r.source_module ? SOURCE_LABELS[r.source_module] || r.source_module : "") },
+        { label: "Descripción", value: (r) => `${r.description || ""}${r.source_status === "ANULADO" ? " (Anulado)" : ""}` },
+        { label: "Débito", value: (r) => (r.opening ? null : Number(r.debit || 0)), numeric: true, format: (v) => (Number(v) > 0 ? reportMoney(v) : "") },
+        { label: "Crédito", value: (r) => (r.opening ? null : Number(r.credit || 0)), numeric: true, format: (v) => (Number(v) > 0 ? reportMoney(v) : "") },
+        { label: "Saldo", value: (r) => Number(r.balance || 0), numeric: true, format: reportMoney },
+      ],
+      rows: [
+        { opening: true, section: true, entry_date: statement.start_date, description: "SALDO INICIAL", balance: statement.opening_balance },
+        ...(statement.movements || []),
+      ],
+      totals: [
+        { value: "Totales del período", colspan: 4 },
+        { value: reportMoney(statement.total_debit), raw: Number(statement.total_debit || 0), numeric: true },
+        { value: reportMoney(statement.total_credit), raw: Number(statement.total_credit || 0), numeric: true },
+        { value: reportMoney(statement.closing_balance), raw: Number(statement.closing_balance || 0), numeric: true },
+      ],
+    };
+  };
 
   // ==========================================
   // CHEQUE (idéntico al flujo/vista original de BankChecksList)
@@ -478,6 +512,7 @@ export default function BankMovementsList() {
           <Button variant="outlined" startIcon={<PrintIcon />} disabled={!statement} onClick={handlePrint} sx={{ textTransform: "none" }}>
             Imprimir
           </Button>
+          <ReportExportButtons print={false} report={buildStatementReport} disabled={!statement} />
         </Stack>
 
         {statement && (

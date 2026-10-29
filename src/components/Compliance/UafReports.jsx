@@ -12,6 +12,8 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import * as XLSX from "xlsx";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportInteger, reportMoney } from "../common/reportFormat";
 
 // Reportes a la UAF (Resolución UAF-N-021-2019). Backend: /api/aml/uaf/*.
 // El envío se hace en SIREL; aquí se calculan los reportes, se controla el
@@ -249,6 +251,137 @@ export default function UafReports() {
     XLSX.writeFile(wb, `RAII_${period}.xlsx`);
   };
 
+  // Definiciones para Imprimir / Excel de cada pestaña (las pestañas con Excel
+  // en formato SIREL conservan su exportación propia).
+  const periodText = () => periodLabel(period);
+  const controlReport = () => ({
+    title: "Reportes a la UAF — Control del mes",
+    subtitle: reportFilters([["Sujeto obligado", control.institution_type], ["Vencimiento del período", control.due_date]]),
+    period: periodText(),
+    orientation: "landscape",
+    columns: [
+      { field: "label", label: "Reporte" },
+      {
+        label: "Base legal",
+        value: (r) => [
+          r.article,
+          r.threshold_usd ? `umbral ${usd(r.threshold_usd)} al mes` : "",
+          r.type === "RAII" && r.required ? `sin información: ${r.reports_without_records.join("; ")}` : "",
+          r.type === "ROS" ? `casos abiertos: ${r.open_cases}` : "",
+        ].filter(Boolean).join(" · "),
+      },
+      {
+        label: "Registros",
+        numeric: true,
+        value: (r) => (r.type === "RAII" ? (r.required ? "Procede" : "—") : r.records),
+        format: (v) => (typeof v === "number" ? reportInteger(v) : v),
+      },
+      { label: "Plazo", value: (r) => r.due_rule || r.due_date },
+      { field: "status", label: "Estado", format: (v) => STATUS[v]?.label || v },
+      {
+        label: "Envío",
+        value: (r) => (r.submission
+          ? [r.submission.sent_at, r.submission.sirel_receipt ? `acuse ${r.submission.sirel_receipt}` : "", r.submission.file_name].filter(Boolean).join(" · ")
+          : "—"),
+      },
+    ],
+    rows: controlRows,
+    fileName: `UAF_control_${period}`,
+  });
+
+  const rteReport = () => ({
+    title: "Reporte de Transacciones en Efectivo (RTE) — Resumen por cliente",
+    subtitle: `Umbral ${usd(rte.threshold_usd)} al mes · ${rte.cash_transactions} transacciones en efectivo de ${rte.customers_with_cash} clientes`,
+    period: periodText(),
+    columns: [
+      { field: "customer_name", label: "Cliente" },
+      { field: "identification", label: "Identificación" },
+      { field: "transactions_count", label: "Transacciones", numeric: true, format: reportInteger },
+      { field: "total_local", label: "Total C$", numeric: true, format: reportMoney },
+      { label: "Total US$", numeric: true, value: (c) => (c.usd_incomplete ? null : c.total_usd), format: (v) => (v == null ? "Sin tipo de cambio" : reportMoney(v)) },
+      { field: "fractioned", label: "Tipo de transacción", format: (v) => (v ? "Fraccionada" : "Individual") },
+    ],
+    rows: rte.reportable,
+    fileName: `RTE_resumen_${period}`,
+  });
+
+  const inmovReport = () => {
+    const nameOf = Object.fromEntries(inmov.frozen.map((f) => [f.customer_id, f.customer_name]));
+    return {
+      title: "Detección e inmovilización",
+      subtitle: reportFilters([
+        ["Consultas a listas", inmov.screenings_total],
+        ["Resultados negativos", inmov.screenings_negative],
+        ["Coincidencias", inmov.matches.length],
+        ["Barridos de cartera", inmov.portfolio_scans.length],
+      ]),
+      period: periodText(),
+      orientation: "landscape",
+      columns: [
+        { field: "person", label: "Persona" },
+        { field: "identification", label: "Identificación" },
+        { field: "date", label: "Fecha" },
+        { field: "reason", label: "Motivo / lista" },
+        { field: "detail", label: "Detalle" },
+        { field: "amount", label: "Saldo / monto (C$)", numeric: true, format: (v) => (v == null || v === "" ? "" : reportMoney(v)) },
+      ],
+      rows: [
+        { section: true, person: "Personas inmovilizadas" },
+        ...inmov.frozen.map((f) => ({
+          person: f.customer_name, identification: f.identification, date: d10(f.frozen_at), reason: f.frozen_reason,
+          detail: f.is_frozen ? "Vigente" : "No vigente", amount: f.loans_balance,
+        })),
+        { section: true, person: "Coincidencias en listas" },
+        ...inmov.matches.map((m) => ({ person: m.subject_label, date: d10(m.screened_at), reason: m.list_name, detail: m.notes })),
+        ...(inmov.operations_of_frozen.length
+          ? [
+            { section: true, person: "Operaciones de personas inmovilizadas" },
+            ...inmov.operations_of_frozen.map((o) => ({
+              person: nameOf[o.customer_id] || o.customer_id, date: o.payment_date, reason: `Crédito ${o.credit_code}`, amount: o.amount,
+            })),
+          ]
+          : []),
+      ],
+      fileName: `Deteccion_Inmovilizacion_${period}`,
+    };
+  };
+
+  const salesReport = () => ({
+    title: "Ventas de bienes no pagados por sus dueños",
+    subtitle: `Umbral ${usd(sales.threshold_usd)} al mes`,
+    period: periodText(),
+    orientation: "landscape",
+    columns: [
+      { field: "sale_date", label: "Fecha" },
+      { field: "asset_description", label: "Bien" },
+      { field: "asset_type", label: "Tipo" },
+      { field: "former_owner", label: "Dueño anterior" },
+      { field: "former_owner_identification", label: "Identificación" },
+      { field: "credit_code", label: "Crédito" },
+      { field: "sale_price", label: "Precio de venta", numeric: true, format: reportMoney },
+      { field: "exchange_rate", label: "Tipo de cambio", numeric: true, format: (v) => (v ? String(v) : "") },
+      { field: "sale_price_usd", label: "Precio US$", numeric: true, format: reportMoney },
+    ],
+    rows: sales.sales,
+    totals: [{ value: "Total del período (US$)", colspan: 8 }, { value: reportMoney(sales.total_usd), raw: Number(sales.total_usd || 0), numeric: true }],
+    fileName: `Ventas_${period}`,
+  });
+
+  const historyReport = () => ({
+    title: "Reportes a la UAF — Historial de envíos",
+    columns: [
+      { field: "period", label: "Período", format: (v) => periodLabel(v) },
+      { field: "report_type", label: "Reporte" },
+      { field: "records_count", label: "Registros", numeric: true, format: reportInteger },
+      { field: "sent_at", label: "Enviado" },
+      { field: "sirel_receipt", label: "Acuse SIREL" },
+      { field: "file_name", label: "Archivo" },
+      { field: "registered_by", label: "Registró" },
+    ],
+    rows: history,
+    fileName: "UAF_historial_envios",
+  });
+
   const exporters = { RTE: exportRte, INMOVILIZACION: exportInmov, VENTAS: exportSales, RAII: exportRaii };
   const tabFor = { RTE: "rte", INMOVILIZACION: "inmov", VENTAS: "ventas" };
 
@@ -299,48 +432,53 @@ export default function UafReports() {
             </Tabs>
 
             {tab === "control" && (
-              <Table size="small">
-                <TableHead>
-                  <TableRow><TableCell>Reporte</TableCell><TableCell align="right">Registros</TableCell><TableCell>Plazo</TableCell><TableCell>Estado</TableCell><TableCell>Envío</TableCell><TableCell align="right">Acciones</TableCell></TableRow>
-                </TableHead>
-                <TableBody>
-                  {controlRows.map((r) => (
-                    <TableRow key={r.type}>
-                      <TableCell>
-                        <Typography fontWeight={700} fontSize={13.5}>{r.label}</Typography>
-                        <Typography fontSize={12} color="text.secondary">
-                          {r.article}
-                          {r.threshold_usd ? ` · umbral ${usd(r.threshold_usd)} al mes` : ""}
-                          {r.type === "RAII" && r.required ? ` · sin información: ${r.reports_without_records.join("; ")}` : ""}
-                          {r.type === "ROS" ? ` · casos abiertos: ${r.open_cases}` : ""}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">{r.type === "RAII" ? (r.required ? "Procede" : "—") : r.records}</TableCell>
-                      <TableCell>{r.due_rule || r.due_date}</TableCell>
-                      <TableCell><StatusChip status={r.status} /></TableCell>
-                      <TableCell>
-                        {r.submission ? (
-                          <Stack spacing={0.25}>
-                            <Typography fontSize={12.5}>{r.submission.sent_at}{r.submission.sirel_receipt ? ` · acuse ${r.submission.sirel_receipt}` : ""}</Typography>
-                            {r.submission.file_name && <Button size="small" sx={{ p: 0, justifyContent: "flex-start", textTransform: "none" }} onClick={() => openFile(r.submission.id)}>{r.submission.file_name}</Button>}
+              <>
+                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mb: 1 }}>
+                  <ReportExportButtons size="small" report={controlReport} disabled={!controlRows.length} />
+                </Stack>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow><TableCell>Reporte</TableCell><TableCell align="right">Registros</TableCell><TableCell>Plazo</TableCell><TableCell>Estado</TableCell><TableCell>Envío</TableCell><TableCell align="right">Acciones</TableCell></TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {controlRows.map((r) => (
+                      <TableRow key={r.type}>
+                        <TableCell>
+                          <Typography fontWeight={700} fontSize={13.5}>{r.label}</Typography>
+                          <Typography fontSize={12} color="text.secondary">
+                            {r.article}
+                            {r.threshold_usd ? ` · umbral ${usd(r.threshold_usd)} al mes` : ""}
+                            {r.type === "RAII" && r.required ? ` · sin información: ${r.reports_without_records.join("; ")}` : ""}
+                            {r.type === "ROS" ? ` · casos abiertos: ${r.open_cases}` : ""}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">{r.type === "RAII" ? (r.required ? "Procede" : "—") : r.records}</TableCell>
+                        <TableCell>{r.due_rule || r.due_date}</TableCell>
+                        <TableCell><StatusChip status={r.status} /></TableCell>
+                        <TableCell>
+                          {r.submission ? (
+                            <Stack spacing={0.25}>
+                              <Typography fontSize={12.5}>{r.submission.sent_at}{r.submission.sirel_receipt ? ` · acuse ${r.submission.sirel_receipt}` : ""}</Typography>
+                              {r.submission.file_name && <Button size="small" sx={{ p: 0, justifyContent: "flex-start", textTransform: "none" }} onClick={() => openFile(r.submission.id)}>{r.submission.file_name}</Button>}
+                            </Stack>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            {tabFor[r.type] && <Button size="small" onClick={() => setTab(tabFor[r.type])} sx={{ textTransform: "none" }}>Ver detalle</Button>}
+                            {exporters[r.type] && (r.type !== "RAII" || r.required) && (
+                              <Button size="small" startIcon={<FileDownloadIcon />} onClick={exporters[r.type]} sx={{ textTransform: "none" }}>Excel</Button>
+                            )}
+                            {r.type !== "ROS" && !r.submission && r.status !== "NO_APLICA" && (r.type !== "RAII" || r.required) && (
+                              <Button size="small" variant="contained" startIcon={<SendIcon />} onClick={() => setSubmitFor(r)} sx={{ textTransform: "none" }}>Registrar envío</Button>
+                            )}
                           </Stack>
-                        ) : "—"}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          {tabFor[r.type] && <Button size="small" onClick={() => setTab(tabFor[r.type])} sx={{ textTransform: "none" }}>Ver detalle</Button>}
-                          {exporters[r.type] && (r.type !== "RAII" || r.required) && (
-                            <Button size="small" startIcon={<FileDownloadIcon />} onClick={exporters[r.type]} sx={{ textTransform: "none" }}>Excel</Button>
-                          )}
-                          {r.type !== "ROS" && !r.submission && r.status !== "NO_APLICA" && (r.type !== "RAII" || r.required) && (
-                            <Button size="small" variant="contained" startIcon={<SendIcon />} onClick={() => setSubmitFor(r)} sx={{ textTransform: "none" }}>Registrar envío</Button>
-                          )}
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </>
             )}
 
             {tab === "rte" && rte && (
@@ -353,7 +491,10 @@ export default function UafReports() {
                   <Typography fontSize={12.5} color="text.secondary">
                     El Excel trae los campos del formulario de SIREL en el orden del manual de la UAF. Revise los nombres separados y el gestor (se asume el propio cliente).
                   </Typography>
-                  <Button size="small" startIcon={<FileDownloadIcon />} onClick={exportRte} sx={{ textTransform: "none", flexShrink: 0 }}>Exportar RTE (formato SIREL)</Button>
+                  <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                    <ReportExportButtons excel={false} size="small" report={rteReport} disabled={!rte.reportable.length} />
+                    <Button size="small" startIcon={<FileDownloadIcon />} onClick={exportRte} sx={{ textTransform: "none", flexShrink: 0 }}>Exportar RTE (formato SIREL)</Button>
+                  </Stack>
                 </Stack>
                 <Table size="small">
                   <TableHead><TableRow><TableCell /><TableCell>Cliente</TableCell><TableCell align="right">Transacciones</TableCell><TableCell align="right">Total C$</TableCell><TableCell align="right">Total US$</TableCell><TableCell /></TableRow></TableHead>
@@ -383,6 +524,7 @@ export default function UafReports() {
                   <Chip color={inmov.matches.length ? "error" : "default"} label={`Coincidencias: ${inmov.matches.length}`} />
                   <Chip label={`Barridos de cartera: ${inmov.portfolio_scans.length}`} />
                   <Box sx={{ flex: 1 }} />
+                  <ReportExportButtons excel={false} size="small" report={inmovReport} />
                   <Button size="small" startIcon={<FileDownloadIcon />} onClick={exportInmov} sx={{ textTransform: "none" }}>Exportar</Button>
                 </Stack>
                 <Typography fontWeight={700} fontSize={14} sx={{ mb: 0.5 }}>Personas inmovilizadas</Typography>
@@ -411,7 +553,7 @@ export default function UafReports() {
                 <Typography fontSize={13.5} color="text.secondary" sx={{ mb: 1 }}>
                   Ventas de bienes no pagados por sus dueños (garantías adjudicadas). Se reportan cuando en el mes suman {usd(sales.threshold_usd)} o más. Total del período: <b>{usd(sales.total_usd)}</b>.
                 </Typography>
-                <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}><Button size="small" startIcon={<FileDownloadIcon />} onClick={exportSales} sx={{ textTransform: "none" }}>Exportar ventas</Button></Stack>
+                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mb: 1 }}><ReportExportButtons excel={false} size="small" report={salesReport} disabled={!sales.sales.length} /><Button size="small" startIcon={<FileDownloadIcon />} onClick={exportSales} sx={{ textTransform: "none" }}>Exportar ventas</Button></Stack>
                 <Table size="small">
                   <TableHead><TableRow><TableCell>Fecha</TableCell><TableCell>Bien</TableCell><TableCell>Dueño anterior</TableCell><TableCell align="right">Precio</TableCell><TableCell align="right">US$</TableCell></TableRow></TableHead>
                   <TableBody>
@@ -423,19 +565,24 @@ export default function UafReports() {
             )}
 
             {tab === "historial" && (
-              <Table size="small">
-                <TableHead><TableRow><TableCell>Período</TableCell><TableCell>Reporte</TableCell><TableCell align="right">Registros</TableCell><TableCell>Enviado</TableCell><TableCell>Acuse SIREL</TableCell><TableCell>Archivo</TableCell><TableCell>Registró</TableCell></TableRow></TableHead>
-                <TableBody>
-                  {history.map((h) => (
-                    <TableRow key={h.id}>
-                      <TableCell sx={{ textTransform: "capitalize" }}>{periodLabel(h.period)}</TableCell><TableCell>{h.report_type}</TableCell><TableCell align="right">{h.records_count}</TableCell>
-                      <TableCell>{h.sent_at}</TableCell><TableCell>{h.sirel_receipt || "—"}</TableCell>
-                      <TableCell>{h.file_name ? <Button size="small" sx={{ textTransform: "none" }} onClick={() => openFile(h.id)}>{h.file_name}</Button> : "—"}</TableCell><TableCell>{h.registered_by}</TableCell>
-                    </TableRow>
-                  ))}
-                  {!history.length && <TableRow><TableCell colSpan={7}><Typography color="text.secondary" fontSize={13.5}>Aún no hay envíos registrados.</Typography></TableCell></TableRow>}
-                </TableBody>
-              </Table>
+              <>
+                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mb: 1 }}>
+                  <ReportExportButtons size="small" report={historyReport} disabled={!history.length} />
+                </Stack>
+                <Table size="small">
+                  <TableHead><TableRow><TableCell>Período</TableCell><TableCell>Reporte</TableCell><TableCell align="right">Registros</TableCell><TableCell>Enviado</TableCell><TableCell>Acuse SIREL</TableCell><TableCell>Archivo</TableCell><TableCell>Registró</TableCell></TableRow></TableHead>
+                  <TableBody>
+                    {history.map((h) => (
+                      <TableRow key={h.id}>
+                        <TableCell sx={{ textTransform: "capitalize" }}>{periodLabel(h.period)}</TableCell><TableCell>{h.report_type}</TableCell><TableCell align="right">{h.records_count}</TableCell>
+                        <TableCell>{h.sent_at}</TableCell><TableCell>{h.sirel_receipt || "—"}</TableCell>
+                        <TableCell>{h.file_name ? <Button size="small" sx={{ textTransform: "none" }} onClick={() => openFile(h.id)}>{h.file_name}</Button> : "—"}</TableCell><TableCell>{h.registered_by}</TableCell>
+                      </TableRow>
+                    ))}
+                    {!history.length && <TableRow><TableCell colSpan={7}><Typography color="text.secondary" fontSize={13.5}>Aún no hay envíos registrados.</Typography></TableCell></TableRow>}
+                  </TableBody>
+                </Table>
+              </>
             )}
           </>
         )}

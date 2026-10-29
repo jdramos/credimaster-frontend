@@ -11,6 +11,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import * as XLSX from "xlsx";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 // Integración de cuentas (api/accounting/accountIntegrationController.js):
 // el saldo de una cuenta a una fecha de corte descompuesto por su auxiliar
@@ -61,6 +62,34 @@ const exportIntegration = (data) => {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "Resumen");
   XLSX.utils.book_append_sheet(wb, ws, "Detalle");
   XLSX.writeFile(wb, `integracion_${data.account.muc_code}_${data.as_of}.xlsx`);
+};
+
+// Impresión de una integración: el mismo detalle y resumen que exporta
+// exportIntegration (hojas Detalle y Resumen), en una sola tabla.
+const buildIntegrationReport = (data) => {
+  const cols = data.columns || [];
+  const first = cols[0]?.field || "label";
+  const amountField = [...cols].reverse().find((c) => c.type === "money")?.field || cols[cols.length - 1]?.field || "amount";
+  const summaryRow = (label, amount, extra = {}) => ({ [first]: label, [amountField]: Number(amount || 0), ...extra });
+  return {
+    title: "Integración de cuentas",
+    subtitle: `${data.account.muc_code} - ${data.account.account_name} · ${data.kind_label || ""}`,
+    period: `Al ${dmy(data.as_of)}`,
+    fileName: `integracion_${data.account.muc_code}_${data.as_of}`,
+    orientation: cols.length > 7 ? "landscape" : "portrait",
+    columns: cols.map((c) => (c.type === "money"
+      ? { field: c.field, label: c.header, numeric: true, format: (v) => (v === undefined || v === null || v === "" ? "" : money(v)) }
+      : { field: c.field, label: c.header, format: (v) => (c.type === "date" ? (v ? dmy(v) : "") : v ?? "") })),
+    rows: [
+      ...(data.rows || []),
+      { section: true, [first]: "Resumen" },
+      summaryRow(`Total del auxiliar (${(data.rows || []).length})`, data.subledger_total, { total: true }),
+      ...(data.reconciling || []).map((r) => summaryRow(r.label, r.amount)),
+      summaryRow("Saldo esperado en libros", data.expected_gl),
+      summaryRow("Saldo en libros", data.gl_balance, { total: true }),
+      summaryRow("Diferencia sin explicar", data.difference, { total: true }),
+    ],
+  };
 };
 
 // Detalle de una integración (en vivo o guardada).
@@ -299,6 +328,49 @@ export default function AccountIntegration() {
     }
   };
 
+  const buildSummaryReport = () => ({
+    title: "Resumen de cuentas con auxiliar",
+    period: `Al ${dmy(summary?.as_of || asOf)}`,
+    fileName: `integracion_resumen_${summary?.as_of || asOf}`,
+    columns: [
+      { label: "Cuenta", value: (r) => `${r.account.muc_code} - ${r.account.account_name}` },
+      { label: "Auxiliar", value: (r) => (r.unavailable ? "No disponible" : r.kind_label) },
+      { field: "gl_balance", label: "Libros", numeric: true, format: money },
+      { label: "Auxiliar", numeric: true, value: (r) => (r.unavailable ? "" : r.subledger_total), format: (v) => (v === "" ? "—" : money(v)) },
+      { field: "reconciling_total", label: "Partidas conciliatorias", numeric: true, format: (v) => (v ? money(v) : "—") },
+      { label: "Diferencia sin explicar", numeric: true, value: (r) => (r.unavailable ? "" : r.difference), format: (v) => (v === "" ? "—" : Number(v) === 0 ? "Cuadra" : money(v)) },
+    ],
+    rows: summary?.accounts || [],
+  });
+
+  const buildHistoryReport = () => ({
+    title: "Historial de integraciones y conciliaciones",
+    subtitle: account ? `${account.muc_code} - ${account.account_name}` : "",
+    fileName: `integracion_historial_${account?.muc_code || ""}`,
+    columns: [
+      { field: "statement_date", label: "Fecha de corte", format: (v) => String(v || "").slice(0, 10) },
+      { label: "Tipo", value: (r) => (r.source_kind ? "Integración" : "Conciliación manual") },
+      { field: "external_balance", label: "Auxiliar / fuente externa", numeric: true, format: money },
+      { field: "book_balance", label: "Saldo libros", numeric: true, format: money },
+      { field: "difference", label: "Diferencia", numeric: true, format: money },
+      { field: "notes", label: "Notas", format: (v) => v || "" },
+    ],
+    rows: history,
+  });
+
+  const savedViewData = savedView?.integration_snapshot ? {
+    account: { muc_code: savedView.muc_code, account_name: savedView.account_name || "" },
+    as_of: String(savedView.statement_date || "").slice(0, 10),
+    kind_label: savedView.integration_snapshot.kind_label,
+    columns: savedView.integration_snapshot.columns,
+    rows: savedView.integration_snapshot.rows,
+    reconciling: savedView.integration_snapshot.reconciling,
+    subledger_total: savedView.subledger_total,
+    expected_gl: savedView.external_balance,
+    gl_balance: savedView.book_balance,
+    difference: Number((Number(savedView.book_balance) - Number(savedView.external_balance)).toFixed(2)),
+  } : null;
+
   const openSaved = async (row) => {
     try {
       const res = await API.get(`/api/accounting/integration/saved/${row.id}`);
@@ -383,6 +455,7 @@ export default function AccountIntegration() {
                   <Button size="small" startIcon={<FileDownloadIcon />} sx={{ textTransform: "none" }} onClick={() => exportIntegration(integration)}>
                     Exportar a Excel
                   </Button>
+                  <ReportExportButtons excel={false} size="small" report={() => buildIntegrationReport(integration)} />
                 </Stack>
                 <IntegrationDetail data={integration} filter={filter} />
                 {canSave && (
@@ -474,6 +547,7 @@ export default function AccountIntegration() {
               <Button variant="outlined" onClick={loadSummary} disabled={loading} sx={{ textTransform: "none" }}>
                 {loading ? "Calculando..." : "Calcular"}
               </Button>
+              <ReportExportButtons report={buildSummaryReport} disabled={!summary?.accounts?.length} />
             </Stack>
             {loading && <CircularProgress size={22} />}
             {summary && (
@@ -510,7 +584,10 @@ export default function AccountIntegration() {
 
       {tab === 0 && (
         <Paper elevation={0} sx={paperSx}>
-          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Historial de integraciones y conciliaciones</Typography>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Historial de integraciones y conciliaciones</Typography>
+            <ReportExportButtons report={buildHistoryReport} disabled={!history.length} size="small" />
+          </Stack>
           <Table size="small">
             <TableHead sx={headSx}>
               <TableRow>
@@ -552,21 +629,12 @@ export default function AccountIntegration() {
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{savedView.integration_snapshot.kind_label}</Typography>
               <Divider sx={{ mb: 1 }} />
-              <IntegrationDetail
-                data={{
-                  columns: savedView.integration_snapshot.columns,
-                  rows: savedView.integration_snapshot.rows,
-                  reconciling: savedView.integration_snapshot.reconciling,
-                  subledger_total: savedView.subledger_total,
-                  expected_gl: savedView.external_balance,
-                  gl_balance: savedView.book_balance,
-                  difference: Number((Number(savedView.book_balance) - Number(savedView.external_balance)).toFixed(2)),
-                }}
-              />
+              <IntegrationDetail data={savedViewData} />
             </>
           )}
         </DialogContent>
         <DialogActions>
+          {savedViewData && <ReportExportButtons size="small" report={() => buildIntegrationReport(savedViewData)} />}
           <Button onClick={() => setSavedView(null)} sx={{ textTransform: "none" }}>Cerrar</Button>
         </DialogActions>
       </Dialog>

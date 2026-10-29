@@ -9,6 +9,7 @@ import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 import JournalDetailDialog from "./JournalDetailDialog";
 import { UserContext } from "../../contexts/UserContext";
 
@@ -161,9 +162,7 @@ export default function FixedAssetDepreciation() {
     }));
   }, [detailLines]);
 
-  const printDetail = () => {
-    if (!detailRun || !detailLines.length) return;
-
+  const buildDetailReport = () => {
     const totalAcquisition = detailLines.reduce((sum, r) => sum + Number(r.acquisition_cost || 0), 0);
     const totalMonth = detailLines.reduce((sum, r) => sum + Number(r.depreciation_amount || 0), 0);
     const totalAccumulated = detailLines.reduce((sum, r) => sum + Number(r.accumulated_depreciation_after || 0), 0);
@@ -187,8 +186,9 @@ export default function FixedAssetDepreciation() {
       });
     });
 
-    printAccountingReport({
+    return {
       title: "Detalle de Depreciación",
+      fileName: `depreciacion_${detailRun.period_year}-${String(detailRun.period_month).padStart(2, "0")}`,
       subtitle: `${MONTH_NAMES[detailRun.period_month - 1]} ${detailRun.period_year}`,
       period: String(detailRun.run_date).slice(0, 10),
       columns: [
@@ -205,12 +205,40 @@ export default function FixedAssetDepreciation() {
       rows: printRows,
       totals: [
         { value: "Totales", colspan: 5 },
-        { value: money(totalAcquisition), numeric: true },
-        { value: money(totalMonth), numeric: true },
-        { value: money(totalAccumulated), numeric: true },
-        { value: money(totalBookValue), numeric: true },
+        { value: money(totalAcquisition), numeric: true, raw: totalAcquisition },
+        { value: money(totalMonth), numeric: true, raw: totalMonth },
+        { value: money(totalAccumulated), numeric: true, raw: totalAccumulated },
+        { value: money(totalBookValue), numeric: true, raw: totalBookValue },
       ],
-    });
+    };
+  };
+
+  const printDetail = () => {
+    if (!detailRun || !detailLines.length) return;
+    printAccountingReport(buildDetailReport());
+  };
+
+  // Historial de corridas: mismas columnas que la tabla en pantalla.
+  const buildRunsReport = () => {
+    const totalRuns = runs.reduce((s, r) => s + Number(r.total_depreciation_amount || 0), 0);
+    return {
+      title: "Historial de depreciaciones generadas",
+      fileName: "historial_depreciaciones",
+      columns: [
+        { label: "Período", value: (r) => `${MONTH_NAMES[r.period_month - 1]} ${r.period_year}` },
+        { field: "run_date", label: "Fecha contable", format: (v) => String(v || "").slice(0, 10) },
+        { field: "total_assets_included", label: "Activos", numeric: true },
+        { field: "total_depreciation_amount", label: "Total depreciado", numeric: true, format: money },
+        { label: "Comprobante(s)", value: (r) => (r.journal_entries || []).map((je) => je.entry_no).join(", ") },
+      ],
+      rows: runs,
+      totals: [
+        { value: "Total", colspan: 2 },
+        { value: runs.reduce((s, r) => s + Number(r.total_assets_included || 0), 0), numeric: true },
+        { value: money(totalRuns), numeric: true, raw: totalRuns },
+        { value: "" },
+      ],
+    };
   };
 
   return (
@@ -279,7 +307,10 @@ export default function FixedAssetDepreciation() {
       </Paper>
 
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
-        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Historial de depreciaciones generadas</Typography>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Historial de depreciaciones generadas</Typography>
+          <ReportExportButtons report={buildRunsReport} disabled={!runs.length} size="small" />
+        </Stack>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -329,16 +360,19 @@ export default function FixedAssetDepreciation() {
       <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 900 }}>
           Detalle de depreciación — {detailRun ? `${MONTH_NAMES[detailRun.period_month - 1]} ${detailRun.period_year}` : ""}
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<PrintIcon />}
-            onClick={printDetail}
-            disabled={!detailLines.length}
-            sx={{ textTransform: "none" }}
-          >
-            Imprimir
-          </Button>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<PrintIcon />}
+              onClick={printDetail}
+              disabled={!detailLines.length}
+              sx={{ textTransform: "none" }}
+            >
+              Imprimir
+            </Button>
+            <ReportExportButtons print={false} report={buildDetailReport} disabled={!detailLines.length} size="small" />
+          </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 2 }}>
           {detailLoading ? (

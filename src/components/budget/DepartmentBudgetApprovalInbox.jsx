@@ -38,6 +38,8 @@ import {
   rejectDepartmentSubmission,
 } from "../../api/budget";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 
 const MONTH_LABELS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
@@ -170,6 +172,52 @@ export default function DepartmentBudgetApprovalInbox() {
     return { conceptRows, totals };
   }, [detailLines]);
 
+  const budgetLabel = () => {
+    const b = budgets.find((x) => String(x.id) === String(budgetId));
+    return b ? `${b.name} (${b.year_no})` : "";
+  };
+
+  const buildReport = () => {
+    const total = rows.reduce((acc, r) => acc + Number(r.total_amount || 0), 0);
+    return {
+      title: "Aprobación de presupuesto por departamento",
+      subtitle: `Presupuesto: ${budgetLabel()}`,
+      fileName: "aprobacion_presupuesto_departamentos",
+      sheetName: "Departamentos",
+      columns: [
+        { field: "department_name", label: "Departamento" },
+        { label: "Total", value: (r) => Number(r.total_amount || 0), numeric: true, format: reportMoney },
+        { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v || "" },
+        { field: "submitted_by_name", label: "Enviado por", format: (v) => v || "—" },
+      ],
+      rows,
+      totals: [{ value: "Total" }, { value: reportMoney(total), raw: total, numeric: true }, { value: "", colspan: 2 }],
+    };
+  };
+
+  // Detalle mensual por concepto del departamento abierto en el diálogo.
+  const buildDetailReport = () => {
+    const year = detailTotals.totals.reduce((a, b) => a + b, 0);
+    return {
+      title: `Presupuesto del departamento ${detailDept?.department_name || ""}`,
+      subtitle: `Presupuesto: ${budgetLabel()} · Estado: ${STATUS_CHIP[detailDept?.status]?.label || detailDept?.status || ""}`,
+      orientation: "landscape",
+      fileName: `presupuesto_departamento_${detailDept?.department_name || ""}`,
+      sheetName: "Detalle",
+      columns: [
+        { label: "Concepto", value: (r) => `${r.concept_name || ""}${r.muc_code ? ` (${r.muc_code})` : ""}` },
+        ...MONTH_LABELS.map((m, idx) => ({ label: m, value: (r) => r.months[idx], numeric: true, format: reportMoney })),
+        { label: "Total año", value: (r) => r.months.reduce((a, b) => a + b, 0), numeric: true, format: reportMoney },
+      ],
+      rows: detailTotals.conceptRows,
+      totals: [
+        { value: "Total" },
+        ...detailTotals.totals.map((t) => ({ value: reportMoney(t), raw: t, numeric: true })),
+        { value: reportMoney(year), raw: year, numeric: true },
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -195,6 +243,9 @@ export default function DepartmentBudgetApprovalInbox() {
               ))}
             </Select>
           </FormControl>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
+          </Box>
         </Box>
 
         <Table size="small">
@@ -282,6 +333,7 @@ export default function DepartmentBudgetApprovalInbox() {
           </Box>
         </DialogContent>
         <DialogActions>
+          <ReportExportButtons report={buildDetailReport} disabled={!detailTotals.conceptRows.length} />
           <Button onClick={() => setDetailOpen(false)} sx={{ textTransform: "none" }}>Cerrar</Button>
         </DialogActions>
       </Dialog>

@@ -41,6 +41,8 @@ import dayjs from "dayjs";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import { newClientReferenceId } from "../../utils/clientReferenceId";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportInteger, reportPercent, reportPeriod, reportFilters } from "../common/reportFormat";
 
 // Liquidación de primas de microseguros a las aseguradoras y comisiones que
 // la aseguradora reconoce (api/insurance/insuranceSettlementsController.js).
@@ -771,6 +773,152 @@ export default function InsuranceSettlements() {
     <TextField size="small" type="date" label={label} InputLabelProps={{ shrink: true }} value={value} onChange={onChange} />
   );
 
+  // Reportes de cada pestaña (Imprimir / Excel) con lo que muestra la tabla.
+  const providerName = (id) => (id ? providers.find((p) => String(p.id) === String(id))?.name || "" : "");
+  const moneyCol = (label, get) => ({
+    label,
+    value: (r) => (get(r) === null || get(r) === undefined ? null : Number(get(r))),
+    numeric: true,
+    format: (v) => (v === null || v === undefined ? "" : reportMoney(v)),
+  });
+  const total = (raw) => ({ value: reportMoney(raw), raw: Number(raw || 0), numeric: true });
+
+  const buildPendingReport = () => ({
+    title: "Primas pendientes de liquidar",
+    period: reportPeriod(pendingFilter.date_from, pendingFilter.date_to),
+    orientation: "landscape",
+    fileName: "primas_pendientes_liquidar",
+    sheetName: "Pendiente",
+    columns: [
+      { label: "Aseguradora", value: (r) => `${r.provider_name}${r.is_default ? " (póliza colectiva)" : ""}` },
+      { label: "% comisión", value: (r) => r.commission_rate, numeric: true, format: (v) => (v === null || v === undefined ? "—" : reportPercent(v)) },
+      { label: "Pagos", value: (r) => Number(r.payments_count || 0), numeric: true, format: reportInteger },
+      { label: "Créditos", value: (r) => Number(r.loans_count || 0), numeric: true, format: reportInteger },
+      { field: "first_payment_date", label: "Desde", format: dmy },
+      { field: "last_payment_date", label: "Hasta", format: dmy },
+      moneyCol("Primas pendientes", (r) => r.premium),
+    ],
+    rows: [
+      ...pending.providers,
+      ...(pending.unassigned.payments_count > 0 ? [{ ...pending.unassigned, provider_name: "Sin aseguradora asignada", commission_rate: null }] : []),
+    ],
+    totals: [{ value: "Total pendiente", colspan: 6 }, total(pending.total_premium)],
+  });
+
+  const buildSettlementsReport = () => {
+    const active = settlements.filter((r) => r.status !== "VOID");
+    const sum = (field) => active.reduce((acc, r) => acc + Number(r[field] || 0), 0);
+    return {
+      title: "Liquidaciones de seguros",
+      subtitle: reportFilters([
+        ["Aseguradora", providerName(settlementFilter.provider_id)],
+        ["Estado", settlementFilter.status === "ACTIVE" ? "Vigentes" : settlementFilter.status === "VOID" ? "Anuladas" : ""],
+      ]),
+      period: reportPeriod(settlementFilter.from, settlementFilter.to),
+      orientation: "landscape",
+      fileName: "liquidaciones_seguros",
+      sheetName: "Liquidaciones",
+      columns: [
+        { field: "id", label: "#" },
+        { field: "settlement_date", label: "Fecha", format: dmy },
+        { field: "provider_name", label: "Aseguradora" },
+        { label: "Período", value: (r) => `${dmy(r.period_from)} – ${dmy(r.period_to)}` },
+        moneyCol("Primas", (r) => r.premium_amount),
+        moneyCol("Comisión compensada", (r) => r.compensated_amount),
+        moneyCol("Neto pagado", (r) => r.net_amount),
+        { label: "Forma de pago", value: (r) => `${METHOD_LABELS[r.payment_method] || r.payment_method || ""}${r.check_number ? ` #${r.check_number}` : ""}` },
+        { field: "entry_no", label: "Comprobante", format: (v) => v || "—" },
+        { field: "status", label: "Estado", format: (v) => (v === "VOID" ? "Anulada" : "Vigente") },
+      ],
+      rows: settlements,
+      totals: [
+        { value: `Total vigentes (${active.length})`, colspan: 4 },
+        total(sum("premium_amount")),
+        total(sum("compensated_amount")),
+        total(sum("net_amount")),
+        { value: "", colspan: 3 },
+      ],
+    };
+  };
+
+  const buildCommissionsReport = () => {
+    const active = commissions.filter((c) => c.status !== "VOID");
+    const sum = active.reduce((acc, r) => acc + Number(r.amount || 0), 0);
+    return {
+      title: "Comisiones de seguros",
+      subtitle: reportFilters([
+        ["Aseguradora", providerName(commissionFilter.provider_id)],
+        ["Estado", COMMISSION_STATUS[commissionFilter.status]?.label],
+      ]),
+      orientation: "landscape",
+      fileName: "comisiones_seguros",
+      sheetName: "Comisiones",
+      columns: [
+        { field: "id", label: "#" },
+        { field: "accrual_date", label: "Devengo", format: dmy },
+        { field: "provider_name", label: "Aseguradora" },
+        { label: "Período", value: (r) => (r.period_from ? `${dmy(r.period_from)} – ${dmy(r.period_to)}` : "—") },
+        moneyCol("Base", (r) => r.base_amount),
+        {
+          label: "%",
+          value: (r) => (r.commission_rate === null || r.commission_rate === undefined ? null : Number(r.commission_rate)),
+          numeric: true,
+          format: (v) => (v === null || v === undefined ? "—" : reportPercent(v)),
+        },
+        moneyCol("Comisión", (r) => r.amount),
+        { field: "entry_no", label: "Comprobante", format: (v) => v || "—" },
+        { field: "status", label: "Estado", format: (v) => (COMMISSION_STATUS[v] || COMMISSION_STATUS.PENDIENTE).label },
+        {
+          label: "Cobro",
+          value: (c) => (c.collection_id
+            ? `${COLLECTION_LABELS[c.collection_method]}${c.collection_settlement_id ? ` #${c.collection_settlement_id}` : ""} · ${dmy(c.collection_date)}${c.collection_entry_no ? ` · ${c.collection_entry_no}` : ""}`
+            : "—"),
+        },
+      ],
+      rows: commissions,
+      totals: [{ value: `Total sin anuladas (${active.length})`, colspan: 6 }, total(sum), { value: "", colspan: 3 }],
+    };
+  };
+
+  const buildReconReport = () => ({
+    title: "Conciliación de microseguros",
+    subtitle: `Cuentas ${recon.accounts.payableMucCode || "2601.07"} y ${recon.accounts.receivableMucCode || "1601.06"}`,
+    period: `Saldos al ${asOf}`,
+    orientation: "landscape",
+    fileName: `conciliacion_seguros_${asOf}`,
+    sheetName: "Conciliación",
+    columns: [
+      { field: "provider_name", label: "Aseguradora / concepto" },
+      moneyCol("Primas cobradas", (r) => r.collected),
+      moneyCol("Liquidado", (r) => r.settled),
+      moneyCol("Pendiente (2601.07)", (r) => r.pending),
+      moneyCol("Comisión devengada", (r) => r.commission_accrued),
+      moneyCol("Comisión cobrada", (r) => r.commission_collected),
+      moneyCol("Por cobrar (1601.06)", (r) => r.commission_receivable),
+    ],
+    rows: [
+      ...recon.providers,
+      {
+        total: true,
+        provider_name: "Total",
+        collected: recon.totals.collected,
+        settled: recon.totals.settled,
+        pending: recon.totals.pending,
+        commission_receivable: recon.commissions.receivable,
+      },
+      { section: true, provider_name: `Cuenta ${recon.accounts.payableMucCode || "2601.07"} — primas por liquidar` },
+      { provider_name: "Pendiente según auxiliar (cobrado − liquidado)", pending: recon.totals.pending },
+      ...(recon.voided_after_posting !== 0 ? [{ provider_name: "Primas de pagos anulados después de contabilizados", pending: recon.voided_after_posting }] : []),
+      ...(recon.other_movements !== 0 ? [{ provider_name: "Otros movimientos de la cuenta", pending: recon.other_movements }] : []),
+      { provider_name: "Saldo contable", pending: recon.gl_payable },
+      { provider_name: `Diferencia${recon.difference === 0 ? " (cuadra)" : ""}`, pending: recon.difference },
+      { section: true, provider_name: `Cuenta ${recon.accounts.receivableMucCode || "1601.06"} — comisiones por cobrar` },
+      { provider_name: "Por cobrar según auxiliar", commission_receivable: recon.commissions.receivable },
+      { provider_name: "Saldo contable", commission_receivable: recon.commissions.gl_receivable },
+      { provider_name: `Diferencia${recon.commissions.difference === 0 ? " (cuadra)" : ""}`, commission_receivable: recon.commissions.difference },
+    ],
+  });
+
   const consultButton = (
     <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={refresh}>
       Consultar
@@ -814,6 +962,7 @@ export default function InsuranceSettlements() {
               {dateField("Pagos desde", pendingFilter.date_from, (e) => setPendingFilter((f) => ({ ...f, date_from: e.target.value })))}
               {dateField("Pagos hasta", pendingFilter.date_to, (e) => setPendingFilter((f) => ({ ...f, date_to: e.target.value })))}
               {consultButton}
+              <ReportExportButtons report={buildPendingReport} disabled={!pending} />
             </Stack>
             {pending && (
               <>
@@ -901,6 +1050,7 @@ export default function InsuranceSettlements() {
               {dateField("Desde", settlementFilter.from, (e) => setSettlementFilter((f) => ({ ...f, from: e.target.value })))}
               {dateField("Hasta", settlementFilter.to, (e) => setSettlementFilter((f) => ({ ...f, to: e.target.value })))}
               {consultButton}
+              <ReportExportButtons report={buildSettlementsReport} disabled={!settlements.length} />
             </Stack>
             <TableContainer sx={{ maxHeight: 560 }}>
               <Table size="small" stickyHeader>
@@ -957,6 +1107,7 @@ export default function InsuranceSettlements() {
                 {Object.entries(COMMISSION_STATUS).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
               </TextField>
               {consultButton}
+              <ReportExportButtons report={buildCommissionsReport} disabled={!commissions.length} />
               {canSettle && (
                 <Button variant="outlined" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={() => setCommissionOpen(true)}>
                   Registrar comisión
@@ -1025,6 +1176,7 @@ export default function InsuranceSettlements() {
             <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
               {dateField("Saldos al", asOf, (e) => setAsOf(e.target.value))}
               {consultButton}
+              <ReportExportButtons report={buildReconReport} disabled={!recon} />
             </Stack>
             {recon && (
               <>

@@ -19,6 +19,7 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormA } from "./mucReportModels";
@@ -246,13 +247,16 @@ export default function BalanceSheet() {
     [allRows, previousRows, ytdRows, previousYtdRows],
   );
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Estado de Situación Financiera",
+    fileName: `estado_situacion_financiera_${generatedDate || "corte"}`,
     subtitle: `Forma A - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Al ${generatedDate || "fecha de corte"}`,
     columns: formColumns,
     rows: formRows,
   });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   const displayRows = onlyWithBalance
     ? rows.filter((row) => {
@@ -320,6 +324,7 @@ export default function BalanceSheet() {
             Generar
           </Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
           <ReportSignaturesDialog />
         </Box>
 

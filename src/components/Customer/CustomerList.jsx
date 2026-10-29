@@ -39,6 +39,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { isModuleEnabled } from "../../utils/moduleAccess";
 import API from "../../api";
 import HelpButton from "../help/HelpButton";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportFilters } from "../common/reportFormat";
 import { printPicReport } from "../../reports/picReport";
 import { printCustomerProfileReport } from "../../reports/customerProfileReport";
 
@@ -434,6 +436,57 @@ export default function CustomerList() {
     }));
   };
 
+  // La lista se pagina en el servidor: para imprimir/exportar se recorren
+  // todas las páginas con la misma búsqueda y orden de la pantalla.
+  const fetchAllCustomers = async () => {
+    const all = [];
+    const pageSize = 100;
+    for (let page = 1; page <= 1000; page += 1) {
+      const res = await API.get(url, {
+        params: {
+          page,
+          pageSize,
+          sortBy: sortModel[0]?.field || "id",
+          sortDir: sortModel[0]?.sort || "desc",
+          search: globalFilter,
+        },
+      });
+      const payload = res?.data?.data ?? res?.data;
+      const pageRows = Array.isArray(payload?.rows) ? payload.rows : [];
+      all.push(...pageRows);
+      if (!pageRows.length || all.length >= (Number(payload?.total) || 0)) break;
+    }
+    return all;
+  };
+
+  const TYPE_LABEL = { DEUDOR: "Deudor", FIADOR: "Fiador", AMBOS: "Deudor/Fiador" };
+  const buildReport = async () => {
+    const all = await fetchAllCustomers();
+    return {
+      title: "Clientes",
+      subtitle: reportFilters([["Búsqueda", globalFilter]]),
+      orientation: amlEnabled ? "landscape" : "portrait",
+      fileName: "clientes",
+      sheetName: "Clientes",
+      columns: [
+        { field: "id", label: "ID" },
+        { field: "customer_code", label: "Código" },
+        { field: "identification", label: "Identificación" },
+        { field: "customer_name", label: "Cliente" },
+        ...(amlEnabled
+          ? [
+              { field: "risk_level", label: "Riesgo LA/FT/FP", format: (v) => RISK_CHIP[v]?.label || "Sin calcular" },
+              { field: "identity_verified_at", label: "Identidad verificada", format: (v) => (v ? `Sí (${reportDate(v)})` : "No") },
+            ]
+          : []),
+        { field: "customer_type", label: "Tipo", format: (v) => TYPE_LABEL[v] || "Deudor" },
+        { label: "Inmovilización", value: (r) => (r.is_frozen === 1 || r.is_frozen === true ? "Congelado" : "") },
+      ],
+      rows: all,
+      totals: [{ value: `${all.length} registros`, colspan: amlEnabled ? 8 : 6 }],
+    };
+  };
+
   const refresh = () => {
     const ac = new AbortController();
     fetchData(ac.signal);
@@ -547,6 +600,12 @@ export default function CustomerList() {
                   <RefreshIcon />
                 </IconButton>
               </Tooltip>
+
+              <ReportExportButtons
+                report={buildReport}
+                disabled={loading || !rowCount}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.6)", borderRadius: 2, "&:hover": { borderColor: "#fff" } }}
+              />
 
               {canCreate && (
                 <Button

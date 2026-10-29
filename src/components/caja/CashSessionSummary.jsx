@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import API from "../../api";
 import { money } from "./DenominationCounter";
+import { reportMoney } from "../common/reportFormat";
 
 const Stat = ({ label, value, strong = false, color }) => (
   <Paper variant="outlined" sx={{ p: 1.5, height: "100%" }}>
@@ -26,6 +27,91 @@ const Stat = ({ label, value, strong = false, color }) => (
 );
 
 const time = (value) => (value ? String(value).replace("T", " ").slice(11, 16) : "");
+
+// Excel del detalle de un turno (lo mismo que muestra este componente):
+// resumen del arqueo, compraventa de divisas, cobros y movimientos.
+export const buildCashSessionDetailReport = (session, currencies = []) => {
+  const t = session?.totals || {};
+  const closed = session?.status === "CERRADA";
+  const difference = Number(session?.difference || 0);
+  const symbolOf = (code) => currencies.find((c) => c.code === code)?.symbol || code;
+  const section = (concept) => ({ section: true, concept });
+  const line = (concept, amount, extra = {}) => ({ concept, amount: amount === null || amount === undefined ? null : Number(amount), ...extra });
+  const rows = [
+    section("Resumen"),
+    line("Fondo de apertura", t.opening_amount),
+    line(`Cobros en efectivo (${t.payments_count || 0})`, t.payments_total),
+    line(`Ingresos (${t.ingresos_count || 0})`, t.ingresos_total),
+    line(`Arqueos de cobradores (${t.arqueos_count || 0})`, t.arqueos_total),
+    line(`Egresos (${t.egresos_count || 0})`, -Number(t.egresos_total || 0)),
+    line(`Desembolsos (${t.disbursements_count || 0})`, -Number(t.disbursements_total || 0)),
+    ...(Number(t.voids_out_total) !== 0 || Number(t.voids_in_total) !== 0
+      ? [line("Anulaciones de turnos cerrados", Number(t.voids_in_total || 0) - Number(t.voids_out_total || 0))] : []),
+    ...(Number(t.fx_operations_count || 0) > 0 ? [line(`Compraventa de divisas (${t.fx_operations_count}), neto en C$`, t.fx_operations_nio)] : []),
+    ...(Number(t.fx_gain || 0) !== 0 ? [line("Ganancia en divisas (vuelto y ventas)", t.fx_gain)] : []),
+    line("Esperado en córdobas", t.expected_nio ?? t.expected_amount),
+    ...Object.entries(t.currencies || {})
+      .filter(([, c]) => Number(c.expected_qty) || Number(c.payments_in) || Number(c.bought) || Number(c.sold))
+      .map(([code, c]) => line(`Esperado en ${code}${c.book_rate ? ` (costo ${Number(c.book_rate).toFixed(4)})` : ""}`, c.expected_qty, { reference: symbolOf(code) })),
+    ...(closed ? [
+      line("Contado en córdobas", session.counted_nio ?? session.counted_amount),
+      ...Object.entries(t.fx_close || {}).filter(([, c]) => Number(c.counted_qty))
+        .map(([code, c]) => line(`Contado en ${code}`, c.counted_qty, { reference: symbolOf(code) })),
+      line(difference < 0 ? "Faltante" : difference > 0 ? "Sobrante" : "Diferencia", Math.abs(difference)),
+    ] : []),
+  ];
+  const fxOperations = session?.fx_operations || [];
+  if (fxOperations.length) {
+    rows.push(section("Compraventa de divisas"));
+    fxOperations.forEach((f) => rows.push(line(
+      `${f.operation_type === "COMPRA" ? "Compra" : "Venta"} ${f.currency_symbol || f.currency_code} ${Number(f.fx_amount || 0).toFixed(2)} a ${Number(f.rate).toFixed(4)} — ${f.person_name} (${f.person_identification})`,
+      f.operation_type === "COMPRA" ? -f.nio_amount : f.nio_amount,
+      { id: f.id, time: time(f.created_at), status: f.status === "ANULADO" ? "Anulada" : "Registrada" },
+    )));
+  }
+  rows.push(section("Cobros en efectivo"));
+  (session?.payments || []).forEach((p) => rows.push(line(
+    p.customer_name,
+    p.voided_in_this_session ? -p.amount : p.amount,
+    {
+      id: `#${p.id}`,
+      time: time(p.created_at),
+      reference: p.credit_code || p.loan_id,
+      status: p.voided_in_this_session ? "Anulado (sale de este turno)" : p.payment_status === "A" ? "Activo" : "Anulado",
+    },
+  )));
+  rows.push(section("Movimientos de caja"));
+  (session?.movements || []).forEach((m) => rows.push(line(
+    `${m.movement_type === "INGRESO" ? "Ingreso" : Number(m.is_disbursement) ? "Desembolso" : "Egreso"}: ${m.description || ""}`,
+    m.movement_type === "INGRESO" ? m.amount : -m.amount,
+    {
+      id: m.id,
+      reference: m.entry_no,
+      status: m.voided_in_this_session ? "Anulado (cargado a este turno)" : m.status === "REGISTRADO" ? "Registrado" : "Anulado",
+    },
+  )));
+  (session?.arqueos || []).forEach((a) => rows.push(line(
+    `Arqueo de cobrador: ${a.collector_name || ""}`,
+    a.counted_amount,
+    { id: `A-${a.id}`, status: a.status === "REGISTRADO" ? "Registrado" : "Anulado" },
+  )));
+  return {
+    title: "Detalle de turno de caja",
+    subtitle: `${session?.register_name || ""} · Turno #${session?.id || ""} · ${session?.user_name || ""} · ${closed ? "Cerrada" : "Abierta"}`,
+    period: session?.business_date ? `Día operativo ${session.business_date}` : "",
+    fileName: `turno_caja_${session?.id || ""}_${session?.business_date || ""}`,
+    sheetName: "Turno de caja",
+    columns: [
+      { field: "id", label: "#" },
+      { field: "time", label: "Hora" },
+      { field: "concept", label: "Concepto" },
+      { field: "reference", label: "Crédito / comprobante" },
+      { label: "Monto", value: (r) => r.amount, numeric: true, format: (v) => (v === null || v === undefined ? "" : reportMoney(v)) },
+      { field: "status", label: "Estado" },
+    ],
+    rows,
+  };
+};
 
 // Desglose del arqueo de un turno y lo que entró/salió de la caja en él, por
 // moneda. onChanged: tras anular una compraventa de divisas (turno abierto).

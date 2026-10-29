@@ -6,6 +6,8 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings";
 import { DataGrid } from "@mui/x-data-grid";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateStr = (v) => (v ? String(v).slice(0, 10) : "");
@@ -121,12 +123,38 @@ export default function AdvancesTab() {
     },
   ], []);
 
+  const buildReport = () => {
+    const sum = (field) => rows.reduce((s, r) => s + Number(r[field] || 0), 0);
+    return {
+      title: "Anticipos a Proveedores",
+      subtitle: onlyOpen ? "Solo con saldo disponible" : "Todos los anticipos",
+      fileName: "anticipos_proveedores",
+      columns: [
+        { field: "provider_name", label: "Proveedor" },
+        { field: "payment_date", label: "Fecha", format: dateStr },
+        { field: "method", label: "Forma", format: (v) => METHOD[v] || v || "" },
+        { field: "reference", label: "Referencia", format: (v) => v || "—" },
+        { field: "amount", label: "Monto", numeric: true, format: reportMoney },
+        { field: "applied_amount", label: "Aplicado", numeric: true, format: reportMoney },
+        { field: "balance", label: "Disponible", numeric: true, format: reportMoney },
+      ],
+      rows,
+      totals: [
+        { value: "Totales", colspan: 4 },
+        { value: reportMoney(sum("amount")), numeric: true, raw: sum("amount") },
+        { value: reportMoney(sum("applied_amount")), numeric: true, raw: sum("applied_amount") },
+        { value: reportMoney(sum("balance")), numeric: true, raw: sum("balance") },
+      ],
+    };
+  };
+
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} alignItems="center">
         <Button variant="outlined" onClick={() => setOnlyOpen((v) => !v)} sx={{ textTransform: "none" }}>
           {onlyOpen ? "Ver todos" : "Solo con saldo"}
         </Button>
+        <ReportExportButtons report={buildReport} disabled={!rows.length} />
         <Box sx={{ flex: 1 }} />
         <Chip color="primary" label={`Disponible total: C$ ${money(rows.reduce((s, r) => s + Number(r.balance || 0), 0))}`} />
       </Stack>

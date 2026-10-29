@@ -21,6 +21,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import API from "../../api";
 import ClaimAddModal from "./ClaimAddModal";
 import ClaimDetailModal from "./ClaimDetailModal";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportFilters } from "../common/reportFormat";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
@@ -31,6 +33,9 @@ const STATUS_OPTIONS = [
   { value: "CERRADO", label: "Cerrado" },
   { value: "RECHAZADO", label: "Rechazado" },
 ];
+
+const PRIORITY_LABEL = { BAJA: "Baja", MEDIA: "Media", ALTA: "Alta", CRITICA: "Crítica" };
+const statusLabel = (status) => STATUS_OPTIONS.find((o) => o.value && o.value === status)?.label || status || "";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -72,6 +77,7 @@ export default function CustomerClaimsList() {
 
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
 
   const [openAdd, setOpenAdd] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
@@ -87,6 +93,7 @@ export default function CustomerClaimsList() {
 
       const res = await API.get("/api/customer-claims", { params });
       setRows(Array.isArray(res.data?.data) ? res.data.data : []);
+      setAppliedSearch(search.trim());
     } catch (error) {
       console.error("Error cargando reclamos:", error);
       setRows([]);
@@ -108,6 +115,26 @@ export default function CustomerClaimsList() {
       cerrados: rows.filter((r) => r.status === "CERRADO").length,
     };
   }, [rows]);
+
+  const buildReport = () => ({
+    title: "Reclamos de clientes",
+    subtitle: reportFilters([["Estado", status ? statusLabel(status) : ""], ["Búsqueda", appliedSearch]]),
+    columns: [
+      { field: "claim_code", label: "Código" },
+      { field: "created_at", label: "Fecha", format: reportDate },
+      { label: "Cliente", value: (r) => r.customer_name || `Cliente #${r.customer_id}` },
+      { field: "subject", label: "Asunto" },
+      { field: "status", label: "Estado", format: statusLabel },
+      { field: "priority", label: "Prioridad", format: (v) => PRIORITY_LABEL[v] || v || "" },
+      { field: "claim_type", label: "Tipo" },
+    ],
+    rows,
+    totals: [{
+      value: `Total: ${summary.total} · Recibidos: ${summary.recibidos} · En análisis: ${summary.analisis} · Pendiente cliente: ${summary.pendientes} · Cerrados: ${summary.cerrados}`,
+      colspan: 7,
+    }],
+    fileName: "reclamos_clientes",
+  });
 
   const handleOpenDetail = (id) => {
     setSelectedClaimId(id);
@@ -231,6 +258,8 @@ export default function CustomerClaimsList() {
               >
                 Actualizar
               </Button>
+
+              <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
 
               <Button
                 variant="contained"

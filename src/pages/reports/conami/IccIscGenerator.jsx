@@ -24,6 +24,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import { DataGrid } from "@mui/x-data-grid";
 import API from "../../../api";
+import ReportExportButtons from "../../../components/common/ReportExportButtons";
 
 const MONTH_LABELS = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -140,8 +141,17 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
 
   useImperativeHandle(ref, () => ({ validateNow, generateNow }));
 
-  const errorRows = validation?.errors?.map((item, index) => ({ id: `E-${index + 1}`, type: "ERROR", ...item })) || [];
-  const warningRows = validation?.warnings?.map((item, index) => ({ id: `W-${index + 1}`, type: "WARNING", ...item })) || [];
+  // La validación del ICC devuelve { credit_code, field, message } y la del
+  // ISC filas de isc_report_errors (validation_code, record_key,
+  // error_message): se llevan a los mismos campos para la tabla.
+  const normalize = (item) => ({
+    ...item,
+    validation_code: item.validation_code ?? item.field ?? "",
+    record_key: item.record_key ?? item.credit_code ?? item.loan_id ?? "",
+    error_message: item.error_message ?? item.message ?? "",
+  });
+  const errorRows = validation?.errors?.map((item, index) => ({ id: `E-${index + 1}`, type: "ERROR", ...normalize(item) })) || [];
+  const warningRows = validation?.warnings?.map((item, index) => ({ id: `W-${index + 1}`, type: "WARNING", ...normalize(item) })) || [];
   const rows = [...errorRows, ...warningRows];
 
   const columns = [
@@ -157,6 +167,22 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
   ];
 
   const valid = validation?.summary?.valid;
+
+  // Imprimir/Excel solo de los hallazgos de la validación; el ZIP oficial
+  // sigue saliendo de "Generar ZIP".
+  const buildFindingsReport = () => ({
+    title: `Validación ${label} — errores y advertencias`,
+    subtitle: `Mes: ${monthLabel(form.report_month)} · Fecha de corte: ${form.cutoff_date}`,
+    columns: [
+      { field: "type", label: "Tipo", format: (v) => (v === "ERROR" ? "Error" : "Advertencia") },
+      { field: "validation_code", label: "Código" },
+      { field: "record_key", label: "Referencia" },
+      { field: "error_message", label: "Descripción" },
+    ],
+    rows,
+    totals: [{ value: `Errores: ${validation?.summary?.errors ?? errorRows.length} · Advertencias: ${validation?.summary?.warnings ?? warningRows.length}`, colspan: 4 }],
+    fileName: `${code}_validacion_${form.report_month}`,
+  });
 
   return (
     <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid #D8E2EF", overflow: "hidden", height: "100%" }}>
@@ -222,6 +248,7 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
               <Chip size="small" icon={<ErrorOutlineIcon />} label={`Errores: ${validation.summary.errors}`} color="error" variant="outlined" />
               <Chip size="small" icon={<WarningAmberIcon />} label={`Advertencias: ${validation.summary.warnings}`} color="warning" variant="outlined" />
               <Chip size="small" icon={<CheckCircleOutlineIcon />} label={valid ? "Listo para generar" : "Requiere corrección"} color={valid ? "success" : "error"} />
+              {rows.length > 0 && <ReportExportButtons size="small" report={buildFindingsReport} />}
             </Stack>
 
             {rows.length > 0 && (

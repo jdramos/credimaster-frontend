@@ -27,6 +27,8 @@ import { loanApi } from "../../api/loanApi";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { printCheckDisbursementDetail } from "../../reports/checkDisbursementDetailReport";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 
 const money = (n) =>
   new Intl.NumberFormat("es-NI", { style: "currency", currency: "NIO", minimumFractionDigits: 2 }).format(
@@ -135,6 +137,37 @@ export default function PendingDeliveriesList() {
     }
   };
 
+  const buildReport = () => {
+    const total = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    return {
+      title: "Entregas pendientes",
+      subtitle: user?.full_name ? `Responsable: ${user.full_name}` : undefined,
+      columns: [
+        { field: "id", label: "ID" },
+        { field: "credit_code", label: "Crédito" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "customer_identification", label: "Cédula" },
+        { field: "branch_name", label: "Sucursal" },
+        { label: "Forma", value: (r) => METHOD_LABEL[r.disbursement_method] || r.disbursement_method || "" },
+        { label: "Cuenta / Caja", value: (r) => r.bank_account_alias || r.cash_register_name || "—" },
+        { field: "amount", label: "Monto", numeric: true, format: reportMoney },
+        {
+          field: "disbursed_at",
+          label: "Desembolsado",
+          format: (v) => (v ? new Date(`${String(v).replace(" ", "T")}Z`).toLocaleString("es-NI") : ""),
+        },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length} pendientes)`, colspan: 7 },
+        { value: reportMoney(total), raw: total, numeric: true },
+        { value: "" },
+      ],
+      orientation: "landscape",
+      fileName: "entregas_pendientes",
+    };
+  };
+
   const columns = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "credit_code", headerName: "Crédito", width: 100 },
@@ -213,6 +246,7 @@ export default function PendingDeliveriesList() {
         </Box>
         <Stack direction="row" spacing={1} alignItems="center">
           <Chip label={`${rows.length} pendiente(s)`} color={rows.length ? "warning" : "default"} />
+          <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
           <Button startIcon={<RefreshIcon />} onClick={loadData}>
             Recargar
           </Button>

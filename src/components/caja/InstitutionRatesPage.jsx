@@ -22,6 +22,8 @@ import CurrencyExchangeIcon from "@mui/icons-material/CurrencyExchange";
 import dayjs from "dayjs";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportInteger } from "../common/reportFormat";
 
 const fmtRate = (v) => (v == null ? "—" : Number(v).toFixed(4));
 const emptyCurrency = { code: "", name: "", symbol: "", denominations: "", is_active: true };
@@ -155,11 +157,33 @@ export default function InstitutionRatesPage() {
     }
   };
 
+  // Histórico que se muestra en la tabla (últimos 30 días y los ya registrados a futuro).
+  const buildReport = () => {
+    const dates = rows.map((r) => String(r.rate_date).slice(0, 10)).sort();
+    return {
+      title: "Tipo de cambio de ventanilla",
+      period: dates.length ? `Del ${dates[0]} al ${dates[dates.length - 1]}` : "",
+      subtitle: official != null ? `TC oficial BCN del dólar hoy: ${fmtRate(official)}` : "",
+      fileName: "tipo_cambio_ventanilla",
+      sheetName: "Tipo de cambio",
+      columns: [
+        { field: "rate_date", label: "Fecha", format: reportDate },
+        { field: "currency_code", label: "Moneda" },
+        { label: "Compra", value: (r) => (r.buy_rate == null ? null : Number(r.buy_rate)), numeric: true, format: fmtRate },
+        { label: "Venta", value: (r) => (r.sell_rate == null ? null : Number(r.sell_rate)), numeric: true, format: fmtRate },
+        { label: "Operaciones", value: (r) => Number(r.uses || 0), numeric: true, format: reportInteger },
+        { field: "updated_by_name", label: "Registrado por" },
+      ],
+      rows,
+    };
+  };
+
   return (
     <Box sx={{ p: { xs: 1, md: 3 } }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
         <CurrencyExchangeIcon color="primary" />
-        <Typography variant="h5">Tipo de cambio de ventanilla</Typography>
+        <Typography variant="h5" sx={{ flexGrow: 1 }}>Tipo de cambio de ventanilla</Typography>
+        <ReportExportButtons report={buildReport} disabled={!rows.length} />
       </Stack>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Al TC de <strong>compra</strong> la institución recibe divisas (pagos y compra de divisas); al de <strong>venta</strong> las entrega

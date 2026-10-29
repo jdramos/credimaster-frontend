@@ -23,6 +23,8 @@ import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters } from "./common/reportFormat";
 
 const BAC = {
   primary: "#0057B8",
@@ -115,6 +117,25 @@ export default function PromoterList() {
 
     await fetchPromoters();
   };
+
+  const buildReport = () => ({
+    title: "Listado de promotores",
+    subtitle: reportFilters([
+      ["Sucursal", branchFilter ? branchOptions.find(([id]) => id === branchFilter)?.[1] : ""],
+      ["Búsqueda", search.trim()],
+    ]),
+    fileName: "promotores",
+    sheetName: "Promotores",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "name", label: "Nombre", format: (v) => v || "Sin nombre" },
+      { field: "identification", label: "Identificación" },
+      { field: "telephone", label: "Teléfono" },
+      { field: "branch_name", label: "Sucursal", format: (v) => v || "Sin sucursal" },
+    ],
+    rows: filteredRows,
+    totals: [{ value: `${filteredRows.length} registros`, colspan: 5 }],
+  });
 
   const columns = useMemo(
     () => [
@@ -344,6 +365,7 @@ export default function PromoterList() {
                 Limpiar
               </Button>
             )}
+            <ReportExportButtons report={buildReport} disabled={loading || !filteredRows.length} sx={{ bgcolor: BAC.white }} />
           </Stack>
 
           <Box

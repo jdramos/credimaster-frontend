@@ -11,6 +11,7 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
 import { printAccountingReport } from "../accounting/printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -130,8 +131,9 @@ export default function CashFlowProjection() {
     },
   ], [gran]);
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Flujo de Caja Proyectado",
+    fileName: `flujo_caja_proyectado_${filters.from}_${filters.to}`,
     subtitle: `Del ${filters.from} al ${filters.to} · Saldo inicial: C$ ${money(filters.opening_balance)}`,
     period: "",
     columns: [
@@ -150,6 +152,8 @@ export default function CashFlowProjection() {
       { value: money(totals.ending_balance), numeric: true },
     ] : [],
   });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   const firstNegative = rows.find((r) => Number(r.balance) < 0);
 
@@ -190,6 +194,7 @@ export default function CashFlowProjection() {
             sx={{ textTransform: "none" }}>Conceptos manuales</Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}
             sx={{ textTransform: "none" }}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
         </Stack>
 
         {totals && (

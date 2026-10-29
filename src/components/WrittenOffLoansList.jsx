@@ -9,6 +9,8 @@ import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import { printWrittenOffLoansReport } from "../reports/writtenOffLoansReport";
 import WriteoffRecoveriesDialog from "./WriteoffRecoveriesDialog";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportMoney } from "./common/reportFormat";
 
 const currency = (value) =>
   `C$ ${Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -29,6 +31,7 @@ export default function WrittenOffLoansList() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [error, setError] = useState("");
 
   const [loanModalOpen, setLoanModalOpen] = useState(false);
@@ -47,6 +50,7 @@ export default function WrittenOffLoansList() {
         params: searchValue ? { search: searchValue } : {},
       });
       setRows(res.data?.data || []);
+      setAppliedSearch(searchValue || "");
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Error al consultar cartera saneada");
     } finally {
@@ -106,6 +110,30 @@ export default function WrittenOffLoansList() {
   const handlePrint = () => {
     printWrittenOffLoansReport({ company: buildCompany(), user, rows });
   };
+
+  // Excel con las columnas de la impresión más lo recuperado.
+  const buildExcelReport = () => ({
+    title: "Cartera saneada",
+    subtitle: reportFilters([["Búsqueda", appliedSearch]]),
+    columns: [
+      { field: "credit_code", label: "Código" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "customer_identification", label: "Identificación" },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "writeoff_original_amount", label: "Monto saneado", numeric: true, format: reportMoney },
+      { field: "recovered_amount", label: "Recuperado", numeric: true, format: reportMoney },
+      { field: "writeoff_date", label: "Fecha de saneamiento", format: formatDate },
+      { field: "disbursement_date", label: "Fecha de desembolso", format: formatDate },
+    ],
+    rows,
+    totals: [
+      { value: `Total (${rows.length})`, colspan: 4 },
+      { value: reportMoney(totalWrittenOff), raw: totalWrittenOff, numeric: true },
+      { value: reportMoney(totalRecovered), raw: totalRecovered, numeric: true },
+      { value: "", colspan: 2 },
+    ],
+    fileName: "cartera_saneada",
+  });
 
   const columns = [
     {
@@ -210,6 +238,7 @@ export default function WrittenOffLoansList() {
             >
               Imprimir
             </Button>
+            <ReportExportButtons print={false} size="small" report={buildExcelReport} disabled={!rows.length} />
           </Stack>
         </Box>
 

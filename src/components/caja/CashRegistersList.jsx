@@ -29,6 +29,8 @@ import GroupIcon from "@mui/icons-material/Group";
 import RegisterCashiersDialog from "./RegisterCashiersDialog";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportDate } from "../common/reportFormat";
 
 const API_URL = "/api/caja/registers";
 const DEFAULT_GL_MUC_CODE = "1101.01";
@@ -222,6 +224,24 @@ export default function CashRegistersList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [accounts]);
 
+  const buildReport = () => ({
+    title: "Cajas",
+    orientation: "landscape",
+    fileName: "cajas",
+    sheetName: "Cajas",
+    columns: [
+      { field: "name", label: "Nombre" },
+      { field: "branch_name", label: "Sucursal", format: (v) => v || "Sin asignar" },
+      { label: "Cuenta contable", value: (r) => (r.gl_muc_code ? `${r.gl_muc_code} - ${r.gl_account_name || ""}` : "") },
+      { field: "currency_symbol", label: "Moneda", format: (v) => v || "C$" },
+      { field: "opening_date", label: "Fecha apertura", format: reportDate },
+      { label: "Saldo apertura", value: (r) => Number(r.opening_balance || 0), numeric: true, format: reportMoney },
+      { label: "Cajeros", value: (r) => (r.assigned_cashiers || []).map((a) => a.name).join(", ") || "Cualquiera de la sucursal" },
+      { field: "status", label: "Estado", format: (v) => (v === "ACTIVA" ? "Activa" : "Cerrada") },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -248,6 +268,7 @@ export default function CashRegistersList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchRegisters}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

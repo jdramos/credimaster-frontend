@@ -7,13 +7,14 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import * as XLSX from "xlsx";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ItFormDialog from "./ItFormDialog";
 import ItAttachments from "./ItAttachments";
 import { VoidDialog } from "../itRisk/ItIncidentDetailDialog";
 import { Field, PageHeader, StateChip } from "./ItCommon";
 import {
-  ASSET_STATUS_COLORS, BASE, CRITICALITY_COLORS, daysText, errorMessage, fmtDate, money, options, useItCatalog, useItLookups,
-  useItPermissions,
+  ASSET_STATUS_COLORS, BASE, CRITICALITY_COLORS, daysText, errorMessage, fmtDate, money, options, stateText, useItCatalog,
+  useItLookups, useItPermissions,
 } from "./itShared";
 
 // Inventario de activos de TI (Art. 11 num. 4 y Art. 12 num. 3 de la Norma
@@ -280,6 +281,35 @@ export default function ItAssets() {
     XLSX.writeFile(wb, `inventario_ti_${dayjs().format("YYYYMMDD")}.xlsx`);
   };
 
+  // Impresión: las columnas de la pantalla más las de identificación del Excel
+  // (las 20 columnas del Excel no caben en una hoja).
+  const buildPrintReport = () => ({
+    title: "Inventario de activos de TI",
+    subtitle: [
+      filters.category && `Categoría: ${catalog?.asset_categories?.[filters.category] || filters.category}`,
+      `Estado: ${filters.status ? catalog?.asset_statuses?.[filters.status] || filters.status : "Vigentes"}`,
+      filters.include_disposed && "Incluye dados de baja",
+      filters.q && `Búsqueda: ${filters.q}`,
+    ].filter(Boolean).join(" · "),
+    orientation: "landscape",
+    columns: [
+      { field: "asset_code", label: "Código" },
+      { field: "name", label: "Activo" },
+      { field: "category", label: "Categoría", format: (v) => catalog?.asset_categories?.[v] || v },
+      { field: "serial_number", label: "Serie" },
+      { label: "Asignado a", value: (a) => a.assigned_to_name || a.assigned_user_name || "" },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "location", label: "Ubicación" },
+      { field: "criticality", label: "Criticidad", format: (v) => catalog?.criticality?.[v] || v },
+      { field: "sensitivity", label: "Sensibilidad", format: (v) => catalog?.sensitivity?.[v] || v },
+      { field: "status", label: "Estado", format: (v) => catalog?.asset_statuses?.[v] || v },
+      { label: "Garantía", value: (a) => (a.warranty ? stateText(a.warranty.status, null, a.warranty.status === "VIGENTE" ? "" : `(${daysText(a.warranty.days_left)})`) : "") },
+      { label: "Mantenimiento", value: (a) => (a.maintenance ? stateText(a.maintenance.status, null, `· ${fmtDate(a.maintenance.due_date)}`) : "") },
+    ],
+    rows: rows || [],
+    totals: [{ value: `${(rows || []).length} activo(s)`, colspan: 12 }],
+  });
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <PageHeader
@@ -287,6 +317,7 @@ export default function ItAssets() {
         subtitle="Equipos, red, servidores y servicios. Inventario y clasificación por criticidad y sensibilidad (Arts. 11.4 y 12.3 de la norma CONAMI de riesgo tecnológico)."
         helpKey="ti.activos"
         actions={[
+          <ReportExportButtons key="p" excel={false} report={buildPrintReport} disabled={!rows?.length} />,
           <Button key="x" variant="outlined" onClick={exportExcel} disabled={!rows?.length}>Excel</Button>,
           canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nuevo activo</Button>,
         ]}

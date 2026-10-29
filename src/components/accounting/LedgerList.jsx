@@ -16,6 +16,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
+import ReportExportButtons from "../common/ReportExportButtons";
 import JournalDetailDialog from "./JournalDetailDialog";
 import HelpButton from "../help/HelpButton";
 
@@ -221,33 +222,35 @@ export default function LedgerList() {
     return [openingRow, ...rows];
   }, [rows, summary, filters.from_date]);
 
+  const buildReport = () => ({
+    title: "Mayor General",
+    fileName: `mayor_${selectedAccount?.muc_code || ""}_${filters.from_date || "inicio"}_${filters.to_date || "corte"}`,
+    subtitle: `${selectedAccount?.muc_code} - ${selectedAccount?.account_name} · Sucursal: ${branchName || "Todas"}`,
+    period: filters.from_date || filters.to_date
+      ? `${filters.from_date || "..."} a ${filters.to_date || "..."}`
+      : "",
+    columns: [
+      { field: "entry_date", label: "Fecha", value: (row) => (row.entry_date ? String(row.entry_date).substring(0, 10) : "") },
+      { field: "entry_no", label: "Comprobante" },
+      { field: "description", label: "Descripción", value: (row) => row.line_description || row.entry_description || "" },
+      { field: "debit", label: "Débito", numeric: true, format: money },
+      { field: "credit", label: "Crédito", numeric: true, format: money },
+      { field: "balance", label: "Saldo", numeric: true, format: money },
+    ],
+    rows: displayRows,
+    totals: summary
+      ? [
+          { value: `Totales (saldo inicial: ${money(summary.opening_balance)})`, colspan: 3 },
+          { value: money(summary.total_debit), numeric: true, raw: Number(summary.total_debit || 0) },
+          { value: money(summary.total_credit), numeric: true, raw: Number(summary.total_credit || 0) },
+          { value: money(summary.closing_balance), numeric: true, raw: Number(summary.closing_balance || 0) },
+        ]
+      : [],
+  });
+
   const printReport = () => {
     if (!selectedAccount) return;
-
-    printAccountingReport({
-      title: "Mayor General",
-      subtitle: `${selectedAccount.muc_code} - ${selectedAccount.account_name} · Sucursal: ${branchName || "Todas"}`,
-      period: filters.from_date || filters.to_date
-        ? `${filters.from_date || "..."} a ${filters.to_date || "..."}`
-        : "",
-      columns: [
-        { field: "entry_date", label: "Fecha", value: (row) => (row.entry_date ? String(row.entry_date).substring(0, 10) : "") },
-        { field: "entry_no", label: "Comprobante" },
-        { field: "description", label: "Descripción", value: (row) => row.line_description || row.entry_description || "" },
-        { field: "debit", label: "Débito", numeric: true, format: money },
-        { field: "credit", label: "Crédito", numeric: true, format: money },
-        { field: "balance", label: "Saldo", numeric: true, format: money },
-      ],
-      rows: displayRows,
-      totals: summary
-        ? [
-            { value: `Totales (saldo inicial: ${money(summary.opening_balance)})`, colspan: 3 },
-            { value: money(summary.total_debit), numeric: true },
-            { value: money(summary.total_credit), numeric: true },
-            { value: money(summary.closing_balance), numeric: true },
-          ]
-        : [],
-    });
+    printAccountingReport(buildReport());
   };
 
   return (
@@ -347,6 +350,8 @@ export default function LedgerList() {
           >
             Imprimir
           </Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!selectedAccount || !displayRows.length}
+            sx={{ borderRadius: 2 }} />
         </Box>
 
         {summary && (

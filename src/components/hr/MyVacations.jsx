@@ -26,6 +26,8 @@ import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { printColillaDePagoReport } from "../../reports/printColillaDePagoReport";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportMoney } from "../common/reportFormat";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -129,6 +131,32 @@ export default function MyVacations() {
     }
   };
 
+  const days = (v) => Number(v || 0).toLocaleString("es-NI", { maximumFractionDigits: 2 });
+  const buildRequestsReport = () => ({
+    title: "Mis solicitudes de vacaciones",
+    subtitle: [employee?.full_name, `Saldo disponible: ${Number(employee?.vacation_balance || 0).toFixed(2)} días`].filter(Boolean).join(" · "),
+    columns: [
+      { field: "start_date", label: "Desde", format: reportDate },
+      { field: "end_date", label: "Hasta", format: reportDate },
+      { field: "days_requested", label: "Días", numeric: true, format: days },
+      { field: "status", label: "Estado", format: (v) => STATUS_LABEL[v] || v },
+      { label: "Comentario", value: (r) => r.comment || "" },
+    ],
+    rows: requests,
+    fileName: "mis_solicitudes_vacaciones",
+  });
+  const buildPayslipsReport = () => ({
+    title: "Mis colillas",
+    subtitle: employee?.full_name || "",
+    columns: [
+      { label: "Período", value: (p) => `${reportDate(p.period_start)} al ${reportDate(p.period_end)}` },
+      { field: "pay_date", label: "Fecha de pago", format: reportDate },
+      { field: "net_pay", label: "Neto", numeric: true, format: reportMoney },
+    ],
+    rows: payslips,
+    fileName: "mis_colillas",
+  });
+
   if (notLinked) {
     return (
       <Box sx={{ p: 2 }}>
@@ -163,7 +191,12 @@ export default function MyVacations() {
       </Paper>
 
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>Mis solicitudes</Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1 }}>
+          <Typography variant="h6" fontWeight={700}>Mis solicitudes</Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <ReportExportButtons size="small" report={buildRequestsReport} disabled={!requests.length} />
+          </Box>
+        </Box>
         <Divider sx={{ mb: 1 }} />
         <Table size="small">
           <TableHead>
@@ -193,7 +226,12 @@ export default function MyVacations() {
       </Paper>
 
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
-        <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>Mis colillas</Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1 }}>
+          <Typography variant="h6" fontWeight={700}>Mis colillas</Typography>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <ReportExportButtons size="small" report={buildPayslipsReport} disabled={!payslips.length} />
+          </Box>
+        </Box>
         <Divider sx={{ mb: 1 }} />
         <Table size="small">
           <TableHead>

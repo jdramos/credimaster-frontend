@@ -31,9 +31,20 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const formatMoney = (value) =>
   Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const OPERATION_LABELS = {
+  PAYMENT: "Pagos",
+  LOAN_DISBURSEMENT: "Desembolsos",
+  INTEREST_ACCRUAL: "Devengo de intereses",
+  PROVISION: "Provisiones",
+  DEFAULT_INTEREST: "Mora",
+  WRITEOFF: "Castigos",
+};
+const dateOnly = (v) => (v ? String(v).substring(0, 10) : "");
 
 export default function PostingRuns() {
   const { permissions = [], role } = useContext(UserContext) || {};
@@ -241,6 +252,54 @@ export default function PostingRuns() {
     [],
   );
 
+  const sumBy = (list, field) => list.reduce((s, r) => s + Number(r[field] || 0), 0);
+
+  const buildRunsReport = () => ({
+    title: "Historial de corridas de contabilización",
+    fileName: "corridas_contabilizacion",
+    orientation: "landscape",
+    columns: [
+      { field: "id", label: "Corrida" },
+      { field: "from_date", label: "Desde", format: dateOnly },
+      { field: "to_date", label: "Hasta", format: dateOnly },
+      { field: "operation_type", label: "Operación", format: (v) => OPERATION_LABELS[v] || v || "" },
+      { field: "posting_mode", label: "Modo", format: (v) => (v === "SUMMARY" ? "Resumido" : "Detallado") },
+      { field: "total_operations", label: "Operaciones", numeric: true },
+      { field: "total_debit", label: "Débito", numeric: true, format: formatMoney },
+      { field: "total_credit", label: "Crédito", numeric: true, format: formatMoney },
+      { field: "entry_no", label: "Comprobante", format: (v) => v || "-" },
+      {
+        field: "status", label: "Estado",
+        format: (v) => ({ ERROR: "Error", VOID: "Anulado" }[v || "POSTED"] || "Contabilizado"),
+      },
+    ],
+    rows,
+    totals: [
+      { value: `Corridas: ${rows.length}`, colspan: 5 },
+      { value: sumBy(rows, "total_operations"), numeric: true },
+      { value: formatMoney(sumBy(rows, "total_debit")), numeric: true, raw: sumBy(rows, "total_debit") },
+      { value: formatMoney(sumBy(rows, "total_credit")), numeric: true, raw: sumBy(rows, "total_credit") },
+      { value: "", colspan: 2 },
+    ],
+  });
+
+  const buildPendingReport = () => ({
+    title: `Operaciones pendientes de contabilizar — ${detailLabel}`,
+    fileName: `pendientes_${detailLabel}`,
+    columns: [
+      { field: "date", label: "Fecha", format: (v) => dateOnly(v) || "-" },
+      { field: "customer_name", label: "Cliente", format: (v) => v || "-" },
+      { field: "credit_code", label: "Crédito", format: (v) => v || "-" },
+      { field: "branch_name", label: "Sucursal", format: (v) => v || "-" },
+      { field: "amount", label: "Monto", numeric: true, format: formatMoney },
+    ],
+    rows: detailRows,
+    totals: [
+      { value: `Operaciones: ${detailRows.length}`, colspan: 4 },
+      { value: formatMoney(sumBy(detailRows, "amount")), numeric: true, raw: sumBy(detailRows, "amount") },
+    ],
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper
@@ -442,6 +501,13 @@ export default function PostingRuns() {
           )}
         </Box>
 
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ flex: 1 }}>
+            Historial de corridas
+          </Typography>
+          <ReportExportButtons report={buildRunsReport} disabled={!rows.length} size="small" />
+        </Stack>
+
         <Box sx={{ height: 620 }}>
           <DataGrid
             rows={rows}
@@ -540,6 +606,7 @@ export default function PostingRuns() {
         </DialogContent>
 
         <DialogActions>
+          <ReportExportButtons report={buildPendingReport} disabled={detailLoading || !detailRows.length} size="small" />
           <Button onClick={() => setDetailOpen(false)}>Cerrar</Button>
         </DialogActions>
       </Dialog>

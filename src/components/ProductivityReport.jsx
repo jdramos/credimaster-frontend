@@ -27,6 +27,8 @@ import { saveAs } from "file-saver";
 import { NumericFormat } from "react-number-format";
 import API from "../api";
 import BranchSelect from "./BranchSelect";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportInteger, reportMoney, reportPeriod } from "./common/reportFormat";
 
 const Money = ({ value }) => (
   <NumericFormat
@@ -45,6 +47,21 @@ const Percent = ({ value }) =>
   ) : (
     <span>{Number(value).toFixed(1)}%</span>
   );
+
+const pctText = (v) => (v === null || v === undefined ? "—" : `${Number(v).toFixed(1)}%`);
+const sumOf = (rows, field) => rows.reduce((acc, r) => acc + Number(r[field] || 0), 0);
+const moneyTotal = (value) => ({ value: reportMoney(value), raw: value, numeric: true });
+const intTotal = (value) => ({ value: reportInteger(value), raw: value, numeric: true });
+const pctTotal = (value) => ({ value: pctText(value), raw: value ?? "", numeric: true });
+
+// Encabezado del reporte con los filtros con que se calculó la tabla.
+const reportHeader = (queried, rows, hideIdle) => ({
+  subtitle: reportFilters([
+    ["Sucursal", queried?.branchId ? rows[0]?.branch_name || queried.branchId : "Todas"],
+    ["Sin actividad", hideIdle ? "ocultos" : "incluidos"],
+  ]),
+  period: reportPeriod(queried?.dateFrom, queried?.dateTo),
+});
 
 const PAR_HELP =
   "PAR: capital de los créditos con alguna cuota vencida sobre el capital total de la cartera. Mismo indicador que \"Mi productividad\" en la app móvil.";
@@ -68,6 +85,7 @@ function PromoterProductivityPanel() {
   const [dateTo, setDateTo] = useState(dayjs().format("YYYY-MM-DD"));
   const [branchId, setBranchId] = useState("");
   const [hideIdle, setHideIdle] = useState(true);
+  const [queried, setQueried] = useState(null);
   const visibleRows = hideIdle ? rows.filter((r) => r.has_activity) : rows;
 
   const fetchData = async () => {
@@ -80,6 +98,7 @@ function PromoterProductivityPanel() {
       setRows(res.data?.data || []);
       setSummary(res.data?.summary || null);
       setHasQueried(true);
+      setQueried({ dateFrom, dateTo, branchId });
     } catch (error) {
       console.error("Error al calcular la productividad de promotores:", error);
       setRows([]);
@@ -88,6 +107,37 @@ function PromoterProductivityPanel() {
       setLoading(false);
     }
   };
+
+  // Mismas columnas y filas que el Excel.
+  const buildReport = () => ({
+    title: "Productividad de Promotores",
+    ...reportHeader(queried, visibleRows, hideIdle),
+    columns: [
+      { field: "promoter_name", label: "Promotor" },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "loans_count", label: "Créditos colocados", numeric: true, format: reportInteger },
+      { field: "placed_amount", label: "Monto colocado", numeric: true, format: reportMoney },
+      { field: "goal_amount", label: "Meta del período", numeric: true, format: (v) => (v === null || v === undefined ? "Sin meta" : reportMoney(v)) },
+      { field: "goal_pct", label: "% Cumplimiento", numeric: true, format: pctText },
+      { field: "active_loans", label: "Créditos activos", numeric: true, format: reportInteger },
+      { field: "current_portfolio", label: "Cartera (capital)", numeric: true, format: reportMoney },
+      { field: "overdue_amount", label: "Mora (capital + interés)", numeric: true, format: reportMoney },
+      { field: "par_pct", label: "PAR %", numeric: true, format: pctText },
+    ],
+    rows: visibleRows,
+    totals: [
+      { value: `Totales (${visibleRows.length})`, colspan: 2 },
+      intTotal(sumOf(visibleRows, "loans_count")),
+      moneyTotal(sumOf(visibleRows, "placed_amount")),
+      moneyTotal(sumOf(visibleRows, "goal_amount")),
+      pctTotal(summary?.total_goal ? summary.total_goal_pct : null),
+      intTotal(sumOf(visibleRows, "active_loans")),
+      moneyTotal(sumOf(visibleRows, "current_portfolio")),
+      moneyTotal(sumOf(visibleRows, "overdue_amount")),
+      pctTotal(summary?.total_par_pct),
+    ],
+    orientation: "landscape",
+  });
 
   const handleExportExcel = () => {
     if (!visibleRows.length) return;
@@ -147,7 +197,7 @@ function PromoterProductivityPanel() {
 
       <Box className="bac-filters">
         <Box className="bac-filters__body">
-          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(5, 1fr)" } }}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(6, 1fr)" } }}>
             <TextField label="Desde" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} size="small" InputLabelProps={{ shrink: true }} />
             <TextField label="Hasta" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} size="small" InputLabelProps={{ shrink: true }} />
             <BranchSelect size="small" value={branchId} onChange={(e) => setBranchId(e.target.value)} />
@@ -161,6 +211,7 @@ function PromoterProductivityPanel() {
                 </Button>
               </span>
             </Tooltip>
+            <ReportExportButtons excel={false} report={buildReport} disabled={loading || !visibleRows.length} sx={{ width: "100%" }} />
           </Box>
           <Box sx={{ mt: 1 }}>
             <ActivityToggle checked={hideIdle} onChange={setHideIdle} />
@@ -234,6 +285,7 @@ function CollectorProductivityPanel() {
   const [dateTo, setDateTo] = useState(dayjs().format("YYYY-MM-DD"));
   const [branchId, setBranchId] = useState("");
   const [hideIdle, setHideIdle] = useState(true);
+  const [queried, setQueried] = useState(null);
   const visibleRows = hideIdle ? rows.filter((r) => r.has_activity) : rows;
 
   const fetchData = async () => {
@@ -246,6 +298,7 @@ function CollectorProductivityPanel() {
       setRows(res.data?.data || []);
       setSummary(res.data?.summary || null);
       setHasQueried(true);
+      setQueried({ dateFrom, dateTo, branchId });
     } catch (error) {
       console.error("Error al calcular la productividad de cobradores:", error);
       setRows([]);
@@ -254,6 +307,37 @@ function CollectorProductivityPanel() {
       setLoading(false);
     }
   };
+
+  // Mismas columnas y filas que el Excel.
+  const buildReport = () => ({
+    title: "Productividad de Cobradores",
+    ...reportHeader(queried, visibleRows, hideIdle),
+    columns: [
+      { field: "collector_name", label: "Cobrador" },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "payments_count", label: "Pagos recibidos", numeric: true, format: reportInteger },
+      { field: "collected_amount", label: "Monto recuperado", numeric: true, format: reportMoney },
+      { field: "expected_amount", label: "Esperado del período", numeric: true, format: reportMoney },
+      { field: "effectiveness_pct", label: "% Efectividad", numeric: true, format: pctText },
+      { field: "active_loans", label: "Créditos activos", numeric: true, format: reportInteger },
+      { field: "portfolio_principal", label: "Cartera (capital)", numeric: true, format: reportMoney },
+      { field: "overdue_amount", label: "Mora (capital + interés)", numeric: true, format: reportMoney },
+      { field: "par_pct", label: "PAR %", numeric: true, format: pctText },
+    ],
+    rows: visibleRows,
+    totals: [
+      { value: `Totales (${visibleRows.length})`, colspan: 2 },
+      intTotal(sumOf(visibleRows, "payments_count")),
+      moneyTotal(sumOf(visibleRows, "collected_amount")),
+      moneyTotal(sumOf(visibleRows, "expected_amount")),
+      pctTotal(summary?.total_effectiveness_pct),
+      intTotal(sumOf(visibleRows, "active_loans")),
+      moneyTotal(sumOf(visibleRows, "portfolio_principal")),
+      moneyTotal(sumOf(visibleRows, "overdue_amount")),
+      pctTotal(summary?.total_par_pct),
+    ],
+    orientation: "landscape",
+  });
 
   const handleExportExcel = () => {
     if (!visibleRows.length) return;
@@ -311,7 +395,7 @@ function CollectorProductivityPanel() {
 
       <Box className="bac-filters">
         <Box className="bac-filters__body">
-          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(5, 1fr)" } }}>
+          <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(6, 1fr)" } }}>
             <TextField label="Desde" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} size="small" InputLabelProps={{ shrink: true }} />
             <TextField label="Hasta" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} size="small" InputLabelProps={{ shrink: true }} />
             <BranchSelect size="small" value={branchId} onChange={(e) => setBranchId(e.target.value)} />
@@ -325,6 +409,7 @@ function CollectorProductivityPanel() {
                 </Button>
               </span>
             </Tooltip>
+            <ReportExportButtons excel={false} report={buildReport} disabled={loading || !visibleRows.length} sx={{ width: "100%" }} />
           </Box>
           <Box sx={{ mt: 1 }}>
             <ActivityToggle checked={hideIdle} onChange={setHideIdle} />

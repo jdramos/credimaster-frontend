@@ -48,6 +48,8 @@ import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import KpiCard from "./KpiCard";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportInteger, reportMoney, reportPercent } from "../common/reportFormat";
 import ManagementDashboard from "./ManagementDashboard";
 import BAC from "../../styles/bac";
 import { UserContext } from "../../contexts/UserContext";
@@ -364,6 +366,62 @@ export default function PortfolioDashboard() {
       `Cobrador: ${catalogs.collectors.find((c) => c.id === filters.collector_id)?.name || filters.collector_id}`,
   ].filter(Boolean);
 
+  // Imprimir / Excel: KPIs y las tablas detrás de cada gráfico, en filas
+  // Concepto / Monto / Cantidad / % / Variación.
+  const buildReport = () => {
+    const round2 = (v) => (v === null || v === undefined ? v : Math.round(Number(v) * 100) / 100);
+    const kpi = (concept, { percent, growth, ...extra }) => ({ concept, ...extra, percent: round2(percent), growth: round2(growth) });
+    const section = (concept) => ({ concept, section: true });
+    const share = (value, total) => (total > 0 ? (Number(value || 0) / total) * 100 : null);
+    const agingTotal = aging.reduce((sum, row) => sum + Number(row.total_balance || 0), 0);
+    const branchTotal = branchBreakdown.reduce((sum, row) => sum + Number(row.total_portfolio || 0), 0);
+    const riskTotal = riskTierData.reduce((sum, row) => sum + row.value, 0);
+    const vigenteMoraTotal = currentPortfolio + moraAmount;
+    const rows = [
+      section("Indicadores al corte"),
+      kpi("Cartera total", { amount: summary?.total_portfolio, growth: calcGrowth(summary?.total_portfolio, previousSummary?.total_portfolio) }),
+      kpi("Cartera vigente", { amount: currentPortfolio }),
+      kpi("Mora (capital + interés vencidos)", { amount: moraAmount, growth: calcGrowth(moraAmount, previousMoraAmount) }),
+      kpi("% Mora", { percent: moraRate, growth: calcGrowth(moraRate, previousMoraRate) }),
+      kpi("Capital", { amount: summary?.total_capital, growth: calcGrowth(summary?.total_capital, previousSummary?.total_capital) }),
+      kpi("Interés", { amount: summary?.total_interest, growth: calcGrowth(summary?.total_interest, previousSummary?.total_interest) }),
+      kpi("Provisión estimada", { amount: summary?.estimated_provision }),
+      kpi("Clientes", { count: summary?.total_customers, growth: calcGrowth(summary?.total_customers, previousSummary?.total_customers) }),
+      kpi("Créditos activos", { count: summary?.total_loans }),
+      section("Cartera vigente vs. mora"),
+      kpi("Vigente", { amount: currentPortfolio, percent: share(currentPortfolio, vigenteMoraTotal) }),
+      kpi("Mora", { amount: moraAmount, percent: share(moraAmount, vigenteMoraTotal) }),
+      section("Evolución de cartera (últimos 12 meses)"),
+      ...portfolioByMonthWithMora.flatMap((row) => [
+        kpi(`${row.period} · Cartera`, { amount: row.total_portfolio }),
+        kpi(`${row.period} · Mora`, { amount: row.mora_amount }),
+        kpi(`${row.period} · Provisión`, { amount: row.provision }),
+      ]),
+      section("Aging de cartera (días de atraso)"),
+      ...aging.map((row) => kpi(row.bucket, { amount: row.total_balance, percent: share(row.total_balance, agingTotal) })),
+      section("Cartera por sucursal"),
+      ...branchBreakdown.map((row) =>
+        kpi(row.branch_name, { amount: row.total_portfolio, count: row.total_loans, percent: share(row.total_portfolio, branchTotal) }),
+      ),
+      section("Cartera por clasificación de riesgo"),
+      ...riskTierData.map((row) => kpi(row.name, { amount: row.value, percent: share(row.value, riskTotal) })),
+    ];
+    return {
+      title: "Dashboard de Saldos",
+      subtitle: activeFilterChips.join(" · "),
+      period: `Del ${dayjs(filters.date_from).format("DD/MM/YYYY")} al ${dayjs(filters.date_to).format("DD/MM/YYYY")}`,
+      columns: [
+        { field: "concept", label: "Concepto" },
+        { field: "amount", label: "Monto (C$)", numeric: true, format: (v) => (v === undefined || v === null ? "" : reportMoney(v)) },
+        { field: "count", label: "Cantidad", numeric: true, format: (v) => (v === undefined || v === null ? "" : reportInteger(v)) },
+        { field: "percent", label: "%", numeric: true, format: reportPercent },
+        { field: "growth", label: "Var. vs. período anterior (%)", numeric: true, format: reportPercent },
+      ],
+      rows,
+      fileName: `dashboard_saldos_${filters.date_from}_${filters.date_to}`,
+    };
+  };
+
   return (
     <Box p={{ xs: 1.5, md: 2 }}>
       <Box
@@ -548,6 +606,8 @@ export default function PortfolioDashboard() {
             >
               Ver detalle por crédito
             </Button>
+
+            <ReportExportButtons report={buildReport} disabled={loading || !summary} />
           </Grid>
 
           {activeFilterChips.length > 0 && (

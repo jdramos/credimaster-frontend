@@ -23,6 +23,8 @@ import { saveAs } from "file-saver";
 import { NumericFormat } from "react-number-format";
 import API from "../api";
 import BranchSelect from "./BranchSelect";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
 
 const Money = ({ value }) => (
   <NumericFormat
@@ -45,6 +47,8 @@ const RecoveryProjection = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [hasQueried, setHasQueried] = useState(false);
+  // Filtros con los que se calcularon las filas (para el encabezado del reporte).
+  const [queried, setQueried] = useState(null);
 
   const [dateFrom, setDateFrom] = useState(dayjs().format("YYYY-MM-DD"));
   const [dateTo, setDateTo] = useState(dayjs().add(1, "month").format("YYYY-MM-DD"));
@@ -64,6 +68,7 @@ const RecoveryProjection = () => {
       setRows(res.data?.data || []);
       setSummary(res.data?.summary || null);
       setHasQueried(true);
+      setQueried({ dateFrom, dateTo, branchId });
     } catch (error) {
       console.error("Error al calcular la proyección de recuperación:", error);
       setRows([]);
@@ -96,6 +101,36 @@ const RecoveryProjection = () => {
     saveAs(blob, `ProyeccionRecuperacion_${dateFrom}_${dateTo}.xlsx`);
   };
 
+  // Mismas columnas y filas que el Excel de arriba.
+  const buildReport = () => ({
+    title: "Proyección de Recuperación",
+    subtitle: reportFilters([["Sucursal", queried?.branchId ? rows[0]?.branch_name || queried.branchId : "Todas"]]),
+    period: reportPeriod(queried?.dateFrom, queried?.dateTo),
+    columns: [
+      { field: "branch_name", label: "Sucursal" },
+      { field: "customer_identification", label: "Cédula" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "loan_id", label: "Crédito" },
+      { field: "projected_principal", label: "Principal proyectado", numeric: true, format: reportMoney },
+      { field: "projected_interest", label: "Interés proyectado", numeric: true, format: reportMoney },
+      { field: "projected_total", label: "Total proyectado", numeric: true, format: reportMoney },
+      { field: "current_balance", label: "Saldo del crédito", numeric: true, format: reportMoney },
+      { field: "recovery", label: "Recuperación estimada", numeric: true, format: reportMoney },
+    ],
+    rows,
+    totals: summary
+      ? [
+        { value: `Totales (${summary.loans_count} créditos)`, colspan: 4 },
+        { value: reportMoney(summary.total_principal), raw: summary.total_principal, numeric: true },
+        { value: reportMoney(summary.total_interest), raw: summary.total_interest, numeric: true },
+        { value: reportMoney(summary.total_projected), raw: summary.total_projected, numeric: true },
+        { value: "" },
+        { value: reportMoney(summary.total_recovery), raw: summary.total_recovery, numeric: true },
+      ]
+      : [],
+    orientation: "landscape",
+  });
+
   return (
     <Box className="bac-page">
       <Box className="bac-page-header">
@@ -112,6 +147,7 @@ const RecoveryProjection = () => {
         </Box>
 
         <Stack direction="row" spacing={1}>
+          <ReportExportButtons excel={false} report={buildReport} disabled={loading || !rows.length} />
           <Tooltip title="Exportar a Excel">
             <span>
               <Button

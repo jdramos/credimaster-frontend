@@ -25,6 +25,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import RemoveShoppingCartIcon from "@mui/icons-material/RemoveShoppingCart";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/fixed-assets";
@@ -235,6 +236,36 @@ export default function FixedAssetsList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], []);
 
+  const buildReport = () => {
+    const bookValue = (r) => Number(r.acquisition_cost || 0) - Number(r.accumulated_depreciation || 0);
+    const totalCost = rows.reduce((s, r) => s + Number(r.acquisition_cost || 0), 0);
+    const totalDep = rows.reduce((s, r) => s + Number(r.accumulated_depreciation || 0), 0);
+    return {
+      title: "Activo Fijo",
+      subtitle: "Registro de activos de la institución",
+      fileName: "activo_fijo",
+      orientation: "landscape",
+      columns: [
+        { field: "asset_code", label: "Código" },
+        { field: "category_code", label: "Categoría", format: (v) => CATEGORY_LABELS[v] || v || "" },
+        { field: "description", label: "Descripción" },
+        { field: "acquisition_date", label: "Fecha compra", format: (v) => String(v || "").slice(0, 10) },
+        { field: "acquisition_cost", label: "Costo", numeric: true, format: money },
+        { field: "accumulated_depreciation", label: "Dep. Acumulada", numeric: true, format: money },
+        { field: "book_value", label: "Valor en libros", numeric: true, format: money, value: bookValue },
+        { field: "status", label: "Estado", format: (v) => (v === "ACTIVE" ? "Activo" : "Dado de baja") },
+      ],
+      rows,
+      totals: [
+        { value: `Activos: ${rows.length}`, colspan: 4 },
+        { value: money(totalCost), numeric: true, raw: totalCost },
+        { value: money(totalDep), numeric: true, raw: totalDep },
+        { value: money(totalCost - totalDep), numeric: true, raw: totalCost - totalDep },
+        { value: "" },
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -261,6 +292,7 @@ export default function FixedAssetsList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchAssets}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

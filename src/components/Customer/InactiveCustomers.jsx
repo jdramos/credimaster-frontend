@@ -14,6 +14,8 @@ import dayjs from "dayjs";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import InactiveCustomerDetail from "./InactiveCustomerDetail";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney, reportPeriod } from "../common/reportFormat";
 import { RATING, STAGE_COLOR, dmy, money, whatsappUrl } from "./inactiveCustomersShared";
 
 // Clientes inactivos (tuvieron crédito desembolsado y hoy no tienen ninguno
@@ -167,8 +169,8 @@ export default function InactiveCustomers() {
     </TableCell>
   );
 
-  const exportExcel = () => {
-    const rows = sorted.map((r) => ({
+  // Una fila del Excel; la impresión usa las mismas columnas.
+  const excelRow = (r) => ({
       Cliente: r.customer_name,
       Identificación: r.identification,
       Teléfono: r.phone || "",
@@ -195,11 +197,47 @@ export default function InactiveCustomers() {
       Gestiones: r.actions_count,
       "Última gestión": r.last_action_date || "",
       "Solicitud en trámite": r.pending_request_id ? `#${r.pending_request_id}` : "",
-    }));
+  });
+
+  const exportExcel = () => {
+    const rows = sorted.map(excelRow);
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Clientes inactivos");
     XLSX.writeFile(wb, `clientes_inactivos_${data?.as_of || today()}.xlsx`);
+  };
+
+  const buildPrintReport = () => {
+    const rows = sorted.map(excelRow);
+    const nameOf = (list, id) => (list || []).find((x) => String(x.id) === String(id))?.name || id;
+    const columns = Object.keys(excelRow({})).map((label) =>
+      label === "Monto último crédito"
+        ? { label, value: (row) => row[label], numeric: true, format: reportMoney }
+        : { label, value: (row) => row[label] ?? "" },
+    );
+    const range = (from, to) => (from !== "" || to !== "" ? `${from !== "" ? from : "…"} a ${to !== "" ? to : "…"}` : "");
+    return {
+      title: "Clientes inactivos",
+      subtitle: reportFilters([
+        ["Sucursal", filters.branch_id ? nameOf(catalogs?.branches, filters.branch_id) : ""],
+        ["Promotor", filters.promoter_id ? nameOf(catalogs?.promoters, filters.promoter_id) : ""],
+        ["Gestor", filters.collector_id ? nameOf(catalogs?.collectors, filters.collector_id) : ""],
+        ["Días inactivo", range(filters.days_min, filters.days_max)],
+        ["Último monto", range(filters.amount_min, filters.amount_max)],
+        ["Elegibilidad", { apto: "Aptos", no_apto: "No aptos" }[filters.eligibility] || ""],
+        ["Calificación", filters.rating ? RATING[filters.rating]?.label || filters.rating : ""],
+        ["Atraso máx. hasta", filters.max_late_max],
+        ["Etapa", filters.stage ? stageLabel[filters.stage] || filters.stage : ""],
+        ["Responsable", { me: "Asignados a mí", none: "Sin asignar" }[filters.responsible] || (filters.responsible ? nameOf(catalogs?.users, filters.responsible) : "")],
+        ["Próxima acción", { due: "Para hoy o atrasada", none: "Sin próxima acción" }[filters.next_action] || ""],
+        ["Búsqueda", filters.q.trim()],
+      ]),
+      period: reportPeriod("", data?.as_of ? dmy(data.as_of) : ""),
+      orientation: "landscape",
+      columns,
+      rows,
+      totals: [{ value: `${rows.length} cliente(s)`, colspan: columns.length }],
+    };
   };
 
   const byStage = data?.by_stage || {};
@@ -232,6 +270,7 @@ export default function InactiveCustomers() {
             <Button variant="outlined" startIcon={<FileDownloadIcon />} sx={{ textTransform: "none" }} onClick={exportExcel} disabled={!sorted.length}>
               Exportar a Excel
             </Button>
+            <ReportExportButtons report={buildPrintReport} excel={false} disabled={!sorted.length} />
             <Tooltip title="Actualizar">
               <IconButton onClick={() => load(filters)} aria-label="Actualizar"><RefreshIcon /></IconButton>
             </Tooltip>

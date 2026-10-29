@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Alert, Box, Button, CircularProgress, Grid, List, ListItemButton, ListItemText, Paper, Typography } from "@mui/material";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import ReportExportButtons from "../common/ReportExportButtons";
 import { Kpi, PageHeader } from "./ItCommon";
-import { BASE, errorMessage, useItCatalog } from "./itShared";
+import { BASE, errorMessage, fileDate, useItCatalog } from "./itShared";
 
 // Tablero de Gestión de TI: cifras del inventario y lo que requiere atención
 // (mantenimientos, licencias, respaldos, tickets, contratos y, en una IMF,
@@ -40,9 +41,50 @@ export default function ItDashboard() {
   const a = data.assets;
   const t = data.tickets;
 
+  // Indicadores y listas del tablero como filas Concepto / Valor / Detalle.
+  const buildReport = () => ({
+    title: "Tablero de TI",
+    columns: [
+      { field: "concept", label: "Concepto" },
+      { field: "value", label: "Valor" },
+      { field: "detail", label: "Detalle" },
+    ],
+    rows: [
+      { section: true, concept: "Indicadores" },
+      { concept: "Activos vigentes", value: a.total, detail: `${a.critical} de criticidad alta o crítica` },
+      { concept: "Mantenimientos vencidos", value: data.maintenance.overdue, detail: `${data.maintenance.upcoming} próximos · ${a.without_maintenance_plan} sin plan` },
+      { concept: "Licencias por renovar", value: data.licenses.expired + data.licenses.expiring, detail: `${data.licenses.expired} vencidas · ${data.licenses.over_assigned} sobreasignadas` },
+      { concept: "Respaldos con alerta", value: data.backups.late + data.backups.restore_overdue, detail: `${data.backups.late} atrasados · ${data.backups.restore_overdue} sin prueba vigente` },
+      { concept: "Tickets pendientes", value: t.active, detail: `${t.sla_overdue} fuera de tiempo` },
+      { concept: "Contratos por renovar", value: data.contracts.expired + data.contracts.expiring, detail: `${data.contracts.with_clause_gaps} con cláusulas por confirmar` },
+      { section: true, concept: "Mesa de ayuda (últimos 30 días)" },
+      { concept: "Tickets abiertos", value: t.opened_30d },
+      { concept: "Tiempo promedio de solución", value: t.avg_resolution_hours_30d == null ? "—" : `${t.avg_resolution_hours_30d} h` },
+      { concept: "Resueltos dentro de la meta", value: t.sla_met_pct_30d == null ? "—" : `${t.sla_met_pct_30d}%` },
+      ...Object.entries(t.by_priority).map(([p, n]) => ({ concept: `Pendientes de prioridad ${catalog?.ticket_priorities?.[p] || p}`, value: n })),
+      { section: true, concept: "Inventario por categoría" },
+      ...Object.entries(a.by_category).sort((x, y) => y[1] - x[1]).map(([k, n]) => ({ concept: catalog?.asset_categories?.[k] || k, value: n })),
+      ...(a.warranty_expiring > 0
+        ? [{ concept: "Garantías por vencer", value: a.warranty_expiring, detail: `En los próximos ${catalog?.warranty_notice_days || 60} días` }]
+        : []),
+      ...(riskEnabled
+        ? [
+          { section: true, concept: "Riesgo tecnológico (CONAMI)" },
+          { concept: "Incidentes con aviso a CONAMI pendiente", value: risk?.total || 0 },
+        ]
+        : []),
+      { section: true, concept: "Requiere atención" },
+      ...attention.map((x) => ({
+        concept: `${KIND_LABEL[x.kind] || x.kind} · ${x.ref}`, value: x.severity === "error" ? "Vencido / urgente" : "Por atender", detail: x.text,
+      })),
+    ],
+    fileName: `tablero_ti_${fileDate()}`,
+  });
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
-      <PageHeader title="Tablero de TI" subtitle="Inventario, mantenimientos, licencias, respaldos, soporte y contratos en un vistazo." helpKey="ti.tablero" />
+      <PageHeader title="Tablero de TI" subtitle="Inventario, mantenimientos, licencias, respaldos, soporte y contratos en un vistazo." helpKey="ti.tablero"
+        actions={[<ReportExportButtons key="r" report={buildReport} />]} />
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={6} md={2}><Kpi label="Activos vigentes" value={a.total} hint={`${a.critical} de criticidad alta o crítica`} onClick={() => navigate("/ti/activos")} /></Grid>
         <Grid item xs={6} md={2}><Kpi label="Mantenimientos vencidos" value={data.maintenance.overdue} color={data.maintenance.overdue ? "error.main" : undefined} hint={`${data.maintenance.upcoming} próximos · ${a.without_maintenance_plan} sin plan`} onClick={() => navigate("/ti/mantenimientos")} /></Grid>

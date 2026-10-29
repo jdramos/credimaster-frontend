@@ -25,6 +25,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDateTime, reportInteger, reportPeriod } from "../common/reportFormat";
 
 const STATUS_CHIP = {
   OPEN: { label: "Abierta", color: "warning" },
@@ -40,6 +42,8 @@ const ALERT_TYPE_LABEL = {
   ALTO_RIESGO_PIC_VENCIDO: "Cliente ALTO riesgo con PIC vencido",
 };
 
+const frequencyDateFrom = () => new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 export default function AmlAlertsInbox() {
   const [frequencyRows, setFrequencyRows] = useState([]);
 
@@ -47,7 +51,7 @@ export default function AmlAlertsInbox() {
     // Art. 33.6: reporte de cuántas veces apareció cada cliente en alertas,
     // por tipo -- últimos 90 días por defecto.
     API.get("/api/aml/alerts/frequency-report", {
-      params: { date_from: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) },
+      params: { date_from: frequencyDateFrom() },
     })
       .then(({ data }) => setFrequencyRows(Array.isArray(data) ? data : []))
       .catch(() => {});
@@ -129,6 +133,51 @@ export default function AmlAlertsInbox() {
     }
   };
 
+  // La bandeja muestra hasta 100 alertas; el reporte recorre todas las páginas
+  // del estado seleccionado.
+  const buildAlertsReport = async () => {
+    const all = [];
+    for (let page = 1; ; page += 1) {
+      const { data } = await API.get("/api/aml/alerts", { params: { status: statusFilter, limit: 100, page } });
+      all.push(...(data?.data || []));
+      if (page >= (data?.pagination?.totalPages || 1)) break;
+    }
+    return {
+      title: "Alertas de Operaciones Inusuales",
+      subtitle: `Estado: ${statusFilter === "ALL" ? "Todas" : STATUS_CHIP[statusFilter]?.label || statusFilter}`,
+      orientation: "landscape",
+      columns: [
+        { field: "alert_type", label: "Tipo", format: (v) => ALERT_TYPE_LABEL[v] || v },
+        { field: "customer_name", label: "Cliente" },
+        { field: "identification", label: "Identificación" },
+        { field: "description", label: "Descripción" },
+        { field: "triggered_at", label: "Fecha", format: reportDateTime },
+        { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v },
+      ],
+      rows: all,
+      totals: [{ value: `${all.length} alerta(s)`, colspan: 6 }],
+      fileName: `alertas_pla_${statusFilter.toLowerCase()}`,
+    };
+  };
+
+  const buildFrequencyReport = () => {
+    const total = frequencyRows.reduce((sum, r) => sum + Number(r.total || 0), 0);
+    return {
+      title: "Frecuencia de alertas por cliente",
+      subtitle: "Art. 33.6 CD-CONAMI-070-01OCT07-2025",
+      period: reportPeriod(frequencyDateFrom(), new Date().toISOString().slice(0, 10)),
+      columns: [
+        { field: "customer_name", label: "Cliente" },
+        { field: "customer_identification", label: "Identificación" },
+        { field: "alert_type", label: "Tipo de alerta", format: (v) => ALERT_TYPE_LABEL[v] || v },
+        { field: "total", label: "Veces", numeric: true, format: reportInteger },
+      ],
+      rows: frequencyRows,
+      totals: [{ value: "Total", colspan: 3 }, { value: reportInteger(total), raw: total, numeric: true }],
+      fileName: "frecuencia_alertas_90_dias",
+    };
+  };
+
   const columns = [
     {
       field: "alert_type",
@@ -189,6 +238,7 @@ export default function AmlAlertsInbox() {
               Art. 33-34, 37-38 CD-CONAMI-070-01OCT07-2025
             </Typography>
           </Box>
+          <ReportExportButtons report={buildAlertsReport} disabled={!rows.length} />
           <Button
             variant="contained"
             startIcon={<PlayArrowIcon />}
@@ -234,9 +284,12 @@ export default function AmlAlertsInbox() {
       </Paper>
 
       <Paper elevation={0} sx={{ p: 2, mt: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
-        <Typography variant="subtitle1" fontWeight={800} mb={0.5}>
-          Frecuencia de alertas por cliente (últimos 90 días)
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+          <Typography variant="subtitle1" fontWeight={800} flexGrow={1}>
+            Frecuencia de alertas por cliente (últimos 90 días)
+          </Typography>
+          <ReportExportButtons size="small" report={buildFrequencyReport} disabled={!frequencyRows.length} />
+        </Stack>
         <Typography variant="body2" color="text.secondary" mb={1.5}>
           Art. 33.6 CD-CONAMI-070-01OCT07-2025.
         </Typography>

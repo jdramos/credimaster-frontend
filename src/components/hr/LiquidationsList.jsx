@@ -36,6 +36,8 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import dayjs from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
 import { printLiquidationReport } from "../../reports/printLiquidationReport";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportMoney } from "../common/reportFormat";
 
 const API_URL = "/api/hr/liquidations";
 
@@ -188,6 +190,21 @@ export default function LiquidationsList() {
     },
   ], []);
 
+  // Mismas columnas y filas que "Exportar Excel".
+  const buildReport = () => ({
+    title: "Liquidaciones",
+    columns: [
+      { field: "employee_name", label: "Empleado" },
+      { field: "termination_date", label: "Terminación", format: reportDate },
+      { field: "motivo", label: "Motivo", format: (v) => MOTIVO_LABELS[v] || v },
+      { field: "total_bruto", label: "Bruto", numeric: true, format: reportMoney },
+      { field: "total_neto", label: "Neto", numeric: true, format: reportMoney },
+      { field: "status", label: "Estado", format: (v) => (v === "APROBADA" ? "Aprobada" : "Anulada") },
+    ],
+    rows,
+    fileName: `liquidaciones_${dayjs().format("YYYYMMDD")}`,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -233,6 +250,7 @@ export default function LiquidationsList() {
             >
               Exportar Excel
             </Button>
+            <ReportExportButtons excel={false} report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

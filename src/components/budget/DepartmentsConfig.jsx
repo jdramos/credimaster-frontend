@@ -21,6 +21,8 @@ import { Link as RouterLink } from "react-router-dom";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import AddIcon from "@mui/icons-material/Add";
 import { getDepartments, createDepartment, updateDepartment } from "../../api/budget";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportYesNo } from "../common/reportFormat";
 
 export default function DepartmentsConfig() {
   const [rows, setRows] = useState([]);
@@ -71,6 +73,17 @@ export default function DepartmentsConfig() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Departamentos",
+    fileName: "departamentos_presupuesto",
+    sheetName: "Departamentos",
+    columns: [
+      { field: "name", label: "Nombre" },
+      { label: "Activo", value: (r) => Boolean(r.is_active), format: reportYesNo },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Breadcrumbs sx={{ mb: 1.5 }}>
@@ -81,7 +94,7 @@ export default function DepartmentsConfig() {
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <ApartmentIcon sx={{ color: "#0057B8" }} />
-          <Box>
+          <Box sx={{ flexGrow: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Departamentos</Typography>
               <HelpButton screenKey="presupuesto.departamentos" />
@@ -90,6 +103,7 @@ export default function DepartmentsConfig() {
               Cada usuario se asigna a uno de estos departamentos para llenar su parte del presupuesto
             </Typography>
           </Box>
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Box sx={{ display: "flex", gap: 1, mb: 2, maxWidth: 480 }}>

@@ -29,6 +29,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import DescriptionIcon from "@mui/icons-material/Description";
 import API from "../../api";
 import { printRetentionCertificate } from "./printRetentionCertificate";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportPercent } from "../common/reportFormat";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -53,6 +55,8 @@ export default function RetentionsManager() {
   const [period, setPeriod] = useState(thisMonth());
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState({ count: 0, base: 0, retained: 0 });
+  // Período con que se cargaron las filas actuales (para el reporte).
+  const [loadedPeriod, setLoadedPeriod] = useState(period);
   const [loading, setLoading] = useState(false);
   const [codes, setCodes] = useState([]);
   const [providers, setProviders] = useState([]);
@@ -106,6 +110,7 @@ export default function RetentionsManager() {
       const res = await API.get("/api/retentions", { params: { period } });
       setRows(res.data?.data || []);
       setSummary(res.data?.summary || { count: 0, base: 0, retained: 0 });
+      setLoadedPeriod(period);
     } catch (e) {
       notify(e.response?.data?.message || "Error cargando retenciones", "error");
     } finally {
@@ -289,6 +294,31 @@ export default function RetentionsManager() {
     [],
   );
 
+  const buildReport = () => ({
+    title: "Retenciones IR (DGI)",
+    subtitle: "Retenciones en la fuente registradas",
+    period: `Período ${loadedPeriod}`,
+    fileName: `retenciones_${loadedPeriod}`,
+    orientation: "landscape",
+    columns: [
+      { field: "retention_code", label: "Código" },
+      { field: "ruc", label: "RUC / Cédula" },
+      { field: "name", label: "Nombre / Razón social" },
+      { field: "document_number", label: "Documento" },
+      { field: "document_date", label: "Fecha", format: dateStr },
+      { field: "base_amount", label: "Base", numeric: true, format: reportMoney },
+      { field: "rate", label: "Alíc.", numeric: true, format: reportPercent },
+      { field: "retained_amount", label: "Retenido", numeric: true, format: reportMoney },
+    ],
+    rows,
+    totals: [
+      { value: `Registros: ${summary.count}`, colspan: 5 },
+      { value: reportMoney(summary.base), numeric: true, raw: Number(summary.base || 0) },
+      { value: "" },
+      { value: reportMoney(summary.retained), numeric: true, raw: Number(summary.retained || 0) },
+    ],
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
@@ -331,6 +361,7 @@ export default function RetentionsManager() {
             Importar de cheques
           </Button>
           <Box sx={{ flex: 1 }} />
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
           <Button
             variant="outlined"
             startIcon={<DescriptionIcon />}

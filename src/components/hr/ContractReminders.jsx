@@ -4,6 +4,8 @@ import { Alert, Box, Chip, Paper, Snackbar, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AssignmentLateIcon from "@mui/icons-material/AssignmentLate";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate } from "../common/reportFormat";
 
 // Recordatorio de contratos por vencer (PLAZO_FIJO/OBRA_DETERMINADA con
 // contract_end_date en los próximos 30 días) -- mismo patrón visual que
@@ -75,10 +77,31 @@ export default function ContractReminders() {
     },
   ];
 
+  const buildReport = () => ({
+    title: "Contratos por vencer",
+    subtitle: "Plazo fijo u obra determinada, vencidos o por vencer en los próximos 30 días",
+    columns: [
+      { field: "full_name", label: "Empleado" },
+      { field: "id_card", label: "Cédula" },
+      { field: "department_name", label: "Departamento" },
+      { field: "position_title", label: "Puesto" },
+      { field: "contract_type", label: "Tipo de contrato", format: (v) => CONTRACT_TYPE_LABEL[v] || v },
+      { field: "contract_end_date", label: "Vencimiento", format: reportDate },
+      {
+        label: "Días restantes",
+        value: (r) => daysUntil(r.contract_end_date),
+        format: (v) => (v < 0 ? `Vencido hace ${Math.abs(v)} días` : `${v} días`),
+      },
+    ],
+    rows,
+    orientation: "landscape",
+    fileName: "contratos_por_vencer",
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", mb: 1 }}>
           <AssignmentLateIcon sx={{ color: "#B45309" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
@@ -91,6 +114,8 @@ export default function ContractReminders() {
               Empleados con contrato a plazo fijo u obra determinada vencido o por vencer en los próximos 30 días.
             </Typography>
           </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Box sx={{ height: 500 }}>

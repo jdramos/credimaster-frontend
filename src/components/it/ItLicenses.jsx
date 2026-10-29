@@ -5,11 +5,15 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 import ItFormDialog from "./ItFormDialog";
 import ItAttachments from "./ItAttachments";
 import { VoidDialog } from "../itRisk/ItIncidentDetailDialog";
 import { Field, PageHeader, StateChip } from "./ItCommon";
-import { BASE, daysText, errorMessage, fmtDate, money, options, useItCatalog, useItLookups, useItPermissions } from "./itShared";
+import {
+  BASE, daysText, errorMessage, fileDate, fmtDate, money, options, stateText, useItCatalog, useItLookups, useItPermissions,
+} from "./itShared";
 
 // Licencias de software (Art. 11 num. 3 y 4 de la norma CONAMI de riesgo
 // tecnológico). Backend: /api/it/licenses.
@@ -169,10 +173,30 @@ export default function ItLicenses() {
     setDetailId(data.id);
   };
 
+  const buildReport = () => ({
+    title: "Licencias de software",
+    orientation: "landscape",
+    columns: [
+      { field: "software_name", label: "Software" },
+      { field: "publisher", label: "Fabricante" },
+      { field: "license_type", label: "Tipo", format: (v) => catalog?.license_types?.[v] || v },
+      { label: "Puestos (usados / comprados)", value: (l) => (l.state.seats == null ? `${l.state.used} / ∞` : `${l.state.used} / ${l.state.seats}`) },
+      { label: "Vencimiento", value: (l) => (l.expires_at ? `${fmtDate(l.expires_at)} (${daysText(l.state.days_left)})` : "—") },
+      { field: "cost", label: "Costo", numeric: true, format: (v) => (v == null || v === "" ? "—" : reportMoney(v)) },
+      { field: "currency", label: "Moneda" },
+      { label: "Estado", value: (l) => stateText(l.state.status) },
+    ],
+    rows: rows || [],
+    fileName: `licencias_ti_${fileDate()}`,
+  });
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <PageHeader title="Licencias de software" subtitle="Puestos comprados y asignados, vencimientos y renovaciones (Art. 11 num. 3 y 4)." helpKey="ti.licencias"
-        actions={[canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nueva licencia</Button>]} />
+        actions={[
+          <ReportExportButtons key="r" report={buildReport} disabled={!rows?.length} />,
+          canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setEditing({})}>Nueva licencia</Button>,
+        ]} />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Paper variant="outlined" sx={{ overflowX: "auto" }}>
         <Table size="small">

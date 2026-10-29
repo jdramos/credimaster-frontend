@@ -12,19 +12,9 @@ const SIGNATURE_SLOTS = [
   { nameKey: "reportes_firma_autoriza_nombre", cargoKey: "reportes_firma_autoriza_cargo", fallback: "Autorizado por" },
 ];
 
-export const printAccountingReport = async ({ title, subtitle, period, columns, rows, totals = [] }) => {
-  const popup = window.open("", "_blank", "width=1100,height=800");
-  if (!popup) throw new Error("El navegador bloqueó la ventana de impresión");
-  popup.document.write("<!doctype html><html><body>Generando reporte...</body></html>");
-
-  let signatures = {};
-  try {
-    const res = await API.get("/api/accounting/report-signatures");
-    signatures = res.data?.data || {};
-  } catch {
-    // Si falla, se imprime el reporte igual con las etiquetas por defecto.
-  }
-
+// Empresa, usuario y fecha de emisión del encabezado. Lo comparten la
+// impresión y la exportación a Excel (exportReportToExcel.js).
+export const getReportContext = () => {
   const readJson = (key) => {
     try { return JSON.parse(localStorage.getItem(key) || "null") || {}; } catch { return {}; }
   };
@@ -36,6 +26,27 @@ export const printAccountingReport = async ({ title, subtitle, period, columns, 
   const taxId = company.tax_id || company.ruc || "";
   const emittedBy = user.full_name || session.full_name || user.user_name || session.user_name || "";
   const emittedAt = new Intl.DateTimeFormat("es-NI", { dateStyle: "short", timeStyle: "short" }).format(new Date());
+  return { company, companyName, legalName, taxId, emittedBy, emittedAt };
+};
+
+// `popup` permite pasar una ventana ya abierta: quien deba traer datos antes
+// de imprimir la abre en el clic (si no, el navegador la bloquea tras el await).
+export const openReportPopup = () => window.open("", "_blank", "width=1100,height=800");
+
+export const printAccountingReport = async ({ title, subtitle, period, columns, rows, totals = [], orientation = "portrait", popup: openedPopup }) => {
+  const popup = openedPopup || openReportPopup();
+  if (!popup) throw new Error("El navegador bloqueó la ventana de impresión");
+  popup.document.write("<!doctype html><html><body>Generando reporte...</body></html>");
+
+  let signatures = {};
+  try {
+    const res = await API.get("/api/accounting/report-signatures");
+    signatures = res.data?.data || {};
+  } catch {
+    // Si falla, se imprime el reporte igual con las etiquetas por defecto.
+  }
+
+  const { company, companyName, legalName, taxId, emittedBy, emittedAt } = getReportContext();
 
   // Cuentas que NO son de detalle (is_movement falso) se resaltan en negrita.
   // Guarda: solo aplica si la fila trae is_movement (p. ej. balance de
@@ -52,7 +63,7 @@ export const printAccountingReport = async ({ title, subtitle, period, columns, 
   popup.document.open();
   popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
     <style>
-      @page{size:portrait;margin:10mm} body{font-family:Arial,sans-serif;color:#111;font-size:10px}
+      @page{size:${orientation === "landscape" ? "landscape" : "portrait"};margin:10mm} body{font-family:Arial,sans-serif;color:#111;font-size:10px}
       .institutional{display:grid;grid-template-columns:72px minmax(260px,1fr) minmax(330px,1fr);align-items:start;border-bottom:3px solid #075ca8;padding:0 0 7px;margin:0 0 8px}
       .logo{max-width:62px;max-height:48px}.company-name{font-size:16px;font-weight:900;color:#075ca8;line-height:1.05}.company-detail{font-size:9px;color:#263b59;line-height:1.2}
       .report-info{text-align:right;color:#263b59;line-height:1.2}.report-name{font-size:16px;font-weight:900;color:#0b1b35;text-transform:uppercase}.report-form{font-size:9px;font-weight:bold}.report-meta{font-size:9px}

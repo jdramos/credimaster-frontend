@@ -20,6 +20,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import BAC from "../../../../styles/bac";
 import API from "../../../../api";
 import SinRiesgoConfigDialog from "./SinRiesgoConfigDialog";
+import ReportExportButtons from "../../../../components/common/ReportExportButtons";
+import { reportInteger } from "../../../../components/common/reportFormat";
 
 const getDefaultMonth = () => {
   const today = new Date();
@@ -31,6 +33,14 @@ const getCutoffDate = (month) => {
   const [year, m] = month.split("-").map(Number);
   const lastDay = new Date(year, m, 0).getDate();
   return `${month}-${String(lastDay).padStart(2, "0")}`;
+};
+
+const STATUS_LABELS = {
+  GENERATED: "Generado",
+  WITH_ERRORS: "Con errores",
+  FAILED: "Fallido",
+  VALIDATING: "Validando",
+  DRAFT: "Borrador",
 };
 
 // Calco de IccReportPage.jsx (mismo patrón de generar/validar/historial),
@@ -87,9 +97,18 @@ export default function SinRiesgoReportPage() {
       const data = res.data?.data || {};
       const summary = data.summary || {};
 
+      // La previsualización devuelve los hallazgos en camelCase (fieldName,
+      // validationCode...); el historial, en snake_case como la tabla.
+      const normalize = (f) => ({
+        ...f,
+        validation_code: f.validation_code ?? f.validationCode,
+        field_name: f.field_name ?? f.fieldName,
+        error_message: f.error_message ?? f.errorMessage,
+        record_key: f.record_key ?? f.recordKey,
+      });
       setFindings([
-        ...(data.errors || []).map((e, i) => ({ id: `E-${i}`, ...e })),
-        ...(data.warnings || []).map((w, i) => ({ id: `W-${i}`, ...w })),
+        ...(data.errors || []).map((e, i) => ({ id: `E-${i}`, ...normalize(e) })),
+        ...(data.warnings || []).map((w, i) => ({ id: `W-${i}`, ...normalize(w) })),
       ]);
       setSelectedRun(null);
 
@@ -270,6 +289,42 @@ export default function SinRiesgoReportPage() {
     { field: "record_key", headerName: "Crédito", width: 120 },
   ];
 
+  // Imprimir/Excel del historial y de los hallazgos; no reemplazan el ZIP
+  // oficial ni el Excel de revisión por corrida.
+  const buildRunsReport = () => ({
+    title: "Reporte Sin Riesgo — historial de corridas",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "report_month", label: "Mes" },
+      { field: "cutoff_date", label: "Fecha corte", format: (v) => (v ? String(v).slice(0, 10) : "") },
+      { field: "status", label: "Estado", format: (v) => STATUS_LABELS[v] || v },
+      { field: "total_errors", label: "Errores", numeric: true, format: reportInteger },
+      { field: "total_warnings", label: "Advertencias", numeric: true, format: reportInteger },
+      { field: "generated_at", label: "Generado", format: (v) => (v ? String(v).replace("T", " ").slice(0, 19) : "") },
+    ],
+    rows: runs,
+    fileName: "sinriesgo_corridas",
+  });
+
+  const buildFindingsReport = () => {
+    const errorCount = findings.filter((f) => f.severity === "ERROR").length;
+    return {
+      title: "Reporte Sin Riesgo — hallazgos",
+      subtitle: selectedRun ? `Corrida #${selectedRun}` : `Previsualización · Mes ${reportMonth} · Corte ${getCutoffDate(reportMonth)}`,
+      columns: [
+        { field: "severity", label: "Severidad", format: (v) => (v === "ERROR" ? "Error" : "Advertencia") },
+        { field: "validation_code", label: "Regla" },
+        { field: "field_name", label: "Campo" },
+        { field: "error_message", label: "Mensaje" },
+        { field: "record_key", label: "Crédito" },
+      ],
+      rows: findings,
+      totals: [{ value: `Errores: ${errorCount} · Advertencias: ${findings.length - errorCount}`, colspan: 5 }],
+      orientation: "landscape",
+      fileName: selectedRun ? `sinriesgo_hallazgos_corrida_${selectedRun}` : `sinriesgo_hallazgos_${reportMonth}`,
+    };
+  };
+
   return (
     <Box sx={{ p: 3, bgcolor: BAC.bg, minHeight: "100vh" }}>
       <Paper elevation={0} sx={{ borderRadius: 4, overflow: "hidden", border: `1px solid ${BAC.border}`, mb: 3 }}>
@@ -346,13 +401,18 @@ export default function SinRiesgoReportPage() {
       </Paper>
 
       <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid ${BAC.border}`, overflow: "hidden", mb: 3 }}>
-        <Box sx={{ p: 2.5 }}>
-          <Typography fontWeight={900} color={BAC.text}>
-            Historial de corridas
-          </Typography>
-          <Typography fontSize={13} color={BAC.muted}>
-            Corridas generadas, estado del proceso y descarga del ZIP (Base de Crédito + Base de Contacto)
-          </Typography>
+        <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+          <Box>
+            <Typography fontWeight={900} color={BAC.text}>
+              Historial de corridas
+            </Typography>
+            <Typography fontSize={13} color={BAC.muted}>
+              Corridas generadas, estado del proceso y descarga del ZIP (Base de Crédito + Base de Contacto)
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <ReportExportButtons size="small" report={buildRunsReport} disabled={!runs.length} />
+          </Stack>
         </Box>
 
         <Divider />
@@ -373,13 +433,18 @@ export default function SinRiesgoReportPage() {
 
       {findings.length > 0 && (
         <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid ${BAC.border}`, overflow: "hidden" }}>
-          <Box sx={{ p: 2.5 }}>
-            <Typography fontWeight={900} color={BAC.text}>
-              Hallazgos {selectedRun ? `— corrida #${selectedRun}` : "(previsualización)"}
-            </Typography>
-            <Typography fontSize={13} color={BAC.muted}>
-              Los errores bloquean la generación; las advertencias solo se muestran para revisión antes de emitir.
-            </Typography>
+          <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+            <Box>
+              <Typography fontWeight={900} color={BAC.text}>
+                Hallazgos {selectedRun ? `— corrida #${selectedRun}` : "(previsualización)"}
+              </Typography>
+              <Typography fontSize={13} color={BAC.muted}>
+                Los errores bloquean la generación; las advertencias solo se muestran para revisión antes de emitir.
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <ReportExportButtons size="small" report={buildFindingsReport} disabled={!findings.length} />
+            </Stack>
           </Box>
 
           <Divider />

@@ -6,6 +6,7 @@ import WavesIcon from "@mui/icons-material/Waves";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormD, getCashFlowDiagnostics } from "./mucReportModels";
@@ -74,8 +75,9 @@ export default function CashFlowStatement() {
     },
   ], [currentYear]);
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Estado de Flujos de Efectivo",
+    fileName: `flujo_efectivo_${filters.start_date}_${filters.end_date}`,
     subtitle: `Forma D - MUC CONAMI (método indirecto) · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.start_date} al ${filters.end_date}`,
     columns: [
@@ -85,6 +87,8 @@ export default function CashFlowStatement() {
     ],
     rows: reportRows,
   });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   return (
     <Box sx={{ p: 2 }}>
@@ -106,6 +110,7 @@ export default function CashFlowStatement() {
           <ReportBranchFilter value={filters.branch_id} onChange={(id, name) => { setFilters((p) => ({ ...p, branch_id: id })); setBranchName(name); }} />
           <Button variant="contained" onClick={generate} disabled={loading}>Generar</Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!currentRows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!currentRows.length} />
           <ReportSignaturesDialog />
         </Stack>
 

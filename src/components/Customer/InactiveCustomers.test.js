@@ -6,12 +6,14 @@ import InactiveCustomers from "./InactiveCustomers";
 import { whatsappUrl } from "./inactiveCustomersShared";
 import { UserContext } from "../../contexts/UserContext";
 import API from "../../api";
+import { openReportPopup, printAccountingReport } from "../accounting/printAccountingReport";
 
 jest.mock("../../api", () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn() }));
 jest.mock("xlsx", () => ({
   utils: { json_to_sheet: jest.fn(() => ({})), book_new: jest.fn(() => ({})), book_append_sheet: jest.fn() },
   writeFile: jest.fn(),
 }));
+jest.mock("../accounting/printAccountingReport", () => ({ openReportPopup: jest.fn(), printAccountingReport: jest.fn() }));
 // El historial crediticio tiene sus propias pruebas.
 jest.mock("./CustomerCreditHistoryTab", () => () => <div>Historial crediticio (mock)</div>);
 
@@ -162,6 +164,27 @@ describe("InactiveCustomers (clientes inactivos + seguimiento)", () => {
       "Elegibilidad represtamo": "No apto", "Motivo no apto": "peor atraso 120 d > 30 d; tiene crédito saneado en la institución",
     });
     expect(rows[1]).toMatchObject({ Cliente: "Alexander Cerda", "Elegibilidad represtamo": "Apto", "Motivo no apto": "" });
+  });
+
+  test("imprime las mismas columnas y filas que el Excel", async () => {
+    const popup = { document: { write: jest.fn() }, close: jest.fn() };
+    openReportPopup.mockReturnValue(popup);
+    printAccountingReport.mockResolvedValue(undefined);
+    setup();
+    await screen.findByText("Alexander Cerda");
+    fireEvent.click(screen.getByText("Imprimir"));
+    await waitFor(() => expect(printAccountingReport).toHaveBeenCalledTimes(1));
+    const report = printAccountingReport.mock.calls[0][0];
+    expect(report.popup).toBe(popup);
+    expect(report.title).toBe("Clientes inactivos");
+    expect(report.period).toBe("Al 20/10/2026");
+    expect(report.subtitle).toBe("Elegibilidad: Aptos");
+    expect(report.columns).toHaveLength(26);
+    expect(report.columns[0].label).toBe("Cliente");
+    expect(report.columns.find((c) => c.label === "Monto último crédito").numeric).toBe(true);
+    expect(report.rows.map((r) => r.Cliente)).toEqual(["Beatriz Cortez", "Alexander Cerda"]);
+    expect(report.rows[0]["Solicitud en trámite"]).toBe("#1020");
+    expect(report.totals[0]).toEqual({ value: "2 cliente(s)", colspan: 26 });
   });
 
   test("detalle: registra una gestión con la etapa sugerida y muestra la bitácora", async () => {

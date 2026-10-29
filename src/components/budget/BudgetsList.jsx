@@ -28,6 +28,7 @@ import PersonPinIcon from "@mui/icons-material/PersonPin";
 import InsightsIcon from "@mui/icons-material/Insights";
 import { UserContext } from "../../contexts/UserContext";
 import { getBudgets, createBudget, updateBudgetStatus } from "../../api/budget";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const emptyForm = { year_no: new Date().getFullYear(), name: "" };
 
@@ -158,6 +159,18 @@ export default function BudgetsList() {
     [canManage],
   );
 
+  const buildReport = () => ({
+    title: "Presupuestos",
+    fileName: "presupuestos",
+    sheetName: "Presupuestos",
+    columns: [
+      { field: "year_no", label: "Año" },
+      { field: "name", label: "Nombre" },
+      { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v || "" },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -184,6 +197,7 @@ export default function BudgetsList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchBudgets}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

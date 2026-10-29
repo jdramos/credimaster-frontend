@@ -22,6 +22,8 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import API from "../../api";
 import ReportBranchFilter from "../accounting/ReportBranchFilter";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney } from "../common/reportFormat";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -90,6 +92,7 @@ export default function CollectionsWorklist() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     branch_id: "",
+    branch_name: "",
     min_days: 1,
     search: "",
     only_promises: false,
@@ -261,6 +264,42 @@ export default function CollectionsWorklist() {
     [],
   );
 
+  const promiseText = (r) => {
+    if (r.promise_status !== "PENDING") return "";
+    const overdue = r.promised_date && r.promised_date < today();
+    return `${overdue ? "Vencida " : ""}${dateStr(r.promised_date)}`;
+  };
+
+  const buildReport = () => ({
+    title: "Cartera en mora",
+    subtitle: reportFilters([
+      ["Sucursal", filters.branch_id ? filters.branch_name : ""],
+      ["Días de mora ≥", filters.min_days || 1],
+      ["Búsqueda", filters.search.trim()],
+      ["Promesas", filters.only_promises ? "Solo con promesa abierta" : ""],
+    ]),
+    orientation: "landscape",
+    fileName: `cartera_en_mora_${today()}`,
+    sheetName: "Cartera en mora",
+    columns: [
+      { field: "credit_code", label: "Crédito" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "collector_name", label: "Gestor" },
+      { label: "Días mora", value: (r) => Number(r.days_overdue || 0), numeric: true },
+      { label: "Monto vencido", value: (r) => Number(r.overdue_amount || 0), numeric: true, format: reportMoney },
+      { label: "Cuotas", value: (r) => Number(r.overdue_installments || 0), numeric: true },
+      { field: "last_action_date", label: "Última gestión", format: dateStr },
+      { label: "Promesa", value: promiseText },
+    ],
+    rows,
+    totals: [
+      { value: `Créditos en mora: ${summary.loans} · Promesas abiertas: ${summary.open_promises}`, colspan: 5 },
+      { value: reportMoney(summary.overdue_amount), raw: Number(summary.overdue_amount || 0), numeric: true },
+      { value: "", colspan: 3 },
+    ],
+  });
+
   const setF = (k, v) => setForm((prev) => ({ ...prev, [k]: v }));
 
   return (
@@ -282,7 +321,7 @@ export default function CollectionsWorklist() {
         <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ mb: 2 }} flexWrap="wrap">
           <ReportBranchFilter
             value={filters.branch_id}
-            onChange={(id) => setFilters((p) => ({ ...p, branch_id: id }))}
+            onChange={(id, name) => setFilters((p) => ({ ...p, branch_id: id, branch_name: name || "" }))}
           />
           <TextField
             size="small"
@@ -314,6 +353,7 @@ export default function CollectionsWorklist() {
           <Button variant="outlined" onClick={fetchWorklist} sx={{ textTransform: "none" }}>
             Buscar
           </Button>
+          <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap">

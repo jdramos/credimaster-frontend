@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import ReportExportButtons from './common/ReportExportButtons';
 
 const SinRiesgoReport = () => {
     const [fechaFin, setFechaFin] = useState(dayjs());
@@ -75,6 +76,18 @@ const SinRiesgoReport = () => {
         { field: 'dir_negocio', headerName: 'Negocio', flex: 2 },
     ];
 
+    // Mismas filas que el Excel (todas las consultadas, menos las eliminadas),
+    // con las columnas de la tabla.
+    const buildReport = () => ({
+        title: 'Reporte Sin Riesgo',
+        period: `Al ${fechaFin.format('YYYY-MM-DD')}`,
+        columns: columns.map((c) => ({ field: c.field, label: c.headerName })),
+        rows,
+        totals: [{ value: `Registros: ${rows.length}`, colspan: columns.length }],
+        orientation: 'landscape',
+        fileName: `reporte_sin_riesgo_${fechaFin.format('YYYYMMDD')}`,
+    });
+
     const filteredRows = rows.filter((row) =>
         Object.values(row).some((value) =>
             value?.toString().toLowerCase().includes(searchText.toLowerCase())
@@ -117,6 +130,8 @@ const SinRiesgoReport = () => {
                     >
                         Exportar a Excel
                     </Button>
+
+                    <ReportExportButtons excel={false} report={buildReport} sx={{ ml: 2 }} />
 
                     <Button
                         variant="outlined"

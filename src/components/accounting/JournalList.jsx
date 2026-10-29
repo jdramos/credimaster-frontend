@@ -23,11 +23,28 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import JournalForm from "./JournalForm";
 import JournalDetailDialog from "./JournalDetailDialog";
 import ReportBranchFilter from "./ReportBranchFilter";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney, reportPeriod } from "../common/reportFormat";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = `/api/accounting/journal`;
-const EMPTY_FILTERS = { from_date: "", to_date: "", search: "", branch_id: "" };
+const EMPTY_FILTERS = { from_date: "", to_date: "", search: "", branch_id: "", branch_name: "" };
+// Máximo de filas por página que acepta el backend del libro diario.
+const REPORT_PAGE_LIMIT = 500;
+
+const SOURCE_LABELS = {
+  BANKS: "Bancos",
+  LOANS: "Créditos",
+  CAJA: "Caja",
+  HR: "Rec. Humanos",
+  PAYMENTS: "Pagos",
+  FIXED_ASSETS: "Activo Fijo",
+  BUSINESS_DAY: "Cierre del día",
+  PROVISIONS: "Provisiones",
+  ADJUSTMENTS: "Ajustes",
+};
+const isManualSource = (sm) => !sm || ["MANUAL", "ACCOUNTING"].includes(sm);
 
 export default function JournalList() {
   const { permissions = [], role } = useContext(UserContext) || {};
@@ -61,6 +78,23 @@ export default function JournalList() {
     setAlert({ open: true, severity, message });
   };
 
+  const buildParams = (pageNo, limit) => {
+    const params = { page: pageNo, limit };
+    if (appliedFilters.from_date) params.from_date = appliedFilters.from_date;
+    if (appliedFilters.to_date) params.to_date = appliedFilters.to_date;
+    if (appliedFilters.search.trim()) params.search = appliedFilters.search.trim();
+    if (appliedFilters.branch_id) params.branch_id = appliedFilters.branch_id;
+    return params;
+  };
+
+  const extractRows = (res) => (Array.isArray(res.data)
+    ? res.data
+    : Array.isArray(res.data?.data)
+      ? res.data.data
+      : Array.isArray(res.data?.data?.rows)
+        ? res.data.data.rows
+        : []);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -68,21 +102,9 @@ export default function JournalList() {
       try {
         setLoading(true);
 
-        const params = { page: page + 1, limit: pageSize };
-        if (appliedFilters.from_date) params.from_date = appliedFilters.from_date;
-        if (appliedFilters.to_date) params.to_date = appliedFilters.to_date;
-        if (appliedFilters.search.trim()) params.search = appliedFilters.search.trim();
-        if (appliedFilters.branch_id) params.branch_id = appliedFilters.branch_id;
+        const res = await API.get(API_URL, { params: buildParams(page + 1, pageSize), signal: controller.signal });
 
-        const res = await API.get(API_URL, { params, signal: controller.signal });
-
-        const data = Array.isArray(res.data)
-          ? res.data
-          : Array.isArray(res.data?.data)
-            ? res.data.data
-            : Array.isArray(res.data?.data?.rows)
-              ? res.data.data.rows
-              : [];
+        const data = extractRows(res);
 
         setRows(data);
         setRowCount(Number(res.data?.pagination?.total ?? data.length) || 0);
@@ -104,6 +126,50 @@ export default function JournalList() {
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, page, pageSize, reloadKey]);
+
+  // Imprimir/Excel: todas las páginas con los filtros consultados, no solo
+  // la página visible.
+  const fetchAllRows = async () => {
+    const all = [];
+    for (let pageNo = 1; ; pageNo += 1) {
+      const res = await API.get(API_URL, { params: buildParams(pageNo, REPORT_PAGE_LIMIT) });
+      const data = extractRows(res);
+      all.push(...data);
+      const totalPages = Number(res.data?.pagination?.totalPages) || 1;
+      if (pageNo >= totalPages || data.length < REPORT_PAGE_LIMIT) break;
+    }
+    return all;
+  };
+
+  const buildReport = async () => {
+    const reportRows = await fetchAllRows();
+    const sum = (field) => reportRows.reduce((s, r) => s + Number(r[field] || 0), 0);
+    return {
+      title: "Libro Diario",
+      subtitle: reportFilters([
+        ["Sucursal", appliedFilters.branch_id ? appliedFilters.branch_name : "Todas"],
+        ["Búsqueda", appliedFilters.search.trim()],
+      ]),
+      period: reportPeriod(appliedFilters.from_date, appliedFilters.to_date),
+      fileName: `libro_diario_${appliedFilters.from_date || "inicio"}_${appliedFilters.to_date || "corte"}`,
+      columns: [
+        { field: "entry_no", label: "Comprobante" },
+        { field: "entry_date", label: "Fecha", format: (v) => (v ? String(v).substring(0, 10) : "") },
+        { field: "description", label: "Descripción" },
+        { field: "source_module", label: "Origen", format: (v) => (isManualSource(v) ? "Manual" : SOURCE_LABELS[v] || v) },
+        { field: "total_debit", label: "Débito", numeric: true, format: reportMoney },
+        { field: "total_credit", label: "Crédito", numeric: true, format: reportMoney },
+        { field: "status", label: "Estado", format: (v) => ((v || "POSTED") === "VOID" ? "Anulado" : "Aplicado") },
+      ],
+      rows: reportRows,
+      totals: [
+        { value: `Comprobantes: ${reportRows.length}`, colspan: 4 },
+        { value: reportMoney(sum("total_debit")), numeric: true, raw: sum("total_debit") },
+        { value: reportMoney(sum("total_credit")), numeric: true, raw: sum("total_credit") },
+        { value: "" },
+      ],
+    };
+  };
 
   // Recarga con los filtros/página actuales (tras crear, editar o anular).
   const fetchJournal = () => setReloadKey((k) => k + 1);
@@ -183,25 +249,14 @@ export default function JournalList() {
         width: 150,
         renderCell: (params) => {
           const sm = params.value;
-          const manual = !sm || ["MANUAL", "ACCOUNTING"].includes(sm);
-          const LABELS = {
-            BANKS: "Bancos",
-            LOANS: "Créditos",
-            CAJA: "Caja",
-            HR: "Rec. Humanos",
-            PAYMENTS: "Pagos",
-            FIXED_ASSETS: "Activo Fijo",
-            BUSINESS_DAY: "Cierre del día",
-            PROVISIONS: "Provisiones",
-            ADJUSTMENTS: "Ajustes",
-          };
+          const manual = isManualSource(sm);
           return manual ? (
             <Tooltip title="Comprobante manual — se puede editar o anular desde aquí">
               <Chip size="small" color="success" variant="outlined" label="Manual" />
             </Tooltip>
           ) : (
-            <Tooltip title={`Generado por ${LABELS[sm] || sm} — se edita/anula desde ese módulo`}>
-              <Chip size="small" label={LABELS[sm] || sm} />
+            <Tooltip title={`Generado por ${SOURCE_LABELS[sm] || sm} — se edita/anula desde ese módulo`}>
+              <Chip size="small" label={SOURCE_LABELS[sm] || sm} />
             </Tooltip>
           );
         },
@@ -328,7 +383,7 @@ export default function JournalList() {
             display: "grid",
             gridTemplateColumns: {
               xs: "1fr",
-              md: "180px 180px 200px 1fr 120px",
+              md: "180px 180px 200px 1fr 120px auto",
             },
             gap: 1,
           }}
@@ -357,7 +412,7 @@ export default function JournalList() {
 
           <ReportBranchFilter
             value={filters.branch_id}
-            onChange={(id) => setFilters((prev) => ({ ...prev, branch_id: id }))}
+            onChange={(id, name) => setFilters((prev) => ({ ...prev, branch_id: id, branch_name: name }))}
           />
 
           <TextField
@@ -379,6 +434,10 @@ export default function JournalList() {
           >
             Buscar
           </Button>
+
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <ReportExportButtons report={buildReport} disabled={!rowCount} sx={{ borderRadius: 2 }} />
+          </Box>
         </Box>
 
         <Box sx={{ height: 620, width: "100%" }}>

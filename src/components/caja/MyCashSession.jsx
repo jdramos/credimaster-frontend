@@ -23,7 +23,8 @@ import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { UserContext } from "../../contexts/UserContext";
 import DenominationCounter, { countTotals, emptyCount, money, toPayload } from "./DenominationCounter";
-import CashSessionSummary from "./CashSessionSummary";
+import CashSessionSummary, { buildCashSessionDetailReport } from "./CashSessionSummary";
+import ReportExportButtons from "../common/ReportExportButtons";
 import CloseCashSessionDialog from "./CloseCashSessionDialog";
 import { printCashSessionReport } from "../../reports/cashSessionReport";
 import TellerPaymentDialog from "./TellerPaymentDialog";
@@ -238,6 +239,7 @@ export default function MyCashSession() {
               </Button>
             )}
             <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => print(session)}>Imprimir</Button>
+            <ReportExportButtons print={false} report={() => buildCashSessionDetailReport(session, currencies)} />
             <Button variant="contained" color="primary" onClick={() => setCloseOpen(true)}>Cerrar caja</Button>
           </Stack>
           <CashSessionSummary session={session} currencies={currencies} onChanged={load} />

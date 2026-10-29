@@ -5,10 +5,14 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 import { MaintenanceDialog } from "./ItAssets";
 import { VoidDialog } from "../itRisk/ItIncidentDetailDialog";
 import { PageHeader, StateChip } from "./ItCommon";
-import { BASE, daysText, errorMessage, fmtDate, money, options, useItCatalog, useItLookups, useItPermissions } from "./itShared";
+import {
+  BASE, daysText, errorMessage, fileDate, fmtDate, money, options, stateText, useItCatalog, useItLookups, useItPermissions,
+} from "./itShared";
 
 // Mantenimientos de equipos: plan preventivo (Art. 21 num. 1.2 de la norma
 // CONAMI de riesgo tecnológico) y registro de preventivos y correctivos.
@@ -42,10 +46,48 @@ export default function ItMaintenances() {
 
   const overdue = (schedule?.items || []).filter((i) => i.maintenance.status === "VENCIDO").length;
 
+  // Cada pestaña imprime/exporta su propia tabla.
+  const planReport = () => ({
+    title: "Plan de mantenimiento preventivo",
+    orientation: "landscape",
+    columns: [
+      { field: "asset_code", label: "Código" },
+      { field: "name", label: "Equipo" },
+      { field: "category", label: "Categoría", format: (v) => catalog?.asset_categories?.[v] || v },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "maintenance_frequency_months", label: "Frecuencia", format: (v) => `Cada ${v} meses` },
+      { label: "Último preventivo", value: (a) => fmtDate(a.maintenance.last_preventive) },
+      { label: "Próximo", value: (a) => `${fmtDate(a.maintenance.due_date)} (${daysText(a.maintenance.days_left)})` },
+      { label: "Estado", value: (a) => stateText(a.maintenance.status) },
+    ],
+    rows: schedule?.items || [],
+    fileName: `plan_mantenimiento_ti_${fileDate()}`,
+  });
+  const logReport = () => ({
+    title: "Registro de mantenimientos",
+    subtitle: type ? `Tipo: ${catalog?.maintenance_types?.[type] || type}` : "",
+    orientation: "landscape",
+    columns: [
+      { field: "performed_at", label: "Fecha", format: fmtDate },
+      { label: "Equipo", value: (m) => `${m.asset_code} · ${m.asset_name}` },
+      { field: "maintenance_type", label: "Tipo", format: (v) => catalog?.maintenance_types?.[v] || v },
+      { field: "description", label: "Trabajo realizado" },
+      { field: "performed_by", label: "Por" },
+      { field: "cost", label: "Costo", numeric: true, format: (v) => (v == null || v === "" ? "—" : reportMoney(v)) },
+      { field: "currency", label: "Moneda" },
+    ],
+    rows: rows || [],
+    fileName: `mantenimientos_ti_${fileDate()}`,
+  });
+  const tabRows = tab === 0 ? schedule?.items : rows;
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <PageHeader title="Mantenimientos" subtitle="Plan de mantenimiento preventivo por equipo (Art. 21 num. 1.2) y registro de preventivos y correctivos." helpKey="ti.mantenimientos"
-        actions={[canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setDialog({})}>Registrar mantenimiento</Button>]} />
+        actions={[
+          <ReportExportButtons key="r" report={tab === 0 ? planReport : logReport} disabled={!tabRows?.length} />,
+          canManage && <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setDialog({})}>Registrar mantenimiento</Button>,
+        ]} />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {overdue > 0 && <Alert severity="error" sx={{ mb: 2 }}>{overdue} equipo(s) con el mantenimiento preventivo vencido.</Alert>}
       {schedule?.assets_without_plan > 0 && (

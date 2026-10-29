@@ -21,6 +21,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
 import ReportBranchFilter from "../accounting/ReportBranchFilter";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney } from "../common/reportFormat";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -42,7 +44,7 @@ const statusColor = (v) =>
 export default function LegalCasesTab() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ branch_id: "", status: "", search: "" });
+  const [filters, setFilters] = useState({ branch_id: "", branch_name: "", status: "", search: "" });
 
   const [detail, setDetail] = useState(null); // caso + expenses
   const [expenseForm, setExpenseForm] = useState({ expense_date: today(), concept: "", amount: "" });
@@ -159,10 +161,42 @@ export default function LegalCasesTab() {
 
   const totalExpenses = (detail?.expenses || []).reduce((s, e) => s + Number(e.amount || 0), 0);
 
+  const buildReport = () => {
+    const sum = (field) => rows.reduce((s, r) => s + Number(r[field] || 0), 0);
+    return {
+      title: "Casos judiciales",
+      subtitle: reportFilters([
+        ["Sucursal", filters.branch_id ? filters.branch_name : ""],
+        ["Estado", filters.status ? statusLabel(filters.status) : ""],
+        ["Búsqueda", filters.search.trim()],
+      ]),
+      orientation: "landscape",
+      fileName: `casos_judiciales_${today()}`,
+      sheetName: "Casos judiciales",
+      columns: [
+        { field: "credit_code", label: "Crédito" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "branch_name", label: "Sucursal" },
+        { field: "case_number", label: "Expediente" },
+        { field: "court", label: "Juzgado" },
+        { field: "lawyer_name", label: "Abogado" },
+        { field: "status", label: "Estado", format: statusLabel },
+        { label: "Demandado", value: (r) => Number(r.claim_amount || 0), numeric: true, format: reportMoney },
+        { label: "Gastos", value: (r) => Number(r.total_expenses || 0), numeric: true, format: reportMoney },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length} casos)`, colspan: 7 },
+        { value: reportMoney(sum("claim_amount")), numeric: true },
+        { value: reportMoney(sum("total_expenses")), numeric: true },
+      ],
+    };
+  };
+
   return (
     <Box>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ mb: 2 }} flexWrap="wrap">
-        <ReportBranchFilter value={filters.branch_id} onChange={(id) => setFilters((p) => ({ ...p, branch_id: id }))} />
+        <ReportBranchFilter value={filters.branch_id} onChange={(id, name) => setFilters((p) => ({ ...p, branch_id: id, branch_name: name || "" }))} />
         <TextField select size="small" label="Estado" value={filters.status}
           onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))} sx={{ minWidth: 170 }}>
           <MenuItem value="">Todos</MenuItem>
@@ -172,6 +206,7 @@ export default function LegalCasesTab() {
           onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
           onKeyDown={(e) => e.key === "Enter" && fetchCases()} sx={{ minWidth: 240 }} />
         <Button variant="outlined" onClick={fetchCases} sx={{ textTransform: "none" }}>Buscar</Button>
+        <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
       </Stack>
 
       <Alert severity="info" sx={{ mb: 2 }}>

@@ -28,6 +28,8 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import HelpButton from "../help/HelpButton";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportDate, reportFilters } from "../common/reportFormat";
 
 const API_URL = "/api/caja/arqueos";
 
@@ -312,6 +314,41 @@ export default function CollectorArqueosList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], []);
 
+  const buildReport = () => {
+    // Los anulados no suman.
+    const active = rows.filter((r) => r.status !== "ANULADO");
+    const sum = (field) => active.reduce((acc, r) => acc + Number(r[field] || 0), 0);
+    const total = (raw) => ({ value: reportMoney(raw), raw, numeric: true });
+    return {
+      title: "Arqueo de cobradores",
+      subtitle: reportFilters([
+        ["Cobrador", collectorFilter ? collectors.find((c) => String(c.id) === String(collectorFilter))?.name : ""],
+        ["Estado", STATUS_CHIP[statusFilter]?.label],
+      ]),
+      orientation: "landscape",
+      fileName: "arqueos_cobradores",
+      sheetName: "Arqueos",
+      columns: [
+        { field: "collector_name", label: "Cobrador" },
+        { field: "cash_register_name", label: "Caja" },
+        { field: "period_end", label: "Corte", format: reportDate },
+        { label: "Esperado", value: (r) => Number(r.expected_amount || 0), numeric: true, format: reportMoney },
+        { label: "Contado", value: (r) => Number(r.counted_amount || 0), numeric: true, format: reportMoney },
+        { label: "Diferencia", value: (r) => Number(r.difference || 0), numeric: true, format: reportMoney },
+        { field: "entry_no", label: "Comprobante" },
+        { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v || "" },
+      ],
+      rows,
+      totals: [
+        { value: `Total sin anulados (${active.length})`, colspan: 3 },
+        total(sum("expected_amount")),
+        total(sum("counted_amount")),
+        total(sum("difference")),
+        { value: "", colspan: 2 },
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -338,6 +375,7 @@ export default function CollectorArqueosList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchArqueos}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

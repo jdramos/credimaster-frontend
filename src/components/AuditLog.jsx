@@ -9,6 +9,8 @@ import {
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportPeriod } from "./common/reportFormat";
 
 const initialFilters = { search: "", action: "", entity: "", date_from: "", date_to: "" };
 const formatDate = (value) => value ? new Intl.DateTimeFormat("es-NI", { dateStyle: "medium", timeStyle: "medium" }).format(new Date(`${String(value).replace(" ", "T")}Z`)) : "—";
@@ -61,11 +63,39 @@ export default function AuditLog() {
   const applyFilters = (event) => { event.preventDefault(); setPage(0); setApplied(filters); };
   const clearFilters = () => { setFilters(initialFilters); setApplied(initialFilters); setPage(0); };
 
+  // La lista se pagina en el servidor: el reporte recorre todas las páginas con los filtros aplicados.
+  const buildReport = async () => {
+    const all = [];
+    for (let p = 1; ; p += 1) {
+      const { data } = await API.get("/api/audit", { params: { ...applied, page: p, page_size: 100 } });
+      all.push(...(data.data || []));
+      if (!data.data?.length || p >= (data.pagination?.total_pages || 1)) break;
+    }
+    return {
+      title: "Auditoría",
+      subtitle: reportFilters([["Búsqueda", applied.search], ["Acción", applied.action], ["Entidad", applied.entity]]),
+      period: reportPeriod(applied.date_from, applied.date_to),
+      columns: [
+        { field: "created_at", label: "Fecha", format: formatDate },
+        { field: "user_name", label: "Usuario" },
+        { field: "action", label: "Acción" },
+        { label: "Descripción", value: describeEvent },
+        { field: "ip_address", label: "IP", format: (v) => v || "—" },
+      ],
+      rows: all,
+      totals: [{ value: `Eventos: ${all.length}`, colspan: 5 }],
+      fileName: `auditoria_${applied.date_from || "inicio"}_${applied.date_to || "hoy"}`,
+    };
+  };
+
   return (
     <Stack spacing={2}>
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Box><Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}><Typography variant="h5" fontWeight={900}>Auditoría</Typography><HelpButton screenKey="auditoria.log" /></Box><Typography color="text.secondary">Trazabilidad de acciones realizadas en el sistema</Typography></Box>
-        <Button startIcon={<RefreshRoundedIcon />} onClick={load} disabled={loading}>Actualizar</Button>
+        <Stack direction="row" spacing={1}>
+          <ReportExportButtons report={buildReport} disabled={loading || total === 0} />
+          <Button startIcon={<RefreshRoundedIcon />} onClick={load} disabled={loading}>Actualizar</Button>
+        </Stack>
       </Box>
 
       <Paper component="form" onSubmit={applyFilters} variant="outlined" sx={{ p: 2 }}>

@@ -10,6 +10,8 @@ import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import BankStatementImportDialog from "./BankStatementImportDialog";
 import BankStatementMatchPanel from "./BankStatementMatchPanel";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportDate } from "../common/reportFormat";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -288,6 +290,90 @@ export default function BankReconciliation() {
   const otherModules = (sharing?.other_modules || []).filter((m) => Number(m.debit) || Number(m.credit));
   const statementEnabled = Boolean(worksheet?.statement_import_enabled);
 
+  // Hoja de conciliación tal como se ve: resumen + partidas pendientes con su marca.
+  const buildWorksheetReport = () => {
+    const concept = (partida, monto) => ({ partida, monto });
+    const section = (partida) => ({ section: true, partida });
+    const bankLines = statement?.lines || [];
+    const rows = [
+      section("Resumen"),
+      concept("Saldo según banco", Number(statementBalance || 0)),
+      concept("Saldo según libros", worksheet.book_balance),
+      concept("Cheques pendientes", summary.outstandingChecksTotal),
+      concept("Otros egresos pendientes", summary.transitOutflowsTotal),
+      concept("Depósitos en tránsito", summary.transitDepositsTotal),
+      concept("Saldo banco ajustado", summary.adjustedBankBalance),
+      concept("Diferencia", summary.difference),
+      ...(bankLines.length ? [
+        concept("Partidas conciliatorias", summary.reconcilingItemsTotal),
+        concept("Diferencia no explicada", summary.unexplainedDifference),
+        section("Estado de cuenta del banco"),
+        ...bankLines.map((l) => ({
+          partida: Number(l.credit) > 0 ? "Banco · Crédito" : "Banco · Débito",
+          fecha: l.txn_date,
+          referencia: l.reference,
+          descripcion: l.description,
+          monto: Number(l.credit) > 0 ? Number(l.credit) : Number(l.debit),
+          estado: l.match_type
+            ? `Pareado: ${l.matched_item?.label || `${l.match_type} #${l.match_id}`}`
+            : l.resolution === "PARTIDA_CONCILIATORIA" ? `Partida conciliatoria: ${l.resolution_notes || ""}` : "Sin explicar",
+        })),
+      ] : []),
+      section("Solo en libros — cheques emitidos pendientes"),
+      ...worksheet.outstanding_checks.map((c) => ({
+        partida: "Cheque", fecha: c.issue_date, referencia: c.check_number, descripcion: c.beneficiary_name, monto: Number(c.amount),
+        estado: isCheckCleared(c.id) ? "Cobrado" : "Pendiente",
+      })),
+      section("Solo en libros — otros egresos pendientes"),
+      ...(worksheet.transit_outflows || []).map((d) => ({
+        partida: "Egreso", fecha: d.deposit_date, descripcion: d.description, monto: Number(d.amount),
+        estado: isOutflowCleared(d.id) ? "Confirmado" : "Pendiente",
+      })),
+      section("Solo en libros — depósitos en tránsito"),
+      ...worksheet.transit_deposits.map((d) => ({
+        partida: "Depósito", fecha: d.deposit_date, descripcion: d.description, monto: Number(d.amount),
+        estado: isDepositCleared(d.id) ? "Acreditado" : "En tránsito",
+      })),
+    ];
+    return {
+      title: "Conciliación bancaria",
+      subtitle: `${selectedAccount?.account_alias || ""} · Base libros: ${worksheet.book_basis === "SUBLEDGER" ? "movimientos de la cuenta bancaria" : "cuenta contable"} · Moneda: ${currency}`,
+      period: `Al ${statementDate}`,
+      fileName: `conciliacion_bancaria_${statementDate}`,
+      sheetName: "Conciliación",
+      columns: [
+        { field: "partida", label: "Partida" },
+        { field: "fecha", label: "Fecha", format: reportDate },
+        { field: "referencia", label: "Referencia / N°" },
+        { field: "descripcion", label: "Descripción" },
+        { label: "Monto", value: (r) => (r.section ? null : r.monto), numeric: true, format: (v) => (v === null || v === undefined ? "" : reportMoney(v)) },
+        { field: "estado", label: "Estado" },
+      ],
+      rows,
+    };
+  };
+
+  const buildHistoryReport = () => ({
+    title: "Historial de conciliaciones bancarias",
+    subtitle: `${selectedAccount?.account_alias || ""} · Moneda: ${currency}`,
+    fileName: "historial_conciliaciones",
+    sheetName: "Historial",
+    columns: [
+      { field: "statement_date", label: "Fecha de corte", format: reportDate },
+      { label: "Base libros", value: (r) => (r.book_basis === "SUBLEDGER" ? "Cuenta bancaria" : "Cuenta contable") },
+      { label: "Saldo banco", value: (r) => Number(r.statement_balance || 0), numeric: true, format: reportMoney },
+      { label: "Saldo libros", value: (r) => Number(r.book_balance || 0), numeric: true, format: reportMoney },
+      { label: "Diferencia", value: (r) => Number(r.difference || 0), numeric: true, format: reportMoney },
+      {
+        label: "No explicada",
+        value: (r) => (r.unexplained_difference === null || r.unexplained_difference === undefined ? null : Number(r.unexplained_difference)),
+        numeric: true,
+        format: (v) => (v === null || v === undefined ? "—" : reportMoney(v)),
+      },
+    ],
+    rows: history,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
@@ -336,6 +422,7 @@ export default function BankReconciliation() {
               Importar estado de cuenta
             </Button>
           )}
+          <ReportExportButtons report={buildWorksheetReport} disabled={!worksheet || !summary} />
         </Stack>
 
         {statement?.suggested_statement_balance_source && worksheet && (
@@ -594,7 +681,10 @@ export default function BankReconciliation() {
       )}
 
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
-        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Historial de conciliaciones</Typography>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Historial de conciliaciones</Typography>
+          <ReportExportButtons size="small" report={buildHistoryReport} disabled={!history.length} />
+        </Stack>
         <Table size="small">
           <TableHead>
             <TableRow>

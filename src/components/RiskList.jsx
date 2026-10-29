@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
 
 const BAC = {
   primary: "#0057B8",
@@ -183,6 +184,22 @@ export default function RiskList() {
     fetchRisks();
   }, []);
 
+  const buildReport = () => ({
+    title: "Listado de riesgos",
+    fileName: "riesgos",
+    sheetName: "Riesgos",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "risk_name", label: "Nombre" },
+      { field: "from_range", label: "Desde", numeric: true },
+      { field: "to_range", label: "Hasta", numeric: true },
+      { label: "Valor", value: (r) => r.value ?? 0, numeric: true },
+      { field: "color", label: "Color" },
+    ],
+    rows,
+    totals: [{ value: `${rows.length} registros`, colspan: 6 }],
+  });
+
   if (!loading && !error && rows.length === 0) {
     return <EmptyNotice route="/riesgos/agregar" />;
   }
@@ -251,6 +268,13 @@ export default function RiskList() {
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.25)",
                 }}
+              />
+
+              <ReportExportButtons
+                report={buildReport}
+                size="small"
+                disabled={loading || !rows.length}
+                sx={{ color: BAC.white, borderColor: "rgba(255,255,255,0.6)", "&:hover": { borderColor: BAC.white } }}
               />
 
               <AddCircle goTo="/riesgos/agregar" />

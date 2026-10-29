@@ -25,6 +25,8 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import BlockIcon from "@mui/icons-material/Block";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 
 const API_URL = "/api/hr/incidents";
 
@@ -175,6 +177,28 @@ export default function IncidentsList() {
     },
   ], []);
 
+  const periodText = (r) => (
+    r.incident_type === "HORAS_EXTRA"
+      ? `${String(r.start_date).slice(0, 10)} (${r.hours}h)`
+      : `${String(r.start_date).slice(0, 10)} a ${String(r.end_date).slice(0, 10)}`
+  );
+  const buildReport = () => ({
+    title: "Incidencias",
+    columns: [
+      { field: "employee_name", label: "Empleado" },
+      { field: "incident_type", label: "Tipo", format: (v) => TYPE_LABELS[v] || v },
+      { label: "Fecha/Período", value: periodText },
+      { label: "Notas", value: (r) => r.notes || "" },
+      {
+        field: "computed_amount", label: "Monto aplicado", numeric: true,
+        format: (v) => (v !== null && v !== undefined && v !== "" ? reportMoney(v) : ""),
+      },
+      { field: "status", label: "Estado", format: (v) => STATUS_LABEL[v] || v },
+    ],
+    rows,
+    fileName: "incidencias",
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -199,6 +223,7 @@ export default function IncidentsList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchIncidents}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

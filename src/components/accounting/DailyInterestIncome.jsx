@@ -16,6 +16,7 @@ import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ReportBranchFilter from "./ReportBranchFilter";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
@@ -141,8 +142,9 @@ export default function DailyInterestIncome() {
 
   const columns = view === "customer" ? customerColumns : dateColumns;
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: view === "customer" ? "Ingresos por Intereses y Comisiones por Cliente" : "Ingresos Diarios por Intereses, Comisiones y Seguros",
+    fileName: `${view === "customer" ? "ingresos_por_cliente" : "ingresos_diarios"}_${filters.start_date}_${filters.end_date}`,
     subtitle: `${view === "customer" ? "Detalle por cliente" : interestBasis === "COLLECTED" ? "Ingreso diario" : "Devengo diario"} contabilizado · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.start_date} al ${filters.end_date}`,
     columns: view === "customer" ? [
@@ -177,6 +179,8 @@ export default function DailyInterestIncome() {
     ],
   });
 
+  const printReport = () => printAccountingReport(buildReport());
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, border: "1px solid #E5E7EB", borderRadius: 3 }}>
@@ -203,6 +207,7 @@ export default function DailyInterestIncome() {
           <ReportBranchFilter value={filters.branch_id} onChange={(id, name) => { setFilters((p) => ({ ...p, branch_id: id })); setBranchName(name); }} />
           <Button variant="contained" onClick={generate} disabled={loading}>Generar</Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
         </Stack>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

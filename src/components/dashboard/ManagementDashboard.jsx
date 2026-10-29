@@ -21,6 +21,8 @@ import { getManagementDashboard } from "../../api/dashboardBalances";
 import { UserContext } from "../../contexts/UserContext";
 import BoardReportDialog from "./BoardReportDialog";
 import ProductPerformanceSection from "./ProductPerformanceSection";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportInteger, reportMoney, reportPercent } from "../common/reportFormat";
 
 // Tablero gerencial: indicadores de FLUJO del período (clientes nuevos e
 // inactivos, colocación, recuperación, cancelaciones, saneamientos, meta) que
@@ -125,6 +127,81 @@ function StatCard({ title, value, extra, growth: g, invertGrowth = false, detail
     card
   );
 }
+
+const optional = (format) => (v) => (v === undefined || v === null || v === "" ? "" : format(v));
+const round2 = (v) => (v === undefined || v === null ? v : Math.round(Number(v) * 100) / 100);
+
+// Imprimir / Excel del tablero: tarjetas, tendencia y rankings en filas
+// Concepto / Monto / Cantidad / % / Variación / Detalle.
+const buildManagementReport = ({ data, comparisonText, productName }) => {
+  const { current: c, previous: p, placement_goal: goal, trend, top_promoters: topPromoters, top_collectors: topCollectors } = data;
+  const row = (concept, { percent, growth: g, ...extra } = {}) => ({ concept, ...extra, percent: round2(percent), growth: round2(g) });
+  const section = (concept) => ({ concept, section: true });
+  const wo = c.write_offs;
+  const rows = [
+    section("Clientes"),
+    row("Clientes activos (al corte)", { count: c.customers.active, growth: growth(c.customers.active, p.customers.active) }),
+    row("Clientes nuevos", { count: c.customers.new, growth: growth(c.customers.new, p.customers.new) }),
+    row("Clientes recurrentes (renovaron)", { count: c.customers.recurrent }),
+    row("Clientes inactivos", { count: c.customers.inactive }),
+    row("Se inactivaron en el período", { count: c.customers.became_inactive }),
+    row("Retención", {
+      percent: c.customers.retention_rate,
+      detail: c.customers.retention_rate == null ? "nadie terminó de pagar en el período" : `de ${int(c.customers.ended)} que terminaron de pagar`,
+    }),
+    section("Colocación"),
+    row("Desembolsado", { amount: c.disbursements.amount, count: c.disbursements.loans, growth: growth(c.disbursements.amount, p.disbursements.amount) }),
+    row("Créditos nuevos", { count: c.disbursements.new_loans }),
+    row("Renovaciones", { count: c.disbursements.recurrent_loans }),
+    row("Monto promedio", { amount: c.disbursements.average }),
+    goal
+      ? row("Meta de colocación", { amount: goal.target_amount, percent: goal.achievement ?? 0, detail: `${money(goal.actual_amount)} de ${money(goal.target_amount)}` })
+      : row("Meta de colocación", { detail: "sin presupuesto activo con metas para estos meses" }),
+    section("Recuperación"),
+    row("Recuperado", { amount: c.collections.total, count: c.collections.payments, growth: growth(c.collections.total, p.collections.total) }),
+    row("Capital", { amount: c.collections.principal }),
+    row("Interés", { amount: c.collections.interest }),
+    row("Mora", { amount: c.collections.late_interest }),
+    row("Eficiencia de cobro", { percent: c.collections.efficiency, detail: `programado ${money(c.collections.expected)}` }),
+    row("Créditos cancelados", { count: c.paid_off.loans, growth: growth(c.paid_off.loans, p.paid_off.loans) }),
+    section("Cartera saneada"),
+    row("Saneado en el período", { amount: wo.period_amount, count: wo.period_loans }),
+    row("Saneado acumulado (al corte)", { amount: wo.total_amount, count: wo.total_loans }),
+    wo.recoveries_available
+      ? row("Recuperación de saneados", {
+        amount: wo.recovered_amount,
+        count: wo.recoveries,
+        growth: growth(wo.recovered_amount, p.write_offs?.recovered_amount),
+        detail: wo.recoveries ? `${int(wo.recoveries)} cobros de ${int(wo.recovered_loans)} créditos` : "sin recuperaciones en el período",
+      })
+      : row("Recuperación de saneados", { detail: "no disponible" }),
+    section("Colocación y recuperación, últimos 12 meses"),
+    ...trend.flatMap((t) => [
+      row(`${monthLabel(t.period)} · Desembolsado`, { amount: t.disbursed_amount, count: t.disbursed_loans, detail: `${int(t.new_customers)} clientes nuevos` }),
+      row(`${monthLabel(t.period)} · Recuperado`, { amount: t.collected_amount }),
+    ]),
+    section("Promotores con más colocación"),
+    ...(topPromoters || []).map((r, i) => row(`${i + 1}. ${r.name}`, { amount: r.amount, count: r.loans, detail: "créditos" })),
+    section("Cobradores con más recuperación"),
+    ...(topCollectors || []).map((r, i) => row(`${i + 1}. ${r.name}`, { amount: r.amount, count: r.payments, detail: "pagos" })),
+  ];
+  return {
+    title: "Indicadores gerenciales",
+    subtitle: [productName ? `Producto: ${productName.code} — ${productName.name}` : "", `Variación vs. ${comparisonText}`].filter(Boolean).join(" · "),
+    period: `Del ${day(c.range.from)} al ${day(c.range.to)}`,
+    columns: [
+      { field: "concept", label: "Concepto" },
+      { field: "amount", label: "Monto (C$)", numeric: true, format: optional(reportMoney) },
+      { field: "count", label: "Cantidad", numeric: true, format: optional(reportInteger) },
+      { field: "percent", label: "%", numeric: true, format: reportPercent },
+      { field: "growth", label: "Variación (%)", numeric: true, format: reportPercent },
+      { field: "detail", label: "Detalle", format: (v) => v || "" },
+    ],
+    rows,
+    orientation: "landscape",
+    fileName: `indicadores_gerenciales_${c.range.from}_${c.range.to}`,
+  };
+};
 
 function RankingTable({ title, rows, columns }) {
   return (
@@ -271,6 +348,11 @@ export default function ManagementDashboard({ params, reloadKey, products = [] }
             ▲▼ vs. {comparison.label}: {compareRangeText}
           </Typography>
         </Stack>
+        <ReportExportButtons
+          size="small"
+          report={() => buildManagementReport({ data: state.data, comparisonText: `${comparison.label} (${compareRangeText})`, productName })}
+          disabled={state.loading}
+        />
         {canBoardReport && (
           <Button size="small" variant="outlined" startIcon={<HistoryEduIcon />} onClick={() => setBoardOpen(true)} sx={{ whiteSpace: "nowrap" }}>
             Informe a la Junta
@@ -452,6 +534,7 @@ export default function ManagementDashboard({ params, reloadKey, products = [] }
               data={state.data.by_product}
               selectedProductId={productId}
               compareTitle={`vs. ${comparison.label} (${compareRangeText})`}
+              period={`Del ${day(c.range.from)} al ${day(c.range.to)}`}
             />
           </Grid>
         )}

@@ -15,20 +15,20 @@ import {
   Typography,
 } from "@mui/material";
 import CreditScoreOutlinedIcon from "@mui/icons-material/CreditScoreOutlined";
-import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { UserContext } from "../contexts/UserContext";
 import LoanListDataTable from "./LoanListDataTable";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import BranchSelect from "./BranchSelect";
 import LinearProgress from "@mui/material/LinearProgress";
 import LoanModificationModal from "./Loan/LoanModificationModal";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
+import { fetchWithCache } from "../hooks/useCachedFetch";
 
 const BAC = {
   primary: "#0057B8",
@@ -163,33 +163,12 @@ const columns = [
   },
 ];
 
-const exportToExcel = (data) => {
-  const formattedData = data.map((row) => ({
-    "Crédito #": row.id,
-    Cédula: row.customer_identification,
-    Cliente: row.customer_name,
-    "Fecha solicitud": dayjs(row.date).format("DD/MM/YYYY"),
-    Monto: row.amount,
-    "Saldo actual": row.current_balance,
-    "% Pago": getPaymentPercent(row).toFixed(0) + "%",
-    Estado: row.approval_status,
-  }));
-
-  const worksheet = XLSX.utils.json_to_sheet(formattedData);
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Créditos");
-
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "array",
-  });
-
-  const file = new Blob([excelBuffer], {
-    type: "application/octet-stream",
-  });
-
-  saveAs(file, `creditos_${dayjs().format("YYYY-MM-DD")}.xlsx`);
+const STATUS_FILTER_LABEL = {
+  DRAFT: "Borrador",
+  APROBADO: "Aprobado",
+  APROBADO_SIN_DESEMBOLSAR: "Aprobado sin desembolsar",
+  RECHAZADO: "Rechazado",
+  PENDIENTE: "Pendiente",
 };
 
 const inputSx = {
@@ -278,6 +257,66 @@ const LoanList = () => {
     search,
     branchId,
   ]);
+
+  // Imprimir y Excel: todas las páginas que cumplen los filtros actuales (la
+  // lista se pagina en el servidor), no solo la página visible.
+  const buildPrintReport = async () => {
+    const all = [];
+    const limit = 500;
+    for (let p = 1; p <= 1000; p += 1) {
+      const params = new URLSearchParams({ page: p, limit, status: statusFilter || "", sortBy, sortOrder });
+      if (branchId) params.append("branch_id", branchId);
+      if (startDate) params.append("startDate", dayjs(startDate).format("YYYY-MM-DD"));
+      if (endDate) params.append("endDate", dayjs(endDate).format("YYYY-MM-DD"));
+      if (search) params.append("search", search);
+      const response = await API.get(`${API_URL}?${params.toString()}`);
+      const pageRows = Array.isArray(response.data?.data) ? response.data.data : [];
+      all.push(...pageRows);
+      if (!pageRows.length || all.length >= Number(response.data?.total || 0)) break;
+    }
+
+    let branchName = "";
+    if (branchId) {
+      try {
+        const branches = await fetchWithCache("/api/branches");
+        branchName = (Array.isArray(branches) ? branches : []).find((b) => Number(b.id) === Number(branchId))?.name || "";
+      } catch {
+        branchName = "";
+      }
+    }
+
+    return {
+      title: "Listado de créditos",
+      fileName: `creditos_${dayjs().format("YYYY-MM-DD")}`,
+      subtitle: reportFilters([
+        ["Sucursal", branchName || (branchId ? `#${branchId}` : "")],
+        ["Estado", STATUS_FILTER_LABEL[statusFilter] || ""],
+        ["Búsqueda", search.trim()],
+      ]),
+      period: reportPeriod(
+        startDate ? dayjs(startDate).format("YYYY-MM-DD") : "",
+        endDate ? dayjs(endDate).format("YYYY-MM-DD") : "",
+      ),
+      orientation: "landscape",
+      columns: [
+        { field: "id", label: "Crédito #" },
+        { field: "customer_identification", label: "Cédula" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "date", label: "Fecha solicitud", format: (v) => (v ? dayjs(v).format("DD/MM/YYYY") : "") },
+        { label: "Monto", value: (r) => Number(r.amount || 0), numeric: true, format: reportMoney },
+        { label: "Saldo actual", value: (r) => Number(r.current_balance || 0), numeric: true, format: reportMoney },
+        { label: "% Pago", value: (r) => `${getPaymentPercent(r).toFixed(0)}%` },
+        { field: "approval_status", label: "Estado", format: (v) => STATUS_FILTER_LABEL[v] || v || "" },
+      ],
+      rows: all,
+      totals: [
+        { value: `Total (${all.length} créditos)`, colspan: 4 },
+        { value: reportMoney(all.reduce((s, r) => s + Number(r.amount || 0), 0)), numeric: true },
+        { value: reportMoney(all.reduce((s, r) => s + Number(r.current_balance || 0), 0)), numeric: true },
+        { value: "", colspan: 2 },
+      ],
+    };
+  };
 
   const handleCloseAlert = () => setAlert({ ...alert, open: false });
 
@@ -513,25 +552,11 @@ const LoanList = () => {
                   Actualizar
                 </Button>
 
-                <Button
-                  variant="contained"
-                  onClick={() => exportToExcel(data)}
-                  startIcon={<FileDownloadOutlinedIcon />}
-                  sx={{
-                    height: 40,
-                    bgcolor: BAC.primary,
-                    borderRadius: 2,
-                    fontWeight: 800,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: BAC.primaryDark,
-                      boxShadow: "none",
-                    },
-                  }}
-                >
-                  Exportar
-                </Button>
+                <ReportExportButtons
+                  report={buildPrintReport}
+                  disabled={loading || !total}
+                  sx={{ height: 40, borderRadius: 2, fontWeight: 800 }}
+                />
               </Stack>
             </Stack>
           </Paper>

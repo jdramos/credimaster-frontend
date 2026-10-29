@@ -3,8 +3,12 @@ import { render, screen, fireEvent, waitFor, within } from "@testing-library/rea
 import InsuranceSettlements from "./InsuranceSettlements";
 import { UserContext } from "../../contexts/UserContext";
 import API from "../../api";
+import { exportReportToExcel } from "../accounting/exportReportToExcel";
+import { openReportPopup, printAccountingReport } from "../accounting/printAccountingReport";
 
 jest.mock("../../api", () => ({ get: jest.fn(), post: jest.fn() }));
+jest.mock("../accounting/exportReportToExcel", () => ({ exportReportToExcel: jest.fn() }));
+jest.mock("../accounting/printAccountingReport", () => ({ openReportPopup: jest.fn(), printAccountingReport: jest.fn() }));
 
 const PROVIDERS = [
   { id: 1, name: "Seguros América S.A.", commission_rate: "10.0000", is_default: 0 },
@@ -153,5 +157,61 @@ describe("InsuranceSettlements (liquidación de microseguros)", () => {
     fireEvent.click(screen.getByText("Liquidaciones"));
     await screen.findByText("CJ-00018403");
     expect(screen.queryByLabelText("Anular liquidación 2")).toBeNull();
+  });
+});
+
+describe("InsuranceSettlements: imprimir y Excel por pestaña", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGets();
+    openReportPopup.mockImplementation(() => ({ document: { write: jest.fn(), open: jest.fn(), close: jest.fn() }, focus: jest.fn(), close: jest.fn() }));
+    printAccountingReport.mockResolvedValue(undefined);
+  });
+
+  test("Excel de pendiente incluye el grupo sin aseguradora y el total pendiente", async () => {
+    setup();
+    await screen.findByText("C$ 257.02");
+    fireEvent.click(screen.getByRole("button", { name: "Excel" }));
+    await waitFor(() => expect(exportReportToExcel).toHaveBeenCalledTimes(1));
+    const def = exportReportToExcel.mock.calls[0][0];
+    expect(def.title).toBe("Primas pendientes de liquidar");
+    expect(def.columns.map((c) => c.label)).toEqual(["Aseguradora", "% comisión", "Pagos", "Créditos", "Desde", "Hasta", "Primas pendientes"]);
+    expect(def.rows.map((r) => r.provider_name)).toEqual(["Seguros América S.A.", "Seguros Nicaragüenses, S.A.", "Sin aseguradora asignada"]);
+    expect(def.columns[6].value(def.rows[2])).toBe(53468.51);
+    expect(def.totals[1]).toMatchObject({ raw: 53725.53, numeric: true });
+  });
+
+  test("Imprimir liquidaciones: filas de la tabla y total sin las anuladas", async () => {
+    setup();
+    fireEvent.click(await screen.findByText("Liquidaciones"));
+    await screen.findByText("CJ-00018403");
+    fireEvent.click(screen.getByRole("button", { name: "Imprimir" }));
+    await waitFor(() => expect(printAccountingReport).toHaveBeenCalledTimes(1));
+    const def = printAccountingReport.mock.calls[0][0];
+    expect(def.title).toBe("Liquidaciones de seguros");
+    expect(def.columns.map((c) => c.label)).toEqual([
+      "#", "Fecha", "Aseguradora", "Período", "Primas", "Comisión compensada", "Neto pagado", "Forma de pago", "Comprobante", "Estado",
+    ]);
+    expect(def.rows).toHaveLength(2);
+    expect(def.columns[9].format(def.rows[1].status)).toBe("Anulada");
+    expect(def.totals[0].value).toBe("Total vigentes (1)");
+    expect(def.totals.slice(1, 4).map((t) => t.raw)).toEqual([257.02, 25.7, 231.32]);
+  });
+
+  test("Excel de conciliación: aseguradoras, total y cuadre de 2601.07 / 1601.06", async () => {
+    setup();
+    fireEvent.click(await screen.findByText("Conciliación 2601.07"));
+    await screen.findByText("Cuenta 2601.07 — primas por liquidar");
+    fireEvent.click(screen.getByRole("button", { name: "Excel" }));
+    await waitFor(() => expect(exportReportToExcel).toHaveBeenCalledTimes(1));
+    const def = exportReportToExcel.mock.calls[0][0];
+    expect(def.period).toMatch(/^Saldos al \d{4}-\d{2}-\d{2}$/);
+    const total = def.rows.find((r) => r.total);
+    expect(total).toMatchObject({ provider_name: "Total", collected: 53781.17, pending: 53524.15 });
+    expect(def.rows.filter((r) => r.section).map((r) => r.provider_name)).toEqual([
+      "Cuenta 2601.07 — primas por liquidar",
+      "Cuenta 1601.06 — comisiones por cobrar",
+    ]);
+    expect(def.rows.find((r) => r.provider_name === "Saldo contable").pending).toBe(53524.15);
   });
 });

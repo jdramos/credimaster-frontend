@@ -17,6 +17,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 import ReportBranchFilter from "./ReportBranchFilter";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import AccountMovementsDialog from "./AccountMovementsDialog";
 import HelpButton from "../help/HelpButton";
@@ -296,8 +297,9 @@ export default function TrialBalance() {
       ? ` · Rango: ${accountFrom?.muc_code || "inicio"} a ${accountTo?.muc_code || "fin"}`
       : "";
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Balance de Comprobación de Saldos",
+    fileName: `balance_comprobacion_${filters.from_date || "inicio"}_${filters.to_date || "corte"}`,
     subtitle: `Forma E - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}${rangeLabel}`,
     period: `Del ${filters.from_date || "inicio"} al ${filters.to_date || "corte"}`,
     columns: [
@@ -308,6 +310,8 @@ export default function TrialBalance() {
       { field: "balance", label: "Saldo actual", numeric: true, format: (v) => Number(v).toLocaleString("es-NI", { minimumFractionDigits: 2 }) },
     ], rows,
   });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   return (
     <Box sx={{ p: 2 }}>
@@ -430,6 +434,7 @@ export default function TrialBalance() {
             Generar
           </Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
           <ReportSignaturesDialog />
         </Box>
 

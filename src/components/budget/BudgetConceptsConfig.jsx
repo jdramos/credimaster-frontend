@@ -24,6 +24,8 @@ import { Link as RouterLink } from "react-router-dom";
 import CategoryIcon from "@mui/icons-material/Category";
 import AddIcon from "@mui/icons-material/Add";
 import { getBudgetConcepts, createBudgetConcept, updateBudgetConcept, getBudgetableAccounts } from "../../api/budget";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportYesNo } from "../common/reportFormat";
 
 export default function BudgetConceptsConfig() {
   const [rows, setRows] = useState([]);
@@ -83,6 +85,19 @@ export default function BudgetConceptsConfig() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Conceptos de presupuesto",
+    fileName: "conceptos_presupuesto",
+    sheetName: "Conceptos",
+    columns: [
+      { field: "name", label: "Concepto" },
+      { field: "description", label: "Descripción" },
+      { label: "Cuenta MUC", value: (r) => (r.muc_code ? `${r.muc_code} — ${r.account_name || ""}` : "") },
+      { label: "Activo", value: (r) => Boolean(r.is_active), format: reportYesNo },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Breadcrumbs sx={{ mb: 1.5 }}>
@@ -93,7 +108,7 @@ export default function BudgetConceptsConfig() {
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <CategoryIcon sx={{ color: "#0057B8" }} />
-          <Box>
+          <Box sx={{ flexGrow: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Conceptos de presupuesto</Typography>
               <HelpButton screenKey="presupuesto.conceptos" />
@@ -102,6 +117,7 @@ export default function BudgetConceptsConfig() {
               Traducen un gasto conocido (Papelería, Equipo de cómputo...) a una cuenta MUC, para que los departamentos no necesiten saber códigos contables
             </Typography>
           </Box>
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Grid container spacing={1.5} sx={{ mb: 2 }}>

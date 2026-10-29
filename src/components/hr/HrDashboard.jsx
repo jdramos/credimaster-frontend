@@ -23,6 +23,8 @@ import ApartmentIcon from "@mui/icons-material/Apartment";
 import KpiCard from "../dashboard/KpiCard";
 import API from "../../api";
 import BAC from "../../styles/bac";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportInteger, reportMoney } from "../common/reportFormat";
 
 // Paleta validada con el skill dataviz (mismos tonos ya corridos por
 // scripts/validate_palette.js en el dashboard de cartera esta sesión: azul
@@ -108,6 +110,32 @@ export default function HrDashboard() {
   const currentMonthCost = costByMonth.length ? costByMonth[costByMonth.length - 1].total_cost : 0;
   const totalAcumulado = liability?.totals?.total_acumulado ?? liability?.total_acumulado ?? null;
 
+  // Impresión/Excel: los KPIs y los datos de las tres gráficas, por secciones.
+  const optional = (format) => (v) => (v === null || v === undefined || v === "" ? "" : format(v));
+  const buildReport = () => ({
+    title: "Dashboard de RRHH",
+    columns: [
+      { field: "concept", label: "Concepto" },
+      { field: "count", label: "Cantidad", numeric: true, format: optional(reportInteger) },
+      { field: "amount", label: "Monto (C$)", numeric: true, format: optional(reportMoney) },
+      { field: "net", label: "Neto pagado (C$)", numeric: true, format: optional(reportMoney) },
+    ],
+    rows: [
+      { concept: "Indicadores", section: true },
+      { concept: "Empleados activos", count: totalHeadcount },
+      { concept: "Costo de planilla (último mes)", amount: currentMonthCost },
+      { concept: "Pasivo por prestaciones (si se liquidara hoy a todos)", amount: totalAcumulado },
+      { concept: "Contratos por vencer (próximos 30 días)", count: contractReminders.length },
+      { concept: "Costo de planilla por mes (corridas aprobadas)", section: true },
+      ...costByMonth.map((m) => ({ concept: m.period, amount: m.total_cost, net: m.total_net })),
+      { concept: "Empleados por departamento", section: true },
+      ...headcount.map((d) => ({ concept: d.department_name, count: d.headcount })),
+      { concept: "Costo de planilla por departamento (acumulado histórico)", section: true },
+      ...costByDept.map((d) => ({ concept: d.department_name, amount: d.total_cost })),
+    ],
+    fileName: "dashboard_rrhh",
+  });
+
   return (
     <Box p={{ xs: 1.5, md: 2 }}>
       <Box
@@ -119,15 +147,26 @@ export default function HrDashboard() {
           background: `linear-gradient(120deg, ${BAC.text} 0%, ${BAC.primary} 100%)`,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
-          <Typography variant="h5" fontWeight={800}>
-            Dashboard de RRHH
-          </Typography>
-          <HelpButton screenKey="rrhh.dashboard" sx={{ color: "white" }} />
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+              <Typography variant="h5" fontWeight={800}>
+                Dashboard de RRHH
+              </Typography>
+              <HelpButton screenKey="rrhh.dashboard" sx={{ color: "white" }} />
+            </Box>
+            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              Headcount, costo de planilla y pasivo contingente por prestaciones
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <ReportExportButtons
+              report={buildReport}
+              disabled={loading}
+              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.7)", "&:hover": { borderColor: "#fff" } }}
+            />
+          </Box>
         </Box>
-        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-          Headcount, costo de planilla y pasivo contingente por prestaciones
-        </Typography>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

@@ -38,6 +38,8 @@ import GppMaybeIcon from "@mui/icons-material/GppMaybe";
 import { toast } from "react-toastify";
 import API from "../api"; // ajusta esta ruta
 import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
 
 // Excepción de garantía insuficiente (política collateral_requirement_mode =
 // 'approval'): el crédito se grabó sin garantía suficiente y no puede aprobarse
@@ -109,7 +111,8 @@ const getPendingDaysChip = (days) => {
   return <Chip size="small" label={`${value} días`} color="default" />;
 };
 
-function getApprovalProgressChip(row, currentUserId) {
+// Texto y color del avance de aprobación (lo usan el chip y la impresión/Excel).
+function getApprovalProgress(row, currentUserId) {
   const approvalStatus = String(
     row.approval_status || row.status || row.item_status || "PENDING",
   ).toUpperCase();
@@ -117,12 +120,12 @@ function getApprovalProgressChip(row, currentUserId) {
 
   // Si está rechazado, prioridad máxima
   if (["REJECTED", "RECHAZADO"].includes(approvalStatus)) {
-    return <Chip size="small" color="error" label="Rechazado" />;
+    return { color: "error", label: "Rechazado" };
   }
 
   // Si todos aprobaron
   if (["APPROVED", "APROBADO"].includes(approvalStatus)) {
-    return <Chip size="small" color="success" label="Aprobado totalmente" />;
+    return { color: "success", label: "Aprobado totalmente" };
   }
 
   // Busca la aprobación del usuario actual
@@ -132,22 +135,30 @@ function getApprovalProgressChip(row, currentUserId) {
   const pendientes = approvals.filter((a) => a.status === "PENDING");
 
   if (myApproval && myApproval.status === "APPROVED") {
-    return <Chip size="small" color="info" label="Ya aprobaste" />;
+    return { color: "info", label: "Ya aprobaste" };
   }
   if (myApproval && myApproval.status === "PENDING") {
-    return <Chip size="small" color="warning" label="Falta tu aprobación" />;
+    return { color: "warning", label: "Falta tu aprobación" };
   }
   if (pendientes.length > 0) {
-    return (
-      <Chip
-        size="small"
-        color="warning"
-        label={`Faltan ${pendientes.length} aprobaciones`}
-      />
-    );
+    return { color: "warning", label: `Faltan ${pendientes.length} aprobaciones` };
   }
-  return <Chip size="small" color="warning" label="Pendiente" />;
+  return { color: "warning", label: "Pendiente" };
 }
+
+function getApprovalProgressChip(row, currentUserId) {
+  const { color, label } = getApprovalProgress(row, currentUserId);
+  return <Chip size="small" color={color} label={label} />;
+}
+
+const TYPE_LABEL = { ALL: "", LOAN: "Créditos", MODIFICATION: "Modificaciones" };
+const SUBTYPE_LABEL = {
+  NUEVO: "Nuevo",
+  PRORROGA: "Prórroga",
+  REESTRUCTURACION: "Reestructuración",
+  REFINANCIAMIENTO: "Refinanciamiento",
+};
+const STATUS_LABEL = { ALL: "Todos", PENDING: "Pendientes", APPROVED: "Aprobados" };
 
 const getCommitteeChip = (row) => {
   // La distinción comité/aprobador único solo aplica a la solicitud
@@ -398,6 +409,47 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
     });
   }, [rows, filters]);
 
+  const buildReport = () => ({
+    title: "Bandeja de aprobaciones",
+    subtitle: reportFilters([
+      ["Estado", STATUS_LABEL[filters.status]],
+      ["Tipo", TYPE_LABEL[filters.type]],
+      ["Subtipo", SUBTYPE_LABEL[filters.subtype]],
+      ["Búsqueda", filters.text.trim()],
+    ]),
+    period: reportPeriod(filters.startDate, filters.endDate),
+    orientation: "landscape",
+    fileName: `bandeja_aprobaciones_${filters.startDate || ""}_${filters.endDate || ""}`,
+    sheetName: "Bandeja de aprobaciones",
+    columns: [
+      { label: "Tipo", value: (r) => (r.item_type === "LOAN" ? "Crédito" : "Modificación") },
+      { field: "item_subtype", label: "Subtipo", format: (v) => SUBTYPE_LABEL[v] || v || "N/D" },
+      {
+        label: "Comité",
+        value: (r) =>
+          [
+            r.item_type === "LOAN" ? (r.requires_committee ? "Comité de Crédito" : "Aprobador único") : "",
+            hasPendingCollateralException(r) ? "Sin garantía suficiente" : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+      },
+      { field: "credit_code", label: "Crédito" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "branch_name", label: "Sucursal" },
+      { label: "Monto", value: (r) => Number(r.requested_amount || 0), numeric: true, format: reportMoney },
+      { field: "requested_at", label: "Fecha", format: dateFormat },
+      { label: "Estado aprobación", value: (r) => getApprovalProgress(r, currentUserId).label },
+      { label: "Antigüedad (días)", value: (r) => Number(r.pending_days || 0), numeric: true },
+    ],
+    rows: filteredRows,
+    totals: [
+      { value: `Total (${filteredRows.length})`, colspan: 6 },
+      { value: reportMoney(filteredRows.reduce((s, r) => s + Number(r.requested_amount || 0), 0)), numeric: true },
+      { value: "", colspan: 3 },
+    ],
+  });
+
   const handleView = async (row) => {
     if (row.item_type !== "LOAN") {
       onViewModification?.(row);
@@ -454,11 +506,14 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
           </Typography>
         </Box>
 
-        <Tooltip title="Actualizar">
-          <IconButton onClick={fetchInbox}>
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <ReportExportButtons report={buildReport} disabled={loading || !filteredRows.length} />
+          <Tooltip title="Actualizar">
+            <IconButton onClick={fetchInbox}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
 
       {error ? (

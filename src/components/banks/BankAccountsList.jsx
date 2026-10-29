@@ -32,6 +32,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import API from "../../api";
 import { fetchWithCache } from "../../hooks/useCachedFetch";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportDate } from "../common/reportFormat";
 
 const API_URL = "/api/banks/accounts";
 const DEFAULT_GL_MUC_CODE = "1102.01.01";
@@ -304,6 +306,25 @@ export default function BankAccountsList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [accounts]);
 
+  const buildReport = () => ({
+    title: "Cuentas bancarias",
+    orientation: "landscape",
+    fileName: "cuentas_bancarias",
+    sheetName: "Cuentas bancarias",
+    columns: [
+      { field: "bank_name", label: "Banco" },
+      { field: "account_number", label: "Número de cuenta" },
+      { field: "account_alias", label: "Alias" },
+      { field: "account_type", label: "Tipo", format: (v) => (v === "AHORRO" ? "Ahorro" : v === "CORRIENTE" ? "Corriente" : v || "") },
+      { label: "Cuenta contable", value: (r) => (r.gl_muc_code ? `${r.gl_muc_code} - ${r.gl_account_name || ""}` : "") },
+      { field: "currency_symbol", label: "Moneda" },
+      { field: "opening_date", label: "Fecha apertura", format: reportDate },
+      { label: "Saldo apertura", value: (r) => Number(r.opening_balance || 0), numeric: true, format: reportMoney },
+      { field: "status", label: "Estado", format: (v) => (v === "ACTIVA" ? "Activa" : "Cerrada") },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -330,6 +351,7 @@ export default function BankAccountsList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchAccounts}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

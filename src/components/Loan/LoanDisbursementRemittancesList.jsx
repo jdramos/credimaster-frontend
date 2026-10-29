@@ -22,6 +22,8 @@ import { loanApi } from "../../api/loanApi";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { printCheckDisbursementDetail } from "../../reports/checkDisbursementDetailReport";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney } from "../common/reportFormat";
 
 const money = (n) =>
   new Intl.NumberFormat("es-NI", { style: "currency", currency: "NIO", minimumFractionDigits: 2 }).format(
@@ -32,6 +34,18 @@ const STATUS_COLOR = {
   EN_TRANSITO: "warning",
   DESEMBOLSADO: "success",
   DEVUELTO: "default",
+};
+
+const STATUS_FILTER_LABEL = { EN_TRANSITO: "En tránsito", DESEMBOLSADO: "Desembolsado", DEVUELTO: "Devuelto" };
+
+const localDateTime = (v) => (v ? new Date(`${String(v).replace(" ", "T")}Z`).toLocaleString("es-NI") : "");
+
+// Mismo texto que el chip de la columna Estado.
+const statusLabel = (row) => {
+  if (row.status === "DESEMBOLSADO") return row.delivered_at ? "Entregado" : "Pendiente de entrega";
+  if (row.status === "EN_TRANSITO") return "En tránsito";
+  if (row.status === "DEVUELTO") return "Devuelto";
+  return row.status || "";
 };
 
 const METHOD_LABEL = {
@@ -99,6 +113,39 @@ export default function LoanDisbursementRemittancesList() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  const buildReport = () => {
+    const total = rows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    return {
+      title: "Remesas de desembolso",
+      subtitle: reportFilters([
+        ["Estado", status ? STATUS_FILTER_LABEL[status] : "Todos"],
+        ["Saldo en remesas en tránsito (1101.03)", reportMoney(pendingTotal)],
+      ]),
+      columns: [
+        { field: "id", label: "ID" },
+        { field: "credit_code", label: "Crédito" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "branch_name", label: "Sucursal" },
+        { label: "Forma", value: (r) => METHOD_LABEL[r.disbursement_method] || r.disbursement_method || "" },
+        { label: "Cuenta / Caja", value: (r) => r.bank_account_alias || r.cash_register_name || "—" },
+        { field: "amount", label: "Monto", numeric: true, format: reportMoney },
+        { label: "Estado", value: statusLabel },
+        { field: "delivery_agent_name", label: "Responsable de entrega" },
+        { field: "delivered_at", label: "Entregado", format: localDateTime },
+        { field: "created_at", label: "Fecha", format: localDateTime },
+        { field: "return_reason", label: "Motivo devolución" },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length} remesas)`, colspan: 6 },
+        { value: reportMoney(total), raw: total, numeric: true },
+        { value: "", colspan: 5 },
+      ],
+      orientation: "landscape",
+      fileName: `remesas_desembolso_${status || "todas"}`,
+    };
+  };
 
   const columns = [
     { field: "id", headerName: "ID", width: 70 },
@@ -203,9 +250,12 @@ export default function LoanDisbursementRemittancesList() {
           </Typography>
           <HelpButton screenKey="creditos.remesas" />
         </Box>
-        <Button startIcon={<RefreshIcon />} onClick={loadData}>
-          Recargar
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
+          <Button startIcon={<RefreshIcon />} onClick={loadData}>
+            Recargar
+          </Button>
+        </Stack>
       </Stack>
 
       <Divider sx={{ mb: 2 }} />

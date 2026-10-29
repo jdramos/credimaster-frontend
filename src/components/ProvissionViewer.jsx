@@ -26,6 +26,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import API from "../api";
 import BranchSelect from "./BranchSelect";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportMoney } from "./common/reportFormat";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import "primereact/resources/themes/lara-light-blue/theme.css";
@@ -182,6 +184,7 @@ const ProvissionViewer = () => {
                 provission_percentage: customer.provission_percentage,
                 provission_amount: money(customer.provission_amount),
                 count: "",
+                raw: customer,
               },
               leaf: true,
             }));
@@ -294,6 +297,54 @@ const ProvissionViewer = () => {
     const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(blob, `Provisiones_${dayjs(date).format("YYYYMMDD")}.xlsx`);
+  };
+
+  // Impresión: mismas filas que el Excel, con sucursal y vendedor como
+  // secciones y el total general al final.
+  const buildReport = () => {
+    const rows = [];
+    nodes.forEach((branch) => {
+      if (!branch.children?.length) return;
+      rows.push({ section: true, name: branch.data.name });
+      branch.children.forEach((vendor) => {
+        if (!vendor.children?.length) return;
+        rows.push({ section: true, name: vendor.data.name });
+        vendor.children.forEach((customer) => rows.push({ ...customer.data.raw, name: customer.data.name }));
+      });
+    });
+    const branchName = branches.find((b) => String(b.id) === String(selectedBranch))?.name;
+    const vendorName = vendors.find((v) => String(v.id) === String(selectedVendor))?.name;
+    return {
+      title: "Provisiones por Sucursal y Vendedor",
+      subtitle: [
+        `Balance: ${balanceType}`,
+        `Sucursal: ${branchName || (selectedBranch ? selectedBranch : "Todas")}`,
+        vendorName ? `Vendedor: ${vendorName}` : "",
+        search ? `Búsqueda: ${search}` : "",
+      ].filter(Boolean).join(" · "),
+      period: `Corte: ${dayjs(date).format("DD/MM/YYYY")}`,
+      orientation: "landscape",
+      columns: [
+        { field: "name", label: "Cliente" },
+        { field: "identification", label: "Identificación" },
+        { field: "loan_id", label: "Crédito" },
+        { field: "capital_balance", label: "Saldo Capital", numeric: true, format: reportMoney },
+        { field: "interest_balance", label: "Saldo Interés", numeric: true, format: reportMoney },
+        { field: "provission_code", label: "Clasificación riesgo" },
+        { field: "overdue_capital", label: "Capital Vencido", numeric: true, format: reportMoney },
+        { field: "provission_amount", label: "Monto Provisión", numeric: true, format: reportMoney },
+      ],
+      rows,
+      totals: [
+        { value: `Total general (${Number(globalTotals.count || 0).toLocaleString("es-NI")} clientes)`, colspan: 3 },
+        { value: reportMoney(globalTotals.capital), raw: globalTotals.capital, numeric: true },
+        { value: reportMoney(globalTotals.interest), raw: globalTotals.interest, numeric: true },
+        { value: "" },
+        { value: reportMoney(globalTotals.overdue), raw: globalTotals.overdue, numeric: true },
+        { value: reportMoney(globalTotals.provission_amount), raw: globalTotals.provission_amount, numeric: true },
+      ],
+      fileName: `Provisiones_${dayjs(date).format("YYYYMMDD")}`,
+    };
   };
 
   /** 📅 Date strip (30 days) */
@@ -438,6 +489,12 @@ const ProvissionViewer = () => {
 
           <Box sx={{ flex: 1 }} />
 
+          <ReportExportButtons
+            report={buildReport}
+            excel={false}
+            disabled={!nodes.some((n) => n.children?.length)}
+            sx={{ borderRadius: 2, fontWeight: 900, borderColor: "rgba(0,87,184,0.35)", color: BAC.primary }}
+          />
           <Tooltip title="Exportar a Excel">
             <Button
               variant="outlined"

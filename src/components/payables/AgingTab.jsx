@@ -4,6 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "../accounting/printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -45,8 +46,9 @@ export default function AgingTab() {
     { field: "balance", headerName: "Total", width: 130, type: "number", valueFormatter: (p) => money(p.value) },
   ], []);
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Antigüedad de Saldos — Cuentas por Pagar",
+    fileName: `antiguedad_cxp_${new Date().toISOString().slice(0, 10)}`,
     subtitle: `Al ${new Date().toISOString().slice(0, 10)}`,
     period: "",
     columns: [
@@ -71,12 +73,15 @@ export default function AgingTab() {
     ],
   });
 
+  const printReport = () => printAccountingReport(buildReport());
+
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" alignItems="center">
         <Button variant="outlined" onClick={fetchAging} sx={{ textTransform: "none" }}>Actualizar</Button>
         <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}
           sx={{ textTransform: "none" }}>Imprimir</Button>
+        <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
         <Box sx={{ flex: 1 }} />
         <Chip label={`Corriente: ${money(totals.current)}`} />
         <Chip color="warning" label={`1–30: ${money(totals.b1)}`} />

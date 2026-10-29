@@ -28,6 +28,8 @@ import dayjs from "dayjs";
 import API from "../api";
 import { UserContext } from "../contexts/UserContext";
 import HelpButton from "./help/HelpButton";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
 
 // Notas de crédito y débito sobre créditos (api/loan/loanAdjustmentsController.js).
 // Registro -> aprobación por OTRO usuario (se aplica) o rechazo -> anulación.
@@ -177,6 +179,37 @@ export default function LoanAdjustments() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Notas de crédito y débito",
+    subtitle: reportFilters([["Estado", STATUS[statusFilter]?.label || "Todas"]]),
+    period: reportPeriod(from, to),
+    orientation: "landscape",
+    fileName: `notas_credito_debito_${from}_${to}`,
+    sheetName: "Notas",
+    columns: [
+      { label: "Fecha", value: (r) => dmy(r.applied_date || r.created_at) },
+      { label: "Crédito", value: (r) => `#${r.credit_code || r.loan_id}` },
+      { field: "customer_name", label: "Cliente" },
+      { label: "Tipo", value: (r) => (r.adjustment_type === "CREDIT" ? "Crédito" : "Débito") },
+      { field: "concept_label", label: "Concepto" },
+      // Las notas de crédito restan (signo negativo), las de débito suman.
+      {
+        label: "Monto",
+        value: (r) => (r.adjustment_type === "CREDIT" ? -1 : 1) * Number(r.total_amount || 0),
+        numeric: true,
+        format: reportMoney,
+      },
+      { label: "Asiento 5202.02", value: (r) => Number(r.booked_amount || 0), numeric: true, format: reportMoney },
+      { field: "reason", label: "Motivo" },
+      { field: "support_reference", label: "Soporte" },
+      { field: "status", label: "Estado", format: (v) => STATUS[v]?.label || v },
+      { field: "created_by_name", label: "Registró" },
+      { label: "Aprobó", value: (r) => r.reviewed_by_name || (r.status === "PENDING" ? "por aprobar" : "") },
+    ],
+    rows,
+    totals: [{ value: `${rows.length} nota(s)`, colspan: 12 }],
+  });
+
   const selectedConcept = conceptMap[form.concept];
   const loanOk = loanInfo && !loanInfo.notFound;
 
@@ -195,11 +228,14 @@ export default function LoanAdjustments() {
             usuario distinto al que la registra.
           </div>
         </Box>
-        {canCreate ? (
-          <Button variant="contained" startIcon={<AddIcon />} className="bac-btn-primary" onClick={() => setCreateOpen(true)}>
-            Nueva nota
-          </Button>
-        ) : null}
+        <Stack direction="row" spacing={1}>
+          <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
+          {canCreate ? (
+            <Button variant="contained" startIcon={<AddIcon />} className="bac-btn-primary" onClick={() => setCreateOpen(true)}>
+              Nueva nota
+            </Button>
+          ) : null}
+        </Stack>
       </Box>
 
       {message ? (

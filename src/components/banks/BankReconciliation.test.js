@@ -3,9 +3,13 @@ import { render, screen, fireEvent, waitFor, within } from "@testing-library/rea
 import BankReconciliation from "./BankReconciliation";
 import { UserContext } from "../../contexts/UserContext";
 import API from "../../api";
+import { exportReportToExcel } from "../accounting/exportReportToExcel";
+import { openReportPopup, printAccountingReport } from "../accounting/printAccountingReport";
 
 jest.mock("../../api", () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() }));
 jest.mock("../help/HelpButton", () => () => null);
+jest.mock("../accounting/exportReportToExcel", () => ({ exportReportToExcel: jest.fn() }));
+jest.mock("../accounting/printAccountingReport", () => ({ openReportPopup: jest.fn(), printAccountingReport: jest.fn() }));
 
 const ACCOUNTS = [
   { id: 1, account_alias: "BAC - Cuenta Operativa", currency_symbol: "C$" },
@@ -235,5 +239,66 @@ describe("BankReconciliation con estado de cuenta importado", () => {
     expect(fd.get("save_template")).toBe("1");
     expect(JSON.parse(fd.get("mapping")).columns.debit).toBe("Débito");
     expect(await screen.findByText(/Importados 1 movimiento\(s\), 1 pareado\(s\) automáticamente, 1 ya existían/)).toBeTruthy();
+  });
+});
+
+describe("BankReconciliation: imprimir y Excel", () => {
+  const HISTORY = [
+    { id: 7, statement_date: "2026-09-30", book_basis: "SUBLEDGER", statement_balance: "11200.00", book_balance: "11200.00", difference: "0.00", unexplained_difference: null },
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    workspace = JSON.parse(JSON.stringify(WORKSPACE));
+    mockGets();
+    const base = API.get.getMockImplementation();
+    API.get.mockImplementation((url, opts) => (url === "/api/banks/reconciliation"
+      ? Promise.resolve({ data: { ok: true, data: HISTORY } })
+      : base(url, opts)));
+    openReportPopup.mockImplementation(() => ({ document: { write: jest.fn(), open: jest.fn(), close: jest.fn() }, focus: jest.fn(), close: jest.fn() }));
+    printAccountingReport.mockResolvedValue(undefined);
+  });
+
+  test("Excel de la hoja de conciliación lleva el resumen y las partidas con su marca", async () => {
+    setup();
+    expect(screen.getAllByRole("button", { name: "Excel" })[0].disabled).toBe(true);
+    await chooseAccountAndLoad();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Excel" })[0]);
+    await waitFor(() => expect(exportReportToExcel).toHaveBeenCalledTimes(1));
+    const def = exportReportToExcel.mock.calls[0][0];
+    expect(def.title).toBe("Conciliación bancaria");
+    expect(def.period).toBe("Al 2026-10-20");
+    expect(def.columns.map((c) => c.label)).toEqual(["Partida", "Fecha", "Referencia / N°", "Descripción", "Monto", "Estado"]);
+    const byConcept = Object.fromEntries(def.rows.filter((r) => !r.section && !r.estado).map((r) => [r.partida, r.monto]));
+    expect(byConcept["Saldo según banco"]).toBe(9550);
+    expect(byConcept["Saldo banco ajustado"]).toBe(9850);
+    expect(byConcept["Diferencia"]).toBe(-150);
+    expect(byConcept["Diferencia no explicada"]).toBe(-150);
+    const comision = def.rows.find((r) => r.descripcion === "COMISION MANEJO DE CUENTA");
+    expect(comision).toMatchObject({ partida: "Banco · Débito", monto: 150, estado: "Sin explicar" });
+    // El cheque pareado con el banco sale como cobrado; el depósito no pareado, en tránsito.
+    expect(def.rows.find((r) => r.partida === "Cheque")).toMatchObject({ referencia: "1017", monto: 2500, estado: "Cobrado" });
+    expect(def.rows.find((r) => r.descripcion === "Depósito en tránsito")).toMatchObject({ monto: 300, estado: "En tránsito" });
+    expect(def.rows.filter((r) => r.section).map((r) => r.partida)).toContain("Solo en libros — depósitos en tránsito");
+  });
+
+  test("Imprimir el historial manda las conciliaciones guardadas", async () => {
+    setup();
+    fireEvent.mouseDown(screen.getByLabelText("Cuenta bancaria"));
+    fireEvent.click(await screen.findByRole("option", { name: "BAC - Cuenta Operativa" }));
+    await screen.findByText("2026-09-30");
+
+    const printButtons = screen.getAllByRole("button", { name: "Imprimir" });
+    fireEvent.click(printButtons[printButtons.length - 1]);
+    await waitFor(() => expect(printAccountingReport).toHaveBeenCalledTimes(1));
+    const def = printAccountingReport.mock.calls[0][0];
+    expect(def.title).toBe("Historial de conciliaciones bancarias");
+    expect(def.subtitle).toContain("BAC - Cuenta Operativa");
+    expect(def.columns.map((c) => c.label)).toEqual(["Fecha de corte", "Base libros", "Saldo banco", "Saldo libros", "Diferencia", "No explicada"]);
+    expect(def.rows).toEqual(HISTORY);
+    expect(def.columns[1].value(HISTORY[0])).toBe("Cuenta bancaria");
+    expect(def.columns[5].format(def.columns[5].value(HISTORY[0]))).toBe("—");
+    expect(def.popup).toBeTruthy();
   });
 });

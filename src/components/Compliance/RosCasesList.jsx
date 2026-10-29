@@ -19,6 +19,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import GavelIcon from "@mui/icons-material/Gavel";
 import API from "../../api";
 import RosDossierDialog from "./RosDossierDialog";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDateTime } from "../common/reportFormat";
 
 // Plazo de envío del ROS: 30 días desde la alerta (Art. 6 Resolución UAF-N-021-2019).
 const DEADLINE_CHIP = {
@@ -149,6 +151,25 @@ export default function RosCasesList() {
     },
   ];
 
+  const buildReport = () => ({
+    title: "Casos ROS",
+    subtitle: `Estado: ${statusFilter === "ALL" ? "Todos" : STATUS_CHIP[statusFilter]?.label || statusFilter}`,
+    orientation: "landscape",
+    columns: [
+      { field: "case_number", label: "N° Caso" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "identification", label: "Identificación" },
+      { field: "opened_at", label: "Apertura", format: reportDateTime },
+      { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v },
+      { label: "Plazo UAF (30 días)", value: (row) => DEADLINE_CHIP[row.deadline_status]?.label(row) || "" },
+      { field: "sirel_receipt", label: "Acuse SIREL" },
+      { field: "analysis_notes", label: "Notas de análisis" },
+    ],
+    rows,
+    totals: [{ value: `${rows.length} caso(s)`, colspan: 8 }],
+    fileName: `casos_ros_${statusFilter.toLowerCase()}`,
+  });
+
   const dialogTitle = {
     notes: "Editar notas de análisis",
     DESCARTADO: "Descartar caso ROS",
@@ -160,7 +181,7 @@ export default function RosCasesList() {
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <GavelIcon sx={{ color: "#B91C1C" }} />
-          <Box>
+          <Box flexGrow={1}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
                 Casos ROS
@@ -173,6 +194,9 @@ export default function RosCasesList() {
               anexos obligatorios del Art. 9.
             </Typography>
           </Box>
+          <Stack direction="row" spacing={1} flexShrink={0}>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
+          </Stack>
         </Box>
 
         <Stack direction="row" spacing={1} mb={2}>

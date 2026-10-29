@@ -8,6 +8,8 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import API from "../../api";
 import SanctionsEntryDetailDialog from "./SanctionsEntryDetailDialog";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportPeriod } from "../common/reportFormat";
 
 const SOURCE_OPTIONS = [
   { value: "", label: "Todas" },
@@ -36,6 +38,12 @@ const fmtDateTime = (v) => {
   return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleString("es-NI", { dateStyle: "medium", timeStyle: "short" });
 };
 // Fecha sin hora (YYYY-MM-DD) armada en hora local, para que no se corra un día.
+// La API entrega como máximo 200 filas por página; sobre este total se pide
+// confirmación antes de imprimir.
+const PRINT_PAGE_SIZE = 200;
+const PRINT_CONFIRM_ABOVE = 2000;
+const optionLabel = (opts, value) => opts.find((o) => o.value === value)?.label || "";
+
 const fmtDay = (v) => {
   if (!v) return "—";
   const [y, m, d] = String(v).slice(0, 10).split("-").map(Number);
@@ -273,6 +281,62 @@ export default function BrowseSanctionsListsPanel({ fullPage = false }) {
     }
   };
 
+  // Imprime todas las entradas que cumplen los filtros (no solo la página).
+  const buildPrintReport = async () => {
+    if (total > PRINT_CONFIRM_ABOVE
+      && !window.confirm(`Se van a imprimir ${total.toLocaleString("es-NI")} entradas. Puede tardar; para un reporte más corto aplique filtros. ¿Continuar?`)) {
+      throw new Error("Impresión cancelada.");
+    }
+    const all = [];
+    for (let page = 1; ; page += 1) {
+      const { data } = await API.get("/api/aml/watchlists/browse", { params: { ...query, page, pageSize: PRINT_PAGE_SIZE } });
+      const batch = data.rows || [];
+      all.push(...batch);
+      if (batch.length < PRINT_PAGE_SIZE || all.length >= (data.total || 0)) break;
+    }
+    const delisted = filters.status !== "active";
+    return {
+      title: "Listas OFAC / ONU",
+      subtitle: reportFilters([
+        ["Lista", filters.source],
+        ["Tipo", filters.entry_type ? optionLabel(TYPE_OPTIONS, filters.entry_type) : ""],
+        ["Programa", filters.program],
+        ["Estado", optionLabel(STATUS_OPTIONS, filters.status)],
+        ["Búsqueda", debounced.search],
+        ["País", debounced.country],
+        ["Inclusión", reportPeriod(filters.listed_from, filters.listed_to)],
+        ["Exclusión", delisted ? reportPeriod(filters.delisted_from, filters.delisted_to) : ""],
+      ]),
+      orientation: "landscape",
+      columns: [
+        { field: "full_name", label: "Nombre" },
+        { field: "entry_type", label: "Tipo", format: (v) => (v === "PERSONA" ? "Persona" : "Entidad") },
+        { field: "programs", label: "Programa(s)" },
+        {
+          label: "Motivo de inclusión",
+          value: (r) => [r.remarks_es || r.remarks, r.source === "ONU Consolidada" ? r.listed_decided_by : r.listed_legal_basis].filter(Boolean).join(" — "),
+        },
+        { field: "nationality", label: "Nacionalidad" },
+        { field: "date_of_birth", label: "Fecha de nacimiento" },
+        { field: "primary_identification", label: "Identificación" },
+        { field: "listed_on", label: "Fecha de inclusión", format: (v) => (v ? fmtDay(v) : "") },
+        { field: "source", label: "Lista" },
+        ...(delisted
+          ? [
+            { field: "active", label: "Estado", format: (v) => (v ? "Vigente" : "Retirada") },
+            { field: "delisted_on", label: "Fecha de exclusión", format: (v) => (v ? fmtDay(v) : "") },
+            {
+              label: "Programa / motivo de la exclusión",
+              value: (r) => (r.active ? "" : [r.delisted_programs, r.delisted_reason_es || r.delisted_reason || r.delisted_decided_by].filter(Boolean).join(" — ")),
+            },
+          ]
+          : []),
+      ],
+      rows: all,
+      totals: [{ value: `${all.length.toLocaleString("es-NI")} entrada(s)`, colspan: delisted ? 12 : 9 }],
+    };
+  };
+
   const bySource = Object.fromEntries((summary?.sources || []).map((s) => [s.source, s]));
 
   return (
@@ -292,6 +356,7 @@ export default function BrowseSanctionsListsPanel({ fullPage = false }) {
               Pantalla completa
             </Button>
           )}
+          <ReportExportButtons excel={false} size="small" report={buildPrintReport} disabled={total === 0} sx={{ whiteSpace: "nowrap" }} />
           <Button
             variant="outlined"
             size="small"

@@ -31,6 +31,8 @@ import PaymentForm from "./PaymentForm";
 import PaymentCorrectionDialog from "./PaymentCorrectionDialog";
 import PaymentEvidenceDialog from "./PaymentEvidenceDialog";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportDate, reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
 
 const API_URL = "/api/payments";
 
@@ -201,6 +203,82 @@ const PaymentList = () => {
     }
   };
 
+  // Excel con las mismas columnas y filtros que "Imprimir" (todas las páginas).
+  const buildExcelReport = async () => {
+    const all = [];
+    let reportSummary = {};
+    for (let p = 1; p <= 100; p += 1) {
+      const params = new URLSearchParams();
+      params.set("page", String(p));
+      params.set("pageSize", "5000");
+      params.set("report", "1");
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+      if (branchId) params.set("branchId", String(branchId));
+      if (collectorId) params.set("collectorId", String(collectorId));
+      const response = await API.get(`${API_URL}?${params.toString()}`);
+      const json = response.data;
+      const pageRows = Array.isArray(json?.data) ? json.data : [];
+      if (p === 1) reportSummary = json?.summary || {};
+      all.push(...pageRows);
+      if (!pageRows.length || all.length >= Number(json?.total || 0)) break;
+    }
+
+    const branchName = branchId
+      ? branches.find((b) => String(b.id ?? b.branch_id) === String(branchId))?.name || ""
+      : "";
+    const collectorName = collectorId
+      ? collectors.find((c) => String(c.id ?? c.collector_id) === String(collectorId))?.name || ""
+      : "";
+    const amount = (field) => ({ value: (r) => Number(r[field] || 0), numeric: true, format: reportMoney });
+    const rowTotal = (r) =>
+      Number(r.principal_payment || 0) +
+      Number(r.interest_payment || 0) +
+      Number(r.insurance_payment || 0) +
+      Number(r.fee_payment || 0) +
+      Number(r.other_charges_payment || 0) +
+      Number(r.defaulted_interest || 0);
+    const sum = (field) => all.reduce((s, r) => s + Number(r[field] || 0), 0);
+    const totalCell = (value) => ({ value: reportMoney(value), raw: Number(value || 0), numeric: true });
+
+    return {
+      title: "Pagos recibidos",
+      subtitle: reportFilters([["Sucursal", branchName], ["Colector", collectorName]]),
+      period: reportPeriod(dateFrom, dateTo),
+      orientation: "landscape",
+      fileName: `pagos_${dateFrom || ""}_${dateTo || ""}`,
+      sheetName: "Pagos recibidos",
+      columns: [
+        { field: "id", label: "ID" },
+        { field: "payment_date", label: "Fecha", format: reportDate },
+        { label: "Crédito", value: (r) => r.credit_code || r.loan_id },
+        { field: "customer_identification", label: "Cédula" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "branch_name", label: "Sucursal" },
+        { field: "collector_name", label: "Colector" },
+        { field: "forma_pago_name", label: "Forma de pago" },
+        { label: "Capital", ...amount("principal_payment") },
+        { label: "Interés", ...amount("interest_payment") },
+        { label: "Mora", ...amount("defaulted_interest") },
+        { label: "Seguro", ...amount("insurance_payment") },
+        { label: "Comisión", ...amount("fee_payment") },
+        { label: "Otros", ...amount("other_charges_payment") },
+        { label: "Total", value: rowTotal, numeric: true, format: reportMoney },
+      ],
+      rows: all,
+      totals: [
+        { value: `Totales (${reportSummary.payments_count ?? all.length} pagos)`, colspan: 8 },
+        totalCell(reportSummary.total_principal ?? sum("principal_payment")),
+        totalCell(reportSummary.total_interest ?? sum("interest_payment")),
+        totalCell(reportSummary.total_defaulted_interest ?? sum("defaulted_interest")),
+        totalCell(reportSummary.total_insurance ?? sum("insurance_payment")),
+        totalCell(reportSummary.total_fee ?? sum("fee_payment")),
+        totalCell(reportSummary.total_other_charges ?? sum("other_charges_payment")),
+        totalCell(reportSummary.total_collected ?? all.reduce((s, r) => s + rowTotal(r), 0)),
+      ],
+    };
+  };
+
   // initial loads
   useEffect(() => {
     fetchBranches();
@@ -294,6 +372,8 @@ const PaymentList = () => {
           >
             Imprimir
           </Button>
+
+          <ReportExportButtons report={buildExcelReport} print={false} disabled={loading || !total} />
 
           <Button
             variant="outlined"

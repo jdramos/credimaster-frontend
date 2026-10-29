@@ -28,6 +28,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportPercent } from "../common/reportFormat";
 
 const API_URL = "/api/insurance/providers";
 
@@ -187,6 +189,29 @@ export default function InsuranceProvidersList() {
     [canManage],
   );
 
+  const buildReport = () => ({
+    title: "Aseguradoras",
+    orientation: "landscape",
+    fileName: "aseguradoras",
+    sheetName: "Aseguradoras",
+    columns: [
+      { field: "name", label: "Aseguradora" },
+      { field: "tax_id", label: "RUC / Identificación", format: (v) => v || "—" },
+      { field: "contact_name", label: "Contacto", format: (v) => v || "—" },
+      { field: "phone", label: "Teléfono", format: (v) => v || "—" },
+      { field: "email", label: "Correo", format: (v) => v || "—" },
+      {
+        label: "% comisión",
+        value: (r) => (r.commission_rate === null || r.commission_rate === undefined ? null : Number(r.commission_rate)),
+        numeric: true,
+        format: (v) => (v === null || v === undefined ? "—" : reportPercent(v)),
+      },
+      { field: "is_default", label: "Póliza colectiva", format: (v) => (Number(v) === 1 ? "Por defecto" : "—") },
+      { field: "status", label: "Estado", format: (v) => (v === "ACTIVA" ? "Activa" : "Inactiva") },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -215,6 +240,7 @@ export default function InsuranceProvidersList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchProviders}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

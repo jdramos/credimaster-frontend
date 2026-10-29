@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from "react";
+import dayjs from "dayjs";
 import HelpButton from "../help/HelpButton";
 import { Alert, Box, Button, Chip, Paper, Snackbar, Stack, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import BadgeIcon from "@mui/icons-material/Badge";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate } from "../common/reportFormat";
+
+const deadlineLabel = (row) =>
+  row.overdue
+    ? `Vencido hace ${Math.abs(row.business_days_remaining)} día(s) hábiles`
+    : `${row.business_days_remaining} día(s) hábiles restantes`;
 
 export default function IdentityVerificationReminders() {
   const [rows, setRows] = useState([]);
@@ -60,7 +68,7 @@ export default function IdentityVerificationReminders() {
       renderCell: (params) => (
         <Chip
           size="small"
-          label={params.row.overdue ? `Vencido hace ${Math.abs(params.value)} día(s) hábiles` : `${params.value} día(s) hábiles restantes`}
+          label={deadlineLabel(params.row)}
           color={params.row.overdue ? "error" : params.value <= 1 ? "warning" : "default"}
         />
       ),
@@ -85,12 +93,27 @@ export default function IdentityVerificationReminders() {
     },
   ];
 
+  const buildReport = () => ({
+    title: "Verificación de Identidad Pendiente",
+    subtitle: "Clientes con identidad y beneficiario final sin verificar (plazo de 10 días hábiles desde el alta)",
+    columns: [
+      { field: "customer_code", label: "Código" },
+      { field: "identification", label: "Identificación" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "created_at", label: "Fecha de alta", format: reportDate },
+      { field: "business_days_remaining", label: "Días hábiles restantes", numeric: true, format: (v) => String(v ?? "") },
+      { label: "Plazo", value: (row) => deadlineLabel(row) },
+    ],
+    rows,
+    fileName: `verificacion_identidad_${dayjs().format("YYYY-MM-DD")}`,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
           <BadgeIcon sx={{ color: "#B45309" }} />
-          <Box>
+          <Box flexGrow={1}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
                 Verificación de Identidad Pendiente
@@ -102,6 +125,7 @@ export default function IdentityVerificationReminders() {
               de 10 días hábiles desde el alta (Art. 22 Ley N°. 1215)
             </Typography>
           </Box>
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Box sx={{ height: 500 }}>

@@ -6,6 +6,7 @@ import { Alert, Box, Chip, Paper, Stack, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import LocationCityOutlinedIcon from "@mui/icons-material/LocationCityOutlined";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
 
 const BAC = {
   primary: "#0057B8",
@@ -89,6 +90,19 @@ export default function ProvincesList() {
     fetchProvinces();
   }, []);
 
+  const buildReport = () => ({
+    title: "Departamentos del país",
+    fileName: "departamentos",
+    sheetName: "Departamentos",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "name", label: "Descripción" },
+      { field: "risk_name", label: "Tipo de riesgo", format: (v) => v || "Sin riesgo" },
+    ],
+    rows,
+    totals: [{ value: `${rows.length} registros`, colspan: 3 }],
+  });
+
   if (!loading && !error && rows.length === 0) {
     return <EmptyNotice route="/departamentos/agregar" />;
   }
@@ -157,6 +171,13 @@ export default function ProvincesList() {
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.25)",
                 }}
+              />
+
+              <ReportExportButtons
+                report={buildReport}
+                size="small"
+                disabled={loading || !rows.length}
+                sx={{ color: BAC.white, borderColor: "rgba(255,255,255,0.6)", "&:hover": { borderColor: BAC.white } }}
               />
 
               <AddCircle goTo="/departamentos/agregar" />

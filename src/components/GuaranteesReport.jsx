@@ -20,6 +20,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import API from "../api";
 import GuaranteePhotosDialog from "./GuaranteePhotosDialog";
 import { printAccountingReport } from "./accounting/printAccountingReport";
+import ReportExportButtons from "./common/ReportExportButtons";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", {
@@ -102,28 +103,32 @@ export default function GuaranteesReport() {
     return "Pendiente";
   };
 
-  const printReport = () =>
-    printAccountingReport({
-      title: "Reporte de Garantías",
-      subtitle: cuentaContable ? `Cuenta contable: ${cuentaContable}` : undefined,
-      period: selectedCustomer ? `Cliente: ${selectedCustomer.customer_name}` : "Todos los clientes",
-      columns: [
-        { field: "customer_name", label: "Cliente" },
-        { field: "article", label: "Artículo" },
-        { field: "series", label: "Serie" },
-        { field: "brand", label: "Marca" },
-        { field: "value", label: "Valor", numeric: true, format: (v) => money(v) },
-        { field: "status", label: "Estado", value: (row) => statusLabel(row) },
-        { field: "entry_no", label: "Comprobante" },
-        { field: "created_at", label: "Fecha registro", format: (v) => (v ? String(v).slice(0, 10) : "") },
-      ],
-      rows,
-      totals: [
-        { value: "Totales (excluye anuladas)", colspan: 4 },
-        { value: money(totalValue), numeric: true },
-        { value: "", colspan: 3 },
-      ],
-    });
+  // La misma definición alimenta la impresión y el Excel.
+  const buildReport = () => ({
+    title: "Reporte de Garantías",
+    subtitle: cuentaContable ? `Cuenta contable: ${cuentaContable}` : undefined,
+    period: selectedCustomer ? `Cliente: ${selectedCustomer.customer_name}` : "Todos los clientes",
+    columns: [
+      { field: "customer_name", label: "Cliente" },
+      { field: "article", label: "Artículo" },
+      { field: "series", label: "Serie" },
+      { field: "brand", label: "Marca" },
+      { field: "value", label: "Valor", numeric: true, format: (v) => money(v) },
+      { field: "status", label: "Estado", value: (row) => statusLabel(row) },
+      { field: "entry_no", label: "Comprobante" },
+      { field: "created_at", label: "Fecha registro", format: (v) => (v ? String(v).slice(0, 10) : "") },
+    ],
+    rows,
+    totals: [
+      { value: "Totales (excluye anuladas)", colspan: 4 },
+      { value: money(totalValue), numeric: true },
+      { value: "", colspan: 3 },
+    ],
+    fileName: "reporte_garantias",
+    sheetName: "Garantías",
+  });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   const columns = [
     { field: "customer_name", headerName: "Cliente", flex: 1, minWidth: 180 },
@@ -229,6 +234,7 @@ export default function GuaranteesReport() {
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>
             Imprimir
           </Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Box sx={{ mb: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>

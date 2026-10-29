@@ -10,6 +10,8 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DescriptionIcon from "@mui/icons-material/Description";
 import API from "../../api";
 import HelpButton from "../help/HelpButton";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportInteger, reportPercent } from "../common/reportFormat";
 import { buildAssessmentReportHtml, downloadWord, printHtml } from "../../reports/itRiskLetters";
 import ItAssessmentItemDialog from "./ItAssessmentItemDialog";
 import { VoidDialog } from "./ItIncidentDetailDialog";
@@ -173,6 +175,32 @@ function AssessmentDetail({ id, catalog, onBack, onChanged }) {
     }
   };
 
+  // Excel de la lista de verificación con los filtros aplicados (la impresión
+  // es el informe para la Junta).
+  const buildItemsExcel = () => ({
+    title: `Autoevaluación de riesgo tecnológico ${data.year}`,
+    subtitle: [
+      filters.article && `Artículo: ${filters.article}`,
+      filters.status && `Estado: ${catalog?.item_statuses?.[filters.status] || filters.status}`,
+      filters.category && `Categoría: ${catalog?.infraction_categories?.[filters.category] || filters.category}`,
+      `Cumplimiento ponderado: ${pct(data.summary.compliance_pct)}`,
+    ].filter(Boolean).join(" · "),
+    columns: [
+      { field: "item_code", label: "Req." },
+      { field: "article", label: "Artículo" },
+      { field: "requirement", label: "Requisito" },
+      { field: "infraction_category", label: "Infracción", format: (v) => catalog?.infraction_categories?.[v] || v },
+      { field: "infraction_ref", label: "Referencia Art. 21" },
+      { field: "status", label: "Estado", format: (v) => catalog?.item_statuses?.[v] || v },
+      { field: "responsible", label: "Responsable" },
+      { field: "improvement_plan", label: "Plan de mejora" },
+      { field: "due_date", label: "Compromiso", format: (v) => (v ? fmtDate(v) : "") },
+      { label: "Adjuntos", numeric: true, value: (i) => (i.evidence || []).filter((e) => !e.voided_at).length },
+    ],
+    rows: items,
+    fileName: `autoevaluacion_riesgo_ti_${data.year}`,
+  });
+
   if (error && !data) return <Alert severity="error">{error}</Alert>;
   if (!data) return <CircularProgress size={24} />;
   const s = data.summary;
@@ -188,6 +216,7 @@ function AssessmentDetail({ id, catalog, onBack, onChanged }) {
         <Box sx={{ flex: 1 }} />
         <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => report("pdf")}>Informe para la Junta</Button>
         <Button variant="outlined" startIcon={<DescriptionIcon />} onClick={() => report("word")}>Word</Button>
+        <ReportExportButtons print={false} report={buildItemsExcel} disabled={!items.length} />
         {data.status === "BORRADOR" && canManageAssessment && (
           <Button variant="contained" onClick={() => setPresenting(true)}>Presentar a la Junta</Button>
         )}
@@ -328,6 +357,22 @@ export default function ItRiskAssessments() {
     load();
   }, [load]);
 
+  const buildReport = () => ({
+    title: "Autoevaluaciones de riesgo tecnológico",
+    subtitle: "Art. 16 de la Norma CD-CONAMI-017-01AGO21-2014",
+    columns: [
+      { field: "year", label: "Año" },
+      { field: "assessment_date", label: "Fecha", format: fmtDate },
+      { field: "status", label: "Estado", format: (v) => ASSESSMENT_STATUS[v]?.label || v },
+      { label: "Cumplimiento", numeric: true, value: (r) => r.summary.compliance_pct, format: reportPercent },
+      { label: "Evaluados", value: (r) => `${r.summary.evaluated} / ${r.summary.total}` },
+      { label: "Brechas", numeric: true, value: (r) => r.summary.gaps_count, format: reportInteger },
+      { label: "Junta Directiva", value: (r) => (r.presented_to_board_at ? `${fmtDate(r.presented_to_board_at)} · acta ${r.board_minutes_ref}` : "—") },
+    ],
+    rows: rows || [],
+    fileName: "autoevaluaciones_riesgo_ti",
+  });
+
   const currentYear = dayjs().year();
   const hasCurrent = (rows || []).some((r) => r.year === currentYear && r.status !== "ANULADA");
   const lastPresented = (rows || []).find((r) => r.status === "PRESENTADA");
@@ -353,7 +398,8 @@ export default function ItRiskAssessments() {
               {lastPresented ? ` La última presentada a la Junta Directiva es la de ${lastPresented.year} (${fmtDate(lastPresented.presented_to_board_at)}).` : " Aún no se ha presentado ninguna a la Junta Directiva."}
             </Alert>
           )}
-          <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1.5 }}>
+          <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mb: 1.5 }}>
+            <ReportExportButtons report={buildReport} disabled={!rows?.length} />
             {canManageAssessment && <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreating(true)}>Nueva autoevaluación</Button>}
           </Stack>
           <Paper variant="outlined" sx={{ overflowX: "auto" }}>

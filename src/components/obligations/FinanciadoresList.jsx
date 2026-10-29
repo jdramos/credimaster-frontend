@@ -24,6 +24,7 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const API_URL = "/api/obligations/financiadores";
 
@@ -142,6 +143,18 @@ export default function FinanciadoresList() {
     },
   ], []);
 
+  const buildReport = () => ({
+    title: "Financiadores",
+    fileName: "financiadores",
+    sheetName: "Financiadores",
+    columns: [
+      { field: "name", label: "Nombre / razón social" },
+      { field: "identification", label: "Identificación", format: (v) => v || "—" },
+      { field: "status", label: "Estado", format: (v) => (v === "ACTIVO" ? "Activo" : "Inactivo") },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -166,6 +179,7 @@ export default function FinanciadoresList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchFinanciadores}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

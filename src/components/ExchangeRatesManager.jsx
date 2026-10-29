@@ -5,6 +5,7 @@ import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import CurrencyExchangeRoundedIcon from "@mui/icons-material/CurrencyExchangeRounded";
 import API from "../api";
 import HelpButton from "./help/HelpButton";
+import ReportExportButtons from "./common/ReportExportButtons";
 
 const TYPE_LABELS = { DATE: "Fecha específica", MONTH: "Mes completo", YEAR: "Año completo" };
 const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -65,6 +66,19 @@ export default function ExchangeRatesManager() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Tipos de cambio C$/US$",
+    columns: [
+      { label: "Periodo", value: formatPeriod },
+      { label: "Tipo", value: (row) => TYPE_LABELS[row.rate_type] || row.rate_type },
+      { field: "rate", label: "Tipo de cambio", numeric: true, value: (row) => Number(row.rate),
+        format: (v) => Number(v).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 4 }) },
+      { field: "notes", label: "Notas", format: (v) => v || "—" },
+    ],
+    rows,
+    fileName: "tipos_de_cambio",
+  });
+
   return (
     <Stack spacing={2.5}>
       <Box>
@@ -72,6 +86,8 @@ export default function ExchangeRatesManager() {
           <CurrencyExchangeRoundedIcon color="primary" />
           <Typography variant="h5" fontWeight={900}>Tipos de cambio C$/US$</Typography>
           <HelpButton screenKey="configuracion.tipos_cambio" />
+          <Box sx={{ flexGrow: 1 }} />
+          <ReportExportButtons report={buildReport} disabled={loading || !rows.length} size="small" />
         </Stack>
         <Typography color="text.secondary">
           Configure el tipo de cambio por fecha exacta, mes o año. Al buscar un tipo de cambio para una fecha, gana la entrada más específica: fecha exacta &gt; mes &gt; año.

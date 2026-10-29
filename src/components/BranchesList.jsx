@@ -22,6 +22,7 @@ import API from "../api";
 import DataTable from "./DataTable";
 import EmptyNotice from "./EmptyNotice";
 import { UserContext } from "../contexts/UserContext";
+import ReportExportButtons from "./common/ReportExportButtons";
 
 const bacHeaderSx = {
   background: "linear-gradient(135deg, #0d47a1 0%, #1565c0 45%, #42a5f5 100%)",
@@ -141,6 +142,24 @@ const BranchesList = () => {
     (item) => item.province_name || item.municipality_name,
   ).length;
 
+  const buildReport = () => ({
+    title: "Listado de sucursales",
+    orientation: "landscape",
+    fileName: "sucursales",
+    sheetName: "Sucursales",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "name", label: "Sucursal" },
+      { field: "address", label: "Dirección" },
+      { field: "province_name", label: "Departamento" },
+      { field: "municipality_name", label: "Municipio" },
+      { field: "manager", label: "Gerente / Administrador" },
+      { field: "telephone", label: "Teléfono" },
+    ],
+    rows: data,
+    totals: [{ value: `Total: ${totalBranches} · Con gerente: ${withManager} · Con ubicación: ${withLocation}`, colspan: 7 }],
+  });
+
   const handleCloseSnack = (_, reason) => {
     if (reason === "clickaway") return;
     setSnack((s) => ({ ...s, open: false }));
@@ -170,24 +189,31 @@ const BranchesList = () => {
               </Typography>
             </Box>
 
-            {canCreateBranch && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate("/sucursales/agregar")}
-                sx={{
-                  ...actionButtonSx,
-                  bgcolor: "#fff",
-                  color: "primary.main",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.92)",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Nueva sucursal
-              </Button>
-            )}
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <ReportExportButtons
+                report={buildReport}
+                disabled={loading || !data.length}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.6)", "&:hover": { borderColor: "#fff" } }}
+              />
+              {canCreateBranch && (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate("/sucursales/agregar")}
+                  sx={{
+                    ...actionButtonSx,
+                    bgcolor: "#fff",
+                    color: "primary.main",
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.92)",
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Nueva sucursal
+                </Button>
+              )}
+            </Stack>
           </Stack>
 
           <Stack

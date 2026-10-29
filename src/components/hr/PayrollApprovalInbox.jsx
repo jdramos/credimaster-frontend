@@ -24,6 +24,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportInteger, reportMoney } from "../common/reportFormat";
 
 const money = (value) => Number(value || 0).toLocaleString("es-NI", {
   minimumFractionDigits: 2,
@@ -74,6 +76,20 @@ export default function PayrollApprovalInbox() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Planillas pendientes de aprobación",
+    columns: [
+      { label: "Período", value: (r) => `${reportDate(r.period_start)} al ${reportDate(r.period_end)}` },
+      { field: "pay_date", label: "Fecha de pago", format: reportDate },
+      { label: "Sucursal", value: (r) => r.branch_name || "Todas" },
+      { field: "employee_count", label: "Empleados", numeric: true, format: reportInteger },
+      { field: "total_net", label: "Total neto", numeric: true, format: reportMoney },
+      { label: "Aprobación", value: (r) => `${r.approvers_approved}/${r.approvers_total} aprobado` },
+    ],
+    rows,
+    fileName: "planillas_por_aprobar",
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -90,9 +106,12 @@ export default function PayrollApprovalInbox() {
               </Typography>
             </Box>
           </Box>
-          <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchInbox}>
-            Actualizar
-          </Button>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchInbox}>
+              Actualizar
+            </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
+          </Box>
         </Box>
 
         <Table size="small">

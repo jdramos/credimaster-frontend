@@ -24,6 +24,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import SearchIcon from "@mui/icons-material/Search";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters } from "./common/reportFormat";
 
 const BAC = {
   primary: "#0057B8",
@@ -233,6 +235,27 @@ export default function CollectorList() {
     [],
   );
 
+  const buildReport = () => ({
+    title: "Listado de colectores",
+    subtitle: reportFilters([
+      ["Sucursal", branchFilter ? branchOptions.find(([id]) => id === branchFilter)?.[1] : ""],
+      ["Estado", statusFilter === "ACTIVE" ? "Activos" : statusFilter === "INACTIVE" ? "Inactivos" : "Todos"],
+      ["Búsqueda", search.trim()],
+    ]),
+    fileName: "colectores",
+    sheetName: "Colectores",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "name", label: "Nombre", format: (v) => v || "Sin nombre" },
+      { field: "telephone", label: "Teléfono" },
+      { field: "branch_name", label: "Sucursal", format: (v) => v || "Sin sucursal" },
+      { label: "Estado", value: (r) => (Number(r.active ?? 1) === 1 ? "Activo" : "Inactivo") },
+      { field: "deactivation_reason", label: "Motivo de baja" },
+    ],
+    rows: filteredRows,
+    totals: [{ value: `${filteredRows.length} registros`, colspan: 6 }],
+  });
+
   const handleSaved = async (alertData) => {
     setSnackbar({
       open: true,
@@ -381,6 +404,7 @@ export default function CollectorList() {
                 Limpiar
               </Button>
             )}
+            <ReportExportButtons report={buildReport} disabled={loading || !filteredRows.length} sx={{ bgcolor: BAC.white }} />
           </Stack>
 
           {error && (

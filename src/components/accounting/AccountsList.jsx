@@ -25,6 +25,8 @@ import API from "../../api";
 import BAC from "../../styles/bac";
 import AccountInstructionsButton from "./AccountInstructionsButton";
 import AccountEditDialog from "./AccountEditDialog";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters } from "../common/reportFormat";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = `/api/accounting/accounts`;
@@ -35,6 +37,8 @@ export default function AccountsList() {
   const canApproveAccounts = role === 1 || permissions.includes("contabilidad.cuentas.aprobar");
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
+  // Búsqueda con la que se cargaron las filas (para el reporte).
+  const [loadedSearch, setLoadedSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editAccount, setEditAccount] = useState(null);
@@ -58,6 +62,7 @@ export default function AccountsList() {
       const res = await API.get(API_URL, { params });
 
       setRows(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      setLoadedSearch(search.trim());
     } catch (error) {
       showAlert(
         error.response?.data?.message ||
@@ -230,6 +235,26 @@ export default function AccountsList() {
     [],
   );
 
+  const buildReport = () => ({
+    title: "Catálogo de Cuentas CONAMI",
+    subtitle: reportFilters([["Búsqueda", loadedSearch]]),
+    fileName: "catalogo_cuentas",
+    orientation: "landscape",
+    columns: [
+      { field: "muc_code", label: "Código MUC" },
+      { field: "account_name", label: "Cuenta" },
+      { field: "parent_code", label: "Padre", format: (v) => v || "-" },
+      { field: "level_no", label: "Nivel", numeric: true },
+      { field: "account_type", label: "Tipo", format: (v) => v || "OTRO" },
+      { field: "nature", label: "Naturaleza", format: (v) => (v === "DEBIT" ? "Débito" : "Crédito") },
+      { field: "is_movement", label: "Movimiento", format: (v) => (Number(v) === 1 ? "Sí" : "No") },
+      { field: "is_active", label: "Estado", format: (v) => (Number(v) === 1 ? "Activa" : "Inactiva") },
+      { field: "approval_status", label: "Autorización", format: (v) => ((v || "APPROVED") === "APPROVED" ? "Aprobada" : "Pendiente") },
+    ],
+    rows,
+    totals: [{ value: `Cuentas: ${rows.length}`, colspan: 9 }],
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper
@@ -281,13 +306,16 @@ export default function AccountsList() {
             </Button>
           )}
 
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchAccounts}
-          >
-            Actualizar
-          </Button>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={fetchAccounts}
+            >
+              Actualizar
+            </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
+          </Box>
         </Box>
 
         <Box sx={{ display: "flex", gap: 1, mb: 2 }}>

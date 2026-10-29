@@ -24,6 +24,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate } from "../common/reportFormat";
 
 // Cap. VII (Art. 31-32) CD-CONAMI-070-01OCT07-2025: evaluación de riesgo
 // LA/FT/FP de un producto/servicio/canal/tecnología nuevo antes de
@@ -186,6 +188,23 @@ export default function ProductRiskAssessments() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Evaluación de Riesgo de Nuevos Productos/Tecnologías",
+    subtitle: "Cap. VII, Art. 31-32 CD-CONAMI-070-01OCT07-2025",
+    columns: [
+      { field: "product_name", label: "Producto/servicio/canal" },
+      { label: "Producto financiero", value: (a) => (a.loan_product ? `${a.loan_product.code} — ${a.loan_product.name}` : "") },
+      { field: "channel", label: "Canal" },
+      { field: "description", label: "Descripción" },
+      { field: "status", label: "Estado", format: (v) => (v === "APPROVED" ? "Aprobada" : "Borrador") },
+      { field: "created_at", label: "Iniciada", format: reportDate },
+      { field: "approved_at", label: "Aprobada", format: reportDate },
+    ],
+    rows: assessments,
+    orientation: "landscape",
+    fileName: "evaluaciones_riesgo_productos",
+  });
+
   return (
     <Box p={2}>
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -194,6 +213,8 @@ export default function ProductRiskAssessments() {
             Evaluación de Riesgo de Nuevos Productos/Tecnologías
           </Typography>
           <HelpButton screenKey="cumplimiento.productos" />
+          <Box flexGrow={1} />
+          <ReportExportButtons size="small" report={buildReport} disabled={!assessments.length} />
         </Box>
         <Typography variant="body2" color="text.secondary" mb={2}>
           Antes de lanzar un producto, servicio, canal o tecnología nuevo, evalúe su riesgo

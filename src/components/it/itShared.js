@@ -79,6 +79,18 @@ export const STATE_CHIP = {
   INCUMPLIDO: { label: "Fuera de plazo", color: "warning" },
 };
 
+// Texto de un estado calculado (el mismo de StateChip), para imprimir/exportar.
+export const stateText = (state, label, suffix) => {
+  if (!state) return "";
+  return `${label || STATE_CHIP[state]?.label || state}${suffix ? ` ${suffix}` : ""}`;
+};
+
+// Sufijo de archivo de los reportes: fecha local AAAA-MM-DD.
+export const fileDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
 export const ASSET_STATUS_COLORS = { EN_USO: "success", DISPONIBLE: "info", EN_REPARACION: "warning", DE_BAJA: "default" };
 export const CRITICALITY_COLORS = { BAJA: "default", MEDIA: "info", ALTA: "warning", CRITICA: "error" };
 export const PRIORITY_COLORS = { BAJA: "default", MEDIA: "info", ALTA: "warning", URGENTE: "error" };

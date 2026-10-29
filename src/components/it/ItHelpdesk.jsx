@@ -7,6 +7,7 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ItFormDialog from "./ItFormDialog";
 import ItAttachments from "./ItAttachments";
 import ItIncidentFormDialog from "../itRisk/ItIncidentFormDialog";
@@ -14,13 +15,24 @@ import { VoidDialog } from "../itRisk/ItIncidentDetailDialog";
 import { useItRiskPermissions } from "../itRisk/itRiskShared";
 import { Field, PageHeader, StateChip } from "./ItCommon";
 import {
-  BASE, PRIORITY_COLORS, TICKET_STATUS_COLORS, errorMessage, fmtDateTime, options, useItCatalog, useItPermissions,
+  BASE, PRIORITY_COLORS, TICKET_STATUS_COLORS, errorMessage, fileDate, fmtDateTime, options, stateText, useItCatalog, useItPermissions,
 } from "./itShared";
 
 // Mesa de ayuda de TI: cualquier usuario reporta y sigue sus tickets; quien
 // tiene ti.soporte.atender ve y atiende todos. Backend: /api/it/tickets.
 
 const hoursText = (h) => (h == null ? "" : Math.abs(h) < 1 ? `${Math.round(Math.abs(h) * 60)} min` : `${Math.round(Math.abs(h) * 10) / 10} h`);
+
+// Mismo texto que SlaChip, para imprimir/exportar.
+const slaText = (sla) => {
+  if (!sla || sla.status === "ANULADO") return "";
+  if (sla.status === "VENCIDO") return `Fuera de tiempo (${hoursText(sla.hours_left)})`;
+  if (sla.status === "POR_VENCER") return `Vence en ${hoursText(sla.hours_left)}`;
+  if (sla.status === "EN_PLAZO") return `Meta ${sla.hours} h`;
+  return stateText(sla.status, null, sla.resolution_hours != null ? `(${sla.resolution_hours} h)` : "");
+};
+
+const SCOPE_LABEL = { all: "Todos", assigned: "Asignados a mí", mine: "Reportados por mí" };
 
 export function SlaChip({ sla }) {
   if (!sla || sla.status === "ANULADO") return null;
@@ -281,10 +293,33 @@ export default function ItHelpdesk() {
   ], [catalog, myAssets]);
 
   const rows = data?.items || [];
+  const statusLabel = status === "ACTIVOS" ? "Pendientes" : status ? catalog?.ticket_statuses?.[status] || status : "Todos";
+  const buildReport = () => ({
+    title: "Mesa de ayuda de TI",
+    subtitle: [attend ? SCOPE_LABEL[scope] : "Reportados por mí", `Estado: ${statusLabel}`].join(" · "),
+    orientation: "landscape",
+    columns: [
+      { field: "ticket_number", label: "Ticket" },
+      { field: "title", label: "Asunto" },
+      { field: "category", label: "Categoría", format: (v) => catalog?.ticket_categories?.[v] || v },
+      ...(attend ? [{ field: "requester_name", label: "Reportó" }] : []),
+      { field: "assigned_name", label: "Atiende" },
+      { field: "priority", label: "Prioridad", format: (v) => catalog?.ticket_priorities?.[v] || v },
+      { field: "status", label: "Estado", format: (v) => catalog?.ticket_statuses?.[v] || v },
+      { label: "Tiempo", value: (t) => slaText(t.sla) },
+      { field: "opened_at", label: "Abierto", format: fmtDateTime },
+    ],
+    rows,
+    totals: [{ value: `${rows.length} ticket(s)`, colspan: attend ? 9 : 8 }],
+    fileName: `mesa_de_ayuda_ti_${fileDate()}`,
+  });
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 } }}>
       <PageHeader title="Mesa de ayuda de TI" subtitle={attend ? "Tickets de soporte de todos los usuarios, con tiempos de respuesta por prioridad." : "Reporte problemas con su equipo, el sistema o la red y siga su atención."} helpKey="ti.mesa-de-ayuda"
-        actions={[<Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setCreating(true)}>Reportar un problema</Button>]} />
+        actions={[
+          <ReportExportButtons key="r" report={buildReport} disabled={!rows.length} />,
+          <Button key="n" variant="contained" startIcon={<AddIcon />} onClick={() => setCreating(true)}>Reportar un problema</Button>,
+        ]} />
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ mb: 2 }} alignItems={{ md: "center" }} flexWrap="wrap" useFlexGap>
         {attend && (

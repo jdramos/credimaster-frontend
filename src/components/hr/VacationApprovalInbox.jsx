@@ -23,6 +23,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate } from "../common/reportFormat";
 
 export default function VacationApprovalInbox() {
   const [rows, setRows] = useState([]);
@@ -68,6 +70,20 @@ export default function VacationApprovalInbox() {
     }
   };
 
+  const buildReport = () => ({
+    title: "Solicitudes de vacaciones pendientes",
+    columns: [
+      { field: "employee_name", label: "Empleado" },
+      { label: "Puesto", value: (r) => r.position || "" },
+      { field: "start_date", label: "Desde", format: reportDate },
+      { field: "end_date", label: "Hasta", format: reportDate },
+      { field: "days_requested", label: "Días", numeric: true, format: (v) => Number(v || 0).toLocaleString("es-NI", { maximumFractionDigits: 2 }) },
+      { field: "requested_at", label: "Solicitada", format: reportDate },
+    ],
+    rows,
+    fileName: "vacaciones_por_aprobar",
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -84,9 +100,12 @@ export default function VacationApprovalInbox() {
               </Typography>
             </Box>
           </Box>
-          <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchInbox}>
-            Actualizar
-          </Button>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchInbox}>
+              Actualizar
+            </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
+          </Box>
         </Box>
 
         <Table size="small">

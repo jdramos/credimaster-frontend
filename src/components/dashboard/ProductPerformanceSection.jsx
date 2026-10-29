@@ -1,9 +1,11 @@
 import React from "react";
 import {
-  Box, Chip, Grid, LinearProgress, Paper, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography,
+  Box, Chip, Grid, Stack, LinearProgress, Paper, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography,
 } from "@mui/material";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis } from "recharts";
 import BAC from "../../styles/bac";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportInteger, reportMoney, reportPercent } from "../common/reportFormat";
 
 // Desempeño por producto financiero del tablero gerencial (data.by_product,
 // ver backend api/loanProducts/productPerformance.js): cartera, cartera en
@@ -29,9 +31,46 @@ const Variation = ({ cur, prev, title }) => {
 
 const moraColor = (v) => (v >= 10 ? "error.main" : v >= 5 ? "warning.main" : "text.primary");
 
-export default function ProductPerformanceSection({ data, compareTitle, selectedProductId }) {
+export default function ProductPerformanceSection({ data, compareTitle, selectedProductId, period }) {
   if (!data?.rows?.length) return null;
   const { rows, totals } = data;
+
+  const buildReport = () => ({
+    title: "Desempeño por producto",
+    subtitle: "Cartera, en riesgo, PAR 30 y provisión al corte; colocado, nuevos y recuperado del período",
+    period,
+    columns: [
+      { label: "Producto", value: (r) => `${r.code || "—"} ${r.name || ""}`.trim() + (r.status === "INACTIVE" ? " (inactivo)" : "") },
+      { label: "Cartera", numeric: true, value: (r) => r.portfolio.capital, format: reportMoney },
+      { label: "Créditos", numeric: true, value: (r) => r.portfolio.loans, format: reportInteger },
+      { label: "Particip. %", numeric: true, value: (r) => r.portfolio.share, format: reportPercent },
+      { label: "En riesgo %", numeric: true, value: (r) => r.portfolio.overdue_pct, format: reportPercent },
+      { label: "Capital en riesgo", numeric: true, value: (r) => r.portfolio.overdue_capital, format: reportMoney },
+      { label: "PAR 30 %", numeric: true, value: (r) => r.portfolio.par30_pct, format: reportPercent },
+      { label: "Provisión", numeric: true, value: (r) => r.portfolio.provision, format: reportMoney },
+      { label: "Colocado", numeric: true, value: (r) => r.placement.amount, format: reportMoney },
+      { label: "Créd. colocados", numeric: true, value: (r) => r.placement.loans, format: reportInteger },
+      { label: "Nuevos", numeric: true, value: (r) => r.placement.new_customers, format: reportInteger },
+      { label: "Recuperado", numeric: true, value: (r) => r.collections.total, format: reportMoney },
+    ],
+    rows,
+    totals: [
+      { value: "Total" },
+      { value: reportMoney(totals.portfolio.capital), raw: totals.portfolio.capital, numeric: true },
+      { value: reportInteger(totals.portfolio.loans), raw: totals.portfolio.loans, numeric: true },
+      { value: "100%", raw: 100, numeric: true },
+      { value: reportPercent(totals.portfolio.overdue_pct), raw: totals.portfolio.overdue_pct, numeric: true },
+      { value: reportMoney(totals.portfolio.overdue_capital), raw: totals.portfolio.overdue_capital, numeric: true },
+      { value: reportPercent(totals.portfolio.par30_pct), raw: totals.portfolio.par30_pct, numeric: true },
+      { value: reportMoney(totals.portfolio.provision), raw: totals.portfolio.provision, numeric: true },
+      { value: reportMoney(totals.placement.amount), raw: totals.placement.amount, numeric: true },
+      { value: reportInteger(totals.placement.loans), raw: totals.placement.loans, numeric: true },
+      { value: reportInteger(totals.placement.new_customers), raw: totals.placement.new_customers, numeric: true },
+      { value: reportMoney(totals.collections.total), raw: totals.collections.total, numeric: true },
+    ],
+    orientation: "landscape",
+    fileName: "desempeno_por_producto",
+  });
   const chartRows = rows
     .filter((r) => r.portfolio.capital > 0 || r.placement.amount > 0)
     .map((r) => ({ label: r.code || "Sin producto", capital: r.portfolio.capital, placement: r.placement.amount }));
@@ -41,6 +80,9 @@ export default function ProductPerformanceSection({ data, compareTitle, selected
       <Grid container spacing={1.5}>
         <Grid item xs={12} lg={chartRows.length ? 8 : 12}>
           <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5, overflowX: "auto" }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mb: 1 }}>
+              <ReportExportButtons size="small" report={buildReport} />
+            </Stack>
             <Table size="small" sx={{ "& td, & th": { whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" } }}>
               <TableHead>
                 <TableRow>

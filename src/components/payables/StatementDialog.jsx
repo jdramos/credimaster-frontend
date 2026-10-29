@@ -6,6 +6,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import { DataGrid } from "@mui/x-data-grid";
 import API from "../../api";
 import { printAccountingReport } from "../accounting/printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateStr = (v) => (v ? String(v).slice(0, 10) : "");
@@ -36,8 +37,9 @@ export default function StatementDialog({ open, onClose, providerId, notify }) {
     { field: "balance", headerName: "Saldo", width: 130, type: "number", valueFormatter: (p) => money(p.value) },
   ];
 
-  const print = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Estado de Cuenta - Proveedor",
+    fileName: `estado_cuenta_proveedor_${provider?.ruc || provider?.name || providerId}`,
     subtitle: `${provider?.name || ""}${provider?.ruc ? ` · RUC: ${provider.ruc}` : ""}`,
     period: "",
     columns: [
@@ -49,8 +51,10 @@ export default function StatementDialog({ open, onClose, providerId, notify }) {
       { field: "balance", label: "Saldo", numeric: true, format: money },
     ],
     rows,
-    totals: [{ value: "Saldo final", colspan: 5 }, { value: money(balance), numeric: true }],
+    totals: [{ value: "Saldo final", colspan: 5 }, { value: money(balance), numeric: true, raw: Number(balance || 0) }],
   });
+
+  const print = () => printAccountingReport(buildReport());
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -63,6 +67,7 @@ export default function StatementDialog({ open, onClose, providerId, notify }) {
             {provider?.ruc ? `RUC: ${provider.ruc}` : ""}
           </Typography>
           <Button size="small" startIcon={<PrintIcon />} onClick={print} disabled={!rows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} size="small" sx={{ ml: 1 }} />
         </Stack>
         {rows.length === 0 && <Alert severity="info">Sin movimientos.</Alert>}
         <Box sx={{ height: 420 }}>

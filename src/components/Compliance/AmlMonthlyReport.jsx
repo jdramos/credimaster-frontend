@@ -25,6 +25,8 @@ import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { printAnnualRiskReport } from "../../reports/annualRiskReport";
 import { printMonthlyReport } from "../../reports/monthlyReport";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportDateTime, reportInteger } from "../common/reportFormat";
 
 const currentPeriod = () => new Date().toISOString().slice(0, 7);
 const currentYear = () => new Date().getFullYear();
@@ -134,6 +136,56 @@ export default function AmlMonthlyReport() {
     printMonthlyReport({ company: buildCompany(), user, report });
   };
 
+  // Excel con el mismo contenido de "Emitir informe" (la impresión formal se
+  // mantiene en reports/monthlyReport.js y reports/annualRiskReport.js).
+  const yesNo = (v) => (v ? "SÍ" : "NO");
+  const buildMonthlyExcel = () => ({
+    title: "Informe Mensual PLA/FT/FP a CONAMI",
+    subtitle: "Art. 42.1 CD-CONAMI-070-01OCT07-2025",
+    period: report.period || period,
+    columns: [
+      { field: "ref", label: "Numeral / N° caso" },
+      { field: "concept", label: "Concepto / Cliente" },
+      { field: "value", label: "Valor / Fecha de envío", numeric: true, format: (v) => (typeof v === "number" ? reportInteger(v) : v) },
+    ],
+    rows: [
+      { ref: "42.1.1", concept: "ROS enviados en el mes", value: Number(report.ros_sent_count || 0) },
+      { ref: "42.1.2", concept: "RAII", value: yesNo(report.raii_flag) },
+      { ref: "42.1.3", concept: "Actualizaciones de listas ONU", value: report.onu_list_updates?.length || 0 },
+      { ref: "42.1.3", concept: "Cartera escaneada tras la actualización", value: report.onu_list_attended ? "SÍ" : "—" },
+      { ref: "42.1.4", concept: "Solicitudes rechazadas por PLA/FT", value: Number(report.apps_rejected_count || 0) },
+      { ref: "42.1.5", concept: "De esas, con ROS", value: Number(report.ros_from_rejected_apps || 0) },
+      { ref: "42.1.6", concept: "Relaciones cerradas por PLA/FT", value: Number(report.relationships_closed_count || 0) },
+      { ref: "42.1.7", concept: "De esas, con ROS", value: Number(report.ros_from_closed_relationships || 0) },
+      { section: true, ref: "Detalle de ROS enviados" },
+      ...(report.ros_sent || []).map((r) => ({ ref: r.case_number, concept: r.customer_name, value: reportDateTime(r.ros_sent_at) })),
+    ],
+    fileName: `informe_mensual_plaft_${report.period || period}`,
+  });
+
+  const buildAnnualExcel = () => {
+    const porNivel = annualReport.por_nivel || {};
+    return {
+      title: "Informe Anual de Evaluaciones Individuales de Riesgo",
+      subtitle: `BAJO: ${porNivel.BAJO || 0} · MEDIO: ${porNivel.MEDIO || 0} · ALTO: ${porNivel.ALTO || 0} · Vencimiento de remisión: ${annualReport.deadline || "—"}`,
+      period: `Año ${annualReport.year || year}`,
+      columns: [
+        { field: "customer_code", label: "Código" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "identification", label: "Identificación" },
+        { field: "risk_level", label: "Nivel de riesgo" },
+        { field: "risk_score", label: "Puntaje", numeric: true, format: (v) => (v != null ? Number(v).toFixed(2) : "") },
+        { field: "risk_calculated_at", label: "Fecha de evaluación", format: reportDate },
+      ],
+      rows: annualReport.customers || [],
+      totals: [
+        { value: "Total evaluados", colspan: 5 },
+        { value: reportInteger(annualReport.total_evaluados), raw: Number(annualReport.total_evaluados || 0) },
+      ],
+      fileName: `informe_anual_riesgo_${annualReport.year || year}`,
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff", mb: 2 }}>
@@ -167,6 +219,7 @@ export default function AmlMonthlyReport() {
           >
             Emitir informe
           </Button>
+          <ReportExportButtons print={false} report={buildMonthlyExcel} disabled={!report} />
         </Box>
 
         {report && (
@@ -337,6 +390,7 @@ export default function AmlMonthlyReport() {
           >
             Emitir informe
           </Button>
+          <ReportExportButtons print={false} report={buildAnnualExcel} disabled={!annualReport} />
         </Box>
 
         {annualReport && (

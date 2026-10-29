@@ -25,6 +25,8 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters } from "../common/reportFormat";
 
 const emptyForm = {
   id: null, name: "", ruc: "", telephone: "", email: "", address: "",
@@ -41,6 +43,8 @@ export default function ProvidersList() {
     const fromUrl = searchParams.get("buscar");
     if (fromUrl !== null) setSearch(fromUrl);
   }, [searchParams]);
+  // Búsqueda con la que se cargaron las filas (para el reporte).
+  const [loadedSearch, setLoadedSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [codes, setCodes] = useState([]);
@@ -59,6 +63,7 @@ export default function ProvidersList() {
     try {
       const res = await API.get("/api/providers", { params: search ? { search } : {} });
       setRows(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      setLoadedSearch(search);
     } catch (e) {
       notify(e.response?.data?.message || "Error cargando proveedores", "error");
     } finally {
@@ -122,6 +127,24 @@ export default function ProvidersList() {
     [],
   );
 
+  const buildReport = () => ({
+    title: "Proveedores",
+    subtitle: reportFilters([["Búsqueda", loadedSearch]]),
+    fileName: "proveedores",
+    columns: [
+      { field: "name", label: "Nombre / Razón social" },
+      { field: "ruc", label: "RUC / Cédula", format: (v) => v || "—" },
+      { field: "telephone", label: "Teléfono", format: (v) => v || "—" },
+      { field: "email", label: "Correo", format: (v) => v || "—" },
+      {
+        label: "Retención IR",
+        value: (r) => (Number(r.applies_retention) ? `Sí${r.retention_code ? ` (código ${r.retention_code})` : ""}` : "No"),
+      },
+    ],
+    rows,
+    totals: [{ value: `Proveedores: ${rows.length}`, colspan: 5 }],
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
@@ -148,6 +171,7 @@ export default function ProvidersList() {
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && fetchRows()} sx={{ minWidth: 260 }} />
           <Button variant="outlined" onClick={fetchRows} sx={{ textTransform: "none" }}>Buscar</Button>
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Stack>
 
         <Box sx={{ height: 560 }}>

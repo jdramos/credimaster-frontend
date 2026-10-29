@@ -40,6 +40,8 @@ import dayjs from "dayjs";
 import { useAuth } from "../../contexts/AuthContext";
 import { printColillaDePagoReport } from "../../reports/printColillaDePagoReport";
 import { printPlanillaReport } from "../../reports/printPlanillaReport";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportInteger, reportMoney } from "../common/reportFormat";
 
 const API_URL = "/api/hr/payroll-runs";
 
@@ -307,6 +309,31 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
     },
   ], []);
 
+  // Mismas columnas y filas que "Exportar Excel"; el estado va traducido.
+  const RUN_STATUS_LABEL = {
+    APROBADA: "Aprobada",
+    ANULADA: "Anulada",
+    RECHAZADA: "Rechazada",
+    PENDIENTE_APROBACION: "Pendiente de aprobación",
+    BORRADOR: "Borrador",
+  };
+  const buildReport = () => ({
+    title: isAguinaldo ? "Aguinaldo" : "Planillas",
+    columns: [
+      { field: "id", label: "#" },
+      { field: "period_start", label: "Período desde", format: reportDate },
+      { field: "period_end", label: "Período hasta", format: reportDate },
+      { field: "pay_date", label: "Fecha de pago", format: reportDate },
+      { label: "Sucursal", value: (r) => r.branch_name || "Todas" },
+      { field: "employee_count", label: "Empleados", numeric: true, format: reportInteger },
+      { field: "total_net", label: "Total neto", numeric: true, format: reportMoney },
+      { field: "status", label: "Estado", format: (v) => RUN_STATUS_LABEL[v] || v },
+    ],
+    rows,
+    orientation: "landscape",
+    fileName: `${isAguinaldo ? "aguinaldo" : "planillas"}_${dayjs().format("YYYYMMDD")}`,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -356,6 +383,7 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
             >
               Exportar Excel
             </Button>
+            <ReportExportButtons excel={false} report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

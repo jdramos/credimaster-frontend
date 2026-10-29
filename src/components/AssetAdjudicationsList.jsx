@@ -22,6 +22,8 @@ import SellIcon from "@mui/icons-material/Sell";
 import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../api";
 import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportDate, reportMoney } from "./common/reportFormat";
 
 const API_URL = "/api/asset-adjudications";
 
@@ -44,6 +46,15 @@ const money = (value) =>
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+const totalApplied = (row) =>
+  Number(row.applied_to_principal || 0) +
+  Number(row.applied_to_interest || 0) +
+  Number(row.applied_to_default_interest || 0) +
+  Number(row.applied_to_fees || 0) +
+  Number(row.applied_to_other_charges || 0);
+
+const optionalMoney = (v) => (v === null || v === undefined || v === "" ? "" : reportMoney(v));
 
 export default function AssetAdjudicationsList() {
   const [rows, setRows] = useState([]);
@@ -148,6 +159,39 @@ export default function AssetAdjudicationsList() {
     }
   };
 
+  const buildReport = () => {
+    const sum = (fn) => rows.reduce((acc, r) => acc + Number(fn(r) || 0), 0);
+    const totalAdjudicated = sum((r) => r.adjudicated_value);
+    const totalAppliedAll = sum(totalApplied);
+    const totalSale = sum((r) => r.sale_price);
+    const totalGainLoss = sum((r) => r.gain_loss_amount);
+    return {
+      title: "Adjudicaciones de Bienes",
+      columns: [
+        { field: "credit_code", label: "Crédito" },
+        { field: "customer_name", label: "Cliente" },
+        { field: "adjudication_date", label: "Fecha", format: reportDate },
+        { field: "asset_description", label: "Bien" },
+        { field: "adjudicated_value", label: "Valor adjudicado", numeric: true, format: reportMoney },
+        { label: "Total aplicado", numeric: true, value: totalApplied, format: reportMoney },
+        { field: "sale_price", label: "Precio de venta", numeric: true, format: optionalMoney },
+        { field: "gain_loss_amount", label: "Ganancia/Pérdida", numeric: true, format: optionalMoney },
+        { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v || "" },
+      ],
+      rows,
+      totals: [
+        { value: `Totales (${rows.length})`, colspan: 4 },
+        { value: reportMoney(totalAdjudicated), raw: totalAdjudicated, numeric: true },
+        { value: reportMoney(totalAppliedAll), raw: totalAppliedAll, numeric: true },
+        { value: reportMoney(totalSale), raw: totalSale, numeric: true },
+        { value: reportMoney(totalGainLoss), raw: totalGainLoss, numeric: true },
+        { value: "" },
+      ],
+      orientation: "landscape",
+      fileName: "adjudicaciones_bienes",
+    };
+  };
+
   const columns = [
     {
       field: "credit_code",
@@ -186,12 +230,7 @@ export default function AssetAdjudicationsList() {
       width: 150,
       align: "right",
       headerAlign: "right",
-      valueGetter: (params) =>
-        Number(params.row.applied_to_principal || 0) +
-        Number(params.row.applied_to_interest || 0) +
-        Number(params.row.applied_to_default_interest || 0) +
-        Number(params.row.applied_to_fees || 0) +
-        Number(params.row.applied_to_other_charges || 0),
+      valueGetter: (params) => totalApplied(params.row),
       valueFormatter: (params) => `C$ ${money(params.value)}`,
     },
     {
@@ -304,6 +343,10 @@ export default function AssetAdjudicationsList() {
             Adjudicaciones de Bienes
           </Typography>
           <HelpButton screenKey="adjudicaciones.listado" />
+          <Box sx={{ flexGrow: 1 }} />
+          <Stack direction="row" spacing={1}>
+            <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
+          </Stack>
         </Box>
 
         <div style={{ height: 600, width: "100%" }}>

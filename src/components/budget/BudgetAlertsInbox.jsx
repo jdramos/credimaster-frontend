@@ -19,6 +19,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { getBudgetAlerts, runBudgetAlertCheck, dismissBudgetAlert } from "../../api/budget";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDateTime } from "../common/reportFormat";
 
 const STATUS_CHIP = {
   OPEN: { label: "Abierta", color: "warning" },
@@ -145,6 +147,24 @@ export default function BudgetAlertsInbox() {
     },
   ];
 
+  const buildReport = () => ({
+    title: "Alertas de presupuesto",
+    subtitle: `Estado: ${statusFilter === "ALL" ? "Todas" : STATUS_CHIP[statusFilter]?.label || statusFilter}`,
+    orientation: "landscape",
+    fileName: "alertas_presupuesto",
+    sheetName: "Alertas",
+    columns: [
+      { field: "alert_type", label: "Tipo", format: (v) => ALERT_TYPE_LABEL[v] || v || "" },
+      { field: "year_no", label: "Año" },
+      { field: "month_no", label: "Mes" },
+      { label: "Referencia", value: (r) => (r.muc_code ? `${r.muc_code} — ${r.account_name || ""}` : r.branch_name || "Consolidado") },
+      { field: "description", label: "Descripción" },
+      { field: "triggered_at", label: "Fecha", format: reportDateTime },
+      { field: "status", label: "Estado", format: (v) => STATUS_CHIP[v]?.label || v || "" },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -162,6 +182,7 @@ export default function BudgetAlertsInbox() {
           <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={handleRunCheck} disabled={running}>
             {running ? "Ejecutando..." : "Ejecutar verificación"}
           </Button>
+          <ReportExportButtons report={buildReport} disabled={!rows.length} />
         </Box>
 
         <Stack direction="row" spacing={1} mb={2}>

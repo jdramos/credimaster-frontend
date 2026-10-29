@@ -7,6 +7,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DescriptionIcon from "@mui/icons-material/Description";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 export default function FinancialStatementNotes() {
   const currentYear = new Date().getFullYear();
@@ -62,6 +63,21 @@ export default function FinancialStatementNotes() {
     return years;
   }, [currentYear]);
 
+  // Contenido guardado de cada nota (no los borradores sin guardar).
+  const buildReport = () => ({
+    title: "Notas a los Estados Financieros",
+    subtitle: `Manual Único de Cuentas CONAMI (Cap. IV) · Notas con contenido: ${completedCount} / 13`,
+    period: `Año ${year}`,
+    fileName: `notas_estados_financieros_${year}`,
+    columns: [
+      { field: "note_number", label: "Nota" },
+      { field: "title", label: "Título" },
+      { field: "status", label: "Estado", format: (v) => (v === "FINAL" ? "Definitiva" : "Borrador") },
+      { field: "content", label: "Contenido", format: (v) => (v || "").trim() || "(Vacía)" },
+    ],
+    rows: notes,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
@@ -83,6 +99,8 @@ export default function FinancialStatementNotes() {
             {yearOptions.map((y) => <MenuItem key={y} value={y}>{y}</MenuItem>)}
           </TextField>
           <Chip color={completedCount === 13 ? "success" : "warning"} label={`Notas con contenido: ${completedCount} / 13`} />
+          <Box sx={{ flex: 1 }} />
+          <ReportExportButtons report={buildReport} disabled={loading || !notes.length} />
         </Stack>
 
         {loading && <Typography variant="body2" color="text.secondary">Cargando...</Typography>}

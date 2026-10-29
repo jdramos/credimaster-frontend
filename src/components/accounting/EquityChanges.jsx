@@ -6,6 +6,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import API from "../../api";
 import PrintIcon from "@mui/icons-material/Print";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormC } from "./mucReportModels";
@@ -77,13 +78,16 @@ export default function EquityChanges() {
     [rows, previousRows, generatedYear],
   );
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Estado de Cambios en el Patrimonio",
+    fileName: `cambios_patrimonio_${filters.start_date}_${filters.end_date}`,
     subtitle: `Forma C - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${filters.start_date} al ${filters.end_date}`,
     columns: formColumns,
     rows: formRows,
   });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   return (
     <Box sx={{ p: 2 }}>
@@ -105,6 +109,7 @@ export default function EquityChanges() {
           <ReportBranchFilter value={filters.branch_id} onChange={(id, name) => { setFilters((p) => ({ ...p, branch_id: id })); setBranchName(name); }} />
           <Button variant="contained" onClick={generate} disabled={loading}>Generar</Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
           <ReportSignaturesDialog />
         </Stack>
 

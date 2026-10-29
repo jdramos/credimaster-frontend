@@ -18,6 +18,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FormControlLabel, Checkbox } from '@mui/material';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import ReportExportButtons from './common/ReportExportButtons';
+import { reportFilters } from './common/reportFormat';
 
 const UsersList = () => {
     const { permissions = [], role } = useContext(UserContext) || {};
@@ -56,6 +58,24 @@ const UsersList = () => {
 
 
 
+    // Impresión con las mismas columnas y filas que el Excel.
+    const buildReport = () => ({
+        title: 'Lista de Usuarios',
+        subtitle: reportFilters([['Búsqueda', search.trim()], ['Inactivos', showInactive ? '' : 'ocultos']]),
+        columns: [
+            { field: 'id', label: 'ID' },
+            { field: 'user_name', label: 'Usuario' },
+            { field: 'full_name', label: 'Nombre Completo' },
+            { field: 'email', label: 'Email' },
+            { field: 'role_name', label: 'Rol' },
+            { field: 'user_status', label: 'Estado' },
+            { field: 'branch_name', label: 'Sucursales' },
+        ],
+        rows: filteredRows,
+        totals: [{ value: `Usuarios: ${filteredRows.length}`, colspan: 7 }],
+        orientation: 'landscape',
+    });
+
     const fetchUsers = () => {
         setLoading(true);
         API.get('/api/users')
@@ -93,7 +113,7 @@ const UsersList = () => {
         });
 
         setFilteredRows(filtered);
-    }, [search, rows]);
+    }, [search, rows, showInactive]);
 
     const handleEdit = (user) => {
         setEditUser({ user });
@@ -225,6 +245,7 @@ const UsersList = () => {
                     >
                         Exportar a Excel
                     </Button>
+                    <ReportExportButtons excel={false} report={buildReport} disabled={loading || !filteredRows.length} />
 
 
                     <FormControlLabel

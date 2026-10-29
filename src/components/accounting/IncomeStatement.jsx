@@ -19,6 +19,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import PrintIcon from "@mui/icons-material/Print";
 import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
+import ReportExportButtons from "../common/ReportExportButtons";
 import ReportBranchFilter from "./ReportBranchFilter";
 import ReportSignaturesDialog from "./ReportSignaturesDialog";
 import { buildMucFormB } from "./mucReportModels";
@@ -192,13 +193,16 @@ export default function IncomeStatement() {
   ];
   const formRows = useMemo(() => (allRows.length ? buildMucFormB(allRows, previousRows) : []), [allRows, previousRows]);
 
-  const printReport = () => printAccountingReport({
+  const buildReport = () => ({
     title: "Estado de Resultados",
+    fileName: `estado_resultados_${generated.from || "inicio"}_${generated.to || "corte"}`,
     subtitle: `Forma B - Manual Único de Cuentas CONAMI · Sucursal: ${branchName || "Todas"}`,
     period: `Del ${generated.from || "inicio"} al ${generated.to || "corte"}`,
     columns: formColumns,
     rows: formRows,
   });
+
+  const printReport = () => printAccountingReport(buildReport());
 
   return (
     <Box sx={{ p: 2 }}>
@@ -267,6 +271,7 @@ export default function IncomeStatement() {
             Generar
           </Button>
           <Button variant="outlined" startIcon={<PrintIcon />} onClick={printReport} disabled={!rows.length}>Imprimir</Button>
+          <ReportExportButtons print={false} report={buildReport} disabled={!rows.length} />
           <ReportSignaturesDialog />
         </Box>
 

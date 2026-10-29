@@ -18,6 +18,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { DataGrid } from "@mui/x-data-grid";
 import BAC from "../../../styles/bac";
 import API from "../../../api";
+import ReportExportButtons from "../../../components/common/ReportExportButtons";
+import { reportInteger } from "../../../components/common/reportFormat";
 
 const getDefaultMonth = () => {
   const today = new Date();
@@ -29,6 +31,14 @@ const getCutoffDate = (month) => {
   const [year, m] = month.split("-").map(Number);
   const lastDay = new Date(year, m, 0).getDate();
   return `${month}-${String(lastDay).padStart(2, "0")}`;
+};
+
+const STATUS_LABELS = {
+  GENERATED: "Generado",
+  WITH_ERRORS: "Con errores",
+  FAILED: "Fallido",
+  VALIDATING: "Validando",
+  DRAFT: "Borrador",
 };
 
 export default function IccReportPage() {
@@ -272,6 +282,39 @@ export default function IccReportPage() {
     { field: "record_key", headerName: "Registro", width: 140 },
   ];
 
+  // Imprimir/Excel del historial y de los errores (no tocan el ZIP oficial).
+  const buildRunsReport = () => ({
+    title: "Historial de corridas ICC",
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "report_month", label: "Mes" },
+      { field: "cutoff_date", label: "Fecha corte", format: (v) => (v ? String(v).slice(0, 10) : "") },
+      { field: "status", label: "Estado", format: (v) => STATUS_LABELS[v] || v },
+      { field: "total_errors", label: "Errores", numeric: true, format: reportInteger },
+      { field: "generated_at", label: "Generado", format: (v) => (v ? String(v).replace("T", " ").slice(0, 19) : "") },
+    ],
+    rows: runs,
+    fileName: "icc_corridas",
+  });
+
+  const buildErrorsReport = () => ({
+    title: "Errores de validación ICC",
+    subtitle: `Corrida #${selectedRun}`,
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "file_code", label: "Archivo" },
+      { field: "line_number", label: "Línea" },
+      { field: "field_name", label: "Campo" },
+      { field: "validation_code", label: "Validación" },
+      { field: "error_message", label: "Mensaje" },
+      { field: "record_key", label: "Registro" },
+    ],
+    rows: errors,
+    totals: [{ value: `Total de errores: ${errors.length}`, colspan: 7 }],
+    orientation: "landscape",
+    fileName: `icc_errores_corrida_${selectedRun}`,
+  });
+
   return (
     <Box sx={{ p: 3, bgcolor: BAC.bg, minHeight: "100vh" }}>
       <Paper
@@ -386,13 +429,18 @@ export default function IccReportPage() {
           mb: 3,
         }}
       >
-        <Box sx={{ p: 2.5 }}>
-          <Typography fontWeight={900} color={BAC.text}>
-            Historial de corridas ICC
-          </Typography>
-          <Typography fontSize={13} color={BAC.muted}>
-            Corridas generadas, estado del proceso y descarga del ZIP
-          </Typography>
+        <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+          <Box>
+            <Typography fontWeight={900} color={BAC.text}>
+              Historial de corridas ICC
+            </Typography>
+            <Typography fontSize={13} color={BAC.muted}>
+              Corridas generadas, estado del proceso y descarga del ZIP
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <ReportExportButtons size="small" report={buildRunsReport} disabled={!runs.length} />
+          </Stack>
         </Box>
 
         <Divider />
@@ -428,13 +476,18 @@ export default function IccReportPage() {
             overflow: "hidden",
           }}
         >
-          <Box sx={{ p: 2.5 }}>
-            <Typography fontWeight={900} color={BAC.text}>
-              Errores de validación ICC
-            </Typography>
-            <Typography fontSize={13} color={BAC.muted}>
-              Corrida seleccionada #{selectedRun}
-            </Typography>
+          <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+            <Box>
+              <Typography fontWeight={900} color={BAC.text}>
+                Errores de validación ICC
+              </Typography>
+              <Typography fontSize={13} color={BAC.muted}>
+                Corrida seleccionada #{selectedRun}
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <ReportExportButtons size="small" report={buildErrorsReport} disabled={!errors.length} />
+            </Stack>
           </Box>
 
           <Divider />

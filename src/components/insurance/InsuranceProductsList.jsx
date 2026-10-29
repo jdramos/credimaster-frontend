@@ -27,6 +27,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import ReportExportButtons from "../common/ReportExportButtons";
 
 const API_URL = "/api/insurance/products";
 const PROVIDERS_URL = "/api/insurance/providers";
@@ -214,6 +215,33 @@ export default function InsuranceProductsList() {
     [canManage],
   );
 
+  const buildReport = () => ({
+    title: "Tipos de seguro",
+    orientation: "landscape",
+    fileName: "tipos_seguro",
+    sheetName: "Tipos de seguro",
+    columns: [
+      { field: "name", label: "Tipo de seguro" },
+      { field: "provider_name", label: "Aseguradora" },
+      { field: "coverage_type", label: "Cobertura" },
+      { field: "benefits", label: "Beneficios" },
+      {
+        label: "Prima de referencia",
+        value: (r) => (r.premium_type === "PORCENTAJE_MONTO" ? `${money(r.premium_value)}% del monto` : `C$ ${money(r.premium_value)}`),
+      },
+      {
+        label: "% comisión",
+        value: (r) => {
+          if (r.commission_rate !== null && r.commission_rate !== undefined) return `${money(r.commission_rate)}%`;
+          if (r.provider_commission_rate !== null && r.provider_commission_rate !== undefined) return `${money(r.provider_commission_rate)}% (aseguradora)`;
+          return "—";
+        },
+      },
+      { field: "status", label: "Estado", format: (v) => (v === "ACTIVO" ? "Activo" : "Inactivo") },
+    ],
+    rows,
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -242,6 +270,7 @@ export default function InsuranceProductsList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchProducts}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

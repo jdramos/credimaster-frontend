@@ -9,6 +9,8 @@ import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import * as XLSX from "xlsx";
 import API from "../../api";
 import HelpButton from "../help/HelpButton";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportInteger, reportMoney, reportPeriod } from "../common/reportFormat";
 import ItIncidentFormDialog from "./ItIncidentFormDialog";
 import ItIncidentDetailDialog from "./ItIncidentDetailDialog";
 import {
@@ -29,6 +31,20 @@ export function DeadlineChip({ incident }) {
   }
   return <Chip size="small" color={ALERTS[alert].color} label={ALERTS[alert].label} />;
 }
+
+// Mismo texto que DeadlineChip, para imprimir.
+const deadlineText = (incident) => {
+  const alert = incident.deadlines?.alert;
+  if (!incident.reportable) return "No se informa";
+  if (incident.status === "ANULADO") return "";
+  if (!alert) {
+    const late = incident.deadlines?.detail?.status === "ENVIADO_TARDE" || incident.deadlines?.initial?.status === "ENVIADO_TARDE";
+    return late ? "Informado fuera de plazo" : "Informado";
+  }
+  return ALERTS[alert].label;
+};
+
+const moneyColumn = (field, label) => ({ field, label, numeric: true, format: reportMoney });
 
 export function AlertsBanner({ alerts, onOpen }) {
   if (!alerts?.total) return null;
@@ -81,6 +97,41 @@ function IncidentsTab({ catalog, rows, loading, filters, setFilters, onOpen, onN
     XLSX.writeFile(wb, `incidentes_ti_${dayjs().format("YYYYMMDD")}.xlsx`);
   };
 
+  // Impresión con las columnas principales del Excel (las 16 no caben en una hoja).
+  const buildPrintReport = () => {
+    const sum = (f) => rows.reduce((s, r) => s + Number(r[f] || 0), 0);
+    return {
+      title: "Incidentes y eventos de TI",
+      subtitle: [
+        filters.type && `Tipo: ${types[filters.type]?.short || filters.type}`,
+        `Estado: ${filters.status ? catalog?.incident_statuses?.[filters.status] || filters.status : "Vigentes"}`,
+        filters.include_voided && "Incluye anulados",
+      ].filter(Boolean).join(" · "),
+      orientation: "landscape",
+      columns: [
+        { field: "incident_number", label: "Registro" },
+        { field: "incident_type", label: "Tipo", format: (v) => types[v]?.short || v },
+        { field: "title", label: "Título" },
+        { field: "occurred_at", label: "Ocurrencia", format: fmtDateTime },
+        { field: "detected_at", label: "Detección", format: fmtDateTime },
+        { field: "affected_customers_count", label: "Clientes afectados", numeric: true, format: reportInteger },
+        moneyColumn("economic_loss", "Pérdida (C$)"),
+        moneyColumn("lost_profit", "Frustración de ganancia (C$)"),
+        { field: "severity", label: "Severidad", format: (v) => catalog?.severities?.[v] || v },
+        { field: "status", label: "Estado", format: (v) => catalog?.incident_statuses?.[v] || v },
+        { label: "Aviso CONAMI", value: deadlineText },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length})`, colspan: 5 },
+        { value: reportInteger(sum("affected_customers_count")), raw: sum("affected_customers_count"), numeric: true },
+        { value: reportMoney(sum("economic_loss")), raw: sum("economic_loss"), numeric: true },
+        { value: reportMoney(sum("lost_profit")), raw: sum("lost_profit"), numeric: true },
+        { value: "", colspan: 3 },
+      ],
+    };
+  };
+
   return (
     <>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ mb: 2 }} alignItems={{ md: "center" }}>
@@ -97,6 +148,7 @@ function IncidentsTab({ catalog, rows, loading, filters, setFilters, onOpen, onN
           label="Incluir anulados"
         />
         <Box sx={{ flex: 1 }} />
+        <ReportExportButtons excel={false} report={buildPrintReport} disabled={!rows.length} />
         <Button variant="outlined" onClick={exportExcel} disabled={!rows.length}>Excel</Button>
         {canManage && <Button variant="contained" startIcon={<AddIcon />} onClick={onNew}>Registrar incidente</Button>}
       </Stack>
@@ -161,6 +213,40 @@ export function LossAnalysisTab() {
     load();
   }, [load]);
 
+  // Las cuatro tablas del análisis en un solo reporte, una sección por tabla.
+  const buildReport = () => {
+    const groups = [
+      ["Por tipo de evento", data.by_type],
+      ["Por causa", data.by_cause],
+      ["Por severidad", data.by_severity],
+      ["Por mes de ocurrencia", data.by_month],
+    ];
+    return {
+      title: "Análisis de pérdidas por riesgo tecnológico (Art. 18)",
+      subtitle: [
+        `Eventos: ${data.total.count}`,
+        `Frecuencia anual: ${data.total.annual_frequency}`,
+        `Impacto total: ${nio(data.total.total_impact)}`,
+        `Impacto anualizado: ${nio(data.total.annual_impact)}`,
+        `Clientes afectados: ${data.total.affected_customers.toLocaleString("es-NI")}`,
+      ].join(" · "),
+      period: reportPeriod(data.from, data.to),
+      orientation: "landscape",
+      columns: [
+        { label: "Agrupación", value: (r) => r.label || r.month },
+        { field: "count", label: "Eventos", numeric: true, format: reportInteger },
+        { field: "annual_frequency", label: "Frecuencia anual", numeric: true, format: (v) => String(v ?? "") },
+        moneyColumn("economic_loss", "Pérdida"),
+        moneyColumn("lost_profit", "Frustración de ganancia"),
+        moneyColumn("total_impact", "Impacto total"),
+        moneyColumn("avg_impact", "Impacto promedio"),
+        moneyColumn("max_impact", "Mayor impacto"),
+      ],
+      rows: groups.flatMap(([title, list]) => [{ section: true, label: title }, ...list]),
+      fileName: `analisis_perdidas_ti_${data.from || ""}_${data.to || ""}`,
+    };
+  };
+
   const table = (title, rows, keyLabel) => (
     <Paper variant="outlined" sx={{ mb: 2, overflowX: "auto" }}>
       <Typography fontWeight={700} sx={{ px: 2, pt: 1.5 }}>{title}</Typography>
@@ -206,6 +292,8 @@ export function LossAnalysisTab() {
         <TextField size="small" type="date" label="Desde" InputLabelProps={{ shrink: true }} value={range.from} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} />
         <TextField size="small" type="date" label="Hasta" InputLabelProps={{ shrink: true }} value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} />
         <Button variant="outlined" onClick={() => load(range)}>Calcular</Button>
+        <Box sx={{ flex: 1 }} />
+        <ReportExportButtons report={buildReport} disabled={!data} />
       </Stack>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {data && (

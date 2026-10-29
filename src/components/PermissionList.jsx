@@ -43,6 +43,8 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import PermissionFormDialog from "./PermissionFormDialog";
 import API from "../api";
+import ReportExportButtons from "./common/ReportExportButtons";
+import { reportFilters } from "./common/reportFormat";
 
 const BAC = {
   primary: "#0057B8",
@@ -305,6 +307,26 @@ const PermissionList = () => {
     }
   };
 
+  // Imprimir / Excel: todas las filas filtradas y ordenadas (no solo la página).
+  const buildReport = () => ({
+    title: "Gestión de Permisos",
+    subtitle: reportFilters([
+      ["Búsqueda", searchText.trim()],
+      ["Módulo", moduleFilter],
+      ["Acción", actionFilter],
+    ]),
+    columns: [
+      { field: "id", label: "ID" },
+      { field: "permission_name", label: "Nombre del permiso" },
+      { field: "permission_tag", label: "Etiqueta" },
+      { label: "Módulo", value: (p) => getModuleFromTag(p.permission_tag) },
+      { label: "Acción", value: (p) => getActionFromTag(p.permission_tag) },
+    ],
+    rows: sortedPermissions,
+    totals: [{ value: `Permisos: ${sortedPermissions.length}`, colspan: 5 }],
+    fileName: "permisos",
+  });
+
   const exportPermissions = () => {
     try {
       const dataToExport = sortedPermissions.map((p) => ({
@@ -358,6 +380,18 @@ const PermissionList = () => {
           </Box>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+            <ReportExportButtons
+              report={buildReport}
+              disabled={loading || !sortedPermissions.length}
+              sx={{
+                color: "#fff",
+                fontWeight: 700,
+                borderRadius: 2,
+                borderColor: "rgba(255,255,255,0.5)",
+                "&:hover": { borderColor: "#fff", backgroundColor: alpha("#fff", 0.12) },
+                "&.Mui-disabled": { color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.25)" },
+              }}
+            />
             <Button
               variant="contained"
               startIcon={<FileDownloadIcon />}

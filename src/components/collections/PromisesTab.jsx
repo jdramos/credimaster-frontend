@@ -13,6 +13,8 @@ import { DataGrid } from "@mui/x-data-grid";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import API from "../../api";
 import ReportBranchFilter from "../accounting/ReportBranchFilter";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportFilters, reportMoney } from "../common/reportFormat";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -22,6 +24,7 @@ export default function PromisesTab() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [branchId, setBranchId] = useState("");
+  const [branchName, setBranchName] = useState("");
   const [alert, setAlert] = useState({ open: false, severity: "success", message: "" });
   const notify = (message, severity = "success") => setAlert({ open: true, severity, message });
 
@@ -99,15 +102,44 @@ export default function PromisesTab() {
     [],
   );
 
+  const buildReport = () => ({
+    title: "Promesas de pago abiertas",
+    subtitle: reportFilters([["Sucursal", branchId ? branchName : ""]]),
+    fileName: `promesas_de_pago_${new Date().toISOString().slice(0, 10)}`,
+    sheetName: "Promesas de pago",
+    columns: [
+      { field: "credit_code", label: "Crédito" },
+      { field: "customer_name", label: "Cliente" },
+      { field: "branch_name", label: "Sucursal" },
+      { field: "collector_name", label: "Gestor" },
+      { label: "Monto", value: (r) => Number(r.promised_amount || 0), numeric: true, format: reportMoney },
+      { label: "Fecha prometida", value: (r) => dateStr(r.promised_date) },
+      { label: "Situación", value: (r) => (Number(r.is_overdue) ? "Vencida" : "Vigente") },
+    ],
+    rows,
+    totals: [
+      { value: `Promesas abiertas: ${rows.length}`, colspan: 4 },
+      { value: reportMoney(rows.reduce((s, r) => s + Number(r.promised_amount || 0), 0)), numeric: true },
+      { value: "", colspan: 2 },
+    ],
+  });
+
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" alignItems="center">
-        <ReportBranchFilter value={branchId} onChange={(id) => setBranchId(id)} />
+        <ReportBranchFilter
+          value={branchId}
+          onChange={(id, name) => {
+            setBranchId(id);
+            setBranchName(name || "");
+          }}
+        />
         <Button variant="outlined" onClick={fetchPromises} sx={{ textTransform: "none" }}>Buscar</Button>
         <Button variant="contained" startIcon={<RefreshIcon />} onClick={evaluate}
           sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
           Actualizar contra pagos
         </Button>
+        <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />
         <Box sx={{ flex: 1 }} />
         <Chip color="info" label={`Promesas abiertas: ${rows.length}`} />
       </Stack>

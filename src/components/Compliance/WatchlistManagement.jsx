@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import dayjs from "dayjs";
 import HelpButton from "../help/HelpButton";
 import {
   Box,
@@ -24,6 +25,8 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import API from "../../api";
 import BrowseSanctionsListsPanel from "./BrowseSanctionsListsPanel";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate } from "../common/reportFormat";
 
 const emptyForm = {
   list_name: "",
@@ -234,6 +237,42 @@ export default function WatchlistManagement() {
     }
   };
 
+  const today = dayjs().format("YYYY-MM-DD");
+  const entriesReport = () => ({
+    title: "Listas de Riesgo LA/FT/FP — Entradas internas",
+    columns: [
+      { field: "list_name", label: "Lista" },
+      { field: "entry_name", label: "Nombre" },
+      { field: "entry_type", label: "Tipo", format: (v) => (v === "ENTIDAD" ? "Entidad" : "Persona") },
+      { field: "identification_number", label: "Identificación" },
+      { field: "source", label: "Fuente" },
+    ],
+    rows: entries,
+    fileName: `listas_riesgo_internas_${today}`,
+  });
+  const shareholdersReport = () => ({
+    title: "Socios y Accionistas",
+    columns: [
+      { field: "full_name", label: "Nombre" },
+      { field: "identification", label: "Identificación" },
+      { field: "ownership_pct", label: "% participación", numeric: true, format: (v) => (v != null ? `${v}%` : "") },
+    ],
+    rows: shareholders,
+    fileName: `socios_accionistas_${today}`,
+  });
+  const businessAlliesReport = () => ({
+    title: "Aliados de Negocios",
+    columns: [
+      { field: "full_name", label: "Nombre" },
+      { field: "identification", label: "Identificación" },
+      { field: "contract_description", label: "Contrato" },
+      { field: "contract_start_date", label: "Inicio", format: reportDate },
+      { field: "phone", label: "Teléfono" },
+    ],
+    rows: businessAllies,
+    fileName: `aliados_negocios_${today}`,
+  });
+
   return (
     <Box p={2}>
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -359,6 +398,12 @@ export default function WatchlistManagement() {
       </Paper>
 
       <Paper sx={{ p: 2 }}>
+        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+          <Typography variant="subtitle1" fontWeight={800} flexGrow={1}>
+            Entradas internas
+          </Typography>
+          <ReportExportButtons size="small" report={entriesReport} disabled={!entries.length} />
+        </Stack>
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -403,9 +448,12 @@ export default function WatchlistManagement() {
       <BrowseSanctionsListsPanel />
 
       <Paper sx={{ p: 2, mt: 2 }}>
-        <Typography variant="subtitle1" fontWeight={800} mb={0.5}>
-          Socios y Accionistas
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+          <Typography variant="subtitle1" fontWeight={800} flexGrow={1}>
+            Socios y Accionistas
+          </Typography>
+          <ReportExportButtons size="small" report={shareholdersReport} disabled={!shareholders.length} />
+        </Stack>
         <Typography variant="body2" color="text.secondary" mb={2}>
           Socios/accionistas de la institución (Art. 28/48 CD-CONAMI-070-01OCT07-2025) — se tamizan
           contra listas de riesgo igual que clientes/empleados/fiadores/fondeadores.
@@ -474,9 +522,12 @@ export default function WatchlistManagement() {
       </Paper>
 
       <Paper sx={{ p: 2, mt: 2 }}>
-        <Typography variant="subtitle1" fontWeight={800} mb={0.5}>
-          Aliados de Negocios
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+          <Typography variant="subtitle1" fontWeight={800} flexGrow={1}>
+            Aliados de Negocios
+          </Typography>
+          <ReportExportButtons size="small" report={businessAlliesReport} disabled={!businessAllies.length} />
+        </Stack>
         <Typography variant="body2" color="text.secondary" mb={2}>
           Agentes/colaboradores externos bajo contrato de agencia o colaboración (Art. 4 Ley N°. 1215) —
           se tamizan contra listas de riesgo igual que socios/accionistas.

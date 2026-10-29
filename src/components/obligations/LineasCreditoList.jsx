@@ -23,6 +23,8 @@ import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import EditIcon from "@mui/icons-material/Edit";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney } from "../common/reportFormat";
 
 const API_URL = "/api/obligations/lineas-credito";
 
@@ -150,6 +152,28 @@ export default function LineasCreditoList() {
     },
   ], []);
 
+  const buildReport = () => {
+    const sum = (field) => rows.reduce((acc, r) => acc + Number(r[field] || 0), 0);
+    return {
+      title: "Líneas de crédito",
+      fileName: "lineas_credito",
+      sheetName: "Líneas de crédito",
+      columns: [
+        { field: "id_linea", label: "Identificador" },
+        { field: "financiador_name", label: "Financiador" },
+        { label: "Cuenta contable", value: (r) => (r.gl_muc_code ? `${r.gl_muc_code} - ${r.gl_account_name || ""}` : "") },
+        { label: "Monto de la línea", value: (r) => Number(r.mto_linea || 0), numeric: true, format: reportMoney },
+        { label: "Saldo disponible", value: (r) => Number(r.saldo_disponible_linea || 0), numeric: true, format: reportMoney },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length} líneas)`, colspan: 3 },
+        { value: reportMoney(sum("mto_linea")), raw: sum("mto_linea"), numeric: true },
+        { value: reportMoney(sum("saldo_disponible_linea")), raw: sum("saldo_disponible_linea"), numeric: true },
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
@@ -174,6 +198,7 @@ export default function LineasCreditoList() {
             <Button variant="outlined" startIcon={<RefreshIcon />} sx={{ textTransform: "none" }} onClick={fetchLineas}>
               Actualizar
             </Button>
+            <ReportExportButtons report={buildReport} disabled={!rows.length} />
           </Box>
         </Box>
 

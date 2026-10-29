@@ -24,7 +24,9 @@ import { useAuth } from "../../contexts/AuthContext";
 import { UserContext } from "../../contexts/UserContext";
 import BranchSelect from "../BranchSelect";
 import { money } from "./DenominationCounter";
-import CashSessionSummary from "./CashSessionSummary";
+import CashSessionSummary, { buildCashSessionDetailReport } from "./CashSessionSummary";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportMoney, reportFilters, reportPeriod } from "../common/reportFormat";
 import CloseCashSessionDialog from "./CloseCashSessionDialog";
 import { printCashSessionReport } from "../../reports/cashSessionReport";
 
@@ -130,12 +132,53 @@ export default function CashSessionsList() {
 
   const openCount = rows.filter((r) => r.status === "ABIERTA").length;
 
+  const buildReport = () => {
+    const sum = (get) => rows.reduce((acc, r) => acc + Number(get(r) || 0), 0);
+    const total = (raw) => ({ value: reportMoney(raw), raw, numeric: true });
+    // Con sucursal filtrada todas las filas son de esa sucursal.
+    const branchName = filters.branch_id ? rows[0]?.branch_name || "" : "";
+    return {
+      title: "Turnos de caja",
+      subtitle: reportFilters([
+        ["Estado", filters.status === "ABIERTA" ? "Abiertas" : filters.status === "CERRADA" ? "Cerradas" : ""],
+        ["Sucursal", branchName],
+      ]),
+      period: reportPeriod(filters.date_from, filters.date_to),
+      orientation: "landscape",
+      fileName: `turnos_caja_${filters.date_from || ""}_${filters.date_to || ""}`,
+      sheetName: "Turnos de caja",
+      columns: [
+        { field: "id", label: "Turno" },
+        { field: "branch_name", label: "Sucursal" },
+        { field: "register_name", label: "Caja" },
+        { field: "user_name", label: "Cajero" },
+        { field: "business_date", label: "Día" },
+        { field: "status", label: "Estado", format: (v) => (v === "ABIERTA" ? "Abierta" : "Cerrada") },
+        { label: "Fondo", value: (r) => Number(r.opening_amount || 0), numeric: true, format: reportMoney },
+        { label: "Cobros", value: (r) => Number(r.totals?.payments_total || 0), numeric: true, format: reportMoney },
+        { label: "Esperado", value: (r) => Number(r.totals?.expected_amount || 0), numeric: true, format: reportMoney },
+        { label: "Contado", value: (r) => (r.counted_amount == null ? null : Number(r.counted_amount)), numeric: true, format: (v) => (v == null ? "—" : reportMoney(v)) },
+        { label: "Diferencia", value: (r) => (r.difference == null ? null : Number(r.difference)), numeric: true, format: (v) => (v == null ? "—" : reportMoney(v)) },
+      ],
+      rows,
+      totals: [
+        { value: `Total (${rows.length} turnos)`, colspan: 6 },
+        total(sum((r) => r.opening_amount)),
+        total(sum((r) => r.totals?.payments_total)),
+        total(sum((r) => r.totals?.expected_amount)),
+        total(sum((r) => r.counted_amount)),
+        total(sum((r) => r.difference)),
+      ],
+    };
+  };
+
   return (
     <Box sx={{ p: { xs: 1, md: 3 } }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
         <FactCheckIcon color="primary" />
         <Typography variant="h5" sx={{ flexGrow: 1 }}>Turnos de caja</Typography>
         <Button startIcon={<RefreshIcon />} onClick={load} disabled={loading}>Actualizar</Button>
+        <ReportExportButtons report={buildReport} disabled={!rows.length} />
       </Stack>
 
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -198,6 +241,7 @@ export default function CashSessionsList() {
             </DialogContent>
             <DialogActions>
               <Button startIcon={<PrintIcon />} onClick={() => print(detail)}>Comprobante</Button>
+              <ReportExportButtons print={false} report={() => buildCashSessionDetailReport(detail)} />
               {detail.status === "ABIERTA" && canSupervise && (
                 <Button variant="contained" onClick={() => setCloseTarget(detail)}>Cerrar caja</Button>
               )}

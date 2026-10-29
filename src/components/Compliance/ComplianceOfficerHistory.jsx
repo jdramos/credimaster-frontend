@@ -21,6 +21,8 @@ import {
 } from "@mui/material";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 import API from "../../api";
+import ReportExportButtons from "../common/ReportExportButtons";
+import { reportDate, reportDateTime } from "../common/reportFormat";
 
 const daysUntil = (dateStr) => {
   const today = new Date();
@@ -99,6 +101,20 @@ export default function ComplianceOfficerHistory() {
   const notifyDaysLeft = notifyDeadline ? daysUntil(notifyDeadline) : null;
   const needsNotification = current && !current.notified_conami_at;
 
+  const buildReport = () => ({
+    title: "Oficial de Cumplimiento LA/FT/FP — Historial",
+    subtitle: "Art. 42.3.2 CD-CONAMI-070-01OCT07-2025",
+    columns: [
+      { field: "full_name", label: "Nombre" },
+      { field: "appointed_at", label: "Nombramiento", format: reportDate },
+      { field: "ended_at", label: "Fin", format: (v) => (v ? reportDate(v) : "Vigente") },
+      { field: "notified_conami_at", label: "Notificado a CONAMI", format: (v) => (v ? reportDateTime(v) : "Pendiente") },
+      { field: "notes", label: "Notas" },
+    ],
+    rows: history,
+    fileName: "oficial_cumplimiento_historial",
+  });
+
   return (
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff", mb: 2 }}>
@@ -153,9 +169,12 @@ export default function ComplianceOfficerHistory() {
       </Paper>
 
       <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
-        <Typography variant="subtitle1" fontWeight={700} mb={1}>
-          Historial
-        </Typography>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
+          <Typography variant="subtitle1" fontWeight={700} flexGrow={1}>
+            Historial
+          </Typography>
+          <ReportExportButtons size="small" report={buildReport} disabled={!history.length} />
+        </Box>
         <TableContainer>
           <Table size="small">
             <TableHead>
