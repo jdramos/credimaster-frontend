@@ -207,7 +207,7 @@ const SECTION_LABELS = {
   otros: "Otros",
 };
 
-const getMenuSectionForTag = (tag = "") => {
+export const getMenuSectionForTag = (tag = "") => {
   if (!tag) return "otros";
   if (MENU_TAG_TO_SECTION[tag]) return MENU_TAG_TO_SECTION[tag];
 

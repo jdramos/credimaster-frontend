@@ -51,6 +51,7 @@ import LoanExtraFields from "./LoanExtraFields";
 import useLoanForm, { interestTypeLabel } from "./useLoanForm";
 import InterestRateField from "./InterestRateField";
 import AmountOrPercentageField from "./AmountOrPercentageField";
+import CustomFieldInputs from "../customFields/CustomFieldInputs";
 
 const fieldSx = {
   minWidth: 0,
@@ -101,7 +102,12 @@ const STEP_FIELDS = [
   ["documents"],
 ];
 
-const stepForField = (field) => {
+// Campos personalizados: "custom_fields.<clave>", en el paso de su sección.
+const CUSTOM_SECTION_STEP = { conditions: 0, guarantees: 1 };
+
+const stepForField = (field, customFields = []) => {
+  const custom = customFields.find((f) => `custom_fields.${f.field_key}` === field);
+  if (custom) return CUSTOM_SECTION_STEP[custom.section] ?? 0;
   const idx = STEP_FIELDS.findIndex((fields) => fields.includes(field));
   return idx === -1 ? 0 : idx;
 };
@@ -156,6 +162,9 @@ const LoanAddWizard = () => {
     loan,
     loanId,
     catalogs,
+    customFields,
+    customFieldValues,
+    handleCustomFieldChange,
     guarantees,
     selectedGuaranteeIds,
     selectedGuaranteeValue,
@@ -255,9 +264,9 @@ const LoanAddWizard = () => {
     const errorKeys = Object.keys(errors);
     if (errorKeys.length === 0) return;
 
-    const targetStep = Math.min(...errorKeys.map(stepForField));
+    const targetStep = Math.min(...errorKeys.map((key) => stepForField(key, customFields)));
     setActiveStep((current) => (targetStep < current ? targetStep : current));
-  }, [errors]);
+  }, [errors, customFields]);
 
   const goNext = () => {
     if (activeStep === 0) {
@@ -678,6 +687,16 @@ const LoanAddWizard = () => {
                 errors={errors}
                 lockedFields={lockedFields}
               />
+
+              <CustomFieldInputs
+                fields={customFields}
+                section="conditions"
+                values={customFieldValues}
+                errors={errors}
+                onChange={handleCustomFieldChange}
+                title="Datos adicionales"
+                sx={fieldSx}
+              />
             </>
           )}
 
@@ -795,6 +814,16 @@ const LoanAddWizard = () => {
                   loanId={loanId || null}
                 />
               </Box>
+
+              <CustomFieldInputs
+                fields={customFields}
+                section="guarantees"
+                values={customFieldValues}
+                errors={errors}
+                onChange={handleCustomFieldChange}
+                title="Datos adicionales"
+                sx={fieldSx}
+              />
             </>
           )}
 

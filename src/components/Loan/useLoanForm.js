@@ -17,6 +17,12 @@ import {
   lockedValues,
   productAllowsBranch,
 } from "../loanProducts/loanProductLimits";
+import useCustomFields from "../customFields/useCustomFields";
+import {
+  customFieldsPayload,
+  fieldsInSection,
+  validateCustomFieldValues,
+} from "../customFields/customFieldsShared";
 
 // 1 = sobre saldo ('compound'), 2 = flat ('simple') -- mismo mapeo que
 // utils/interestType.js del backend. El tipo lo define la EMPRESA
@@ -70,6 +76,24 @@ export default function useLoanForm() {
   }, []);
 
   const [errors, setErrors] = useState({});
+
+  // Campos personalizados del crédito (Configuración → Campos
+  // personalizados): paso 1 = "conditions", paso 2 = "guarantees".
+  const {
+    fields: customFields,
+    values: customFieldValues,
+    setValue: setCustomFieldValue,
+  } = useCustomFields("LOAN", loanId || null);
+
+  const handleCustomFieldChange = (key, value) => {
+    setCustomFieldValue(key, value);
+    setErrors((prev) => {
+      if (!prev[`custom_fields.${key}`]) return prev;
+      const next = { ...prev };
+      delete next[`custom_fields.${key}`];
+      return next;
+    });
+  };
   const [loading, setLoading] = useState(false);
 
   const [loan, setLoan] = useState({
@@ -192,7 +216,7 @@ export default function useLoanForm() {
 
   // Aviso al salir de la solicitud con cambios sin guardar.
   const { allowNavigation } = useUnsavedChangesWarning({
-    data: { loan, selectedGuaranteeIds, selectedGuarantorIds },
+    data: { loan, selectedGuaranteeIds, selectedGuarantorIds, customFieldValues },
   });
 
   useEffect(() => {
@@ -821,6 +845,11 @@ export default function useLoanForm() {
     Object.entries(productViolations).forEach(([field, message]) => {
       if (!nextErrors[field]) nextErrors[field] = message;
     });
+    Object.entries(
+      validateCustomFieldValues(fieldsInSection(customFields, "conditions"), customFieldValues),
+    ).forEach(([field, message]) => {
+      nextErrors[field] = `${customFields.find((f) => `custom_fields.${f.field_key}` === field)?.label}: ${message}`;
+    });
 
     setErrors(nextErrors);
     return nextErrors;
@@ -961,6 +990,9 @@ export default function useLoanForm() {
         )}% mínimo requerido del monto del crédito`;
       }
     }
+    Object.entries(validateCustomFieldValues(customFields, customFieldValues)).forEach(([field, message]) => {
+      nextErrors[field] = `${customFields.find((f) => `custom_fields.${f.field_key}` === field)?.label}: ${message}`;
+    });
 
     setErrors(nextErrors);
     return nextErrors;
@@ -1351,6 +1383,7 @@ export default function useLoanForm() {
       id_analista: loan.id_analista ? Number(loan.id_analista) : null,
       guarantee_ids: selectedGuaranteeIds,
       guarantor_customer_ids: selectedGuarantorIds,
+      custom_fields: customFieldsPayload(customFields, customFieldValues),
     };
   };
 
@@ -1491,6 +1524,9 @@ export default function useLoanForm() {
     loading,
     loan,
     catalogs,
+    customFields,
+    customFieldValues,
+    handleCustomFieldChange,
     guaranteeValue,
     guarantees,
     availableGuarantees,

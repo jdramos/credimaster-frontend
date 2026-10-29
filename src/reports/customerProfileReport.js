@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { buildHeader } from "./reportHeader";
 import { reportStyles } from "./reportStyles";
 import { openReport } from "./reportViewer";
+import { formatCustomFieldValue } from "../components/customFields/customFieldsShared";
 
 const text = (value) => (value === null || value === undefined || value === "" ? "—" : value);
 const dateText = (value) => (value ? dayjs(value).format("DD/MM/YYYY") : "—");
@@ -11,6 +12,29 @@ const money = (value) =>
   value === null || value === undefined || value === ""
     ? "—"
     : Number(value).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const escapeHtml = (value) =>
+  String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+
+// Campos personalizados de la empresa (activos), en el orden configurado.
+const customFieldsBlock = (fields, values) =>
+  fields.length
+    ? `
+      <div class="report-section">
+        <div class="section-header"><div class="section-title">X. Datos Adicionales</div></div>
+        <div class="report-fields" style="grid-template-columns: repeat(3, 1fr);">
+          ${fields
+            .map(
+              (field) => `
+          <div class="report-field">
+            <div class="report-field-label">${escapeHtml(field.label)}</div>
+            <div class="report-field-value">${escapeHtml(formatCustomFieldValue(field, values[field.field_key]))}</div>
+          </div>`,
+            )
+            .join("")}
+        </div>
+      </div>`
+    : "";
 
 const referenceBlock = (customer, prefix, title) => `
   <div class="report-fields" style="grid-template-columns: repeat(3, 1fr);">
@@ -52,6 +76,8 @@ export const printCustomerProfileReport = ({
   guarantees = [],
   financialEvaluation = null,
   documents = [],
+  customFields = [],
+  customFieldValues = {},
 }) => {
   const isEmployee = Number(customer.economic_activity) === 2;
   const hasSpouse = Boolean(customer.spouse_name);
@@ -421,6 +447,8 @@ export const printCustomerProfileReport = ({
           </tbody>
         </table>
       </div>
+
+      ${customFieldsBlock(customFields, customFieldValues)}
 
       <div class="signatures">
         <div class="signature">Firma del cliente</div>

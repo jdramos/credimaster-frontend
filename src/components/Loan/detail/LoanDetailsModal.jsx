@@ -38,6 +38,7 @@ import ChecklistDialog from "./ChecklistDialog";
 import CancelLoanDialog from "./CancelLoanDialog";
 import useLoanDetailsData from "./useLoanDetailsData";
 import useLoanApprovalFlow from "./useLoanApprovalFlow";
+import CustomFieldValuesSection from "../../customFields/CustomFieldValuesSection";
 
 dayjs.extend(utc);
 
@@ -225,6 +226,9 @@ const LoanDetailsModal = ({
                   editableTerm={editableTerm}
                   editableRate={editableRate}
                 />
+
+                {/* Campos personalizados del crédito (solo si la empresa tiene). */}
+                <CustomFieldValuesSection entity="LOAN" recordId={loanId} />
 
                 <LoanFinancialEvaluationSection
                   financialEvaluation={financialEvaluation}

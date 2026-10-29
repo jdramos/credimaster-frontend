@@ -37,6 +37,7 @@ import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import GavelIcon from "@mui/icons-material/Gavel";
 import PrintIcon from "@mui/icons-material/Print";
 import RoomIcon from "@mui/icons-material/Room";
+import TuneIcon from "@mui/icons-material/Tune";
 
 import GeneralInfoTab from "./CustomerGeneralInfoTab";
 import GuaranteesTab from "./CustomerGuaranteesTab";
@@ -55,6 +56,14 @@ import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { isConamiRegulated, isModuleEnabled } from "../../utils/moduleAccess";
 import { printCustomerProfileReport } from "../../reports/customerProfileReport";
+import CustomFieldInputs from "../customFields/CustomFieldInputs";
+import useCustomFields from "../customFields/useCustomFields";
+import {
+  customFieldsPayload,
+  errorKeyFor,
+  fieldsInSection,
+  validateCustomFieldValues,
+} from "../customFields/customFieldsShared";
 
 const TabPanel = ({ children, value, index }) => (
   <Box
@@ -152,6 +161,15 @@ const CustomerForm = () => {
   const [notRequiredFields, setNotRequiredFields] = useState([]);
 
   useEffect(() => setInternalMode(mode), [mode]);
+
+  // Campos personalizados de la empresa (Configuración → Campos
+  // personalizados): se muestran en la pestaña de su sección.
+  const {
+    fields: customFields,
+    values: customFieldValues,
+    setValue: setCustomFieldValue,
+  } = useCustomFields("CUSTOMER", customerId || null);
+  const hasAdditionalTab = fieldsInSection(customFields, "additional").length > 0;
 
   const [customer, setCustomer] = useState({
     age: 1,
@@ -271,7 +289,7 @@ const CustomerForm = () => {
   // Aviso al salir con cambios sin guardar (no aplica en modo "ver" ni
   // mientras se cargan los datos del cliente en modo edición).
   const { allowNavigation } = useUnsavedChangesWarning({
-    data: { customer, guarantees, financialEvaluation },
+    data: { customer, guarantees, financialEvaluation, customFieldValues },
     disabled: internalMode === "show" || loading,
   });
 
@@ -444,6 +462,36 @@ const CustomerForm = () => {
     pep_details: 7,
   };
 
+  // Pestaña de cada sección de campos personalizados.
+  const CUSTOM_SECTION_TAB = { general: 0, economic: 1, references: 4, additional: 9 };
+  const tabForField = (field) => {
+    if (field in TAB_BY_FIELD) return TAB_BY_FIELD[field];
+    const custom = customFields.find((f) => errorKeyFor(f) === field);
+    return custom ? CUSTOM_SECTION_TAB[custom.section] ?? 0 : 0;
+  };
+
+  const handleCustomFieldChange = (key, value) => {
+    setCustomFieldValue(key, value);
+    setErrors((prev) => {
+      if (!prev[`custom_fields.${key}`]) return prev;
+      const next = { ...prev };
+      delete next[`custom_fields.${key}`];
+      return next;
+    });
+  };
+
+  const renderCustomFields = (section) => (
+    <CustomFieldInputs
+      fields={customFields}
+      section={section}
+      values={customFieldValues}
+      errors={errors}
+      onChange={handleCustomFieldChange}
+      readOnly={internalMode === "show"}
+      title={section === "additional" ? null : "Campos adicionales de la empresa"}
+    />
+  );
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -459,13 +507,14 @@ const CustomerForm = () => {
       ...vGuarantees.errors,
       ...vReferences.errors,
       ...vAml.errors,
+      ...validateCustomFieldValues(customFields, customFieldValues),
     });
 
     setErrors(mergedErrors);
 
     if (Object.keys(mergedErrors).length > 0) {
       const firstField = Object.keys(mergedErrors)[0];
-      const tab = TAB_BY_FIELD[firstField] ?? 0;
+      const tab = tabForField(firstField);
 
       setActiveTab(tab);
       toast.error("Corrija los errores antes de continuar.");
@@ -503,6 +552,7 @@ const CustomerForm = () => {
         ...financialEvaluation,
         ...(financialEvaluation.concept_values || {}),
       },
+      custom_fields: customFieldsPayload(customFields, customFieldValues),
     };
 
     try {
@@ -574,6 +624,8 @@ const CustomerForm = () => {
       guarantees: cleanedGuarantees,
       financialEvaluation: evaluation,
       documents,
+      customFields,
+      customFieldValues,
     });
   };
 
@@ -734,8 +786,11 @@ const CustomerForm = () => {
       6: [],
     };
 
+    const customKeys = customFields
+      .filter((f) => CUSTOM_SECTION_TAB[f.section] === tabIndex)
+      .map(errorKeyFor);
     const fields = tabFields[tabIndex] || [];
-    const hasErrors = fields.some((field) => Boolean(errors[field]));
+    const hasErrors = [...fields, ...customKeys].some((field) => Boolean(errors[field]));
 
     if (hasErrors) return "error";
 
@@ -749,6 +804,15 @@ const CustomerForm = () => {
 
     if (tabIndex === 5 || tabIndex === 6) {
       return customer?.id ? "complete" : "pending";
+    }
+
+    if (tabIndex === 9) {
+      return customKeys.length &&
+        fieldsInSection(customFields, "additional").some(
+          (f) => customFieldValues[f.field_key] !== undefined && customFieldValues[f.field_key] !== null && customFieldValues[f.field_key] !== "",
+        )
+        ? "complete"
+        : "pending";
     }
 
     const hasValues = fields.some((field) => {
@@ -977,6 +1041,14 @@ const CustomerForm = () => {
                   label="Cumplimiento PLA-FT"
                 />
               )}
+              {hasAdditionalTab && (
+                <Tab
+                  value={9}
+                  icon={getTabIcon(9, <TuneIcon fontSize="small" />)}
+                  iconPosition="start"
+                  label="Datos adicionales"
+                />
+              )}
               {/* Historial crediticio: solo para un cliente ya registrado. */}
               {customer.id && (
                 <Tab value={8} icon={<HistoryIcon fontSize="small" />} iconPosition="start" label="Historial crediticio" />
@@ -999,6 +1071,7 @@ const CustomerForm = () => {
                 mode={internalMode}
                 conamiRegulated={conamiRegulated}
               />
+              {renderCustomFields("general")}
             </TabPanel>
 
             <TabPanel value={activeTab} index={1}>
@@ -1015,6 +1088,7 @@ const CustomerForm = () => {
                 mode={internalMode}
                 conamiRegulated={conamiRegulated}
               />
+              {renderCustomFields("economic")}
             </TabPanel>
 
             <TabPanel value={activeTab} index={2}>
@@ -1044,6 +1118,7 @@ const CustomerForm = () => {
                 mode={internalMode}
                 conamiRegulated={conamiRegulated}
               />
+              {renderCustomFields("references")}
             </TabPanel>
 
             <TabPanel value={activeTab} index={5}>
@@ -1073,6 +1148,12 @@ const CustomerForm = () => {
                   setCustomer={setCustomer}
                   mode={internalMode}
                 />
+              </TabPanel>
+            )}
+
+            {hasAdditionalTab && (
+              <TabPanel value={activeTab} index={9}>
+                {renderCustomFields("additional")}
               </TabPanel>
             )}
 

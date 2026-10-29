@@ -440,6 +440,7 @@ const menuItems = {
     { label: "Datos legales de la IMF", iconName: "FaGavel", to: "/configuracion/datos-legales-imf", permission: "configuracion.datos_legales_imf.gestionar" },
     { label: "Políticas de crédito", iconName: "FaFileSignature", to: "/creditos/politicas", permission: "menu.politicas_credito" },
     { label: "Productos financieros", iconName: "FaBoxes", to: "/configuracion/productos-financieros", permission: "configuracion.productos.ver" },
+    { label: "Campos personalizados", iconName: "FaSlidersH", to: "/configuracion/campos-personalizados", permission: "configuracion.campos_personalizados.gestionar" },
     { label: "Evaluación financiera", iconName: "FaFileSignature", to: "/creditos/evaluacion-financiera/configuracion", permission: "clientes.evaluacion.configuracion.gestionar" },
     { label: "Provisión de cartera", iconName: "FaPercentage", to: "/configuracion/provision-cartera", permission: "creditos.provision.configurar", moduleKey: "risk_classification_ngrc" },
     { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
