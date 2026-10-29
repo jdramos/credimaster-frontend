@@ -55,6 +55,7 @@ import * as FaIcons from "react-icons/fa";
 import BrandMark from "./BrandMark";
 import BusinessDayAlert from "./BusinessDayAlert";
 import ItRiskDeadlineAlert from "./itRisk/ItRiskDeadlineAlert";
+import NgrcDeadlineAlert from "./ngrc/NgrcDeadlineAlert";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
@@ -417,6 +418,14 @@ const menuItems = {
       moduleKey: "sinriesgo",
     },
     {
+      label: "Cumplimiento NGRC",
+      iconName: "FaClipboardCheck",
+      to: "/ngrc/cumplimiento",
+      permission: "ngrc.cumplimiento.ver",
+      moduleKey: "risk_classification_ngrc",
+      regulatedOnly: true,
+    },
+    {
       label: "CrediMaster Studio",
       to: "/reports/studio",
       iconName: "",
@@ -684,6 +693,7 @@ export default function AppLayoutMenu({
   // afectar al resto de "Reportes" cuando el tenant no tiene ese módulo
   // habilitado (ver AVAILABLE_MODULES en moduleRegistry.js, backend).
   const hasItemAccess = (item) => {
+    if (item.regulatedOnly && !conamiRegulated) return false;
     if (item.permission && role !== 1 && !permissions.includes(item.permission)) return false;
     if (item.moduleKey && enabledModules !== null) {
       // moduleKey puede ser un solo código o una lista -- una lista se
@@ -709,7 +719,7 @@ export default function AppLayoutMenu({
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [favoritesSection, enabledModules, permissions, role]);
+  }, [favoritesSection, enabledModules, permissions, role, conamiRegulated]);
 
   // Rutas que el usuario ve en su menú: los atajos de teclado solo llevan a
   // estas (mismos permisos y módulos que el menú lateral).
@@ -1118,6 +1128,8 @@ export default function AppLayoutMenu({
           <BusinessDayAlert />
 
           {isSectionEnabled("it") && (enabledModules === null || enabledModules.includes("it_risk")) && hasPermission("riesgo_tecnologico.ver") && <ItRiskDeadlineAlert />}
+
+          {conamiRegulated && isModuleEnabled(enabledModules, "risk_classification_ngrc") && hasPermission("ngrc.cumplimiento.ver") && <NgrcDeadlineAlert />}
 
           <GlobalSearch />
 

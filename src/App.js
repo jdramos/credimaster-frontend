@@ -120,6 +120,7 @@ const SanctionsListsPage = lazy(() => import("./components/Compliance/SanctionsL
 const AmlAlertsInbox = lazy(() => import("./components/Compliance/AmlAlertsInbox"));
 const RosCasesList = lazy(() => import("./components/Compliance/RosCasesList"));
 const UafReports = lazy(() => import("./components/Compliance/UafReports"));
+const NgrcCompliance = lazy(() => import("./components/ngrc/NgrcCompliance"));
 const AmlMonthlyReport = lazy(() => import("./components/Compliance/AmlMonthlyReport"));
 const ComplianceOfficerHistory = lazy(() => import("./components/Compliance/ComplianceOfficerHistory"));
 const ProductRiskAssessments = lazy(() => import("./components/Compliance/ProductRiskAssessments"));
@@ -804,6 +805,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/cumplimiento/alertas" element={<AmlAlertsInbox />} />
           <Route path="/cumplimiento/ros" element={<RosCasesList />} />
           <Route path="/cumplimiento/reportes-uaf" element={<UafReports />} />
+          <Route path="/ngrc/cumplimiento" element={<NgrcCompliance />} />
           <Route path="/cumplimiento/informe-mensual" element={<AmlMonthlyReport />} />
           <Route path="/cumplimiento/oficial-cumplimiento" element={<ComplianceOfficerHistory />} />
           <Route path="/cumplimiento/productos" element={<ProductRiskAssessments />} />

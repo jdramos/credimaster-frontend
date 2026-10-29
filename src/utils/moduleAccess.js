@@ -31,6 +31,7 @@ export const PATH_MODULES = [
   ["/sinriesgos", "sinriesgo"],
   ["/configuracion/provision-cartera", "risk_classification_ngrc"],
   ["/provisiones", "risk_classification_ngrc"],
+  ["/ngrc", "risk_classification_ngrc"],
 ];
 
 const matchesPrefix = (pathname, prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`);
@@ -41,7 +42,7 @@ export const isConamiRegulated = (tenant) =>
   !(tenant?.conami_regulated === false || tenant?.conami_regulated === 0);
 
 // Pantallas que solo tienen sentido para una empresa normada por la CONAMI.
-export const REGULATED_ONLY_PATHS = ["/conami/tablas"];
+export const REGULATED_ONLY_PATHS = ["/conami/tablas", "/ngrc"];
 
 export const isRegulatedOnlyPath = (pathname) =>
   REGULATED_ONLY_PATHS.some((prefix) => matchesPrefix(pathname, prefix));
