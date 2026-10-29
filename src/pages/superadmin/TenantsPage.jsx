@@ -41,6 +41,17 @@ import { MfaPolicyPanel } from "../SecurityPage";
 import { getTenantMfaPolicy, updateTenantMfaPolicy } from "../../api/mfa";
 import ModulePackagePicker from "./ModulePackagePicker";
 import { applyPackage, effectiveModules, withDependencies } from "./modulePackages";
+import TenantAliadoFields from "./TenantAliadoFields";
+import {
+  ALIADOS_URL,
+  PAYMENT_CONCEPT_OPTIONS,
+  assignmentAction,
+  assignmentFormFromCurrent,
+  assignmentPayload,
+  conceptLabel,
+  emptyAssignmentForm,
+  money,
+} from "./aliados";
 
 const PROVINCES_CATALOG_URL = "/api/superadmin/catalogs/provinces";
 const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
@@ -184,12 +195,21 @@ export default function TenantsPage() {
   const [billingTenant, setBillingTenant] = useState(null);
   const [billingData, setBillingData] = useState(null);
   const [billingLoading, setBillingLoading] = useState(false);
-  const [billingConfigForm, setBillingConfigForm] = useState({ monthly_fee: "", currency: "NIO", billing_day: "", grace_period_days: 5 });
-  const [paymentForm, setPaymentForm] = useState({ amount: "", currency: "NIO", payment_date: "", reference: "", notes: "" });
+  const [billingConfigForm, setBillingConfigForm] = useState({ monthly_fee: "", currency: "NIO", billing_day: "", grace_period_days: 5, implementation_fee: "" });
+  const [paymentForm, setPaymentForm] = useState({ amount: "", currency: "NIO", payment_date: "", concept: "MENSUALIDAD", reference: "", notes: "" });
   const [savingBillingConfig, setSavingBillingConfig] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [togglingSuspension, setTogglingSuspension] = useState(false);
+
+  // Aliado (referidor) que trajo la empresa: se guarda junto con la empresa.
+  const [aliadosCatalog, setAliadosCatalog] = useState([]);
+  const [aliadoByTenant, setAliadoByTenant] = useState({});
+  const [aliadosUnavailable, setAliadosUnavailable] = useState(false);
+  const [createAliadoForm, setCreateAliadoForm] = useState(emptyAssignmentForm);
+  const [editAliadoForm, setEditAliadoForm] = useState(emptyAssignmentForm);
+  const [editAliadoInitial, setEditAliadoInitial] = useState(emptyAssignmentForm);
+  const [editAliadoHistory, setEditAliadoHistory] = useState([]);
 
   const pollTimers = useRef({});
 
@@ -205,6 +225,29 @@ export default function TenantsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Sin la migración 033 corrida, /aliados responde error: los diálogos
+  // muestran un aviso en lugar de los campos.
+  const fetchAliados = async () => {
+    try {
+      const [catalog, assignments] = await Promise.all([
+        API.get(ALIADOS_URL),
+        API.get(`${ALIADOS_URL}/assignments`, { params: { status: "ACTIVE" } }),
+      ]);
+      setAliadosCatalog(catalog.data?.data || []);
+      setAliadoByTenant(Object.fromEntries((assignments.data?.data || []).map((a) => [a.tenant_id, a.aliado_name])));
+      setAliadosUnavailable(false);
+    } catch {
+      setAliadosUnavailable(true);
+    }
+  };
+
+  const saveTenantAliado = async (tenantId, form, initial) => {
+    const action = assignmentAction(form, initial);
+    if (action === "assign") await API.put(`${TENANTS_URL}/${tenantId}/aliado`, assignmentPayload(form));
+    if (action === "end") await API.post(`${TENANTS_URL}/${tenantId}/aliado/end`, {});
+    return action;
   };
 
   const fetchModules = async () => {
@@ -225,6 +268,7 @@ export default function TenantsPage() {
   useEffect(() => {
     fetchTenants();
     fetchModules();
+    fetchAliados();
     const timers = pollTimers.current;
     return () => {
       Object.values(timers).forEach(clearTimeout);
@@ -258,6 +302,7 @@ export default function TenantsPage() {
 
   const handleOpenCreate = () => {
     setForm(emptyForm);
+    setCreateAliadoForm(emptyAssignmentForm());
     setDbNameEdited(false);
     setDialogOpen(true);
   };
@@ -358,7 +403,22 @@ export default function TenantsPage() {
       conami_regulated: row.conami_regulated === undefined || row.conami_regulated === null ? true : !!row.conami_regulated,
       interest_type: row.interest_type || "COMPOUND",
     });
+    setEditAliadoForm(emptyAssignmentForm());
+    setEditAliadoInitial(emptyAssignmentForm());
+    setEditAliadoHistory([]);
     setEditDialogOpen(true);
+    if (!aliadosUnavailable) {
+      API.get(`${TENANTS_URL}/${row.id}/aliado`)
+        .then((res) => {
+          const data = res.data?.data || {};
+          if (data.available === false) return setAliadosUnavailable(true);
+          const initial = data.current ? assignmentFormFromCurrent(data.current) : { ...emptyAssignmentForm(), start_date: "" };
+          setEditAliadoForm(data.current ? initial : emptyAssignmentForm());
+          setEditAliadoInitial(initial);
+          setEditAliadoHistory(data.history || []);
+        })
+        .catch((error) => showAlert(error.response?.data?.message || "No se pudo cargar el aliado de la empresa", "error"));
+    }
   };
 
   const handleEditFieldChange = (field) => (e) => {
@@ -391,9 +451,17 @@ export default function TenantsPage() {
         ...payload,
         ...(editStartsAccounting && accountingSince ? { accounting_since: accountingSince } : {}),
       });
+      try {
+        await saveTenantAliado(editTenant.id, editAliadoForm, editAliadoInitial);
+      } catch (error) {
+        // La empresa ya se guardó: el diálogo queda abierto para corregir el aliado.
+        showAlert(`Empresa guardada, pero el aliado no: ${error.response?.data?.message || error.message}`, "error");
+        await fetchAliados();
+        return;
+      }
       showAlert(`Empresa "${editForm.legal_name}" actualizada`);
       setEditDialogOpen(false);
-      await fetchTenants();
+      await Promise.all([fetchTenants(), fetchAliados()]);
     } catch (error) {
       showAlert(error.response?.data?.message || error.message || "Error actualizando la empresa", "error");
     } finally {
@@ -412,11 +480,13 @@ export default function TenantsPage() {
         currency: data.currency || "NIO",
         billing_day: data.billing_day ?? "",
         grace_period_days: data.grace_period_days ?? 5,
+        implementation_fee: data.implementation_fee ?? "",
       });
       setPaymentForm({
         amount: "",
         currency: data.currency || "NIO",
         payment_date: new Date().toISOString().slice(0, 10),
+        concept: "MENSUALIDAD",
         reference: "",
         notes: "",
       });
@@ -442,6 +512,7 @@ export default function TenantsPage() {
         currency: billingConfigForm.currency,
         billing_day: billingConfigForm.billing_day === "" ? null : Number(billingConfigForm.billing_day),
         grace_period_days: Number(billingConfigForm.grace_period_days || 0),
+        implementation_fee: billingConfigForm.implementation_fee === "" ? null : Number(billingConfigForm.implementation_fee),
       });
       showAlert("Configuración de facturación guardada");
       await fetchBilling(billingTenant.id);
@@ -461,8 +532,13 @@ export default function TenantsPage() {
     }
     try {
       setSavingPayment(true);
-      await API.post(`${TENANTS_URL}/${billingTenant.id}/billing/payments`, paymentForm);
-      showAlert("Pago registrado correctamente");
+      const res = await API.post(`${TENANTS_URL}/${billingTenant.id}/billing/payments`, paymentForm);
+      const commission = res.data?.data?.aliado_commission;
+      showAlert(
+        commission
+          ? `Pago registrado. Comisión del aliado: ${money(commission.amount, commission.currency)}`
+          : "Pago registrado correctamente",
+      );
       await fetchBilling(billingTenant.id);
       await fetchTenants();
     } catch (error) {
@@ -507,7 +583,21 @@ export default function TenantsPage() {
       const res = await API.post(TENANTS_URL, form);
       const tenantId = res.data?.tenant_id;
 
-      showAlert("Empresa creada, aprovisionando en segundo plano…");
+      let aliadoError = null;
+      if (tenantId && createAliadoForm.aliado_id) {
+        try {
+          await saveTenantAliado(tenantId, createAliadoForm, emptyAssignmentForm());
+        } catch (error) {
+          aliadoError = error.response?.data?.message || error.message;
+        }
+      }
+
+      if (aliadoError) {
+        showAlert(`Empresa creada, pero el aliado no se asignó (${aliadoError}). Asígnelo desde Editar.`, "warning");
+      } else {
+        showAlert("Empresa creada, aprovisionando en segundo plano…");
+      }
+      fetchAliados();
       setDialogOpen(false);
       await fetchTenants();
 
@@ -584,6 +674,14 @@ export default function TenantsPage() {
           </Box>
         );
       },
+    },
+    {
+      field: "aliado",
+      headerName: "Aliado",
+      width: 160,
+      sortable: false,
+      valueGetter: (params) => aliadoByTenant[params.row.id] || "",
+      renderCell: (params) => params.value || <Typography variant="caption" color="text.secondary">—</Typography>,
     },
     {
       field: "billing_status",
@@ -812,6 +910,18 @@ export default function TenantsPage() {
 
           <Divider sx={{ my: 2 }} />
           <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
+            Aliado que trajo la empresa
+          </Typography>
+          <TenantAliadoFields
+            value={createAliadoForm}
+            onChange={setCreateAliadoForm}
+            aliados={aliadosCatalog}
+            unavailable={aliadosUnavailable}
+            disabled={saving}
+          />
+
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
             Paquete y módulos
           </Typography>
           <ModulePackagePicker
@@ -954,6 +1064,24 @@ export default function TenantsPage() {
               />
 
               <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
+                Aliado que trajo la empresa
+              </Typography>
+              <TenantAliadoFields
+                value={editAliadoForm}
+                onChange={setEditAliadoForm}
+                aliados={aliadosCatalog}
+                history={editAliadoHistory}
+                unavailable={aliadosUnavailable}
+                disabled={savingEdit}
+              />
+              {editAliadoInitial.aliado_id && !editAliadoForm.aliado_id && (
+                <Alert severity="warning" sx={{ mt: 1 }}>
+                  Al guardar, la empresa deja de generar comisión para su aliado actual (la asignación termina hoy).
+                </Alert>
+              )}
+
+              <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" fontWeight={800}>
                 Verificación en dos pasos
               </Typography>
@@ -1037,6 +1165,17 @@ export default function TenantsPage() {
                 </Grid>
                 <Grid item xs={6} md={3}>
                   <TextField
+                    label="Monto de implementación"
+                    type="number"
+                    fullWidth
+                    size="small"
+                    value={billingConfigForm.implementation_fee}
+                    onChange={(e) => setBillingConfigForm((f) => ({ ...f, implementation_fee: e.target.value }))}
+                    helperText="Base de la comisión fija de implementación"
+                  />
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <TextField
                     label="Días de gracia"
                     type="number"
                     fullWidth
@@ -1083,6 +1222,20 @@ export default function TenantsPage() {
                     value={paymentForm.payment_date}
                     onChange={(e) => setPaymentForm((f) => ({ ...f, payment_date: e.target.value }))}
                   />
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <TextField
+                    select
+                    label="Concepto"
+                    fullWidth
+                    size="small"
+                    value={paymentForm.concept}
+                    onChange={(e) => setPaymentForm((f) => ({ ...f, concept: e.target.value }))}
+                  >
+                    {PAYMENT_CONCEPT_OPTIONS.map((o) => (
+                      <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                    ))}
+                  </TextField>
                 </Grid>
                 <Grid item xs={6} md={3}>
                   <TextField
@@ -1166,6 +1319,7 @@ export default function TenantsPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell>Fecha</TableCell>
+                    <TableCell>Concepto</TableCell>
                     <TableCell>Monto</TableCell>
                     <TableCell>Referencia</TableCell>
                     <TableCell>Notas</TableCell>
@@ -1176,6 +1330,7 @@ export default function TenantsPage() {
                     billingData.payments.map((p) => (
                       <TableRow key={p.id}>
                         <TableCell>{new Date(p.payment_date).toLocaleDateString("es-NI")}</TableCell>
+                        <TableCell>{conceptLabel(p.concept || "MENSUALIDAD")}</TableCell>
                         <TableCell>{p.currency} {Number(p.amount).toFixed(2)}</TableCell>
                         <TableCell>{p.reference || "—"}</TableCell>
                         <TableCell>{p.notes || "—"}</TableCell>
@@ -1183,7 +1338,7 @@ export default function TenantsPage() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} align="center">Sin pagos registrados</TableCell>
+                      <TableCell colSpan={5} align="center">Sin pagos registrados</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

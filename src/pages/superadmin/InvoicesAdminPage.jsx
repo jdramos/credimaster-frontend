@@ -30,6 +30,7 @@ import BlockIcon from "@mui/icons-material/Block";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import { toast } from "react-toastify";
 import API from "../../api";
+import { PAYMENT_CONCEPT_OPTIONS, conceptLabel } from "./aliados";
 
 const BASE = "/api/superadmin";
 
@@ -95,6 +96,7 @@ export default function InvoicesAdminPage() {
   const [newForm, setNewForm] = useState({
     tenant_id: "",
     amount: "",
+    concept: "MENSUALIDAD",
     issue_date: todayISO(),
     due_date: todayISO(),
     notes: "",
@@ -138,7 +140,7 @@ export default function InvoicesAdminPage() {
   const tenantName = (t) => t.commercial_name || t.legal_name || t.tenant_code || `#${t.id}`;
 
   const openNew = () => {
-    setNewForm({ tenant_id: "", amount: "", issue_date: todayISO(), due_date: todayISO(), notes: "" });
+    setNewForm({ tenant_id: "", amount: "", concept: "MENSUALIDAD", issue_date: todayISO(), due_date: todayISO(), notes: "" });
     setNewOpen(true);
   };
 
@@ -149,6 +151,7 @@ export default function InvoicesAdminPage() {
     try {
       await API.post(`${BASE}/tenants/${newForm.tenant_id}/invoices`, {
         amount: newForm.amount,
+        concept: newForm.concept,
         issue_date: newForm.issue_date,
         due_date: newForm.due_date,
         notes: newForm.notes,
@@ -172,8 +175,9 @@ export default function InvoicesAdminPage() {
     if (!payInvoice) return;
     setSavingPay(true);
     try {
-      await API.post(`${BASE}/invoices/${payInvoice.id}/pay`, payForm);
-      toast.success("Factura pagada");
+      const res = await API.post(`${BASE}/invoices/${payInvoice.id}/pay`, payForm);
+      const commission = res.data?.data?.aliado_commission;
+      toast.success(commission ? `Factura pagada. Comisión del aliado: ${money(commission.amount, commission.currency)}` : "Factura pagada");
       setPayInvoice(null);
       load();
     } catch (err) {
@@ -273,6 +277,7 @@ export default function InvoicesAdminPage() {
             <TableRow>
               <TableCell>Nº Factura</TableCell>
               <TableCell>Empresa</TableCell>
+              <TableCell>Concepto</TableCell>
               <TableCell>Emisión</TableCell>
               <TableCell>Vencimiento</TableCell>
               <TableCell align="right">Monto</TableCell>
@@ -282,14 +287,15 @@ export default function InvoicesAdminPage() {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} align="center" sx={{ py: 5 }}><CircularProgress size={26} /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} align="center" sx={{ py: 5 }}><CircularProgress size={26} /></TableCell></TableRow>
             ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={7} align="center" sx={{ py: 5, color: "text.secondary" }}>No hay facturas con estos filtros.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} align="center" sx={{ py: 5, color: "text.secondary" }}>No hay facturas con estos filtros.</TableCell></TableRow>
             ) : (
               rows.map((r) => (
                 <TableRow key={r.id} hover>
                   <TableCell sx={{ fontWeight: 700 }}>{r.invoice_number}</TableCell>
                   <TableCell>{r.commercial_name || r.legal_name || `#${r.tenant_id}`}</TableCell>
+                  <TableCell>{conceptLabel(r.concept || "MENSUALIDAD")}</TableCell>
                   <TableCell>{fmtDate(r.issue_date)}</TableCell>
                   <TableCell>
                     {fmtDate(r.due_date)}
@@ -337,6 +343,12 @@ export default function InvoicesAdminPage() {
               ))}
             </TextField>
             <TextField label="Monto" type="number" value={newForm.amount} onChange={(e) => setNewForm((f) => ({ ...f, amount: e.target.value }))} fullWidth required />
+            <TextField select label="Concepto" value={newForm.concept} onChange={(e) => setNewForm((f) => ({ ...f, concept: e.target.value }))} fullWidth
+              helperText="Solo la mensualidad mueve la fecha de corte. Mensualidad e implementación generan la comisión del aliado.">
+              {PAYMENT_CONCEPT_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+              ))}
+            </TextField>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               <TextField label="Fecha de emisión" type="date" InputLabelProps={{ shrink: true }} value={newForm.issue_date} onChange={(e) => setNewForm((f) => ({ ...f, issue_date: e.target.value }))} fullWidth />
               <TextField label="Fecha de vencimiento" type="date" InputLabelProps={{ shrink: true }} value={newForm.due_date} onChange={(e) => setNewForm((f) => ({ ...f, due_date: e.target.value }))} fullWidth />

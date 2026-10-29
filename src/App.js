@@ -207,6 +207,7 @@ const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrati
 const SupportAdminPage = lazy(() => import("./pages/superadmin/SupportAdminPage"));
 const InvoicesAdminPage = lazy(() => import("./pages/superadmin/InvoicesAdminPage"));
 const ScreenHelpAdminPage = lazy(() => import("./pages/superadmin/ScreenHelpAdminPage"));
+const AliadosAdminPage = lazy(() => import("./pages/superadmin/AliadosAdminPage"));
 const SupportTickets = lazy(() => import("./components/support/SupportTickets"));
 
 function RouteLoadingFallback() {
@@ -281,6 +282,7 @@ function SuperAdminRoutes() {
           <Route path="/tenants/:id/migration" element={<TenantMigrationPanel />} />
           <Route path="/soporte" element={<SupportAdminPage />} />
           <Route path="/facturas" element={<InvoicesAdminPage />} />
+          <Route path="/aliados" element={<AliadosAdminPage />} />
           <Route path="/ayuda" element={<ScreenHelpAdminPage />} />
           <Route path="/seguridad" element={<SecurityPage platform />} />
         </Routes>
