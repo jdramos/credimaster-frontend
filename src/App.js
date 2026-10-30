@@ -163,6 +163,7 @@ const DepartmentBudgetApprovalInbox = lazy(() => import("./components/budget/Dep
 const CashRegistersList = lazy(() => import("./components/caja/CashRegistersList"));
 const CashMovementsList = lazy(() => import("./components/caja/CashMovementsList"));
 const CollectorArqueosList = lazy(() => import("./components/caja/CollectorArqueosList"));
+const CollectorDayCloses = lazy(() => import("./components/caja/CollectorDayCloses"));
 const MyCashSession = lazy(() => import("./components/caja/MyCashSession"));
 const CashSessionsList = lazy(() => import("./components/caja/CashSessionsList"));
 const InstitutionRatesPage = lazy(() => import("./components/caja/InstitutionRatesPage"));
@@ -859,6 +860,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/caja/cajas" element={<CashRegistersList />} />
           <Route path="/caja/movimientos" element={<CashMovementsList />} />
           <Route path="/caja/arqueos" element={<CollectorArqueosList />} />
+          <Route path="/caja/cierres-cobradores" element={<CollectorDayCloses />} />
           <Route path="/caja/mi-caja" element={<MyCashSession />} />
           <Route path="/caja/turnos" element={<CashSessionsList />} />
           <Route path="/caja/tipo-cambio" element={<InstitutionRatesPage />} />

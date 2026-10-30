@@ -344,6 +344,7 @@ const menuItems = {
     { label: "Cajas", iconName: "FaCashRegister", to: "/caja/cajas", permission: "menu.caja" },
     { label: "Movimientos", iconName: "FaExchangeAlt", to: "/caja/movimientos", permission: "menu.caja" },
     { label: "Arqueo de Cobradores", iconName: "FaClipboardCheck", to: "/caja/arqueos", permission: "menu.caja" },
+    { label: "Cierres de Cobradores", iconName: "FaClipboardCheck", to: "/caja/cierres-cobradores", permission: "menu.caja" },
   ],
 
   obligations: [
