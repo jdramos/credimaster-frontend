@@ -23,6 +23,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../api";
 import LoanDetailsModal from "./Loan/detail/LoanDetailsModal";
 import ReportExportButtons from "./common/ReportExportButtons";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 import { reportDate, reportMoney } from "./common/reportFormat";
 
 const API_URL = "/api/asset-adjudications";
@@ -139,15 +140,18 @@ export default function AssetAdjudicationsList() {
     setSaleError("");
   };
 
+  // Cuerpo de la venta; la simulación contable manda lo mismo.
+  const buildSalePayload = () => ({
+    entry_date: saleForm.entry_date,
+    sale_price: Number(saleForm.sale_price || 0),
+  });
+
   const handleConfirmSale = async () => {
     try {
       setSaving(true);
       setSaleError("");
 
-      const res = await API.put(`${API_URL}/${saleTarget.id}/sell`, {
-        entry_date: saleForm.entry_date,
-        sale_price: Number(saleForm.sale_price || 0),
-      });
+      const res = await API.put(`${API_URL}/${saleTarget.id}/sell`, buildSalePayload());
 
       showAlert(res.data?.message || "Venta registrada", "success");
       setSaleTarget(null);
@@ -304,6 +308,15 @@ export default function AssetAdjudicationsList() {
               </Button>
             )}
 
+            {row.status === "APPROVED" && (
+              <AccountingSimulationButton
+                size="small"
+                label="Simular asiento"
+                request={() => ({ method: "put", url: `${API_URL}/${row.id}/apply` })}
+                disabled={disabled}
+              />
+            )}
+
             {row.status === "APPLIED" && (
               <Button
                 size="small"
@@ -397,6 +410,10 @@ export default function AssetAdjudicationsList() {
           <Button onClick={() => setSaleTarget(null)} disabled={saving}>
             Cancelar
           </Button>
+          <AccountingSimulationButton
+            request={() => (saleTarget ? { method: "put", url: `${API_URL}/${saleTarget.id}/sell`, data: buildSalePayload() } : null)}
+            disabled={saving}
+          />
           <Button variant="contained" onClick={handleConfirmSale} disabled={saving}>
             Confirmar venta
           </Button>

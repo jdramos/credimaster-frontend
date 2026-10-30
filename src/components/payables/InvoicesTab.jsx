@@ -14,6 +14,7 @@ import API from "../../api";
 import PaymentDialog from "./PaymentDialog";
 import StatementDialog from "./StatementDialog";
 import ReportExportButtons from "../common/ReportExportButtons";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 import { reportFilters, reportMoney } from "../common/reportFormat";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -141,27 +142,35 @@ export default function InvoicesTab() {
   const removeDist = (i) => setForm((p) => ({ ...p, dist: p.dist.filter((_, j) => j !== i) }));
   const distTotal = useMemo(() => form.dist.reduce((s, d) => s + (Number(d.amount) || 0), 0), [form.dist]);
 
-  const save = async () => {
+  // Valida y arma la factura; la simulación contable manda lo mismo.
+  const buildInvoicePayload = () => {
     if (!form.provider?.id || !form.document_date || !form.amount) {
-      notify("Proveedor, fecha y monto son obligatorios", "warning"); return;
+      return { problem: "Proveedor, fecha y monto son obligatorios" };
     }
     const lines = form.dist
       .filter((d) => d.account && Number(d.amount) > 0)
       .map((d) => ({ account_id: d.account.id, branch_id: d.branch?.id || null, amount: Number(d.amount) }));
-    if (!lines.length) { notify("Agregue al menos una línea de distribución del gasto", "warning"); return; }
+    if (!lines.length) return { problem: "Agregue al menos una línea de distribución del gasto" };
     if (Math.abs(distTotal - Number(form.amount)) > 0.01) {
-      notify(`La distribución (${money(distTotal)}) no cuadra con el monto (${money(form.amount)})`, "warning"); return;
+      return { problem: `La distribución (${money(distTotal)}) no cuadra con el monto (${money(form.amount)})` };
     }
-    const payload = {
-      provider_id: form.provider.id, document_number: form.document_number || null,
-      document_date: form.document_date, due_date: form.due_date || null, concept: form.concept || null,
-      lines,
-      amount: Number(form.amount),
-      retention_base: form.retention_base === "" ? null : Number(form.retention_base),
-      retention_code: form.retention_code || null,
-      retention_rate: form.retention_rate === "" ? null : Number(form.retention_rate),
-      retention_amount: form.retention_amount === "" ? retentionComputed : Number(form.retention_amount),
+    return {
+      payload: {
+        provider_id: form.provider.id, document_number: form.document_number || null,
+        document_date: form.document_date, due_date: form.due_date || null, concept: form.concept || null,
+        lines,
+        amount: Number(form.amount),
+        retention_base: form.retention_base === "" ? null : Number(form.retention_base),
+        retention_code: form.retention_code || null,
+        retention_rate: form.retention_rate === "" ? null : Number(form.retention_rate),
+        retention_amount: form.retention_amount === "" ? retentionComputed : Number(form.retention_amount),
+      },
     };
+  };
+
+  const save = async () => {
+    const { problem, payload } = buildInvoicePayload();
+    if (problem) { notify(problem, "warning"); return; }
     try {
       if (form.id) await API.put(`/api/payables/invoices/${form.id}`, payload);
       else await API.post("/api/payables/invoices", payload);
@@ -212,12 +221,14 @@ export default function InvoicesTab() {
     } catch (e) { notify(e.response?.data?.message || "Error", "error"); }
   };
 
+  const buildCreditNotePayload = () => ({
+    amount: Number(cn.amount), document_number: cn.document_number || null, date: cn.date,
+  });
+
   const saveCreditNote = async () => {
     if (!cn.invoice || !cn.amount) return;
     try {
-      await API.post(`/api/payables/invoices/${cn.invoice.id}/credit-note`, {
-        amount: Number(cn.amount), document_number: cn.document_number || null, date: cn.date,
-      });
+      await API.post(`/api/payables/invoices/${cn.invoice.id}/credit-note`, buildCreditNotePayload());
       notify("Nota de crédito aplicada");
       setCn({ open: false, invoice: null, amount: "", document_number: "", date: today() });
       fetchRows();
@@ -424,6 +435,15 @@ export default function InvoicesTab() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          {/* Editar una factura no genera un asiento nuevo: solo se simula el registro. */}
+          {!form.id && (
+            <AccountingSimulationButton
+              request={() => {
+                const { payload } = buildInvoicePayload();
+                return payload ? { method: "post", url: "/api/payables/invoices", data: payload } : null;
+              }}
+            />
+          )}
           <Button variant="contained" onClick={save}
             sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Guardar</Button>
         </DialogActions>
@@ -494,6 +514,9 @@ export default function InvoicesTab() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCn((c) => ({ ...c, open: false }))} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (cn.invoice && cn.amount ? { method: "post", url: `/api/payables/invoices/${cn.invoice.id}/credit-note`, data: buildCreditNotePayload() } : null)}
+          />
           <Button variant="contained" onClick={saveCreditNote}
             sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Aplicar</Button>
         </DialogActions>

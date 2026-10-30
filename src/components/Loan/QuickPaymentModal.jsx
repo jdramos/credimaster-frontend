@@ -28,6 +28,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import { NumericFormat } from "react-number-format";
 import dayjs from "dayjs";
 import API from "../../api";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const money = (v) =>
   Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -276,6 +277,17 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
     balanceTotal > 0.004 && { label: `Cancelar todo · C$${money(balanceTotal)}`, value: balanceTotal, icon: <BoltIcon fontSize="small" /> },
   ].filter(Boolean);
 
+  // Cuerpo del pago; la simulación contable manda lo mismo.
+  const buildPaymentParams = (confirmDuplicate = false) => ({
+    loan_id: loanId,
+    branch_id: loanFull?.branch_id || loanBase.branch_id,
+    payment_date: dayjs().format("YYYY-MM-DD"),
+    payment_amount: paymentAmount,
+    payment_method_id: Number(methodId),
+    client_reference_id: clientReferenceIdRef.current,
+    confirm_duplicate: confirmDuplicate || undefined,
+  });
+
   const handleSubmit = async (confirmDuplicate = false) => {
     if (!paymentAmount || paymentAmount <= 0) {
       setSubmitError("Ingrese un monto mayor a cero.");
@@ -297,17 +309,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
     try {
       setSubmitting(true);
       setSubmitError("");
-      const res = await API.post("/api/payments", {
-        params: {
-          loan_id: loanId,
-          branch_id: branchId,
-          payment_date: dayjs().format("YYYY-MM-DD"),
-          payment_amount: paymentAmount,
-          payment_method_id: Number(methodId),
-          client_reference_id: clientReferenceIdRef.current,
-          confirm_duplicate: confirmDuplicate || undefined,
-        },
-      });
+      const res = await API.post("/api/payments", { params: buildPaymentParams(confirmDuplicate) });
 
       setSuccess(res.data);
       setTimeout(() => onSuccess?.(res.data), 1300);
@@ -520,6 +522,12 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
               Cancelar
             </Button>
             <Divider flexItem orientation="vertical" sx={{ mx: "auto" }} />
+            {/* La simulación no graba: no hace falta el aviso de pago repetido. */}
+            <AccountingSimulationButton
+              request={() => (paymentAmount > 0 && methodId ? { method: "post", url: "/api/payments", data: { params: buildPaymentParams(true) } } : null)}
+              disabled={submitting || simulating || !paymentAmount}
+              sx={{ fontWeight: 800, borderRadius: 2 }}
+            />
             <Button
               variant="contained"
               onClick={() => handleSubmit()}

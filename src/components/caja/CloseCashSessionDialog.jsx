@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import API from "../../api";
 import DenominationCounter, { countTotals, emptyCount, money, toPayload } from "./DenominationCounter";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const round2 = (v) => Math.round((Number(v) + Number.EPSILON) * 100) / 100;
 
@@ -90,15 +91,13 @@ export default function CloseCashSessionDialog({ open, session, currencies: curr
   const fxDiffs = Object.fromEntries(fxCodes.map((code) => [code, round2((totals.fx[code] || 0) - Number(expectedFx[code]?.expected_qty || 0))]));
   const hasDifference = diffNio !== 0 || Object.values(fxDiffs).some((d) => d !== 0);
 
-  const handleSubmit = async () => {
-    setError("");
+  // Valida y arma el cierre; la simulación contable manda lo mismo.
+  const buildCloseRequest = () => {
     if (totals.missingRate) {
-      setError(`Hay ${totals.missingCodes.join(", ")} en el conteo pero no hay TC de compra de la institución para hoy.`);
-      return;
+      return { problem: `Hay ${totals.missingCodes.join(", ")} en el conteo pero no hay TC de compra de la institución para hoy.` };
     }
     if (hasDifference && !notes.trim()) {
-      setError("El conteo no cuadra: explique la diferencia en la nota.");
-      return;
+      return { problem: "El conteo no cuadra: explique la diferencia en la nota." };
     }
     let transfer = null;
     if (transferType) {
@@ -107,20 +106,31 @@ export default function CloseCashSessionDialog({ open, session, currencies: curr
         ? Object.fromEntries(Object.entries(transferFx).map(([code, v]) => [code, round2(v || 0)]).filter(([, v]) => v > 0))
         : {};
       if (!(nio > 0 || Object.keys(amountsFx).length)) {
-        setError("Indique el monto a trasladar.");
-        return;
+        return { problem: "Indique el monto a trasladar." };
       }
       transfer = transferType === "BOVEDA"
         ? { type: "BOVEDA", cash_register_id: transferRegisterId, amount_nio: nio, amounts_fx: amountsFx }
         : { type: "BANCO", bank_account_id: transferBankId, amount_nio: nio };
     }
+    return {
+      request: {
+        method: "post",
+        url: `/api/caja/sessions/${session.id}/close`,
+        data: { denominations: toPayload(count), notes: notes.trim() || undefined, transfer },
+      },
+    };
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    const { problem, request } = buildCloseRequest();
+    if (problem) {
+      setError(problem);
+      return;
+    }
     setSaving(true);
     try {
-      const res = await API.post(`/api/caja/sessions/${session.id}/close`, {
-        denominations: toPayload(count),
-        notes: notes.trim() || undefined,
-        transfer,
-      });
+      const res = await API.post(request.url, request.data);
       onClosed?.(res.data?.data);
     } catch (err) {
       setError(err.response?.data?.message || "No se pudo cerrar la caja");
@@ -227,6 +237,7 @@ export default function CloseCashSessionDialog({ open, session, currencies: curr
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>Cancelar</Button>
+        <AccountingSimulationButton request={() => buildCloseRequest().request || null} disabled={saving} />
         <Button variant="contained" color="primary" onClick={handleSubmit} disabled={saving}>
           {saving ? "Cerrando..." : "Cerrar caja"}
         </Button>

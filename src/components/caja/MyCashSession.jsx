@@ -29,6 +29,7 @@ import CloseCashSessionDialog from "./CloseCashSessionDialog";
 import { printCashSessionReport } from "../../reports/cashSessionReport";
 import TellerPaymentDialog from "./TellerPaymentDialog";
 import FxOperationDialog from "./FxOperationDialog";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const round2 = (v) => Math.round((Number(v) + Number.EPSILON) * 100) / 100;
 
@@ -131,6 +132,16 @@ export default function MyCashSession() {
     : {};
   const hasOpeningDifference = diffNio !== 0 || Object.keys(fxDiffs).length > 0;
 
+  // Cuerpo de la apertura; la simulación contable manda lo mismo.
+  const buildOpenPayload = () => ({
+    cash_register_id: registerId,
+    denominations: toPayload(count),
+    fund_source_cash_register_id: useFund ? fundSourceId || null : null,
+    fund_amount: useFund ? fund : 0,
+    accept_opening_difference: acceptDifference,
+    notes: notes.trim() || undefined,
+  });
+
   const handleOpen = async () => {
     setOpenError("");
     if (!registerId) {
@@ -147,14 +158,7 @@ export default function MyCashSession() {
     }
     setOpening(true);
     try {
-      await API.post("/api/caja/sessions", {
-        cash_register_id: registerId,
-        denominations: toPayload(count),
-        fund_source_cash_register_id: useFund ? fundSourceId || null : null,
-        fund_amount: useFund ? fund : 0,
-        accept_opening_difference: acceptDifference,
-        notes: notes.trim() || undefined,
-      });
+      await API.post("/api/caja/sessions", buildOpenPayload());
       setCount(emptyCount());
       setNotes("");
       setRegisterId("");
@@ -340,10 +344,14 @@ export default function MyCashSession() {
                   <Alert severity="error">{openError}</Alert>
                 </Grid>
               )}
-              <Grid item xs={12}>
+              <Grid item xs={12} sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 <Button variant="contained" onClick={handleOpen} disabled={opening || !canOperate || !registerId || (preview && !preview.day_ready)}>
                   {opening ? "Abriendo..." : "Abrir caja"}
                 </Button>
+                <AccountingSimulationButton
+                  request={() => (registerId ? { method: "post", url: "/api/caja/sessions", data: buildOpenPayload() } : null)}
+                  disabled={opening || !canOperate || !registerId}
+                />
               </Grid>
             </Grid>
           )}

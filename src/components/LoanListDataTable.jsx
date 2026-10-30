@@ -51,9 +51,9 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import API from "../api";
-import { loanApi } from "../api/loanApi";
 import { useAuth } from "../contexts/AuthContext";
 import { isModuleEnabled } from "../utils/moduleAccess";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 
 const urlGuarantee = `/api/guarantees`;
 
@@ -367,6 +367,23 @@ function LoanListDataTable({
     }
   };
 
+  // Ruta y cuerpo del desembolso; la simulación contable manda lo mismo.
+  const buildDisburseRequest = () => {
+    if (!selectedDisburseLoan?.id) return null;
+    if (directDisbursement && !selectedDisburseLoan.disbursement_method) {
+      return {
+        method: "post",
+        url: `/api/loans/${selectedDisburseLoan.id}/remittance`,
+        data: { disbursement_method: disburseMethod, delivery_agent_id: deliveryAgentId },
+      };
+    }
+    return {
+      method: "post",
+      url: `/api/loans/${selectedDisburseLoan.id}/disburse`,
+      data: { disbursed_by: currentUserId, delivery_agent_id: deliveryAgentId },
+    };
+  };
+
   const handleSubmitDisburse = async () => {
     if (!selectedDisburseLoan?.id) {
       openSnack("No se encontró el crédito a desembolsar.", "warning");
@@ -380,17 +397,8 @@ function LoanListDataTable({
     try {
       setDisburseLoading(true);
 
-      if (directDisbursement && !selectedDisburseLoan.disbursement_method) {
-        await loanApi.createRemittance(selectedDisburseLoan.id, {
-          disbursement_method: disburseMethod,
-          delivery_agent_id: deliveryAgentId,
-        });
-      } else {
-        await API.post(`/api/loans/${selectedDisburseLoan.id}/disburse`, {
-          disbursed_by: currentUserId,
-          delivery_agent_id: deliveryAgentId,
-        });
-      }
+      const { url, data } = buildDisburseRequest();
+      await API.post(url, data);
 
       openSnack("Crédito desembolsado correctamente.", "success");
       handleCloseDisburseDialog();
@@ -1185,6 +1193,7 @@ function LoanListDataTable({
 
         <DialogActions>
           <Button onClick={handleCloseDisburseDialog}>Cerrar</Button>
+          <AccountingSimulationButton request={buildDisburseRequest} disabled={disburseLoading} />
           <Button
             variant="contained"
             color="info"

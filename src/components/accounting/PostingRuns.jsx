@@ -32,6 +32,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import ReportExportButtons from "../common/ReportExportButtons";
+import AccountingSimulationButton from "./simulation/AccountingSimulationButton";
 
 const formatMoney = (value) =>
   Number(value || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -498,6 +499,14 @@ export default function PostingRuns() {
             >
               Contabilizar
             </Button>
+          )}
+
+          {canPost && (
+            <AccountingSimulationButton
+              request={() => (form.from_date && form.to_date ? { method: "post", url: "/api/accounting/post-operations", data: form } : null)}
+              disabled={posting}
+              sx={{ borderRadius: 2 }}
+            />
           )}
         </Box>
 

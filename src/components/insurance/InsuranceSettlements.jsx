@@ -42,6 +42,7 @@ import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
 import { newClientReferenceId } from "../../utils/clientReferenceId";
 import ReportExportButtons from "../common/ReportExportButtons";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 import { reportMoney, reportInteger, reportPercent, reportPeriod, reportFilters } from "../common/reportFormat";
 
 // Liquidación de primas de microseguros a las aseguradoras y comisiones que
@@ -78,7 +79,7 @@ const StatusChip = ({ status }) =>
 // ==========================================
 // Diálogo de anulación (motivo obligatorio)
 // ==========================================
-function VoidDialog({ open, title, description, onClose, onConfirm }) {
+function VoidDialog({ open, title, description, onClose, onConfirm, simulationRequest }) {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -123,6 +124,7 @@ function VoidDialog({ open, title, description, onClose, onConfirm }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancelar</Button>
+        {simulationRequest && <AccountingSimulationButton request={() => simulationRequest(reason.trim())} disabled={saving} />}
         <Button color="error" variant="contained" onClick={confirm} disabled={saving} sx={{ textTransform: "none" }}>
           {saving ? "Anulando..." : "Anular"}
         </Button>
@@ -256,6 +258,24 @@ function SettlementDialog({ open, initial, providers, sources, onClose, onSaved 
   const toggleCompensate = (id) =>
     set({ compensate_ids: form.compensate_ids.includes(id) ? form.compensate_ids.filter((x) => x !== id) : [...form.compensate_ids, id] });
 
+  // Cuerpo de la liquidación; la simulación contable manda lo mismo.
+  const buildSettlementPayload = () => ({
+    provider_id: form.provider_id,
+    date_from: form.date_from,
+    date_to: form.date_to,
+    settlement_date: form.settlement_date,
+    payment_method: form.payment_method,
+    bank_account_id: form.payment_method === "CAJA" ? null : form.bank_account_id,
+    cash_register_id: form.payment_method === "CAJA" ? form.cash_register_id : null,
+    check_number: form.payment_method === "CHEQUE" ? form.check_number.trim() : null,
+    document_reference: form.document_reference || null,
+    notes: form.notes || null,
+    expected_premium: premium,
+    commission: { accrue: form.accrue && commission > 0, amount: commission, compensate: form.compensate },
+    compensate_commission_ids: form.compensate_ids,
+    client_reference_id: clientRef.current,
+  });
+
   const save = async () => {
     if (!form.provider_id) return setError("Seleccione la aseguradora.");
     if (!preview?.items?.length) return setError("No hay primas pendientes de liquidar en ese período.");
@@ -265,22 +285,7 @@ function SettlementDialog({ open, initial, providers, sources, onClose, onSaved 
     if (net <= 0) return setError("Las comisiones a compensar cubren las primas: no queda nada que pagar.");
     try {
       setSaving(true);
-      const res = await API.post(API_URL, {
-        provider_id: form.provider_id,
-        date_from: form.date_from,
-        date_to: form.date_to,
-        settlement_date: form.settlement_date,
-        payment_method: form.payment_method,
-        bank_account_id: form.payment_method === "CAJA" ? null : form.bank_account_id,
-        cash_register_id: form.payment_method === "CAJA" ? form.cash_register_id : null,
-        check_number: form.payment_method === "CHEQUE" ? form.check_number.trim() : null,
-        document_reference: form.document_reference || null,
-        notes: form.notes || null,
-        expected_premium: premium,
-        commission: { accrue: form.accrue && commission > 0, amount: commission, compensate: form.compensate },
-        compensate_commission_ids: form.compensate_ids,
-        client_reference_id: clientRef.current,
-      });
+      const res = await API.post(API_URL, buildSettlementPayload());
       onSaved(res.data?.data);
     } catch (err) {
       setError(errorMessage(err, "No se pudo registrar la liquidación."));
@@ -414,6 +419,10 @@ function SettlementDialog({ open, initial, providers, sources, onClose, onSaved 
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancelar</Button>
+        <AccountingSimulationButton
+          request={() => (form.provider_id ? { method: "post", url: API_URL, data: buildSettlementPayload() } : null)}
+          disabled={saving || loading || !preview?.items?.length}
+        />
         <Button variant="contained" onClick={save} disabled={saving || loading || !preview?.items?.length} sx={{ textTransform: "none" }}>
           {saving ? "Registrando..." : "Registrar liquidación"}
         </Button>
@@ -541,9 +550,11 @@ function CommissionDialog({ open, providers, onClose, onSaved }) {
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
   const suggested = form.base_amount && form.commission_rate ? round2((Number(form.base_amount) * Number(form.commission_rate)) / 100) : null;
 
+  const commissionAmount = () => (form.amount !== "" ? Number(form.amount) : suggested);
+
   const save = async () => {
     if (!form.provider_id) return setError("Seleccione la aseguradora.");
-    const amount = form.amount !== "" ? Number(form.amount) : suggested;
+    const amount = commissionAmount();
     if (!(amount > 0)) return setError("Indique el monto de la comisión.");
     try {
       setSaving(true);
@@ -598,6 +609,10 @@ function CommissionDialog({ open, providers, onClose, onSaved }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancelar</Button>
+        <AccountingSimulationButton
+          request={() => (form.provider_id && commissionAmount() > 0 ? { method: "post", url: COMMISSIONS_URL, data: { ...form, amount: commissionAmount() } } : null)}
+          disabled={saving}
+        />
         <Button variant="contained" onClick={save} disabled={saving} sx={{ textTransform: "none" }}>
           {saving ? "Registrando..." : "Registrar comisión"}
         </Button>
@@ -660,6 +675,10 @@ function CollectDialog({ commission, sources, onClose, onSaved }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancelar</Button>
+        <AccountingSimulationButton
+          request={() => (commission ? { method: "post", url: `${COMMISSIONS_URL}/${commission.id}/collect`, data: form } : null)}
+          disabled={saving}
+        />
         <Button variant="contained" onClick={save} disabled={saving} sx={{ textTransform: "none" }}>
           {saving ? "Registrando..." : "Registrar cobro"}
         </Button>
@@ -752,12 +771,13 @@ export default function InsuranceSettlements() {
     afterChange(`Liquidación registrada: primas ${money(data?.premium_amount)}, neto pagado ${money(data?.net_amount)} (comprobante ${data?.entry_no || "—"})`);
   };
 
+  const voidUrl = ({ kind, row }) => (kind === "settlement" ? `${API_URL}/${row.id}/void`
+    : kind === "commission" ? `${COMMISSIONS_URL}/${row.id}/void`
+      : `/api/insurance/commission-collections/${row.collection_id}/void`);
+
   const confirmVoid = async (reason) => {
     const { kind, row } = voidTarget;
-    const url = kind === "settlement" ? `${API_URL}/${row.id}/void`
-      : kind === "commission" ? `${COMMISSIONS_URL}/${row.id}/void`
-        : `/api/insurance/commission-collections/${row.collection_id}/void`;
-    await API.post(url, { reason });
+    await API.post(voidUrl(voidTarget), { reason });
     setVoidTarget(null);
     afterChange(kind === "settlement" ? `Liquidación #${row.id} anulada` : kind === "commission" ? `Comisión #${row.id} anulada` : `Cobro de la comisión #${row.id} anulado`);
   };
@@ -1313,6 +1333,7 @@ export default function InsuranceSettlements() {
         }
         onClose={() => setVoidTarget(null)}
         onConfirm={confirmVoid}
+        simulationRequest={(reason) => (voidTarget ? { method: "post", url: voidUrl(voidTarget), data: { reason } } : null)}
       />
 
       <Snackbar

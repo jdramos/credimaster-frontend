@@ -42,6 +42,7 @@ import LoanBatchDisbursementDialog from "../Loan/LoanBatchDisbursementDialog";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ReportExportButtons from "../common/ReportExportButtons";
 import { reportMoney, reportDate, reportPeriod } from "../common/reportFormat";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const SOURCE_LABELS = {
   CAJA: "Caja",
@@ -237,6 +238,20 @@ export default function CashMovementsList() {
     [form.lines, isIngreso],
   );
 
+  // Cuerpo del movimiento; la simulación contable manda lo mismo.
+  const buildMovementPayload = () => ({
+    cash_register_id: cashRegisterId,
+    movement_type: form.movement_type,
+    movement_date: form.movement_date,
+    description: form.description,
+    lines: form.lines.map((l) => ({
+      account_id: l.account?.id,
+      debit: Number(l.debit) || 0,
+      credit: Number(l.credit) || 0,
+      description: l.description || undefined,
+    })),
+  });
+
   const handleSaveMovement = async () => {
     if (!form.movement_date || !form.description) {
       showAlert("Complete fecha y descripción");
@@ -253,18 +268,7 @@ export default function CashMovementsList() {
 
     try {
       setSaving(true);
-      const res = await API.post("/api/caja/movements", {
-        cash_register_id: cashRegisterId,
-        movement_type: form.movement_type,
-        movement_date: form.movement_date,
-        description: form.description,
-        lines: form.lines.map((l) => ({
-          account_id: l.account.id,
-          debit: Number(l.debit) || 0,
-          credit: Number(l.credit) || 0,
-          description: l.description || undefined,
-        })),
-      });
+      const res = await API.post("/api/caja/movements", buildMovementPayload());
       showAlert(`${isIngreso ? "Ingreso" : "Egreso"} registrado por ${currencySymbol} ${money(res.data.data.amount)} (comprobante ${res.data.data.entry_no})`, "success");
       setDialogOpen(false);
       fetchStatement();
@@ -529,6 +533,10 @@ export default function CashMovementsList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => ({ method: "post", url: "/api/caja/movements", data: buildMovementPayload() })}
+            disabled={saving}
+          />
           <Button variant="contained" onClick={handleSaveMovement} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Guardando..." : `Registrar ${isIngreso ? "ingreso" : "egreso"}`}
           </Button>
@@ -550,6 +558,10 @@ export default function CashMovementsList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setVoidTarget(null)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (voidTarget ? { method: "put", url: `/api/caja/movements/${voidTarget.source_id}/void`, data: { void_reason: voidReason || null } } : null)}
+            disabled={voiding}
+          />
           <Button variant="contained" color="error" onClick={confirmVoid} disabled={voiding} sx={{ textTransform: "none" }}>
             {voiding ? "Anulando..." : "Anular"}
           </Button>

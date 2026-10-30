@@ -26,6 +26,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import RemoveShoppingCartIcon from "@mui/icons-material/RemoveShoppingCart";
 import API from "../../api";
 import ReportExportButtons from "../common/ReportExportButtons";
+import AccountingSimulationButton from "./simulation/AccountingSimulationButton";
 import { UserContext } from "../../contexts/UserContext";
 
 const API_URL = "/api/fixed-assets";
@@ -100,6 +101,23 @@ export default function FixedAssetsList() {
     setDialogOpen(true);
   };
 
+  // Cuerpos del alta y de la baja; la simulación contable manda lo mismo.
+  const buildAssetPayload = () => ({
+    category_code: form.category_code,
+    description: form.description,
+    branch_id: form.branch_id || null,
+    acquisition_date: form.acquisition_date,
+    acquisition_cost: Number(form.acquisition_cost),
+    residual_value: Number(form.residual_value || 0),
+    useful_life_months: isDepreciable ? Number(form.useful_life_months) : undefined,
+  });
+
+  const buildDisposalPayload = () => ({
+    entry_date: disposal.entry_date,
+    sale_price: Number(disposal.sale_price || 0),
+    disposal_notes: disposal.disposal_notes || null,
+  });
+
   const handleSave = async () => {
     if (!form.category_code || !form.description || !form.acquisition_date || !form.acquisition_cost) {
       showAlert("Complete categoría, descripción, fecha y costo de adquisición", "error");
@@ -112,17 +130,7 @@ export default function FixedAssetsList() {
 
     try {
       setSaving(true);
-      const payload = {
-        category_code: form.category_code,
-        description: form.description,
-        branch_id: form.branch_id || null,
-        acquisition_date: form.acquisition_date,
-        acquisition_cost: Number(form.acquisition_cost),
-        residual_value: Number(form.residual_value || 0),
-        useful_life_months: isDepreciable ? Number(form.useful_life_months) : undefined,
-      };
-
-      const res = await API.post(API_URL, payload);
+      const res = await API.post(API_URL, buildAssetPayload());
       showAlert(`Activo ${res.data.data.asset_code} registrado (comprobante ${res.data.data.entry_no})`);
       setDialogOpen(false);
       fetchAssets();
@@ -171,11 +179,7 @@ export default function FixedAssetsList() {
 
     try {
       setConfirming(true);
-      const res = await API.put(`${API_URL}/${disposal.asset.id}/dispose`, {
-        entry_date: disposal.entry_date,
-        sale_price: Number(disposal.sale_price || 0),
-        disposal_notes: disposal.disposal_notes || null,
-      });
+      const res = await API.put(`${API_URL}/${disposal.asset.id}/dispose`, buildDisposalPayload());
       showAlert(`Activo ${disposal.asset.asset_code} dado de baja (comprobante ${res.data.data.entry_no})`);
       setDisposal(null);
       setDisposalPreview(null);
@@ -382,6 +386,7 @@ export default function FixedAssetsList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton request={() => ({ method: "post", url: API_URL, data: buildAssetPayload() })} disabled={saving} />
           <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Guardando..." : "Registrar activo"}
           </Button>
@@ -435,6 +440,10 @@ export default function FixedAssetsList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDisposal(null)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (disposal ? { method: "put", url: `${API_URL}/${disposal.asset.id}/dispose`, data: buildDisposalPayload() } : null)}
+            disabled={confirming}
+          />
           <Button
             variant="contained" color="error" onClick={confirmDisposal}
             disabled={!disposalPreview || confirming}

@@ -8,6 +8,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import API from "../../api";
 import ReportExportButtons from "../common/ReportExportButtons";
 import { reportMoney } from "../common/reportFormat";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const dateStr = (v) => (v ? String(v).slice(0, 10) : "");
@@ -93,8 +94,11 @@ export default function AdvancesTab() {
     [sel],
   );
 
+  const selectedPayments = () =>
+    Object.entries(sel).map(([id, amt]) => ({ invoice_id: Number(id), amount: Number(amt) || 0 })).filter((p) => p.amount > 0);
+
   const doApply = async () => {
-    const payments = Object.entries(sel).map(([id, amt]) => ({ invoice_id: Number(id), amount: Number(amt) || 0 })).filter((p) => p.amount > 0);
+    const payments = selectedPayments();
     if (!payments.length) { notify("Seleccione facturas", "warning"); return; }
     if (selTotal > Number(apply.advance.balance) + 0.009) { notify("La aplicación excede el saldo del anticipo", "warning"); return; }
     setSaving(true);
@@ -220,6 +224,10 @@ export default function AdvancesTab() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setApply({ open: false, advance: null })} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (apply.advance && selectedPayments().length ? { method: "post", url: `/api/payables/advances/${apply.advance.id}/apply`, data: { payments: selectedPayments(), apply_date: applyDate } } : null)}
+            disabled={saving}
+          />
           <Button variant="contained" onClick={doApply} disabled={saving}
             sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             {saving ? "Aplicando..." : "Aplicar"}

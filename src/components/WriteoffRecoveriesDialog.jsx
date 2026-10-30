@@ -26,6 +26,7 @@ import dayjs from "dayjs";
 import API from "../api";
 import { UserContext } from "../contexts/UserContext";
 import { newClientReferenceId } from "../utils/clientReferenceId";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 
 // Recuperaciones de un crédito saneado (api/loan/writeoffRecoveriesController.js):
 // resumen (saneado / recuperado / principal pendiente), registro de un cobro
@@ -113,19 +114,22 @@ export default function WriteoffRecoveriesDialog({ open, loan, startWithForm = f
   const amountValid = amount > 0;
   const canSubmit = amountValid && form.id_forma_pago && !saving;
 
+  // Cuerpo de la recuperación; la simulación contable manda lo mismo.
+  const buildRecoveryPayload = () => ({
+    loan_id: loan.id,
+    amount,
+    id_forma_pago: Number(form.id_forma_pago),
+    collector_id: isCash && form.collector_id ? Number(form.collector_id) : null,
+    document_reference: form.document_reference,
+    notes: form.notes,
+    client_reference_id: clientReferenceIdRef.current,
+  });
+
   const submit = async () => {
     setSaving(true);
     setError("");
     try {
-      const res = await API.post("/api/writeoff-recoveries", {
-        loan_id: loan.id,
-        amount,
-        id_forma_pago: Number(form.id_forma_pago),
-        collector_id: isCash && form.collector_id ? Number(form.collector_id) : null,
-        document_reference: form.document_reference,
-        notes: form.notes,
-        client_reference_id: clientReferenceIdRef.current,
-      });
+      const res = await API.post("/api/writeoff-recoveries", buildRecoveryPayload());
       const rec = res.data?.data;
       setMessage(
         res.data?.duplicate
@@ -271,6 +275,10 @@ export default function WriteoffRecoveriesDialog({ open, loan, startWithForm = f
             </Stack>
             <Stack direction="row" spacing={1} sx={{ mt: 2 }} justifyContent="flex-end">
               <Button onClick={() => setFormOpen(false)} disabled={saving}>Cancelar</Button>
+              <AccountingSimulationButton
+                request={() => ({ method: "post", url: "/api/writeoff-recoveries", data: buildRecoveryPayload() })}
+                disabled={!canSubmit}
+              />
               <Button variant="contained" onClick={submit} disabled={!canSubmit}>
                 {saving ? <CircularProgress size={20} /> : "Guardar recuperación"}
               </Button>
@@ -356,6 +364,10 @@ export default function WriteoffRecoveriesDialog({ open, loan, startWithForm = f
             />
             <Stack direction="row" spacing={1} sx={{ mt: 1.5 }} justifyContent="flex-end">
               <Button onClick={() => setVoiding(null)} disabled={saving}>Cancelar</Button>
+              <AccountingSimulationButton
+                request={() => (voiding ? { method: "post", url: `/api/writeoff-recoveries/${voiding.id}/void`, data: { reason: voidReason.trim() } } : null)}
+                disabled={!voidReason.trim() || saving}
+              />
               <Button variant="contained" color="error" onClick={confirmVoid} disabled={!voidReason.trim() || saving}>
                 Confirmar anulación
               </Button>

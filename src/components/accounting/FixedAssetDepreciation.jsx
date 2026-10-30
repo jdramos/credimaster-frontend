@@ -11,6 +11,7 @@ import API from "../../api";
 import { printAccountingReport } from "./printAccountingReport";
 import ReportExportButtons from "../common/ReportExportButtons";
 import JournalDetailDialog from "./JournalDetailDialog";
+import AccountingSimulationButton from "./simulation/AccountingSimulationButton";
 import { UserContext } from "../../contexts/UserContext";
 
 const CATEGORY_LABELS = {
@@ -93,6 +94,13 @@ export default function FixedAssetDepreciation() {
     }
   };
 
+  // Ruta y cuerpo de la corrida; la simulación contable manda lo mismo.
+  const depreciationRequest = () => ({
+    method: "post",
+    url: "/api/fixed-assets/depreciation/run",
+    data: { year, month, run_date: lastDayOfMonth(year, month) },
+  });
+
   const doRun = async () => {
     const runDate = lastDayOfMonth(year, month);
     const confirmed = window.confirm(
@@ -106,7 +114,8 @@ export default function FixedAssetDepreciation() {
 
     try {
       setRunning(true);
-      const res = await API.post("/api/fixed-assets/depreciation/run", { year, month, run_date: runDate });
+      const { url, data } = depreciationRequest();
+      const res = await API.post(url, data);
       showAlert(
         `Depreciación de ${MONTH_NAMES[month - 1]} ${year} generada (${res.data.data.total_assets_included} activos, C$ ${money(res.data.data.total_depreciation_amount)})`,
         "success",
@@ -293,14 +302,20 @@ export default function FixedAssetDepreciation() {
             </Stack>
 
             {canRunDepreciation && (
-              <Button
-                variant="contained"
-                color="error"
-                disabled={running || preview.already_run || preview.total_assets_included === 0}
-                onClick={doRun}
-              >
-                {running ? "Generando..." : `Generar depreciación de ${MONTH_NAMES[month - 1]} ${year}`}
-              </Button>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Button
+                  variant="contained"
+                  color="error"
+                  disabled={running || preview.already_run || preview.total_assets_included === 0}
+                  onClick={doRun}
+                >
+                  {running ? "Generando..." : `Generar depreciación de ${MONTH_NAMES[month - 1]} ${year}`}
+                </Button>
+                <AccountingSimulationButton
+                  request={depreciationRequest}
+                  disabled={running || preview.already_run || preview.total_assets_included === 0}
+                />
+              </Stack>
             )}
           </>
         )}

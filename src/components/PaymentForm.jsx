@@ -38,6 +38,7 @@ import { NumericFormat } from "react-number-format";
 import BranchSelect from "./BranchSelect";
 import LoanInfo from "./LoanInfo";
 import FormaPagoSelect from "./conami/FormaPagoSelect";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("es-NI", {
@@ -306,6 +307,16 @@ const PaymentForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Cuerpo del pago; la simulación contable manda lo mismo.
+  const buildPaymentPayload = (confirmDuplicate = false) => ({
+    ...form,
+    payment_date: dayjs().format("YYYY-MM-DD"),
+    payment_amount: Number(form.payment_amount),
+    payment_method_id: Number(form.payment_method_id),
+    client_reference_id: clientReferenceIdRef.current,
+    confirm_duplicate: confirmDuplicate || undefined,
+  });
+
   const handleSubmit = async (confirmDuplicate = false) => {
     if (!validate()) return;
 
@@ -314,17 +325,8 @@ const PaymentForm = ({
     try {
       setLoading(true);
 
-      const payload = {
-        ...form,
-        payment_date: dayjs().format("YYYY-MM-DD"),
-        payment_amount: Number(form.payment_amount),
-        payment_method_id: Number(form.payment_method_id),
-        client_reference_id: clientReferenceIdRef.current,
-        confirm_duplicate: confirmDuplicate || undefined,
-      };
-
       const res = await API.post("/api/payments", {
-        params: payload,
+        params: buildPaymentPayload(confirmDuplicate),
       });
 
       allowNavigation();
@@ -782,6 +784,13 @@ const PaymentForm = ({
             >
               Cancelar
             </Button>
+
+            {/* La simulación no graba: no hace falta el aviso de pago repetido. */}
+            <AccountingSimulationButton
+              request={() => (validate() ? { method: "post", url: "/api/payments", data: { params: buildPaymentPayload(true) } } : null)}
+              disabled={loading || initialLoading || paymentApplicationLoading}
+              sx={{ borderRadius: 2, fontWeight: 800 }}
+            />
 
             <Button
               variant="contained"

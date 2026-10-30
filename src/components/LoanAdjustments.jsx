@@ -30,6 +30,7 @@ import { UserContext } from "../contexts/UserContext";
 import HelpButton from "./help/HelpButton";
 import ReportExportButtons from "./common/ReportExportButtons";
 import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 
 // Notas de crédito y débito sobre créditos (api/loan/loanAdjustmentsController.js).
 // Registro -> aprobación por OTRO usuario (se aplica) o rechazo -> anulación.
@@ -157,13 +158,19 @@ export default function LoanAdjustments() {
     }
   };
 
+  // Ruta y cuerpo de la acción; la simulación contable manda lo mismo.
+  const actionRequest = ({ kind, row }) => ({
+    method: "post",
+    url: `/api/loan-adjustments/${row.id}/${kind}`,
+    data: kind === "void" ? { reason: actionText } : { comment: actionText },
+  });
+
   const runAction = async () => {
-    const { kind, row } = action;
+    const { kind } = action;
     setSaving(true);
     try {
-      if (kind === "approve") await API.post(`/api/loan-adjustments/${row.id}/approve`, { comment: actionText });
-      if (kind === "reject") await API.post(`/api/loan-adjustments/${row.id}/reject`, { comment: actionText });
-      if (kind === "void") await API.post(`/api/loan-adjustments/${row.id}/void`, { reason: actionText });
+      const { url, data } = actionRequest(action);
+      await API.post(url, data);
       setMessage({
         type: "success",
         text: { approve: "Nota aplicada.", reject: "Nota rechazada.", void: "Nota anulada: se revirtieron la tabla y el asiento." }[kind],
@@ -500,6 +507,14 @@ export default function LoanAdjustments() {
           <Button onClick={() => setAction(null)} disabled={saving}>
             Cancelar
           </Button>
+          {/* Rechazar no contabiliza: solo aprobar y anular tienen asiento. */}
+          {action && action.kind !== "reject" && (
+            <AccountingSimulationButton
+              request={() => actionRequest(action)}
+              disabled={saving || (action.kind === "void" && !actionText.trim())}
+              size="small"
+            />
+          )}
           <Button
             variant="contained"
             color={action?.kind === "approve" ? "primary" : "error"}

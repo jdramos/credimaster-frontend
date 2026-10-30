@@ -19,6 +19,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CustomerSelect from "./Customer/CustomerSelect";
 import API from "../api";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 
 const money = (value) =>
   Number(value || 0).toLocaleString("es-NI", {
@@ -233,6 +234,10 @@ const PaymentCorrectionDialog = ({ open, payment, onClose, onSuccess }) => {
           <Button onClick={onClose} disabled={applying}>
             Cancelar
           </Button>
+          <AccountingSimulationButton
+            request={() => (correctLoanId ? { method: "post", url: `/api/payments/${payment.id}/correction/apply`, data: { correct_loan_id: correctLoanId } } : null)}
+            disabled={!preview || applying}
+          />
           <Button
             variant="contained"
             color="error"

@@ -33,6 +33,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import API from "../../api";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const API_URL = "/api/banks/deposits";
 
@@ -162,6 +163,20 @@ export default function BankDepositsList() {
     [form.lines],
   );
 
+  // Cuerpo del depósito; la simulación contable manda lo mismo.
+  const buildDepositPayload = () => ({
+    bank_account_id: form.bank_account_id,
+    deposit_date: form.deposit_date,
+    description: form.description,
+    collector_id: form.collector?.id || undefined,
+    lines: form.lines.map((l) => ({
+      account_id: l.account?.id,
+      debit: Number(l.debit) || 0,
+      credit: Number(l.credit) || 0,
+      description: l.description || undefined,
+    })),
+  });
+
   const handleSave = async () => {
     if (!form.bank_account_id || !form.deposit_date || !form.description) {
       showAlert("Complete cuenta bancaria, fecha y descripción", "error");
@@ -178,18 +193,7 @@ export default function BankDepositsList() {
 
     try {
       setSaving(true);
-      const res = await API.post(API_URL, {
-        bank_account_id: form.bank_account_id,
-        deposit_date: form.deposit_date,
-        description: form.description,
-        collector_id: form.collector?.id || undefined,
-        lines: form.lines.map((l) => ({
-          account_id: l.account.id,
-          debit: Number(l.debit) || 0,
-          credit: Number(l.credit) || 0,
-          description: l.description || undefined,
-        })),
-      });
+      const res = await API.post(API_URL, buildDepositPayload());
       showAlert(`Depósito registrado por C$ ${money(res.data.data.amount)} (comprobante ${res.data.data.entry_no})`);
       setDialogOpen(false);
       fetchDeposits();
@@ -425,6 +429,7 @@ export default function BankDepositsList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton request={() => ({ method: "post", url: API_URL, data: buildDepositPayload() })} disabled={saving} />
           <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Guardando..." : "Registrar depósito"}
           </Button>
@@ -445,6 +450,10 @@ export default function BankDepositsList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setVoidTarget(null)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (voidTarget ? { method: "put", url: `${API_URL}/${voidTarget.id}/void`, data: { void_reason: voidReason || null } } : null)}
+            disabled={voiding}
+          />
           <Button variant="contained" color="error" onClick={confirmVoid} disabled={voiding} sx={{ textTransform: "none" }}>
             {voiding ? "Anulando..." : "Anular depósito"}
           </Button>

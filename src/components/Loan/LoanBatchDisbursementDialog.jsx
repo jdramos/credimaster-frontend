@@ -29,6 +29,7 @@ import { loanApi } from "../../api/loanApi";
 import { UserContext } from "../../contexts/UserContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { printCheckDisbursementDetail } from "../../reports/checkDisbursementDetailReport";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const money = (n) =>
   Number(n || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -131,6 +132,17 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
     );
   };
 
+  // Lo que se envía al confirmar; la simulación contable manda lo mismo.
+  const buildPayload = () => ({
+    loan_ids: selectedIds,
+    disbursement_method: method,
+    bank_account_id: method !== "EFECTIVO" ? bankAccountId : null,
+    check_number: method === "CHEQUE" ? checkNumber : null,
+    beneficiary_name: method === "CHEQUE" ? beneficiaryName : null,
+    cash_register_id: method === "EFECTIVO" ? cashRegisterId : null,
+    delivery_agent_id: deliveryAgentId,
+  });
+
   const handleSubmit = async () => {
     if (selectedIds.length === 0) {
       setError("Debe seleccionar al menos un crédito a desembolsar");
@@ -161,15 +173,7 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
       setLoading(true);
       setError("");
 
-      const res = await loanApi.createBatchRemittance({
-        loan_ids: selectedIds,
-        disbursement_method: method,
-        bank_account_id: method !== "EFECTIVO" ? bankAccountId : null,
-        check_number: method === "CHEQUE" ? checkNumber : null,
-        beneficiary_name: method === "CHEQUE" ? beneficiaryName : null,
-        cash_register_id: method === "EFECTIVO" ? cashRegisterId : null,
-        delivery_agent_id: deliveryAgentId,
-      });
+      const res = await loanApi.createBatchRemittance(buildPayload());
 
       // Al desembolsar con cheque, imprimir automáticamente el detalle con los
       // créditos que respaldan el cheque (el asiento consolida el monto).
@@ -376,6 +380,10 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
         <Button onClick={onClose} color="inherit" disabled={loading}>
           Cancelar
         </Button>
+        <AccountingSimulationButton
+          request={() => ({ method: "post", url: "/api/loans/remittances/batch", data: buildPayload() })}
+          disabled={loading || selectedIds.length === 0}
+        />
         <Button onClick={handleSubmit} variant="contained" disabled={loading || !deliveryAgentId}>
           {loading ? "Desembolsando..." : "Confirmar desembolso"}
         </Button>

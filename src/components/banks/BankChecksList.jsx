@@ -36,6 +36,7 @@ import API from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 import { UserContext } from "../../contexts/UserContext";
 import { numberToWords } from "./numberToWords";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const API_URL = "/api/banks/checks";
 
@@ -184,6 +185,26 @@ export default function BankChecksList() {
     [bankAccounts, form.bank_account_id],
   );
 
+  // Cuerpo del cheque; la simulación contable manda lo mismo.
+  const buildCheckPayload = () => ({
+    bank_account_id: form.bank_account_id,
+    check_number: form.check_number,
+    issue_date: form.issue_date,
+    beneficiary_name: form.beneficiary_name,
+    provider_id: form.provider?.id || null,
+    invoice_payments: invoicePayments.map((p) => ({ invoice_id: p.invoice_id, amount: p.amount })),
+    concept: form.concept,
+    // En modo factura las líneas las arma el backend desde las facturas.
+    lines: invoiceMode
+      ? []
+      : form.lines.map((l) => ({
+          account_id: l.account?.id,
+          debit: Number(l.debit) || 0,
+          credit: Number(l.credit) || 0,
+          description: l.description || undefined,
+        })),
+  });
+
   const handleSave = async () => {
     if (!form.bank_account_id || !form.check_number || !form.issue_date || !form.beneficiary_name || !form.concept) {
       showAlert("Complete cuenta bancaria, número, fecha, beneficiario y concepto", "error");
@@ -200,24 +221,7 @@ export default function BankChecksList() {
 
     try {
       setSaving(true);
-      const res = await API.post(API_URL, {
-        bank_account_id: form.bank_account_id,
-        check_number: form.check_number,
-        issue_date: form.issue_date,
-        beneficiary_name: form.beneficiary_name,
-        provider_id: form.provider?.id || null,
-        invoice_payments: invoicePayments.map((p) => ({ invoice_id: p.invoice_id, amount: p.amount })),
-        concept: form.concept,
-        // En modo factura las líneas las arma el backend desde las facturas.
-        lines: invoiceMode
-          ? []
-          : form.lines.map((l) => ({
-              account_id: l.account.id,
-              debit: Number(l.debit) || 0,
-              credit: Number(l.credit) || 0,
-              description: l.description || undefined,
-            })),
-      });
+      const res = await API.post(API_URL, buildCheckPayload());
       showAlert(`Cheque #${form.check_number} emitido por ${selectedBankAccount?.currency_symbol || "C$"} ${money(res.data.data.amount)} (comprobante ${res.data.data.entry_no})`);
       setDialogOpen(false);
       fetchChecks();
@@ -569,6 +573,7 @@ export default function BankChecksList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton request={() => ({ method: "post", url: API_URL, data: buildCheckPayload() })} disabled={saving} />
           <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Emitiendo..." : "Emitir cheque"}
           </Button>
@@ -593,6 +598,10 @@ export default function BankChecksList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setVoidTarget(null)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (voidTarget ? { method: "put", url: `${API_URL}/${voidTarget.id}/void`, data: { void_reason: voidReason || null, annulment_date: voidDate || null } } : null)}
+            disabled={voiding}
+          />
           <Button variant="contained" color="error" onClick={confirmVoid} disabled={voiding} sx={{ textTransform: "none" }}>
             {voiding ? "Anulando..." : "Anular cheque"}
           </Button>

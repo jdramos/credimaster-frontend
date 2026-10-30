@@ -30,6 +30,7 @@ import { UserContext } from "../../contexts/UserContext";
 import HelpButton from "../help/HelpButton";
 import ReportExportButtons from "../common/ReportExportButtons";
 import { reportMoney, reportDate, reportFilters } from "../common/reportFormat";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const API_URL = "/api/caja/arqueos";
 
@@ -201,6 +202,20 @@ export default function CollectorArqueosList() {
     return Number((Number(preview.expected_amount) - bankAmount - cashAmount).toFixed(2));
   }, [preview, bankAmount, cashAmount]);
 
+  // Cuerpo de la liquidación; la simulación contable manda lo mismo.
+  const buildArqueoPayload = () => ({
+    collector_id: form.collector_id,
+    period_end: form.period_end,
+    cash_register_id: cashAmount > 0 ? form.cash_register_id : undefined,
+    cash_amount: cashAmount > 0 ? cashAmount : undefined,
+    denominations: cashAmount > 0 && useDenominations
+      ? Object.fromEntries(DENOMINATIONS.filter((d) => Number(denomQty[d.value]) > 0).map((d) => [d.value, Number(denomQty[d.value])]))
+      : undefined,
+    bank_account_id: bankAmount > 0 ? form.bank_account_id : undefined,
+    bank_amount: bankAmount > 0 ? bankAmount : undefined,
+    notes: form.notes || undefined,
+  });
+
   const handleSave = async () => {
     if (!form.collector_id || !form.period_end) {
       showAlert("Complete cobrador y fecha de corte", "error");
@@ -229,18 +244,7 @@ export default function CollectorArqueosList() {
 
     try {
       setSaving(true);
-      const res = await API.post(API_URL, {
-        collector_id: form.collector_id,
-        period_end: form.period_end,
-        cash_register_id: cashAmount > 0 ? form.cash_register_id : undefined,
-        cash_amount: cashAmount > 0 ? cashAmount : undefined,
-        denominations: cashAmount > 0 && useDenominations
-          ? Object.fromEntries(DENOMINATIONS.filter((d) => Number(denomQty[d.value]) > 0).map((d) => [d.value, Number(denomQty[d.value])]))
-          : undefined,
-        bank_account_id: bankAmount > 0 ? form.bank_account_id : undefined,
-        bank_amount: bankAmount > 0 ? bankAmount : undefined,
-        notes: form.notes || undefined,
-      });
+      const res = await API.post(API_URL, buildArqueoPayload());
 
       const parts = [];
       if (res.data?.data?.bank) parts.push(`depósito al banco ${currencySymbol} ${money(res.data.data.bank.amount)} (${res.data.data.bank.entry_no})`);
@@ -581,6 +585,10 @@ export default function CollectorArqueosList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (form.collector_id && form.period_end ? { method: "post", url: API_URL, data: buildArqueoPayload() } : null)}
+            disabled={saving}
+          />
           <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
             {saving ? "Guardando..." : "Registrar liquidación"}
           </Button>
@@ -603,6 +611,10 @@ export default function CollectorArqueosList() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setVoidTarget(null)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <AccountingSimulationButton
+            request={() => (voidTarget ? { method: "put", url: `${API_URL}/${voidTarget.id}/void`, data: { void_reason: voidReason || null } } : null)}
+            disabled={voiding}
+          />
           <Button variant="contained" color="error" onClick={confirmVoid} disabled={voiding} sx={{ textTransform: "none" }}>
             {voiding ? "Anulando..." : "Anular arqueo"}
           </Button>

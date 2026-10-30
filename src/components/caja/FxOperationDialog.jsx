@@ -22,6 +22,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import CustomerSelect from "../Customer/CustomerSelect";
 import { money } from "./DenominationCounter";
 import { printFxOperationReceipt } from "../../reports/fxOperationReceiptReport";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const round2 = (v) => Math.round((Number(v) + Number.EPSILON) * 100) / 100;
 
@@ -66,6 +67,16 @@ export default function FxOperationDialog({ open, session, currencies = [], rate
   const nio = rate && Number(amount) > 0 ? round2(Number(amount) * rate) : 0;
   const available = session?.totals?.currencies?.[currencyCode]?.expected_qty || 0;
 
+  // Cuerpo de la operación; la simulación contable manda lo mismo.
+  const buildFxPayload = () => ({
+    operation_type: type,
+    currency_code: currency?.code,
+    fx_amount: round2(amount),
+    customer_id: isCustomer ? customerId : undefined,
+    person_name: isCustomer ? undefined : personName.trim(),
+    person_identification: isCustomer ? undefined : personId.trim(),
+  });
+
   const submit = async () => {
     setError("");
     if (!currency) return setError("Elija la moneda.");
@@ -76,14 +87,7 @@ export default function FxOperationDialog({ open, session, currencies = [], rate
     }
     setSaving(true);
     try {
-      const res = await API.post(`/api/caja/sessions/${session.id}/fx-operations`, {
-        operation_type: type,
-        currency_code: currency.code,
-        fx_amount: round2(amount),
-        customer_id: isCustomer ? customerId : undefined,
-        person_name: isCustomer ? undefined : personName.trim(),
-        person_identification: isCustomer ? undefined : personId.trim(),
-      });
+      const res = await API.post(`/api/caja/sessions/${session.id}/fx-operations`, buildFxPayload());
       setResult({ ...res.data?.data, currency_name: currency.name });
     } catch (err) {
       setError(err.response?.data?.message || "No se pudo registrar la operación");
@@ -188,6 +192,10 @@ export default function FxOperationDialog({ open, session, currencies = [], rate
         ) : (
           <>
             <Button onClick={onClose} disabled={saving}>Cancelar</Button>
+            <AccountingSimulationButton
+              request={() => (currency && Number(amount) > 0 ? { method: "post", url: `/api/caja/sessions/${session.id}/fx-operations`, data: buildFxPayload() } : null)}
+              disabled={saving}
+            />
             <Button variant="contained" onClick={submit} disabled={saving}>
               {saving ? "Registrando..." : type === "COMPRA" ? "Registrar compra" : "Registrar venta"}
             </Button>

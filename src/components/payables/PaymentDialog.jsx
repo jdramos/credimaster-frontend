@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import API from "../../api";
 import { printRetentionCertificate } from "../retentions/printRetentionCertificate";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const money = (v) => Number(v || 0).toLocaleString("es-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const today = () => new Date().toISOString().slice(0, 10);
@@ -70,60 +71,79 @@ export default function PaymentDialog({ open, onClose, providers, accounts, onSa
     [sel, invoices],
   );
 
+  // Valida y arma la operación (anticipo, cheque o pago directo); la
+  // simulación contable manda lo mismo.
+  const buildPaymentRequest = () => {
+    if (isAdvance) {
+      if (!provider) return { problem: "Elija el proveedor" };
+      if (!(Number(advanceAmount) > 0)) return { problem: "Indique el monto del anticipo" };
+      if (!advanceAccount) return { problem: "Elija la cuenta de anticipos a proveedores" };
+      const body = {
+        provider_id: provider.id, amount: Number(advanceAmount), method,
+        advance_account_id: advanceAccount.id, reference: reference || null, payment_date: date,
+      };
+      if (isCheck) {
+        if (!bankAccount) return { problem: "Elija la cuenta bancaria" };
+        if (!checkNumber) return { problem: "Indique el número de cheque" };
+        body.bank_account_id = bankAccount.id; body.check_number = checkNumber;
+      } else {
+        if (!sourceAccount) return { problem: "Elija la cuenta de origen" };
+        body.source_account_id = sourceAccount.id;
+      }
+      return { request: { method: "post", url: "/api/payables/advances", data: body } };
+    }
+
+    const payments = Object.entries(sel)
+      .map(([id, amt]) => ({ invoice_id: Number(id), amount: Number(amt) || 0 }))
+      .filter((p) => p.amount > 0);
+    if (!payments.length) return { problem: "Seleccione al menos una factura" };
+
+    if (isCheck) {
+      if (!bankAccount) return { problem: "Elija la cuenta bancaria" };
+      if (!checkNumber) return { problem: "Indique el número de cheque" };
+      // El cheque se emite por el módulo de bancos; el backend arma el asiento
+      // desde las facturas y aplica los pagos.
+      return {
+        payments,
+        request: {
+          method: "post",
+          url: "/api/banks/checks",
+          data: {
+            bank_account_id: bankAccount.id,
+            check_number: checkNumber,
+            issue_date: date,
+            beneficiary_name: provider?.name || "",
+            provider_id: provider?.id || null,
+            concept: reference || "Pago a proveedor",
+            invoice_payments: payments,
+            lines: [],
+          },
+        },
+      };
+    }
+    if (!sourceAccount) return { problem: "Elija la cuenta de origen (caja/banco)" };
+    return {
+      payments,
+      request: {
+        method: "post",
+        url: "/api/payables/payments",
+        data: { payments, method, source_account_id: sourceAccount.id, reference: reference || null, payment_date: date },
+      },
+    };
+  };
+
   const save = async () => {
+    const { problem, request, payments } = buildPaymentRequest();
+    if (problem) { notify(problem, "warning"); return; }
     setSaving(true);
     try {
+      await API.post(request.url, request.data);
       if (isAdvance) {
-        if (!provider) { notify("Elija el proveedor", "warning"); setSaving(false); return; }
-        if (!(Number(advanceAmount) > 0)) { notify("Indique el monto del anticipo", "warning"); setSaving(false); return; }
-        if (!advanceAccount) { notify("Elija la cuenta de anticipos a proveedores", "warning"); setSaving(false); return; }
-        const body = {
-          provider_id: provider.id, amount: Number(advanceAmount), method,
-          advance_account_id: advanceAccount.id, reference: reference || null, payment_date: date,
-        };
-        if (isCheck) {
-          if (!bankAccount) { notify("Elija la cuenta bancaria", "warning"); setSaving(false); return; }
-          if (!checkNumber) { notify("Indique el número de cheque", "warning"); setSaving(false); return; }
-          body.bank_account_id = bankAccount.id; body.check_number = checkNumber;
-        } else {
-          if (!sourceAccount) { notify("Elija la cuenta de origen", "warning"); setSaving(false); return; }
-          body.source_account_id = sourceAccount.id;
-        }
-        await API.post("/api/payables/advances", body);
         notify("Anticipo registrado");
         onSaved?.(); onClose();
         return;
       }
-
-      const payments = Object.entries(sel)
-        .map(([id, amt]) => ({ invoice_id: Number(id), amount: Number(amt) || 0 }))
-        .filter((p) => p.amount > 0);
-      if (!payments.length) { notify("Seleccione al menos una factura", "warning"); setSaving(false); return; }
-
-      if (isCheck) {
-        if (!bankAccount) { notify("Elija la cuenta bancaria", "warning"); setSaving(false); return; }
-        if (!checkNumber) { notify("Indique el número de cheque", "warning"); setSaving(false); return; }
-        // El cheque se emite por el módulo de bancos; el backend arma el asiento
-        // desde las facturas y aplica los pagos.
-        await API.post("/api/banks/checks", {
-          bank_account_id: bankAccount.id,
-          check_number: checkNumber,
-          issue_date: date,
-          beneficiary_name: provider?.name || "",
-          provider_id: provider?.id || null,
-          concept: reference || "Pago a proveedor",
-          invoice_payments: payments,
-          lines: [],
-        });
-        notify("Cheque emitido y pago registrado");
-      } else {
-        if (!sourceAccount) { notify("Elija la cuenta de origen (caja/banco)", "warning"); setSaving(false); return; }
-        await API.post("/api/payables/payments", {
-          payments, method, source_account_id: sourceAccount.id,
-          reference: reference || null, payment_date: date,
-        });
-        notify("Pago registrado");
-      }
+      notify(isCheck ? "Cheque emitido y pago registrado" : "Pago registrado");
       // Constancia de retención: si el pago involucró facturas con retención,
       // se ofrece imprimir la constancia del proveedor del período.
       const hadRetention = payments.some((p) => {
@@ -245,6 +265,7 @@ export default function PaymentDialog({ open, onClose, providers, accounts, onSa
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancelar</Button>
+        <AccountingSimulationButton request={() => buildPaymentRequest().request || null} disabled={saving} />
         <Button variant="contained" onClick={save} disabled={saving}
           sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
           {saving ? "Registrando..." : "Registrar pago"}

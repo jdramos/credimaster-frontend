@@ -34,6 +34,7 @@ import BranchSelect from "./BranchSelect";
 import BusinessDayAllBranches from "./BusinessDayAllBranches";
 import HelpButton from "./help/HelpButton";
 import API from "../api";
+import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
 
 function formatDateTime(value) {
   if (!value) return "-";
@@ -136,6 +137,14 @@ const BusinessDayPanel = () => {
     }
   };
 
+  // Ruta y cuerpo de la generación del saldo; la simulación contable del
+  // cierre manda lo mismo (el saldo FINAL cierra el día y contabiliza).
+  const balancesRequest = () => ({
+    method: "post",
+    url: "/api/loans/balances",
+    data: { branch_id: branchId, balance_type: balanceType, balance_date: status?.pending_date },
+  });
+
   const handleGenerate = async () => {
     setSubmitting(true);
     setError("");
@@ -148,11 +157,8 @@ const BusinessDayPanel = () => {
     );
 
     try {
-      const { data } = await API.post(`/api/loans/balances`, {
-        branch_id: branchId,
-        balance_type: balanceType,
-        balance_date: status.pending_date,
-      });
+      const { url, data: body } = balancesRequest();
+      const { data } = await API.post(url, body);
 
       if (data.generated_dates) {
         data.generated_dates.forEach((date) => addLog(`Saldo generado para ${formatDate(date)}`));
@@ -428,6 +434,7 @@ const BusinessDayPanel = () => {
           <Button onClick={() => setConfirmOpen(false)} disabled={submitting}>
             Cancelar
           </Button>
+          {!isOpenAction && <AccountingSimulationButton request={balancesRequest} disabled={submitting} label="Ver simulación contable del cierre" />}
           <Button
             onClick={handleGenerate}
             color={isOpenAction ? "primary" : "error"}
@@ -452,6 +459,7 @@ const BusinessDayPanel = () => {
           <Button onClick={() => setRegenerateOpen(false)} color="secondary">
             Cancelar
           </Button>
+          {!isOpenAction && <AccountingSimulationButton request={balancesRequest} disabled={submitting} label="Ver simulación contable del cierre" />}
           <Button onClick={handleGenerate} color="primary" variant="contained" disabled={submitting}>
             {submitting ? "Procesando..." : "Sí, regenerar"}
           </Button>

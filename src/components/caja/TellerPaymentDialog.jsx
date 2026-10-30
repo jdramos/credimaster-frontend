@@ -26,6 +26,7 @@ import LoanInfo from "../LoanInfo";
 import { newClientReferenceId } from "../../utils/clientReferenceId";
 import { money } from "./DenominationCounter";
 import { printTellerReceipt } from "../../reports/tellerReceiptReport";
+import AccountingSimulationButton from "../accounting/simulation/AccountingSimulationButton";
 
 const CASH_PAYMENT_METHOD_ID = 1;
 
@@ -162,6 +163,23 @@ export default function TellerPaymentDialog({ open, session, currencies = [], ra
     return "";
   };
 
+  // Cuerpo del pago; la simulación contable manda lo mismo.
+  const buildPaymentParams = (confirmDuplicate = false) => ({
+    loan_id: loan.id,
+    branch_id: loan.branch_id,
+    payment_date: dayjs().format("YYYY-MM-DD"),
+    payment_amount: round2(amount),
+    payment_method_id: CASH_PAYMENT_METHOD_ID,
+    client_reference_id: referenceRef.current,
+    confirm_duplicate: confirmDuplicate || undefined,
+    tender: {
+      tendered_nio: round2(num(tenderedNio)),
+      currency_code: num(tenderedFx) > 0 || num(changeFx) > 0 ? currencyCode : undefined,
+      tendered_fx: round2(num(tenderedFx)),
+      change_fx: round2(num(changeFx)),
+    },
+  });
+
   const submit = async (confirmDuplicate = false) => {
     const problem = validate();
     if (problem) {
@@ -172,23 +190,7 @@ export default function TellerPaymentDialog({ open, session, currencies = [], ra
     setSaving(true);
     let retry = false;
     try {
-      const res = await API.post("/api/payments", {
-        params: {
-          loan_id: loan.id,
-          branch_id: loan.branch_id,
-          payment_date: dayjs().format("YYYY-MM-DD"),
-          payment_amount: round2(amount),
-          payment_method_id: CASH_PAYMENT_METHOD_ID,
-          client_reference_id: referenceRef.current,
-          confirm_duplicate: confirmDuplicate || undefined,
-          tender: {
-            tendered_nio: round2(num(tenderedNio)),
-            currency_code: num(tenderedFx) > 0 || num(changeFx) > 0 ? currencyCode : undefined,
-            tendered_fx: round2(num(tenderedFx)),
-            change_fx: round2(num(changeFx)),
-          },
-        },
-      });
+      const res = await API.post("/api/payments", { params: buildPaymentParams(confirmDuplicate) });
       setResult({ ...res.data, loan, customer_name: customerName });
       onPaid?.(res.data);
     } catch (err) {
@@ -361,6 +363,11 @@ export default function TellerPaymentDialog({ open, session, currencies = [], ra
         ) : (
           <>
             <Button onClick={onClose} disabled={saving}>Cancelar</Button>
+            {/* La simulación no graba: no hace falta el aviso de pago repetido. */}
+            <AccountingSimulationButton
+              request={() => (validate() ? null : { method: "post", url: "/api/payments", data: { params: buildPaymentParams(true) } })}
+              disabled={saving}
+            />
             <Button variant="contained" color="success" onClick={() => submit(false)} disabled={saving}>
               {saving ? "Registrando..." : "Registrar pago"}
             </Button>
