@@ -9,9 +9,10 @@ import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import BlockIcon from '@mui/icons-material/Block';
+import LocationOffIcon from '@mui/icons-material/LocationOff';
 import { Chip, Paper, Divider } from '@mui/material';
 import { Button } from '@mui/material';
-import { Dialog, DialogContent } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, DialogActions, Alert } from '@mui/material';
 import UserAdd from './UserAdd';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -33,6 +34,12 @@ const UsersList = () => {
     const [editUser, setEditUser] = useState(false);
     const [showInactive, setShowInactive] = useState(true);
     const [viewUser, setViewUser] = useState(null);
+    // Excepciones a la ubicación obligatoria de la app móvil, por id de usuario.
+    const [exemptions, setExemptions] = useState({});
+    const [locationUser, setLocationUser] = useState(null);
+    const [locationReason, setLocationReason] = useState('');
+    const [locationError, setLocationError] = useState('');
+    const [locationSaving, setLocationSaving] = useState(false);
 
 
     const exportToExcel = () => {
@@ -44,6 +51,7 @@ const UsersList = () => {
             Rol: user.role_name,
             Estado: user.user_status,
             Sucursales: user.branch_name,
+            'Ubicación en la app': exemptions[user.id] ? 'Exenta' : 'Obligatoria',
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(worksheetData);
@@ -70,9 +78,10 @@ const UsersList = () => {
             { field: 'role_name', label: 'Rol' },
             { field: 'user_status', label: 'Estado' },
             { field: 'branch_name', label: 'Sucursales' },
+            { label: 'Ubicación en la app', value: (r) => (exemptions[r.id] ? 'Exenta' : 'Obligatoria') },
         ],
         rows: filteredRows,
-        totals: [{ value: `Usuarios: ${filteredRows.length}`, colspan: 7 }],
+        totals: [{ value: `Usuarios: ${filteredRows.length}`, colspan: 8 }],
         orientation: 'landscape',
     });
 
@@ -92,9 +101,41 @@ const UsersList = () => {
             .finally(() => setLoading(false));
     };
 
+    const fetchExemptions = () => {
+        API.get('/api/users/location-exemptions')
+            .then(res => setExemptions(Object.fromEntries((res.data?.data || []).map(e => [e.user_id, e]))))
+            .catch(err => console.error(err));
+    };
+
     useEffect(() => {
         fetchUsers();
+        fetchExemptions();
     }, []);
+
+    const openLocationDialog = (user) => {
+        setLocationUser(user);
+        setLocationReason(exemptions[user.id]?.reason || '');
+        setLocationError('');
+    };
+
+    const saveLocationExemption = async (exempt) => {
+        setLocationError('');
+        if (exempt && locationReason.trim().length < 5) {
+            setLocationError('Indique el motivo de la excepción (mínimo 5 caracteres).');
+            return;
+        }
+        setLocationSaving(true);
+        try {
+            await API.put(`/api/users/${locationUser.id}/location-exemption`, { exempt, reason: locationReason.trim() });
+            toast.success(exempt ? 'Excepción guardada' : 'Excepción quitada', { position: 'top-center', autoClose: 3000 });
+            setLocationUser(null);
+            fetchExemptions();
+        } catch (err) {
+            setLocationError(err.response?.data?.message || 'No se pudo guardar la excepción');
+        } finally {
+            setLocationSaving(false);
+        }
+    };
 
 
     useEffect(() => {
@@ -183,9 +224,25 @@ const UsersList = () => {
         }
         ,
         {
+            field: 'location_exempt',
+            headerName: 'Ubicación en la app',
+            width: 170,
+            sortable: false,
+            renderCell: (params) => {
+                const ex = exemptions[params.row.id];
+                return ex ? (
+                    <Tooltip title={`Exenta: ${ex.reason}`}>
+                        <Chip label="Exenta" color="warning" size="small" />
+                    </Tooltip>
+                ) : (
+                    <Chip label="Obligatoria" size="small" variant="outlined" />
+                );
+            }
+        },
+        {
             field: 'acciones',
             headerName: 'Acciones',
-            width: 150,
+            width: 200,
             sortable: false,
             renderCell: (params) => (
                 <>
@@ -207,6 +264,13 @@ const UsersList = () => {
                                 <EditIcon />
                             </IconButton>
 
+                        </Tooltip>
+                    )}
+                    {canEditUser && (
+                        <Tooltip title="Ubicación en la app (excepción)">
+                            <IconButton onClick={() => openLocationDialog(params.row)} color={exemptions[params.row.id] ? 'warning' : 'default'}>
+                                <LocationOffIcon />
+                            </IconButton>
                         </Tooltip>
                     )}
                     {canEditUser && (
@@ -340,6 +404,42 @@ const UsersList = () => {
                 </DialogContent>
             </Dialog>
 
+
+            <Dialog open={Boolean(locationUser)} onClose={() => !locationSaving && setLocationUser(null)} fullWidth maxWidth="sm">
+                <DialogTitle>Ubicación en la app — {locationUser?.full_name}</DialogTitle>
+                <DialogContent dividers>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        Por defecto la app móvil bloquea toda operación mientras el usuario no tenga la ubicación activa.
+                        Con una excepción, a este usuario no se le exige. Queda registrado quién la creó y el motivo.
+                    </Typography>
+                    {locationUser && exemptions[locationUser.id] ? (
+                        <Alert severity="warning" sx={{ mb: 2 }}>
+                            Este usuario está exento. Creada por {exemptions[locationUser.id].created_by_name || '—'} el {String(exemptions[locationUser.id].created_at || '').replace('T', ' ').slice(0, 16)}.
+                        </Alert>
+                    ) : (
+                        <Alert severity="info" sx={{ mb: 2 }}>A este usuario se le exige la ubicación.</Alert>
+                    )}
+                    <TextField
+                        label="Motivo de la excepción"
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        value={locationReason}
+                        onChange={(e) => setLocationReason(e.target.value)}
+                        inputProps={{ maxLength: 300 }}
+                    />
+                    {locationError && <Alert severity="error" sx={{ mt: 2 }}>{locationError}</Alert>}
+                </DialogContent>
+                <DialogActions>
+                    {locationUser && exemptions[locationUser.id] && (
+                        <Button color="error" disabled={locationSaving} onClick={() => saveLocationExemption(false)}>Quitar excepción</Button>
+                    )}
+                    <Button disabled={locationSaving} onClick={() => setLocationUser(null)}>Cancelar</Button>
+                    <Button variant="contained" disabled={locationSaving} onClick={() => saveLocationExemption(true)}>
+                        {locationUser && exemptions[locationUser.id] ? 'Guardar motivo' : 'Crear excepción'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             <ToastContainer />
 
