@@ -159,23 +159,19 @@ export default function LoginPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
         bgcolor: (t) => t.palette.background.default,
-        px: 2,
-        py: 3,
       }}
     >
+      {/* Pantalla completa: panel de marca y formulario ocupan todo el alto. */}
       <Card
         elevation={0}
         sx={{
           width: "100%",
-          maxWidth: { xs: 460, md: 980 },
+          minHeight: "100vh",
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.2fr 1fr" },
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 3,
+          gridTemplateRows: { xs: "auto 1fr", md: "1fr" },
+          borderRadius: 0,
           overflow: "hidden",
         }}
       >
@@ -186,7 +182,7 @@ export default function LoginPage() {
             overflow: "hidden",
             bgcolor: BRAND.deep,
             color: "#FFFFFF",
-            p: { xs: 2.5, md: 4 },
+            p: { xs: 2.5, md: 7 },
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
@@ -197,13 +193,27 @@ export default function LoginPage() {
             aria-hidden
             sx={{
               position: "absolute",
-              right: -70,
-              top: -70,
-              width: 220,
-              height: 220,
+              right: { xs: -70, md: -140 },
+              top: { xs: -70, md: -140 },
+              width: { xs: 220, md: 440 },
+              height: { xs: 220, md: 440 },
               borderRadius: "50%",
               bgcolor: "#7F77DD",
               opacity: 0.2,
+            }}
+          />
+          <Box
+            aria-hidden
+            sx={{
+              display: { xs: "none", md: "block" },
+              position: "absolute",
+              left: -120,
+              bottom: -160,
+              width: 360,
+              height: 360,
+              borderRadius: "50%",
+              bgcolor: "#378ADD",
+              opacity: 0.12,
             }}
           />
 
@@ -219,10 +229,10 @@ export default function LoginPage() {
             </Box>
           </Box>
 
-          <Box sx={{ position: "relative" }}>
+          <Box sx={{ position: "relative", maxWidth: 620 }}>
             <Typography
               component="h1"
-              sx={{ fontWeight: 800, lineHeight: 1.25, fontSize: { xs: 20, md: 28 } }}
+              sx={{ fontWeight: 800, lineHeight: 1.2, fontSize: { xs: 20, md: 40 } }}
             >
               El ERP para microfinanzas{" "}
               <Box component="span" sx={{ color: BRAND.gold }}>más completo</Box>{" "}
@@ -279,8 +289,8 @@ export default function LoginPage() {
               <Box key={label} sx={{ bgcolor: color }} />
             ))}
           </Box>
-          <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
-        <CardContent sx={{ p: { xs: 3, md: 4 }, width: "100%" }}>
+          <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CardContent sx={{ p: { xs: 3, md: 4 }, width: "100%", maxWidth: 440 }}>
           {mfaContent || (
           <>
           <Typography variant="h6" sx={{ fontWeight: 900 }}>
