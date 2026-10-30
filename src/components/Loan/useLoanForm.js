@@ -434,7 +434,12 @@ export default function useLoanForm() {
     Boolean(selectedProduct) && !productsRegulated &&
     selectedProduct[field] !== null && selectedProduct[field] !== undefined;
 
+  // Se vuelve a pedir al cerrar "Ver documentos": los documentos se suben
+  // desde ese diálogo, y con el resumen viejo el paso 2 seguía marcando
+  // Faltantes y bloqueaba el avance (validateForm).
   useEffect(() => {
+    if (showCustomerDocs) return;
+
     const fetchCustomerChecklist = async () => {
       if (!loan.customer_id) {
         setDocSummary(null);
@@ -458,7 +463,7 @@ export default function useLoanForm() {
     };
 
     fetchCustomerChecklist();
-  }, [loan.customer_id]);
+  }, [loan.customer_id, showCustomerDocs]);
 
   useEffect(() => {
     const fetchGuaranteesByCustomer = async () => {
