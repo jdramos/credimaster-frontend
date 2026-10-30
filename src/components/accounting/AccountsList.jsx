@@ -296,6 +296,7 @@ export default function AccountsList() {
               variant="contained"
               startIcon={<AddIcon />}
               sx={{
+                color: "#fff",
                 borderRadius: 2,
                 textTransform: "none",
                 background: "#0057B8",

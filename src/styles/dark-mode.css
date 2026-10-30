@@ -113,7 +113,19 @@
   color: var(--cm-error-text) !important;
 }
 
+/* Botón primario BAC: fondo azul de marca fijo. El texto por defecto del
+   botón "contained" sale del primary del tema, que en oscuro es azul claro
+   con texto casi negro; sobre el azul de marca debe ser blanco. */
+:root[data-theme="dark"] .bac-btn-primary:not(.Mui-disabled) {
+  color: #fff !important;
+}
+
 /* ===== PrimeReact (tema lara-light-blue, Balances / Provisiones) ===== */
+/* bac-prime.css pinta el contenedor de blanco; se ve cuando la tabla no lo llena */
+:root[data-theme="dark"] .p-treetable {
+  background: var(--cm-paper);
+  border-color: var(--cm-border);
+}
 :root[data-theme="dark"] .p-treetable .p-treetable-tbody > tr,
 :root[data-theme="dark"] .p-treetable .p-treetable-tfoot > tr > td,
 :root[data-theme="dark"] .p-treetable .p-treetable-header,

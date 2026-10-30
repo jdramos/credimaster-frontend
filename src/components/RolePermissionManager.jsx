@@ -550,7 +550,7 @@ const RolePermissionManager = () => {
                   py: 1,
                   boxShadow: "none",
                   "&:hover": {
-                    backgroundColor: alpha(BAC.white, 0.88),
+                    backgroundColor: `var(--cm-surface-2, ${alpha(BAC.white, 0.88)})`,
                     boxShadow: "none",
                   },
                 }}
@@ -832,7 +832,7 @@ const RolePermissionManager = () => {
                 sx={{
                   borderRadius: 2,
                   fontWeight: 700,
-                  borderColor: BAC.grey300,
+                  borderColor: `var(--cm-border, ${BAC.grey300})`,
                   color: `var(--cm-text, ${BAC.secondary})`,
                   backgroundColor: `var(--cm-paper, ${BAC.white})`,
                   whiteSpace: "nowrap",
@@ -845,7 +845,7 @@ const RolePermissionManager = () => {
             </Stack>
           </Box>
 
-          <Divider sx={{ borderColor: BAC.grey200 }} />
+          <Divider sx={{ borderColor: `var(--cm-border, ${BAC.grey200})` }} />
 
           <Box sx={{ p: 2.5 }}>
             {moduleNames.length === 0 ? (
@@ -885,7 +885,7 @@ const RolePermissionManager = () => {
                       <Box
                         sx={{
                           p: 2,
-                          backgroundColor: alpha(BAC.grey200, 0.35),
+                          backgroundColor: `var(--cm-surface, ${alpha(BAC.grey200, 0.35)})`,
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
@@ -922,7 +922,7 @@ const RolePermissionManager = () => {
                           sx={{
                             borderRadius: 2,
                             fontWeight: 700,
-                            borderColor: BAC.grey300,
+                            borderColor: `var(--cm-border, ${BAC.grey300})`,
                             color: `var(--cm-text, ${BAC.secondary})`,
                             backgroundColor: `var(--cm-paper, ${BAC.white})`,
                           }}
@@ -952,7 +952,7 @@ const RolePermissionManager = () => {
                                     checked={assigned.includes(perm.id)}
                                     onChange={() => handleToggle(perm.id)}
                                     sx={{
-                                      color: BAC.grey400,
+                                      color: `var(--cm-text-3, ${BAC.grey400})`,
                                       "&.Mui-checked": {
                                         color: `var(--cm-primary-text, ${BAC.primary})`,
                                       },

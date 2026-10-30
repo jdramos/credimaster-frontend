@@ -136,7 +136,7 @@ export default function PromisesTab() {
         />
         <Button variant="outlined" onClick={fetchPromises} sx={{ textTransform: "none" }}>Buscar</Button>
         <Button variant="contained" startIcon={<RefreshIcon />} onClick={evaluate}
-          sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+          sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
           Actualizar contra pagos
         </Button>
         <ReportExportButtons report={buildReport} disabled={loading || !rows.length} />

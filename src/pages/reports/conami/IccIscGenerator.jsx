@@ -201,7 +201,7 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
             startIcon={loadingValidate ? <CircularProgress size={16} color="inherit" /> : <FactCheckIcon />}
             onClick={validateNow}
             disabled={loadingValidate || loadingGenerate}
-            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, backgroundColor: "#0057B8", "&:hover": { backgroundColor: "#003E8A" } }}
+            sx={{ color: "#fff", borderRadius: 2, textTransform: "none", fontWeight: 700, backgroundColor: "#0057B8", "&:hover": { backgroundColor: "#003E8A" } }}
           >
             Validar {label}
           </Button>
@@ -416,7 +416,7 @@ export default function IccIscGenerator() {
                   startIcon={validatingBoth ? <CircularProgress size={18} color="inherit" /> : <FactCheckIcon />}
                   onClick={validateBoth}
                   disabled={validatingBoth || generatingBoth}
-                  sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700, backgroundColor: "#0057B8", "&:hover": { backgroundColor: "#003E8A" } }}
+                  sx={{ color: "#fff", borderRadius: 2, textTransform: "none", fontWeight: 700, backgroundColor: "#0057B8", "&:hover": { backgroundColor: "#003E8A" } }}
                 >
                   Validar ambos
                 </Button>

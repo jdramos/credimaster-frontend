@@ -431,7 +431,7 @@ export default function CollectionsWorklist() {
             </Stack>
             <Box>
               <Button variant="contained" onClick={saveAction} disabled={saving}
-                sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+                sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
                 {saving ? "Guardando..." : "Registrar gestión"}
               </Button>
             </Box>

@@ -666,7 +666,7 @@ const PermissionList = () => {
                 minWidth: { xs: "100%", md: 160 },
                 borderRadius: 2,
                 fontWeight: 700,
-                borderColor: BAC.grey300,
+                borderColor: `var(--cm-border, ${BAC.grey300})`,
                 color: `var(--cm-text, ${BAC.secondary})`,
               }}
             >
@@ -839,7 +839,7 @@ const PermissionList = () => {
                         hover
                         sx={{
                           backgroundColor:
-                            index % 2 === 0 ? "var(--cm-paper, #fff)" : alpha(BAC.grey200, 0.35),
+                            index % 2 === 0 ? "var(--cm-paper, #fff)" : `var(--cm-surface, ${alpha(BAC.grey200, 0.35)})`,
                           transition: "all 0.2s ease",
                           "&:hover": {
                             backgroundColor: alpha(BAC.primary, 0.05),
@@ -1002,7 +1002,7 @@ const PermissionList = () => {
         )}
       </Paper>
 
-      <Divider sx={{ my: 3, borderColor: BAC.grey200 }} />
+      <Divider sx={{ my: 3, borderColor: `var(--cm-border, ${BAC.grey200})` }} />
 
       <PermissionFormDialog
         open={openDialog}

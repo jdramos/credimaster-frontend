@@ -229,7 +229,7 @@ export default function AdvancesTab() {
             disabled={saving}
           />
           <Button variant="contained" onClick={doApply} disabled={saving}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             {saving ? "Aplicando..." : "Aplicar"}
           </Button>
         </DialogActions>
@@ -262,7 +262,7 @@ export default function AdvancesTab() {
         <DialogActions>
           <Button onClick={() => setCfg((c) => ({ ...c, open: false }))} sx={{ textTransform: "none" }}>Cancelar</Button>
           <Button variant="contained" onClick={saveConfig}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Guardar</Button>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Guardar</Button>
         </DialogActions>
       </Dialog>
 

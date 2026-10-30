@@ -27,10 +27,10 @@ import { printFinancialIndicatorsSummary } from "../../reports/financialIndicato
 // con" solo elige una IMF del reporte para ponerla al lado (no se guarda).
 
 const LEVEL_STYLE = {
-  FUERTE: { color: "var(--cm-success-text, #166534)", bg: "#DCFCE7", label: "Fuerte" },
-  FAVORABLE: { color: "var(--cm-primary-text, #1E40AF)", bg: "#DBEAFE", label: "Favorable" },
-  OBSERVACION: { color: "var(--cm-warning-text, #92400E)", bg: "#FEF3C7", label: "En observación" },
-  DEBIL: { color: "var(--cm-error-text, #991B1B)", bg: "#FEE2E2", label: "Débil" },
+  FUERTE: { color: "var(--cm-success-text, #166534)", bg: "var(--cm-success-soft, #DCFCE7)", label: "Fuerte" },
+  FAVORABLE: { color: "var(--cm-primary-text, #1E40AF)", bg: "var(--cm-info-soft, #DBEAFE)", label: "Favorable" },
+  OBSERVACION: { color: "var(--cm-warning-text, #92400E)", bg: "var(--cm-warning-soft, #FEF3C7)", label: "En observación" },
+  DEBIL: { color: "var(--cm-error-text, #991B1B)", bg: "var(--cm-error-soft, #FEE2E2)", label: "Débil" },
 };
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];

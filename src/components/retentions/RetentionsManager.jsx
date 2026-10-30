@@ -376,7 +376,7 @@ export default function RetentionsManager() {
             startIcon={<DownloadIcon />}
             onClick={downloadDmi}
             disabled={!rows.length}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}
           >
             Generar DMI (Excel)
           </Button>
@@ -472,7 +472,7 @@ export default function RetentionsManager() {
         <DialogActions>
           <Button onClick={() => setFormOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
           <Button variant="contained" onClick={save}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             Guardar
           </Button>
         </DialogActions>

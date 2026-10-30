@@ -137,7 +137,7 @@ const GuaranteesTable = ({
       <TableContainer component={Paper} variant="outlined">
         <Table size="small" aria-label="guarantees table">
           <TableHead>
-            <TableRow sx={{ bgcolor: "grey.100" }}>
+            <TableRow sx={{ bgcolor: "var(--cm-surface-2, #f5f5f5)" }}>
               <TableCell sx={{ fontWeight: 800 }}>Artículo</TableCell>
               <TableCell sx={{ fontWeight: 800 }}>N° de serie</TableCell>
               <TableCell sx={{ fontWeight: 800 }}>Marca/modelo</TableCell>
@@ -272,7 +272,7 @@ const GuaranteesTable = ({
               </TableRow>
             ))}
 
-            <TableRow sx={{ bgcolor: "grey.50" }}>
+            <TableRow sx={{ bgcolor: "var(--cm-surface, #fafafa)" }}>
               <TableCell colSpan={3} align="right" sx={{ fontWeight: 900 }}>
                 Total Garantías
               </TableCell>

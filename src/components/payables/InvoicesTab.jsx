@@ -342,7 +342,7 @@ export default function InvoicesTab() {
           Registrar pago
         </Button>
         <Button variant="contained" startIcon={<AddIcon />} onClick={openNew}
-          sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+          sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
           Nueva factura
         </Button>
       </Stack>
@@ -445,7 +445,7 @@ export default function InvoicesTab() {
             />
           )}
           <Button variant="contained" onClick={save}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Guardar</Button>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Guardar</Button>
         </DialogActions>
       </Dialog>
 
@@ -518,7 +518,7 @@ export default function InvoicesTab() {
             request={() => (cn.invoice && cn.amount ? { method: "post", url: `/api/payables/invoices/${cn.invoice.id}/credit-note`, data: buildCreditNotePayload() } : null)}
           />
           <Button variant="contained" onClick={saveCreditNote}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Aplicar</Button>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Aplicar</Button>
         </DialogActions>
       </Dialog>
 

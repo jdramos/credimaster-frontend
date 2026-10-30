@@ -42,6 +42,7 @@ const ChecklistDialog = ({ open, onClose, customerId, customerName }) => (
         onClick={onClose}
         variant="contained"
         sx={{
+          color: "#fff",
           borderRadius: 2,
           fontWeight: 900,
           bgcolor: BAC.primary,

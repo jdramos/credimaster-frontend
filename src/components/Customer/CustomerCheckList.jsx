@@ -890,6 +890,7 @@ export default function CustomerChecklist({
                   rel="noreferrer"
                   startIcon={<OpenInNewIcon />}
                   sx={{
+                    color: "#fff",
                     textTransform: "none",
                     fontWeight: 700,
                     borderRadius: 2,
@@ -920,6 +921,7 @@ export default function CustomerChecklist({
               rel="noreferrer"
               startIcon={<OpenInNewIcon />}
               sx={{
+                color: "#fff",
                 textTransform: "none",
                 fontWeight: 700,
                 borderRadius: 2,

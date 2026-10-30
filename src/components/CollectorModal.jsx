@@ -237,7 +237,7 @@ export default function CollectorModal({
           variant="outlined"
           startIcon={<CancelIcon />}
           sx={{
-            borderColor: BAC.border,
+            borderColor: `var(--cm-border, ${BAC.border})`,
             color: `var(--cm-text, ${BAC.text})`,
           }}
         >
@@ -250,6 +250,7 @@ export default function CollectorModal({
           variant="contained"
           startIcon={<SaveIcon />}
           sx={{
+            color: "#fff",
             bgcolor: BAC.primary,
             fontWeight: 700,
             "&:hover": {

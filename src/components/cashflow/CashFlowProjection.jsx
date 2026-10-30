@@ -187,7 +187,7 @@ export default function CashFlowProjection() {
             value={filters.opening_balance} onChange={(e) => setF("opening_balance", e.target.value)} sx={{ minWidth: 190 }} />
           <Button variant="text" onClick={useBankBalance} sx={{ textTransform: "none" }}>Saldo de bancos</Button>
           <Button variant="contained" onClick={generate} disabled={loading}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             Generar
           </Button>
           <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => { fetchManual(); setManualOpen(true); }}
@@ -250,7 +250,7 @@ export default function CashFlowProjection() {
             <TextField size="small" type="date" label="Fecha" InputLabelProps={{ shrink: true }}
               value={itemForm.item_date} onChange={(e) => setItemForm((f) => ({ ...f, item_date: e.target.value }))} />
             <Button variant="contained" onClick={addItem}
-              sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Agregar</Button>
+              sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>Agregar</Button>
           </Stack>
 
           <Typography variant="subtitle2" sx={{ mb: 1 }}>Ítems registrados</Typography>

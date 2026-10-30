@@ -500,7 +500,7 @@ export default function CustomerList() {
           borderRadius: 3,
           overflow: "hidden",
           border: "1px solid",
-          borderColor: BAC.border,
+          borderColor: `var(--cm-border, ${BAC.border})`,
           bgcolor: "var(--cm-paper, #fff)",
         }}
       >

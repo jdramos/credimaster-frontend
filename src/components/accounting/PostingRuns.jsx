@@ -489,6 +489,7 @@ export default function PostingRuns() {
               disabled={posting}
               onClick={handlePost}
               sx={{
+                color: "#fff",
                 borderRadius: 2,
                 textTransform: "none",
                 background: "#0057B8",

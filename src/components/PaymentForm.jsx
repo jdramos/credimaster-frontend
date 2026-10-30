@@ -804,6 +804,7 @@ const PaymentForm = ({
                 )
               }
               sx={{
+                color: "#fff",
                 borderRadius: 2,
                 fontWeight: 900,
                 px: 3,

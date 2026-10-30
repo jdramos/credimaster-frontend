@@ -777,8 +777,8 @@ const CustomerBalanceViewer = () => {
                   textTransform: "none",
                   fontWeight: 800,
                   ...(d === date
-                    ? { bgcolor: BAC.blue, "&:hover": { bgcolor: BAC.blue2 } }
-                    : { borderColor: BAC.border, color: `var(--cm-primary-text, ${BAC.blue})` }),
+                    ? { bgcolor: BAC.blue, color: "#fff", "&:hover": { bgcolor: BAC.blue2 } }
+                    : { borderColor: `var(--cm-border, ${BAC.border})`, color: `var(--cm-primary-text, ${BAC.blue})` }),
                 }}
               >
                 {dayjs(d).format("DD/MM")}
@@ -871,6 +871,7 @@ const CustomerBalanceViewer = () => {
             disabled={loading}
             startIcon={loading ? <CircularProgress size={18} /> : null}
             sx={{
+              color: "#fff",
               bgcolor: BAC.blue,
               "&:hover": { bgcolor: BAC.blue2 },
               borderRadius: 2,

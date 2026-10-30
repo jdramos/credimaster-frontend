@@ -254,6 +254,7 @@ export default function IccReportPage() {
             disabled={params.row.status !== "GENERATED" || !params.row.zip_path}
             onClick={() => handleDownload(params.row.id)}
             sx={{
+              color: "#fff",
               textTransform: "none",
               borderRadius: 2,
               bgcolor: BAC.primary,
@@ -391,6 +392,7 @@ export default function IccReportPage() {
               disabled={generating}
               onClick={handleGenerate}
               sx={{
+                color: "#fff",
                 height: 40,
                 borderRadius: 2,
                 textTransform: "none",

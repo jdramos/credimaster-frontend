@@ -423,6 +423,7 @@ export default function JournalForm({ open, onClose, onSaved, editId = null }) {
             disabled={saving}
             onClick={handleSave}
             sx={{
+              color: "#fff",
               borderRadius: 2,
               textTransform: "none",
               background: "#0057B8",

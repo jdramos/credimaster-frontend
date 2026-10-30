@@ -345,7 +345,7 @@ const LoanInfo = ({
                   fontSize: 11,
                   fontWeight: 900,
                   textTransform: "uppercase",
-                  bgcolor: "grey.100",
+                  bgcolor: "var(--cm-surface-2, #f5f5f5)",
                   whiteSpace: "nowrap",
                 },
               }}

@@ -828,7 +828,7 @@ export default function CustomerFinancialEvaluationTab({
               sx={{
                 p: 1.25,
                 borderRadius: 2,
-                borderColor: BAC.border,
+                borderColor: `var(--cm-border, ${BAC.border})`,
                 height: "100%",
               }}
             >
@@ -982,6 +982,7 @@ export default function CustomerFinancialEvaluationTab({
             disabled={saving || readOnly}
             size="small"
             sx={{
+              color: "#fff",
               textTransform: "none",
               borderRadius: 2,
               px: 2,

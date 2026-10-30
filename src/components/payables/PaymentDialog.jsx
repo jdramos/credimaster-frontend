@@ -267,7 +267,7 @@ export default function PaymentDialog({ open, onClose, providers, accounts, onSa
         <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancelar</Button>
         <AccountingSimulationButton request={() => buildPaymentRequest().request || null} disabled={saving} />
         <Button variant="contained" onClick={save} disabled={saving}
-          sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+          sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
           {saving ? "Registrando..." : "Registrar pago"}
         </Button>
       </DialogActions>

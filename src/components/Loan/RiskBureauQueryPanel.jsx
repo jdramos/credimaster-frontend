@@ -166,6 +166,7 @@ export default function RiskBureauQueryPanel({ customerId, loanId, readOnly = fa
               disabled={saving}
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <FactCheckIcon />}
               sx={{
+                color: "#fff",
                 textTransform: "none",
                 fontWeight: 700,
                 borderRadius: 2,

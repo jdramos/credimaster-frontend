@@ -320,6 +320,7 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
             onClick={handleClose}
             variant="contained"
             sx={{
+              color: "#fff",
               backgroundColor: "#0033A0",
               "&:hover": { backgroundColor: "#00257A" },
               textTransform: "none",

@@ -255,7 +255,7 @@ export default function LegalCasesTab() {
                 onChange={(e) => setCaseField("notes", e.target.value)} />
               <Box>
                 <Button variant="contained" onClick={saveCase}
-                  sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+                  sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
                   Guardar caso
                 </Button>
               </Box>

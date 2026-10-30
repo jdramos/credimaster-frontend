@@ -335,7 +335,7 @@ export default function PromoterModal({
           variant="outlined"
           startIcon={<CancelIcon />}
           sx={{
-            borderColor: BAC.border,
+            borderColor: `var(--cm-border, ${BAC.border})`,
             color: `var(--cm-text, ${BAC.text})`,
             borderRadius: 2,
             fontWeight: 700,
@@ -351,6 +351,7 @@ export default function PromoterModal({
           variant="contained"
           startIcon={<SaveIcon />}
           sx={{
+            color: "#fff",
             bgcolor: BAC.primary,
             borderRadius: 2,
             fontWeight: 800,

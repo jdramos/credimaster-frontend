@@ -109,7 +109,7 @@ const LoanPaymentHistorySection = ({ loanId }) => {
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "grey.100" }}>
+                <TableRow sx={{ bgcolor: "var(--cm-surface-2, #f5f5f5)" }}>
                   <TableCell sx={{ fontWeight: 800 }}>Fecha</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 800 }}>
                     Capital
@@ -174,7 +174,7 @@ const LoanPaymentHistorySection = ({ loanId }) => {
                 ))}
 
                 {summary && (
-                  <TableRow sx={{ bgcolor: "grey.50" }}>
+                  <TableRow sx={{ bgcolor: "var(--cm-surface, #fafafa)" }}>
                     <TableCell sx={{ fontWeight: 800 }}>Totales</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 800 }}>
                       {formatMoney(summary.total_principal)}

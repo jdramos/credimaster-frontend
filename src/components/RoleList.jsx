@@ -544,7 +544,7 @@ const RoleList = () => {
                           backgroundColor:
                             index % 2 === 0
                               ? `var(--cm-paper, ${BAC.white})`
-                              : alpha(BAC.grey200, 0.45),
+                              : `var(--cm-surface, ${alpha(BAC.grey200, 0.45)})`,
                           transition: "all 0.2s ease",
                           "&:hover": {
                             backgroundColor: alpha(BAC.primary, 0.05),

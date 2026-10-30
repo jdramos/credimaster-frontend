@@ -322,7 +322,7 @@ const CustomerEvaluationTab = forwardRef(({ customer = {}, mode }, ref) => {
             <TableHead>
               <TableRow
                 sx={{
-                  bgcolor: "grey.50",
+                  bgcolor: "var(--cm-surface, #fafafa)",
                   "& .MuiTableCell-root": {
                     fontWeight: 900,
                     whiteSpace: "nowrap",
@@ -374,7 +374,7 @@ const CustomerEvaluationTab = forwardRef(({ customer = {}, mode }, ref) => {
 
               <TableRow
                 sx={{
-                  bgcolor: "grey.50",
+                  bgcolor: "var(--cm-surface, #fafafa)",
                   "& .MuiTableCell-root": {
                     fontWeight: 900,
                   },

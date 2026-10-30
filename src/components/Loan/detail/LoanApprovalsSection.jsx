@@ -108,7 +108,7 @@ const LoanApprovalsSection = ({
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "grey.100" }}>
+              <TableRow sx={{ bgcolor: "var(--cm-surface-2, #f5f5f5)" }}>
                 <TableCell sx={{ fontWeight: 800 }}>Aprobador</TableCell>
                 <TableCell sx={{ fontWeight: 800 }}>Estado</TableCell>
                 <TableCell sx={{ fontWeight: 800 }}>Fecha</TableCell>

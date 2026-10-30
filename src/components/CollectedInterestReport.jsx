@@ -127,7 +127,7 @@ export default function CollectedInterestReport() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, border: "1px solid #E5E7EB", borderRadius: 3 }}>
+      <Paper elevation={0} sx={{ p: 2, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 3 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <PaidIcon color="primary" />
           <Box>
@@ -174,7 +174,7 @@ export default function CollectedInterestReport() {
             rowsPerPageOptions={[25, 50, 100]}
             initialState={{ pagination: { pageSize: 50 } }}
             disableSelectionOnClick
-            sx={{ border: "1px solid #E5E7EB", borderRadius: 2 }}
+            sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2 }}
           />
         </Box>
       </Paper>

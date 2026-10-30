@@ -274,6 +274,7 @@ export default function IscGenerator() {
                   onClick={handleValidate}
                   disabled={loadingValidate || loadingGenerate}
                   sx={{
+                    color: "#fff",
                     borderRadius: 2,
                     textTransform: "none",
                     fontWeight: 700,

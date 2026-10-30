@@ -602,7 +602,7 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                   onClick={handleMarkIdentityVerified}
                   disabled={verifyingIdentity}
                   startIcon={verifyingIdentity ? <CircularProgress size={16} color="inherit" /> : <BadgeIcon />}
-                  sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2, bgcolor: BAC.success, "&:hover": { bgcolor: "#1B5E20" } }}
+                  sx={{ color: "#fff", textTransform: "none", fontWeight: 700, borderRadius: 2, bgcolor: BAC.success, "&:hover": { bgcolor: "#1B5E20" } }}
                 >
                   {verifyingIdentity ? "Guardando..." : "Marcar identidad verificada"}
                 </Button>
@@ -681,6 +681,7 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                 disabled={savingPep}
                 startIcon={savingPep ? <CircularProgress size={16} color="inherit" /> : <GavelIcon />}
                 sx={{
+                  color: "#fff",
                   textTransform: "none",
                   fontWeight: 700,
                   borderRadius: 2,
@@ -784,6 +785,7 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                 onClick={handleAddScreening}
                 disabled={savingScreening}
                 sx={{
+                  color: "#fff",
                   textTransform: "none",
                   fontWeight: 700,
                   borderRadius: 2,

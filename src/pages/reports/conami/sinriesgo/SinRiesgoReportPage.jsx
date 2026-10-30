@@ -249,7 +249,7 @@ export default function SinRiesgoReportPage() {
             startIcon={<CloudDownloadIcon />}
             disabled={params.row.status !== "GENERATED" || !params.row.zip_path}
             onClick={() => handleDownload(params.row.id)}
-            sx={{ textTransform: "none", borderRadius: 2, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
+            sx={{ color: "#fff", textTransform: "none", borderRadius: 2, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
           >
             ZIP
           </Button>
@@ -378,7 +378,7 @@ export default function SinRiesgoReportPage() {
               startIcon={generating ? <CircularProgress size={18} /> : <PlayArrowIcon />}
               disabled={generating || validating}
               onClick={handleGenerate}
-              sx={{ height: 40, borderRadius: 2, textTransform: "none", fontWeight: 800, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
+              sx={{ color: "#fff", height: 40, borderRadius: 2, textTransform: "none", fontWeight: 800, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
             >
               {generating ? "Generando..." : "Generar ZIP"}
             </Button>

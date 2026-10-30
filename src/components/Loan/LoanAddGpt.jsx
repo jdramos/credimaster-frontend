@@ -45,7 +45,7 @@ const fieldSx = {
   "& .MuiOutlinedInput-root": {
     borderRadius: 12,
     backgroundColor: `var(--cm-paper, ${BAC.white})`,
-    "& fieldset": { borderColor: BAC.border },
+    "& fieldset": { borderColor: `var(--cm-border, ${BAC.border})` },
     "&:hover fieldset": { borderColor: "rgba(0,87,184,0.45)" },
     "&.Mui-focused fieldset": { borderColor: BAC.primary, borderWidth: 2 },
   },
@@ -179,7 +179,7 @@ const LoanAdd = () => {
             valida evaluación y expediente.
           </Typography>
 
-          <Divider sx={{ my: 1.5, borderColor: BAC.border }} />
+          <Divider sx={{ my: 1.5, borderColor: `var(--cm-border, ${BAC.border})` }} />
 
           <Box
             sx={{
@@ -741,6 +741,7 @@ const LoanAdd = () => {
               variant="contained"
               startIcon={<Save />}
               sx={{
+                color: "#fff",
                 borderRadius: 2,
                 fontWeight: 900,
                 px: 4,
@@ -850,6 +851,7 @@ const LoanAdd = () => {
             onClick={() => setEvaluationModalOpen(false)}
             variant="contained"
             sx={{
+              color: "#fff",
               borderRadius: 2,
               fontWeight: 900,
               bgcolor: BAC.primary,
@@ -903,6 +905,7 @@ const LoanAdd = () => {
             onClick={() => setShowCustomerDocs(false)}
             variant="contained"
             sx={{
+              color: "#fff",
               fontWeight: 800,
               borderRadius: 2,
               bgcolor: BAC.primary,

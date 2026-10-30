@@ -275,7 +275,7 @@ export default function NotificationsManager() {
             startIcon={running ? <CircularProgress size={18} color="inherit" /> : <SendIcon />}
             onClick={() => run(false)}
             disabled={running}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" } }}
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" } }}
           >
             Enviar ahora
           </Button>
@@ -460,7 +460,7 @@ export default function NotificationsManager() {
                 startIcon={<SaveIcon />}
                 onClick={saveConfig}
                 disabled={saving}
-                sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" } }}
+                sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" } }}
               >
                 Guardar configuración
               </Button>

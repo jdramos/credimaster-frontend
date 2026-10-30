@@ -337,6 +337,7 @@ export default function LoanDocuments({ loanId }) {
                 onClick={handleUpload}
                 disabled={uploading || !file || !docType}
                 sx={{
+                  color: "#fff",
                   borderRadius: 2,
                   textTransform: "none",
                   fontWeight: 800,

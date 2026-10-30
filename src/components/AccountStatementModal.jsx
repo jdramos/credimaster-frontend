@@ -747,7 +747,7 @@ export default function AccountStatementModal({
                 variant="outlined"
                 size="small"
                 sx={{
-                  borderColor: BAC.border,
+                  borderColor: `var(--cm-border, ${BAC.border})`,
                   color: `var(--cm-primary-text, ${BAC.blue})`,
                   fontWeight: 900,
                   textTransform: "none",

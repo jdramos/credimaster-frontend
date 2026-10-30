@@ -810,6 +810,7 @@ export default function CustomerDocuments({ customerId }) {
                   onClick={handleUpload}
                   disabled={uploading || !file || !customerId || !docType}
                   sx={{
+                    color: "#fff",
                     borderRadius: 2,
                     textTransform: "none",
                     fontWeight: 800,

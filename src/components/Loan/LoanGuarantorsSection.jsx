@@ -126,7 +126,7 @@ const LoanGuarantorsSection = ({ loanId, readOnly = false }) => {
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ bgcolor: "grey.100" }}>
+            <TableRow sx={{ bgcolor: "var(--cm-surface-2, #f5f5f5)" }}>
               <TableCell sx={{ fontWeight: 800 }}>Nombre</TableCell>
               <TableCell sx={{ fontWeight: 800 }}>Identificación</TableCell>
               <TableCell sx={{ fontWeight: 800 }}>Teléfono</TableCell>

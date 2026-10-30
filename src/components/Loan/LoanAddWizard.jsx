@@ -59,7 +59,7 @@ const fieldSx = {
   "& .MuiOutlinedInput-root": {
     borderRadius: 12,
     backgroundColor: `var(--cm-paper, ${BAC.white})`,
-    "& fieldset": { borderColor: BAC.border },
+    "& fieldset": { borderColor: `var(--cm-border, ${BAC.border})` },
     "&:hover fieldset": { borderColor: "rgba(0,87,184,0.45)" },
     "&.Mui-focused fieldset": { borderColor: BAC.primary, borderWidth: 2 },
   },
@@ -135,7 +135,7 @@ const RiskIndicator = ({ label, value, hint, bad = false }) => (
     sx={{
       p: 1.25,
       borderRadius: 2,
-      border: `1px solid ${bad ? "#FCA5A5" : BAC.border}`,
+      border: `1px solid ${bad ? "#FCA5A5" : `var(--cm-border, ${BAC.border})`}`,
       background: bad ? "var(--cm-surface, #FEF2F2)" : `var(--cm-paper, ${BAC.white})`,
     }}
   >
@@ -1024,7 +1024,7 @@ const LoanAddWizard = () => {
               onClick={goNext}
               variant="contained"
               endIcon={<ArrowForward />}
-              sx={{ borderRadius: 2, fontWeight: 900, px: 4, width: { xs: "100%", sm: "auto" }, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
+              sx={{ color: "#fff", borderRadius: 2, fontWeight: 900, px: 4, width: { xs: "100%", sm: "auto" }, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
             >
               Siguiente
             </Button>
@@ -1034,7 +1034,7 @@ const LoanAddWizard = () => {
                 type="submit"
                 variant="contained"
                 startIcon={<Save />}
-                sx={{ borderRadius: 2, fontWeight: 900, px: 4, width: { xs: "100%", sm: "auto" }, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
+                sx={{ color: "#fff", borderRadius: 2, fontWeight: 900, px: 4, width: { xs: "100%", sm: "auto" }, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
               >
                 Guardar
               </Button>
@@ -1096,7 +1096,7 @@ const LoanAddWizard = () => {
           <Button
             onClick={() => setEvaluationModalOpen(false)}
             variant="contained"
-            sx={{ borderRadius: 2, fontWeight: 900, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
+            sx={{ color: "#fff", borderRadius: 2, fontWeight: 900, bgcolor: BAC.primary, "&:hover": { bgcolor: BAC.primaryDark } }}
           >
             Cerrar
           </Button>
@@ -1121,7 +1121,7 @@ const LoanAddWizard = () => {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setShowCustomerDocs(false)} variant="contained" sx={{ fontWeight: 800, borderRadius: 2, bgcolor: BAC.primary }}>
+          <Button onClick={() => setShowCustomerDocs(false)} variant="contained" sx={{ color: "#fff", fontWeight: 800, borderRadius: 2, bgcolor: BAC.primary }}>
             Cerrar
           </Button>
         </DialogActions>

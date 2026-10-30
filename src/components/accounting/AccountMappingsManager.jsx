@@ -286,7 +286,7 @@ export default function AccountMappingsManager() {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={openCreateDialog}
-                sx={{ borderRadius: 2, textTransform: "none", background: "#0057B8", "&:hover": { background: "#003E8A" } }}
+                sx={{ color: "#fff", borderRadius: 2, textTransform: "none", background: "#0057B8", "&:hover": { background: "#003E8A" } }}
               >
                 Nuevo mapeo
               </Button>

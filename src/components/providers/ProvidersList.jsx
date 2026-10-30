@@ -161,7 +161,7 @@ export default function ProvidersList() {
           </Box>
           <Button variant="contained" startIcon={<AddIcon />}
             onClick={() => { setForm(emptyForm); setOpen(true); }}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             Nuevo proveedor
           </Button>
         </Stack>
@@ -215,7 +215,7 @@ export default function ProvidersList() {
         <DialogActions>
           <Button onClick={closeProviderDialog} sx={{ textTransform: "none" }}>Cancelar</Button>
           <Button variant="contained" onClick={save}
-            sx={{ background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
+            sx={{ color: "#fff", background: "#0057B8", "&:hover": { background: "#003E8A" }, textTransform: "none" }}>
             Guardar
           </Button>
         </DialogActions>

@@ -130,7 +130,7 @@ export default function PreprintedSignatureManager() {
               <Divider />
 
               <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar variant="rounded" src={imageUrl} sx={{ width: 120, height: 60, bgcolor: "grey.100" }}>
+                <Avatar variant="rounded" src={imageUrl} sx={{ width: 120, height: 60, bgcolor: "var(--cm-surface-2, #f5f5f5)" }}>
                   {!imageUrl && <BorderColorRoundedIcon color="disabled" />}
                 </Avatar>
                 <Button variant="outlined" component="label" startIcon={uploading ? <CircularProgress size={16} /> : <UploadFileRoundedIcon />} disabled={uploading}>

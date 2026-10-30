@@ -133,9 +133,9 @@ const ProvissionViewer = () => {
       };
     if (level === "vendor")
       return {
-        backgroundColor: BAC.soft,
+        backgroundColor: `var(--cm-soft, ${BAC.soft})`,
         fontWeight: 900,
-        color: BAC.text,
+        color: `var(--cm-text, ${BAC.text})`,
       };
     return {};
   };
@@ -464,6 +464,7 @@ const ProvissionViewer = () => {
                 ...(d === date
                   ? {
                       bgcolor: BAC.primary,
+                      color: "#fff",
                       "&:hover": { bgcolor: BAC.primaryDark },
                     }
                   : {
@@ -529,7 +530,7 @@ const ProvissionViewer = () => {
         <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>
           Filtros
         </Typography>
-        <Divider sx={{ mb: 2, borderColor: BAC.border }} />
+        <Divider sx={{ mb: 2, borderColor: `var(--cm-border, ${BAC.border})` }} />
 
         <Box
           sx={{
@@ -599,6 +600,7 @@ const ProvissionViewer = () => {
             disabled={loading}
             startIcon={loading ? <CircularProgress size={18} /> : null}
             sx={{
+              color: "#fff",
               borderRadius: 2,
               fontWeight: 900,
               px: 3,
