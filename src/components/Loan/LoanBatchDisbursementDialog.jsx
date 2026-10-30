@@ -115,10 +115,14 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
     [loans, selectedIds],
   );
 
+  // Lo que sale de banco/caja: monto menos la deducción de cada crédito
+  // (comisión retenida al desembolsar; el backend usa el mismo neto).
+  const netOf = (l) => Number(l.net_amount ?? Number(l.amount || 0) - Number(l.deduction || 0));
   const totalAmount = useMemo(
-    () => selectedLoans.reduce((sum, l) => sum + Number(l.amount || 0), 0),
+    () => selectedLoans.reduce((sum, l) => sum + netOf(l), 0),
     [selectedLoans],
   );
+  const hasDeductions = loans.some((l) => Number(l.deduction || 0) > 0);
 
   const branchMismatch = useMemo(() => {
     if (selectedLoans.length < 2) return false;
@@ -328,17 +332,19 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
                 <TableCell>Cliente</TableCell>
                 <TableCell>Sucursal</TableCell>
                 <TableCell align="right">Monto</TableCell>
+                {hasDeductions && <TableCell align="right">Deducción</TableCell>}
+                {hasDeductions && <TableCell align="right">Neto a entregar</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {loadingLoans && (
                 <TableRow>
-                  <TableCell colSpan={5}>Cargando créditos…</TableCell>
+                  <TableCell colSpan={hasDeductions ? 7 : 5}>Cargando créditos…</TableCell>
                 </TableRow>
               )}
               {!loadingLoans && filteredLoans.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5}>No hay créditos aprobados pendientes de desembolsar.</TableCell>
+                  <TableCell colSpan={hasDeductions ? 7 : 5}>No hay créditos aprobados pendientes de desembolsar.</TableCell>
                 </TableRow>
               )}
               {filteredLoans.map((loan) => (
@@ -364,6 +370,10 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
                   </TableCell>
                   <TableCell>{loan.branch_name || "—"}</TableCell>
                   <TableCell align="right">C$ {money(loan.amount)}</TableCell>
+                  {hasDeductions && (
+                    <TableCell align="right">{Number(loan.deduction || 0) > 0 ? `- C$ ${money(loan.deduction)}` : "—"}</TableCell>
+                  )}
+                  {hasDeductions && <TableCell align="right" sx={{ fontWeight: 700 }}>C$ {money(netOf(loan))}</TableCell>}
                 </TableRow>
               ))}
             </TableBody>
@@ -371,7 +381,7 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
 
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Chip label={`${selectedIds.length} crédito(s) seleccionado(s)`} />
-            <Typography sx={{ fontWeight: 700 }}>Total: C$ {money(totalAmount)}</Typography>
+            <Typography sx={{ fontWeight: 700 }}>{hasDeductions ? "Total a entregar" : "Total"}: C$ {money(totalAmount)}</Typography>
           </Stack>
         </Stack>
       </DialogContent>

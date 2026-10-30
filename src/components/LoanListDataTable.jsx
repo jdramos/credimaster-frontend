@@ -1153,6 +1153,24 @@ function LoanListDataTable({
                     maximumFractionDigits: 2,
                   })}
                 </Typography>
+                {(() => {
+                  // Deducción (comisión retenida): al cliente se le entrega el
+                  // neto, igual que lo calcula el backend al desembolsar.
+                  const gross = Number(selectedDisburseLoan.approved_amount || selectedDisburseLoan.amount || 0);
+                  const deduction = Number(selectedDisburseLoan.approved_deduction ?? selectedDisburseLoan.deduction ?? 0);
+                  if (!(deduction > 0)) return null;
+                  const fmt = (v) => v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  return (
+                    <>
+                      <Typography variant="body2">
+                        <strong>Deducción:</strong> - C$ {fmt(deduction)}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Neto a entregar:</strong> C$ {fmt(gross - deduction)}
+                      </Typography>
+                    </>
+                  );
+                })()}
               </Stack>
             </Alert>
           )}
