@@ -88,6 +88,7 @@ const CashFlowProjection = lazy(() => import("./components/cashflow/CashFlowProj
 const BalanceSummary = lazy(() => import("./components/Balances"));
 const RecoveryProjection = lazy(() => import("./components/RecoveryProjection"));
 const ProductivityReport = lazy(() => import("./components/ProductivityReport"));
+const CollectedInterestReport = lazy(() => import("./components/CollectedInterestReport"));
 const ProvissionViewer = lazy(() => import("./components/ProvissionViewer"));
 const SinRiesgoReport = lazy(() => import("./components/Sinriesgo"));
 const WrittenOffLoansList = lazy(() => import("./components/WrittenOffLoansList"));
@@ -376,6 +377,14 @@ function AppRoutes({ themeMode, setThemeMode }) {
             element={
               <PageContainer>
                 <ProductivityReport />
+              </PageContainer>
+            }
+          />
+          <Route
+            path="/creditos/intereses-cobrados"
+            element={
+              <PageContainer>
+                <CollectedInterestReport />
               </PageContainer>
             }
           />

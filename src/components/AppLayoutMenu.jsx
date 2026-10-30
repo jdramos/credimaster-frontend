@@ -169,6 +169,12 @@ const menuItems = {
       to: "/creditos/productividad",
       permission: "creditos.productividad.ver",
     },
+    {
+      label: "Intereses cobrados",
+      iconName: "FaCoins",
+      to: "/creditos/intereses-cobrados",
+      permission: "reportes.pagos",
+    },
     { label: "Provisiones", iconName: "FaChartLine", to: "/provisiones", moduleKey: "risk_classification_ngrc" },
     { label: "Sin riesgo", iconName: "FaShieldAlt", to: "/sinriesgos", moduleKey: "sinriesgo" },
     { label: "Cartera saneada", iconName: "FaFileInvoiceDollar", to: "/cartera-saneada" },

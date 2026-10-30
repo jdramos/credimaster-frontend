@@ -57,6 +57,13 @@ describe("Menú según los módulos de la empresa", () => {
     expect(screen.queryByTestId("screen")).toBeNull();
   });
 
+  it("Cartera y Cobranza: ve Intereses cobrados y la pantalla se abre", () => {
+    renderMenu([], "/creditos/intereses-cobrados");
+    expect(screen.getAllByText("Intereses cobrados").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("screen")).toBeTruthy();
+    expect(screen.queryByTestId("module-disabled-notice")).toBeNull();
+  });
+
   it("una pantalla del núcleo se abre normalmente", () => {
     renderMenu([], "/pagos");
     expect(screen.getByTestId("screen")).toBeTruthy();
