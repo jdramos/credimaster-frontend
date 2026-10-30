@@ -30,6 +30,11 @@ import ReportExportButtons from "./common/ReportExportButtons";
 import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
 import { fetchWithCache } from "../hooks/useCachedFetch";
 
+// Prórroga / refinanciamiento / reestructuración bloqueados en el backend
+// (409 LOAN_MODIFICATIONS_DISABLED) hasta rediseñar su cálculo: sin esto el
+// botón abría un formulario que siempre terminaba en error.
+const LOAN_MODIFICATIONS_ENABLED = false;
+
 const BAC = {
   primary: "#0057B8",
   primaryDark: "#003E8A",
@@ -578,7 +583,7 @@ const LoanList = () => {
               columns={columns}
               route="loans"
               onUpdate={handleUpdateLoanInList}
-              onModifyLoan={handleOpenModificationModal}
+              onModifyLoan={LOAN_MODIFICATIONS_ENABLED ? handleOpenModificationModal : undefined}
               rowCount={total}
               page={page}
               onPageChange={setPage}
