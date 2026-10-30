@@ -14,7 +14,6 @@ import {
   IconButton,
   CircularProgress,
   Divider,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -30,6 +29,29 @@ import MfaCodeStep from "../components/security/MfaCodeStep";
 import MfaEnrollPanel from "../components/security/MfaEnrollPanel";
 import RecoveryCodesPanel from "../components/security/RecoveryCodesPanel";
 import { startLoginEnrollment, confirmLoginEnrollment } from "../api/mfa";
+import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
+import CalculateOutlinedIcon from "@mui/icons-material/CalculateOutlined";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
+
+// Colores de marca del login (panel izquierdo). Fijos, no del tema: el panel
+// es azul en modo claro y oscuro, y el isotipo trae el navy horneado.
+const BRAND = {
+  navy: "#003E8A",
+  deep: "#042C53",
+  sky: "#85B7EB",
+  mist: "#D6E4F5",
+  gold: "#FAC775",
+};
+
+// Áreas del producto (no módulos sueltos): junto con "+20 módulos" muestran
+// lo amplio del sistema sin dar a entender que eso es todo.
+const AREAS = [
+  { label: "Crédito y cobranza", color: "#378ADD", Icon: PaymentsOutlinedIcon },
+  { label: "Finanzas y contabilidad", color: "#D85A30", Icon: CalculateOutlinedIcon },
+  { label: "Cumplimiento CONAMI", color: "#7F77DD", Icon: VerifiedUserOutlinedIcon },
+  { label: "Gestión administrativa", color: "#BA7517", Icon: ApartmentOutlinedIcon },
+];
 
 export default function LoginPage() {
   const { login, completeMfaLogin } = useAuth();
@@ -141,67 +163,131 @@ export default function LoginPage() {
         placeItems: "center",
         bgcolor: (t) => t.palette.background.default,
         px: 2,
+        py: 3,
       }}
     >
       <Card
         elevation={0}
         sx={{
           width: "100%",
-          maxWidth: 440,
+          maxWidth: { xs: 460, md: 980 },
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1.2fr 1fr" },
           border: "1px solid",
           borderColor: "divider",
           borderRadius: 3,
           overflow: "hidden",
         }}
       >
-        {/* Header bancario -- azul de marca (#003E8A) fijo, no primary.main del
-            tema: el isotipo (BrandMark) trae ese mismo navy horneado en sus
-            propios píxeles (moneda + mano), así que si el header usa otro azul
-            (el primary.main claro del tema, #005EB8) se nota un parche de dos
-            azules distintos alrededor del círculo del logo. */}
+        {/* Panel de marca: en celular queda como franja superior con logo y lema. */}
         <Box
           sx={{
-            p: 2.5,
+            position: "relative",
+            overflow: "hidden",
+            bgcolor: BRAND.deep,
             color: "#FFFFFF",
-            bgcolor: "#003E8A",
+            p: { xs: 2.5, md: 4 },
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: { xs: 1.5, md: 3 },
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <BrandMark size={44} sx={{ border: "2px solid rgba(255,255,255,0.35)" }} />
+          <Box
+            aria-hidden
+            sx={{
+              position: "absolute",
+              right: -70,
+              top: -70,
+              width: 220,
+              height: 220,
+              borderRadius: "50%",
+              bgcolor: "#7F77DD",
+              opacity: 0.2,
+            }}
+          />
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, position: "relative" }}>
+            <BrandMark size={52} sx={{ border: "2px solid rgba(255,255,255,0.35)" }} />
             <Box>
-              <Typography
-                sx={{ fontWeight: 900, lineHeight: 1.1 }}
-                variant="h6"
-              >
+              <Typography sx={{ fontWeight: 900, lineHeight: 1.1, fontSize: 22 }}>
                 CrediMaster
               </Typography>
-              <Typography sx={{ opacity: 0.9 }} variant="body2">
-                Acceso seguro a la plataforma
+              <Typography variant="caption" sx={{ color: BRAND.sky }}>
+                ERP para microfinanzas
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ mt: 1.5 }}>
-            <Chip
-              size="small"
-              label="Autenticación"
+          <Box sx={{ position: "relative" }}>
+            <Typography
+              component="h1"
+              sx={{ fontWeight: 800, lineHeight: 1.25, fontSize: { xs: 20, md: 28 } }}
+            >
+              El ERP para microfinanzas{" "}
+              <Box component="span" sx={{ color: BRAND.gold }}>más completo</Box>{" "}
+              de Nicaragua
+            </Typography>
+
+            <Typography variant="body2" sx={{ color: BRAND.mist, mt: 1.5 }}>
+              <Box component="span" sx={{ color: BRAND.gold, fontWeight: 800 }}>+20 módulos</Box>{" "}
+              integrados en una sola plataforma
+            </Typography>
+
+            <Box
               sx={{
-                bgcolor: "rgba(255,255,255,0.18)",
-                color: "white",
-                fontWeight: 800,
+                display: { xs: "none", sm: "grid" },
+                gridTemplateColumns: "1fr 1fr",
+                gap: 1.5,
+                mt: 2.5,
               }}
-            />
+            >
+              {AREAS.map(({ label, color, Icon }) => (
+                <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 2,
+                      bgcolor: color,
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon fontSize="small" />
+                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{label}</Typography>
+                </Box>
+              ))}
+            </Box>
           </Box>
+
+          <Typography
+            variant="caption"
+            sx={{ color: BRAND.sky, position: "relative", display: { xs: "none", md: "flex" }, alignItems: "center", gap: 0.5 }}
+          >
+            <LockOutlinedIcon sx={{ fontSize: 14 }} />
+            Conexión cifrada · Verificación en dos pasos
+          </Typography>
         </Box>
 
-        <CardContent sx={{ p: 3 }}>
+        {/* Formulario */}
+        <Box sx={{ display: "flex", flexDirection: "column", bgcolor: "background.paper" }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", height: 5 }}>
+            {AREAS.map(({ label, color }) => (
+              <Box key={label} sx={{ bgcolor: color }} />
+            ))}
+          </Box>
+          <Box sx={{ flex: 1, display: "flex", alignItems: "center" }}>
+        <CardContent sx={{ p: { xs: 3, md: 4 }, width: "100%" }}>
           {mfaContent || (
           <>
-          <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
-            Iniciar sesión
+          <Typography variant="h6" sx={{ fontWeight: 900 }}>
+            Bienvenido
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
-            Ingrese sus credenciales para continuar.
+            Ingrese con su usuario de la institución.
           </Typography>
 
           {error && (
@@ -279,7 +365,14 @@ export default function LoginPage() {
               fullWidth
               size="large"
               disabled={loading}
-              sx={{ py: 1.2, fontWeight: 900, borderRadius: 2 }}
+              sx={{
+                py: 1.2,
+                fontWeight: 900,
+                borderRadius: 2,
+                bgcolor: BRAND.navy,
+                color: "#FFFFFF",
+                "&:hover": { bgcolor: BRAND.deep },
+              }}
             >
               {loading ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -303,10 +396,18 @@ export default function LoginPage() {
               Por seguridad, no comparta sus credenciales. Si detecta actividad
               inusual, contacte al administrador.
             </Typography>
+            <Typography
+              variant="caption"
+              sx={{ display: "block", textAlign: "center", mt: 1, color: "text.disabled" }}
+            >
+              © {new Date().getFullYear()} CrediMaster
+            </Typography>
           </Box>
           </>
           )}
         </CardContent>
+          </Box>
+        </Box>
       </Card>
 
       <Dialog open={sessionDialog} maxWidth="sm" fullWidth>
