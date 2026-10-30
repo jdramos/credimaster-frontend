@@ -336,10 +336,10 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <PaidIcon sx={{ color: "#0057B8" }} />
+            <PaidIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>{isAguinaldo ? "Aguinaldo" : "Planillas"}</Typography>
@@ -399,9 +399,9 @@ export default function PayrollRunsList({ runKind = "NOMINA" }) {
             components={{ Toolbar: GridToolbar }}
             componentsProps={{ toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 300 } } }}
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }}
           />
         </Box>

@@ -58,7 +58,7 @@ export default function ItAttachments({ entityType, entityId, canUpload }) {
               </Stack>
             }>
             <ListItemText
-              primary={<span style={a.voided_at ? { textDecoration: "line-through", color: "#94A3B8" } : undefined}>{a.file_name}</span>}
+              primary={<span style={a.voided_at ? { textDecoration: "line-through", color: "var(--cm-text-3, #94A3B8)" } : undefined}>{a.file_name}</span>}
               secondary={a.voided_at ? `Anulado: ${a.void_reason}` : `${a.description ? `${a.description} · ` : ""}${a.uploaded_by_name || ""} · ${fmtDateTime(a.uploaded_at)}`}
             />
           </ListItem>

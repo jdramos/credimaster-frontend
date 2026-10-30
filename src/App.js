@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo, useEffect } from "react";
+import React, { lazy, Suspense, useState, useMemo, useEffect, useLayoutEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -941,6 +941,14 @@ function App() {
     localStorage.setItem("themeMode", themeMode);
   }, [themeMode]);
 
+  // Los colores fijos de las pantallas usan variables --cm-* que solo existen
+  // con data-theme="dark" (ver styles/dark-mode.css); data-bs-theme pone
+  // también a Bootstrap en el mismo modo.
+  useLayoutEffect(() => {
+    document.documentElement.setAttribute("data-theme", themeMode);
+    document.documentElement.setAttribute("data-bs-theme", themeMode);
+  }, [themeMode]);
+
   const theme = useMemo(
     () =>
       createTheme({
@@ -957,7 +965,7 @@ function App() {
             main: themeMode === "light" ? "#00A3E0" : "#66d9ff",
           },
           text: {
-            primary: themeMode === "light" ? "#0B1220" : "#FFFFFF",
+            primary: themeMode === "light" ? "#0B1220" : "#E8EEF5",
             secondary: themeMode === "light" ? "#56657A" : "#B8C0CC",
           },
           divider: themeMode === "light" ? "#E6EAF0" : "#2A3441",
@@ -1039,6 +1047,14 @@ function App() {
           MuiChip: {
             styleOverrides: {
               root: { fontWeight: 800 },
+            },
+          },
+          // En modo oscuro MUI pone el texto del Avatar con background.default
+          // (casi negro), ilegible sobre los bgcolor de marca de las pantallas.
+          // En modo claro ese valor es casi blanco, así que no cambia nada.
+          MuiAvatar: {
+            styleOverrides: {
+              colorDefault: { color: "#fff" },
             },
           },
           MuiButton: {

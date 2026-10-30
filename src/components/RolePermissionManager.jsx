@@ -221,84 +221,84 @@ export const getMenuSectionForTag = (tag = "") => {
 const getModuleStyle = (module) => {
   const styles = {
     dashboard: {
-      color: BAC.info,
-      backgroundColor: BAC.infoSoft,
+      color: `var(--cm-primary-text, ${BAC.info})`,
+      backgroundColor: `var(--cm-info-soft, ${BAC.infoSoft})`,
       border: `1px solid ${alpha(BAC.info, 0.18)}`,
     },
     main: {
-      color: BAC.primary,
-      backgroundColor: BAC.soft,
+      color: `var(--cm-primary-text, ${BAC.primary})`,
+      backgroundColor: `var(--cm-soft, ${BAC.soft})`,
       border: `1px solid ${alpha(BAC.primary, 0.18)}`,
     },
     management: {
-      color: BAC.secondary,
+      color: `var(--cm-text, ${BAC.secondary})`,
       backgroundColor: alpha(BAC.secondary, 0.08),
       border: `1px solid ${alpha(BAC.secondary, 0.16)}`,
     },
     users: {
-      color: BAC.primaryDark,
+      color: `var(--cm-primary-text, ${BAC.primaryDark})`,
       backgroundColor: alpha(BAC.primary, 0.08),
       border: `1px solid ${alpha(BAC.primaryDark, 0.16)}`,
     },
     queries: {
-      color: BAC.purple,
-      backgroundColor: BAC.purpleSoft,
+      color: `var(--cm-purple-text, ${BAC.purple})`,
+      backgroundColor: `var(--cm-purple-soft, ${BAC.purpleSoft})`,
       border: `1px solid ${alpha(BAC.purple, 0.18)}`,
     },
     compliance: {
-      color: BAC.accent,
-      backgroundColor: BAC.accentSoft,
+      color: `var(--cm-error-text, ${BAC.accent})`,
+      backgroundColor: `var(--cm-error-soft, ${BAC.accentSoft})`,
       border: `1px solid ${alpha(BAC.accent, 0.18)}`,
     },
     conami_tables: {
-      color: BAC.warning,
-      backgroundColor: BAC.warningSoft,
+      color: `var(--cm-warning-text, ${BAC.warning})`,
+      backgroundColor: `var(--cm-warning-soft, ${BAC.warningSoft})`,
       border: `1px solid ${alpha(BAC.warning, 0.18)}`,
     },
     accounting: {
-      color: BAC.success,
-      backgroundColor: BAC.successSoft,
+      color: `var(--cm-success-text, ${BAC.success})`,
+      backgroundColor: `var(--cm-surface-2, ${BAC.successSoft})`,
       border: `1px solid ${alpha(BAC.success, 0.18)}`,
     },
     banks: {
-      color: BAC.info,
-      backgroundColor: BAC.infoSoft,
+      color: `var(--cm-primary-text, ${BAC.info})`,
+      backgroundColor: `var(--cm-info-soft, ${BAC.infoSoft})`,
       border: `1px solid ${alpha(BAC.info, 0.18)}`,
     },
     caja: {
-      color: BAC.warning,
-      backgroundColor: BAC.warningSoft,
+      color: `var(--cm-warning-text, ${BAC.warning})`,
+      backgroundColor: `var(--cm-warning-soft, ${BAC.warningSoft})`,
       border: `1px solid ${alpha(BAC.warning, 0.18)}`,
     },
     obligations: {
-      color: BAC.purple,
-      backgroundColor: BAC.purpleSoft,
+      color: `var(--cm-purple-text, ${BAC.purple})`,
+      backgroundColor: `var(--cm-purple-soft, ${BAC.purpleSoft})`,
       border: `1px solid ${alpha(BAC.purple, 0.18)}`,
     },
     budget: {
-      color: BAC.success,
-      backgroundColor: BAC.successSoft,
+      color: `var(--cm-success-text, ${BAC.success})`,
+      backgroundColor: `var(--cm-surface-2, ${BAC.successSoft})`,
       border: `1px solid ${alpha(BAC.success, 0.18)}`,
     },
     insurance: {
-      color: BAC.info,
-      backgroundColor: BAC.infoSoft,
+      color: `var(--cm-primary-text, ${BAC.info})`,
+      backgroundColor: `var(--cm-info-soft, ${BAC.infoSoft})`,
       border: `1px solid ${alpha(BAC.info, 0.18)}`,
     },
     rrhh: {
-      color: BAC.secondaryLight,
+      color: `var(--cm-text-2, ${BAC.secondaryLight})`,
       backgroundColor: alpha(BAC.secondaryLight, 0.08),
       border: `1px solid ${alpha(BAC.secondaryLight, 0.16)}`,
     },
     reports: {
-      color: BAC.secondaryLight,
+      color: `var(--cm-text-2, ${BAC.secondaryLight})`,
       backgroundColor: alpha(BAC.secondaryLight, 0.08),
       border: `1px solid ${alpha(BAC.secondaryLight, 0.16)}`,
     },
     otros: {
-      color: BAC.grey700,
-      backgroundColor: BAC.grey100,
-      border: `1px solid ${BAC.grey300}`,
+      color: `var(--cm-text-2, ${BAC.grey700})`,
+      backgroundColor: `var(--cm-surface, ${BAC.grey100})`,
+      border: `1px solid var(--cm-border, ${BAC.grey300})`,
     },
   };
 
@@ -504,7 +504,7 @@ const RolePermissionManager = () => {
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: BAC.grey100, minHeight: "100%" }}>
+    <Box sx={{ p: 3, backgroundColor: `var(--cm-surface, ${BAC.grey100})`, minHeight: "100%" }}>
       <Paper
         elevation={0}
         sx={{
@@ -542,8 +542,8 @@ const RolePermissionManager = () => {
                 startIcon={<AddIcon />}
                 onClick={openNewRoleDialog}
                 sx={{
-                  backgroundColor: BAC.white,
-                  color: BAC.primary,
+                  backgroundColor: `var(--cm-paper, ${BAC.white})`,
+                  color: `var(--cm-primary-text, ${BAC.primary})`,
                   fontWeight: 700,
                   borderRadius: 2,
                   px: 2.5,
@@ -591,13 +591,13 @@ const RolePermissionManager = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <ManageAccountsIcon sx={{ color: BAC.primary }} />
+            <ManageAccountsIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Rol seleccionado
@@ -615,13 +615,13 @@ const RolePermissionManager = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <KeyIcon sx={{ color: BAC.info }} />
+            <KeyIcon sx={{ color: `var(--cm-primary-text, ${BAC.info})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Permisos asignados
@@ -639,13 +639,13 @@ const RolePermissionManager = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <SecurityIcon sx={{ color: BAC.secondary }} />
+            <SecurityIcon sx={{ color: `var(--cm-text, ${BAC.secondary})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Permisos visibles
@@ -663,13 +663,13 @@ const RolePermissionManager = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <FolderSpecialIcon sx={{ color: BAC.warning }} />
+            <FolderSpecialIcon sx={{ color: `var(--cm-warning-text, ${BAC.warning})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Asignados visibles
@@ -688,8 +688,8 @@ const RolePermissionManager = () => {
           p: 2.5,
           mb: 2,
           borderRadius: 3,
-          border: `1px solid ${BAC.grey200}`,
-          backgroundColor: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.grey200})`,
+          backgroundColor: `var(--cm-paper, ${BAC.white})`,
         }}
       >
         <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
@@ -726,13 +726,13 @@ const RolePermissionManager = () => {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                backgroundColor: BAC.white,
+                backgroundColor: `var(--cm-paper, ${BAC.white})`,
               },
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: BAC.grey500 }} />
+                  <SearchIcon sx={{ color: `var(--cm-text-2, ${BAC.grey500})` }} />
                 </InputAdornment>
               ),
             }}
@@ -746,12 +746,12 @@ const RolePermissionManager = () => {
           sx={{
             p: 6,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             textAlign: "center",
           }}
         >
-          <CircularProgress sx={{ color: BAC.primary, mb: 2 }} />
+          <CircularProgress sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, mb: 2 }} />
           <Typography color="text.secondary">
             Cargando información...
           </Typography>
@@ -762,16 +762,16 @@ const RolePermissionManager = () => {
           sx={{
             p: 3,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
           }}
         >
           <Alert
             severity="info"
             sx={{
               borderRadius: 2,
-              backgroundColor: BAC.infoSoft,
-              color: BAC.info,
+              backgroundColor: `var(--cm-info-soft, ${BAC.infoSoft})`,
+              color: `var(--cm-primary-text, ${BAC.info})`,
               border: `1px solid ${alpha(BAC.info, 0.18)}`,
             }}
           >
@@ -784,12 +784,12 @@ const RolePermissionManager = () => {
           sx={{
             p: 6,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             textAlign: "center",
           }}
         >
-          <CircularProgress sx={{ color: BAC.primary, mb: 2 }} />
+          <CircularProgress sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, mb: 2 }} />
           <Typography color="text.secondary">
             Cargando permisos del rol seleccionado...
           </Typography>
@@ -800,8 +800,8 @@ const RolePermissionManager = () => {
           sx={{
             borderRadius: 3,
             overflow: "hidden",
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
           }}
         >
           <Box sx={{ p: 2.5 }}>
@@ -815,11 +815,11 @@ const RolePermissionManager = () => {
                 <Typography
                   variant="h6"
                   fontWeight={700}
-                  sx={{ color: BAC.secondary }}
+                  sx={{ color: `var(--cm-text, ${BAC.secondary})` }}
                 >
                   Permisos disponibles
                 </Typography>
-                <Typography variant="body2" sx={{ color: BAC.textSoft, mt: 0.5 }}>
+                <Typography variant="body2" sx={{ color: `var(--cm-text-2, ${BAC.textSoft})`, mt: 0.5 }}>
                   Activa o desactiva los permisos que tendrá el rol seleccionado.
                 </Typography>
               </Box>
@@ -833,8 +833,8 @@ const RolePermissionManager = () => {
                   borderRadius: 2,
                   fontWeight: 700,
                   borderColor: BAC.grey300,
-                  color: BAC.secondary,
-                  backgroundColor: BAC.white,
+                  color: `var(--cm-text, ${BAC.secondary})`,
+                  backgroundColor: `var(--cm-paper, ${BAC.white})`,
                   whiteSpace: "nowrap",
                 }}
               >
@@ -853,8 +853,8 @@ const RolePermissionManager = () => {
                 severity="info"
                 sx={{
                   borderRadius: 2,
-                  backgroundColor: BAC.infoSoft,
-                  color: BAC.info,
+                  backgroundColor: `var(--cm-info-soft, ${BAC.infoSoft})`,
+                  color: `var(--cm-primary-text, ${BAC.info})`,
                   border: `1px solid ${alpha(BAC.info, 0.18)}`,
                 }}
               >
@@ -877,9 +877,9 @@ const RolePermissionManager = () => {
                       elevation={0}
                       sx={{
                         borderRadius: 3,
-                        border: `1px solid ${BAC.grey200}`,
+                        border: `1px solid var(--cm-border, ${BAC.grey200})`,
                         overflow: "hidden",
-                        backgroundColor: BAC.white,
+                        backgroundColor: `var(--cm-paper, ${BAC.white})`,
                       }}
                     >
                       <Box
@@ -908,9 +908,9 @@ const RolePermissionManager = () => {
                             size="small"
                             sx={{
                               fontWeight: 700,
-                              color: BAC.secondary,
-                              backgroundColor: BAC.grey100,
-                              border: `1px solid ${BAC.grey300}`,
+                              color: `var(--cm-text, ${BAC.secondary})`,
+                              backgroundColor: `var(--cm-surface, ${BAC.grey100})`,
+                              border: `1px solid var(--cm-border, ${BAC.grey300})`,
                             }}
                           />
                         </Stack>
@@ -923,8 +923,8 @@ const RolePermissionManager = () => {
                             borderRadius: 2,
                             fontWeight: 700,
                             borderColor: BAC.grey300,
-                            color: BAC.secondary,
-                            backgroundColor: BAC.white,
+                            color: `var(--cm-text, ${BAC.secondary})`,
+                            backgroundColor: `var(--cm-paper, ${BAC.white})`,
                           }}
                         >
                           {allSelected ? "Quitar módulo" : "Seleccionar módulo"}
@@ -940,10 +940,10 @@ const RolePermissionManager = () => {
                                 px: 1.5,
                                 py: 1,
                                 borderRadius: 2,
-                                border: `1px solid ${BAC.grey200}`,
+                                border: `1px solid var(--cm-border, ${BAC.grey200})`,
                                 backgroundColor: assigned.includes(perm.id)
                                   ? alpha(BAC.primary, 0.05)
-                                  : BAC.white,
+                                  : `var(--cm-paper, ${BAC.white})`,
                               }}
                             >
                               <FormControlLabel
@@ -954,7 +954,7 @@ const RolePermissionManager = () => {
                                     sx={{
                                       color: BAC.grey400,
                                       "&.Mui-checked": {
-                                        color: BAC.primary,
+                                        color: `var(--cm-primary-text, ${BAC.primary})`,
                                       },
                                     }}
                                   />
@@ -964,14 +964,14 @@ const RolePermissionManager = () => {
                                     <Typography
                                       variant="body2"
                                       fontWeight={600}
-                                      sx={{ color: BAC.text }}
+                                      sx={{ color: `var(--cm-text, ${BAC.text})` }}
                                     >
                                       {perm.permission_name}
                                     </Typography>
                                     <Typography
                                       variant="caption"
                                       sx={{
-                                        color: BAC.textSoft,
+                                        color: `var(--cm-text-2, ${BAC.textSoft})`,
                                         fontFamily: "monospace",
                                       }}
                                     >
@@ -1017,8 +1017,8 @@ const RolePermissionManager = () => {
               boxShadow: "none",
             },
             "&.Mui-disabled": {
-              backgroundColor: BAC.grey300,
-              color: BAC.grey500,
+              backgroundColor: `var(--cm-surface-3, ${BAC.grey300})`,
+              color: `var(--cm-text-2, ${BAC.grey500})`,
             },
           }}
         >
@@ -1036,11 +1036,11 @@ const RolePermissionManager = () => {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: BAC.secondary }}>
+        <DialogTitle sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.secondary})` }}>
           Confirmar cambios
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: BAC.textSoft }}>
+          <DialogContentText sx={{ color: `var(--cm-text-2, ${BAC.textSoft})` }}>
             ¿Está seguro de que desea guardar los cambios en los permisos del
             rol seleccionado?
           </DialogContentText>
@@ -1049,7 +1049,7 @@ const RolePermissionManager = () => {
           <Button
             onClick={() => setConfirmOpen(false)}
             sx={{
-              color: BAC.primary,
+              color: `var(--cm-primary-text, ${BAC.primary})`,
               fontWeight: 700,
             }}
           >
@@ -1100,7 +1100,7 @@ const RolePermissionManager = () => {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: BAC.secondary }}>
+        <DialogTitle sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.secondary})` }}>
           Nuevo rol
         </DialogTitle>
         <DialogContent>
@@ -1124,7 +1124,7 @@ const RolePermissionManager = () => {
               onChange={(e) => setNewRoleDescription(e.target.value)}
             />
 
-            <Typography variant="caption" sx={{ color: BAC.textSoft }}>
+            <Typography variant="caption" sx={{ color: `var(--cm-text-2, ${BAC.textSoft})` }}>
               Después de crear el rol podrás asignarle permisos desde esta misma pantalla.
             </Typography>
           </Stack>
@@ -1133,7 +1133,7 @@ const RolePermissionManager = () => {
           <Button
             onClick={() => setNewRoleOpen(false)}
             disabled={creatingRole}
-            sx={{ color: BAC.primary, fontWeight: 700 }}
+            sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 700 }}
           >
             Cancelar
           </Button>

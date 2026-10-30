@@ -101,10 +101,10 @@ export default function EmployeeKyeTab({ employeeId, canManage }) {
 
       {error && <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert>}
 
-      <TableContainer sx={{ border: "1px solid #E5E7EB", borderRadius: 2 }}>
+      <TableContainer sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2 }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+            <TableRow sx={{ bgcolor: "var(--cm-surface, #F9FAFB)" }}>
               <TableCell sx={{ fontWeight: 800 }}>Verificación</TableCell>
               <TableCell sx={{ fontWeight: 800 }}>Estado</TableCell>
               <TableCell sx={{ fontWeight: 800 }}>Notas</TableCell>

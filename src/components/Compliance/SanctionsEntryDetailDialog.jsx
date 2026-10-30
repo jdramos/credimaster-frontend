@@ -200,10 +200,10 @@ export default function SanctionsEntryDetailDialog({ id, onClose }) {
             <Divider sx={{ mt: 2 }} />
             <SectionTitle>Identificaciones</SectionTitle>
             {entry.identifications?.length > 0 ? (
-              <TableContainer sx={{ border: "1px solid #E5E7EB", borderRadius: 2 }}>
+              <TableContainer sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2 }}>
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+                    <TableRow sx={{ bgcolor: "var(--cm-surface, #F9FAFB)" }}>
                       <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Número</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>País</TableCell>
@@ -226,10 +226,10 @@ export default function SanctionsEntryDetailDialog({ id, onClose }) {
 
             <SectionTitle>Alias</SectionTitle>
             {entry.aliases?.length > 0 ? (
-              <TableContainer sx={{ border: "1px solid #E5E7EB", borderRadius: 2 }}>
+              <TableContainer sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2 }}>
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+                    <TableRow sx={{ bgcolor: "var(--cm-surface, #F9FAFB)" }}>
                       <TableCell sx={{ fontWeight: 700 }}>Tipo</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Categoría</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
@@ -253,10 +253,10 @@ export default function SanctionsEntryDetailDialog({ id, onClose }) {
             {entry.addresses?.length > 0 && (
               <>
                 <SectionTitle>Direcciones</SectionTitle>
-                <TableContainer sx={{ border: "1px solid #E5E7EB", borderRadius: 2 }}>
+                <TableContainer sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2 }}>
                   <Table size="small">
                     <TableHead>
-                      <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+                      <TableRow sx={{ bgcolor: "var(--cm-surface, #F9FAFB)" }}>
                         <TableCell sx={{ fontWeight: 700 }}>Dirección</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Ciudad</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>País</TableCell>

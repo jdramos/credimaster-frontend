@@ -105,7 +105,7 @@ const GroupsTab = () => {
             Agrupaciones
           </Typography>
 
-          <Typography variant="body2" sx={{ color: BAC.muted }}>
+          <Typography variant="body2" sx={{ color: `var(--cm-text-2, ${BAC.muted})` }}>
             Define niveles de agrupación como sucursal, gestor, cliente o
             estado.
           </Typography>
@@ -130,7 +130,7 @@ const GroupsTab = () => {
               elevation={0}
               sx={{
                 p: 1.5,
-                border: `1px solid ${BAC.border}`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 borderRadius: 2,
               }}
             >

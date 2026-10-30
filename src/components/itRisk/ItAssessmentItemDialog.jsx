@@ -135,7 +135,7 @@ export default function ItAssessmentItemDialog({ assessment, item, catalog, onCl
                 </Stack>
               }>
               <ListItemText
-                primary={<span style={ev.voided_at ? { textDecoration: "line-through", color: "#94A3B8" } : undefined}>{ev.file_name}</span>}
+                primary={<span style={ev.voided_at ? { textDecoration: "line-through", color: "var(--cm-text-3, #94A3B8)" } : undefined}>{ev.file_name}</span>}
                 secondary={ev.voided_at ? `Anulada: ${ev.void_reason}` : `${ev.description ? `${ev.description} · ` : ""}${ev.uploaded_by_name || ""} · ${fmtDateTime(ev.uploaded_at)}`}
               />
             </ListItem>

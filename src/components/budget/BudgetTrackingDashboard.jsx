@@ -60,7 +60,7 @@ const STATUS_CHIP = {
 function SectionHeader({ icon: Icon, title, subtitle }) {
   return (
     <Stack direction="row" spacing={1.2} alignItems="center" sx={{ mb: 2 }}>
-      <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: "#EEF3FB", color: "#0F4C81", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: "var(--cm-surface, #EEF3FB)", color: "var(--cm-primary-text, #0F4C81)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Icon sx={{ fontSize: 18 }} />
       </Box>
       <Box>
@@ -266,7 +266,7 @@ export default function BudgetTrackingDashboard() {
             <Box sx={{ overflowX: "auto" }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+                  <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
                     <TableCell>Cuenta</TableCell>
                     <TableCell>Tipo</TableCell>
                     <TableCell align="right">Presup. mes</TableCell>
@@ -333,7 +333,7 @@ export default function BudgetTrackingDashboard() {
             <Box sx={{ overflowX: "auto" }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+                  <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
                     <TableCell>Sucursal</TableCell>
                     <TableCell align="right">Meta mes</TableCell>
                     <TableCell align="right">Real mes</TableCell>

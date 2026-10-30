@@ -188,9 +188,9 @@ export default function AmlMonthlyReport() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff", mb: 2 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)", mb: 2 }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
-          <AssessmentIcon sx={{ color: "#1D4ED8" }} />
+          <AssessmentIcon sx={{ color: "var(--cm-primary-text, #1D4ED8)" }} />
           <Box flexGrow={1}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
@@ -362,7 +362,7 @@ export default function AmlMonthlyReport() {
         )}
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
           <EventNoteIcon sx={{ color: "#7C3AED" }} />
           <Box flexGrow={1}>

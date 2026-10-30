@@ -206,7 +206,7 @@ export default function PaymentDialog({ open, onClose, providers, accounts, onSa
           )}
 
           {!isAdvance && invoices.length > 0 && (
-            <Box sx={{ p: 1, border: "1px dashed #CBD5E1", borderRadius: 1 }}>
+            <Box sx={{ p: 1, border: "1px dashed var(--cm-border, #CBD5E1)", borderRadius: 1 }}>
               <Typography variant="caption" color="text.secondary">FACTURAS PENDIENTES</Typography>
               <Stack spacing={0.5} sx={{ mt: 0.5 }}>
                 {invoices.map((inv) => {

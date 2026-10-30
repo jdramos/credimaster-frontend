@@ -203,7 +203,7 @@ export default function WriteoffRecoveriesDialog({ open, loan, startWithForm = f
         )}
 
         {formOpen && (
-          <Box sx={{ p: 2, mb: 2, border: "1px solid #E5E7EB", borderRadius: 2, background: "#F8FAFC" }}>
+          <Box sx={{ p: 2, mb: 2, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2, background: "var(--cm-surface, #F8FAFC)" }}>
             <Typography fontWeight={700} sx={{ mb: 1.5 }}>Nueva recuperación (fecha de hoy)</Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
               <TextField

@@ -193,7 +193,7 @@ const BranchesList = () => {
               <ReportExportButtons
                 report={buildReport}
                 disabled={loading || !data.length}
-                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.6)", "&:hover": { borderColor: "#fff" } }}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.6)", "&:hover": { borderColor: "var(--cm-border, #fff)" } }}
               />
               {canCreateBranch && (
                 <Button
@@ -202,10 +202,10 @@ const BranchesList = () => {
                   onClick={() => navigate("/sucursales/agregar")}
                   sx={{
                     ...actionButtonSx,
-                    bgcolor: "#fff",
+                    bgcolor: "var(--cm-paper, #fff)",
                     color: "primary.main",
                     "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.92)",
+                      bgcolor: "var(--cm-paper, rgba(255,255,255,0.92))",
                       boxShadow: "none",
                     },
                   }}

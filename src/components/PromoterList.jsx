@@ -152,7 +152,7 @@ export default function PromoterList() {
         flex: 1,
         minWidth: 220,
         renderCell: (params) => (
-          <Typography fontWeight={700} color={BAC.text} fontSize={14}>
+          <Typography fontWeight={700} color={`var(--cm-text, ${BAC.text})`} fontSize={14}>
             {params.value || "Sin nombre"}
           </Typography>
         ),
@@ -163,8 +163,8 @@ export default function PromoterList() {
         width: 170,
         renderCell: (params) => (
           <Stack direction="row" spacing={1} alignItems="center">
-            <BadgeOutlinedIcon sx={{ fontSize: 17, color: BAC.primary }} />
-            <Typography fontSize={14} color={BAC.text}>
+            <BadgeOutlinedIcon sx={{ fontSize: 17, color: `var(--cm-primary-text, ${BAC.primary})` }} />
+            <Typography fontSize={14} color={`var(--cm-text, ${BAC.text})`}>
               {params.value || "No registrada"}
             </Typography>
           </Stack>
@@ -177,13 +177,13 @@ export default function PromoterList() {
         renderCell: (params) =>
           params.value ? (
             <Stack direction="row" alignItems="center" spacing={1}>
-              <PhoneOutlinedIcon sx={{ fontSize: 17, color: BAC.primary }} />
-              <Typography fontSize={14} color={BAC.text}>
+              <PhoneOutlinedIcon sx={{ fontSize: 17, color: `var(--cm-primary-text, ${BAC.primary})` }} />
+              <Typography fontSize={14} color={`var(--cm-text, ${BAC.text})`}>
                 {params.value}
               </Typography>
             </Stack>
           ) : (
-            <Typography fontSize={12} color={BAC.muted}>
+            <Typography fontSize={12} color={`var(--cm-text-2, ${BAC.muted})`}>
               No registrado
             </Typography>
           ),
@@ -199,9 +199,9 @@ export default function PromoterList() {
             size="small"
             sx={{
               fontWeight: 700,
-              bgcolor: params.value ? BAC.soft : "#F3F4F6",
-              color: params.value ? BAC.primaryDark : BAC.muted,
-              border: `1px solid ${BAC.border}`,
+              bgcolor: params.value ? `var(--cm-soft, ${BAC.soft})` : "var(--cm-surface, #F3F4F6)",
+              color: params.value ? `var(--cm-primary-text, ${BAC.primaryDark})` : `var(--cm-text-2, ${BAC.muted})`,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
             }}
           />
         ),
@@ -220,9 +220,9 @@ export default function PromoterList() {
               size="small"
               onClick={() => openEditModal(params.row)}
               sx={{
-                color: BAC.primary,
-                bgcolor: BAC.soft,
-                border: `1px solid ${BAC.border}`,
+                color: `var(--cm-primary-text, ${BAC.primary})`,
+                bgcolor: `var(--cm-soft, ${BAC.soft})`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 "&:hover": {
                   bgcolor: BAC.primary,
                   color: BAC.white,
@@ -245,8 +245,8 @@ export default function PromoterList() {
         sx={{
           borderRadius: 3,
           overflow: "hidden",
-          border: `1px solid ${BAC.border}`,
-          bgcolor: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          bgcolor: `var(--cm-paper, ${BAC.white})`,
           boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
         }}
       >
@@ -308,13 +308,13 @@ export default function PromoterList() {
                 variant="contained"
                 onClick={openAddModal}
                 sx={{
-                  bgcolor: BAC.white,
-                  color: BAC.primaryDark,
+                  bgcolor: `var(--cm-paper, ${BAC.white})`,
+                  color: `var(--cm-primary-text, ${BAC.primaryDark})`,
                   fontWeight: 800,
                   borderRadius: 2,
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: BAC.soft,
+                    bgcolor: `var(--cm-soft, ${BAC.soft})`,
                   },
                 }}
               >
@@ -331,7 +331,7 @@ export default function PromoterList() {
               placeholder="Buscar por nombre, identificación, teléfono o ID"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              sx={{ flex: 1, bgcolor: BAC.white }}
+              sx={{ flex: 1, bgcolor: `var(--cm-paper, ${BAC.white})` }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -346,7 +346,7 @@ export default function PromoterList() {
               label="Sucursal"
               value={branchFilter}
               onChange={(e) => setBranchFilter(e.target.value)}
-              sx={{ minWidth: 220, bgcolor: BAC.white }}
+              sx={{ minWidth: 220, bgcolor: `var(--cm-paper, ${BAC.white})` }}
             >
               <MenuItem value="">Todas</MenuItem>
               {branchOptions.map(([id, name]) => (
@@ -365,14 +365,14 @@ export default function PromoterList() {
                 Limpiar
               </Button>
             )}
-            <ReportExportButtons report={buildReport} disabled={loading || !filteredRows.length} sx={{ bgcolor: BAC.white }} />
+            <ReportExportButtons report={buildReport} disabled={loading || !filteredRows.length} sx={{ bgcolor: `var(--cm-paper, ${BAC.white})` }} />
           </Stack>
 
           <Box
             sx={{
               height: 520,
               width: "100%",
-              bgcolor: BAC.white,
+              bgcolor: `var(--cm-paper, ${BAC.white})`,
               borderRadius: 2,
               overflow: "hidden",
             }}
@@ -396,13 +396,13 @@ export default function PromoterList() {
               sx={{
                 border: 0,
                 fontSize: 14,
-                color: BAC.text,
+                color: `var(--cm-text, ${BAC.text})`,
 
                 "& .MuiDataGrid-columnHeaders": {
-                  bgcolor: BAC.soft,
-                  color: BAC.primaryDark,
+                  bgcolor: `var(--cm-soft, ${BAC.soft})`,
+                  color: `var(--cm-primary-text, ${BAC.primaryDark})`,
                   fontWeight: 800,
-                  borderBottom: `1px solid ${BAC.border}`,
+                  borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                 },
 
                 "& .MuiDataGrid-columnHeaderTitle": {
@@ -414,25 +414,25 @@ export default function PromoterList() {
                 },
 
                 "& .MuiDataGrid-row:hover": {
-                  bgcolor: "#F8FBFF",
+                  bgcolor: "var(--cm-paper, #F8FBFF)",
                 },
 
                 "& .MuiDataGrid-cell": {
-                  borderBottom: `1px solid ${BAC.border}`,
+                  borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                 },
 
                 "& .MuiDataGrid-footerContainer": {
-                  borderTop: `1px solid ${BAC.border}`,
-                  bgcolor: "#FBFCFE",
+                  borderTop: `1px solid var(--cm-border, ${BAC.border})`,
+                  bgcolor: "var(--cm-paper, #FBFCFE)",
                 },
 
                 "& .MuiDataGrid-overlay": {
-                  color: BAC.muted,
+                  color: `var(--cm-text-2, ${BAC.muted})`,
                   fontWeight: 600,
                 },
 
                 "& .MuiTablePagination-root": {
-                  color: BAC.text,
+                  color: `var(--cm-text, ${BAC.text})`,
                 },
               }}
             />

@@ -28,10 +28,10 @@ const LoanGuarantorPicker = ({ candidates = [], selectedIds = [], onToggle }) =>
           <Box
             key={c.id}
             sx={{
-              border: `1px solid ${BAC.border}`,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
               borderRadius: 2,
               p: 1,
-              bgcolor: BAC.white,
+              bgcolor: `var(--cm-paper, ${BAC.white})`,
             }}
           >
             <FormControlLabel
@@ -39,7 +39,7 @@ const LoanGuarantorPicker = ({ candidates = [], selectedIds = [], onToggle }) =>
               control={<Checkbox checked={checked} onChange={() => onToggle(c.id)} sx={{ pt: 0.5 }} />}
               label={
                 <Box>
-                  <Typography sx={{ fontWeight: 700, color: BAC.text }}>{c.customer_name}</Typography>
+                  <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>{c.customer_name}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {c.identification ? `Identificación: ${c.identification}` : "Sin identificación registrada"}
                     {c.cellphone ? ` — Cel: ${c.cellphone}` : ""}

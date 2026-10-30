@@ -212,7 +212,7 @@ export default function WrittenOffLoansList() {
 
   return (
     <Box>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
             <Typography variant="h6" fontWeight={800}>
@@ -272,9 +272,9 @@ export default function WrittenOffLoansList() {
             initialState={{ pagination: { pageSize: 25, page: 0 } }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }}
           />
         </Box>

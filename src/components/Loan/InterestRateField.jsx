@@ -71,7 +71,7 @@ const InterestRateField = ({ loan, errors = {}, handleInputChange, canUseFixedIn
       InputProps={{
         startAdornment: toggle,
         endAdornment: (
-          <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>
+          <InputAdornment position="end" sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}>
             %
           </InputAdornment>
         ),

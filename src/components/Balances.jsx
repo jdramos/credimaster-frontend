@@ -134,7 +134,7 @@ const CustomerBalanceViewer = () => {
               textTransform: "none",
               fontWeight: 900,
               fontSize: 13,
-              color: BAC.blue,
+              color: `var(--cm-primary-text, ${BAC.blue})`,
               borderRadius: 2,
               justifyContent: "flex-start",
               "& .MuiButton-startIcon": {
@@ -142,7 +142,7 @@ const CustomerBalanceViewer = () => {
               },
               "&:hover": {
                 bgcolor: "transparent",
-                color: BAC.blue2,
+                color: `var(--cm-primary-text, ${BAC.blue2})`,
                 textDecoration: "underline",
               },
             }}
@@ -624,15 +624,15 @@ const CustomerBalanceViewer = () => {
     <Paper
       elevation={0}
       sx={{
-        border: `1px solid ${BAC.border}`,
+        border: `1px solid var(--cm-border, ${BAC.border})`,
         borderRadius: 2,
         px: 2,
         py: 1,
         minWidth: 150,
-        bgcolor: "#fff",
+        bgcolor: "var(--cm-paper, #fff)",
       }}
     >
-      <Typography sx={{ fontSize: 11, fontWeight: 700, color: BAC.sub }}>
+      <Typography sx={{ fontSize: 11, fontWeight: 700, color: `var(--cm-text-2, ${BAC.sub})` }}>
         {label}
       </Typography>
       <Typography sx={{ fontSize: 15, fontWeight: 900, lineHeight: 1.1 }}>
@@ -642,7 +642,7 @@ const CustomerBalanceViewer = () => {
   );
 
   return (
-    <Box sx={{ p: 2, bgcolor: BAC.bg, minHeight: "100vh" }}>
+    <Box sx={{ p: 2, bgcolor: `var(--cm-surface, ${BAC.bg})`, minHeight: "100vh" }}>
       {/* Header BAC */}
       <Paper
         elevation={0}
@@ -650,7 +650,7 @@ const CustomerBalanceViewer = () => {
           mb: 2,
           p: 2,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
           background: `linear-gradient(90deg, ${BAC.blue}, ${BAC.blue2})`,
           color: "#fff",
         }}
@@ -689,10 +689,10 @@ const CustomerBalanceViewer = () => {
                 variant="contained"
                 startIcon={<FileDownloadIcon />}
                 sx={{
-                  bgcolor: "#fff",
-                  color: BAC.blue,
+                  bgcolor: "var(--cm-paper, #fff)",
+                  color: `var(--cm-primary-text, ${BAC.blue})`,
                   fontWeight: 900,
-                  "&:hover": { bgcolor: "#F1F6FF" },
+                  "&:hover": { bgcolor: "var(--cm-surface, #F1F6FF)" },
                   borderRadius: 2,
                   textTransform: "none",
                 }}
@@ -727,8 +727,8 @@ const CustomerBalanceViewer = () => {
           mb: 2,
           p: 1.5,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          bgcolor: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          bgcolor: "var(--cm-paper, #fff)",
         }}
       >
         <Stack
@@ -755,7 +755,7 @@ const CustomerBalanceViewer = () => {
           <IconButton
             onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
             disabled={currentIndex === 0}
-            sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}
+            sx={{ border: `1px solid var(--cm-border, ${BAC.border})`, borderRadius: 2 }}
           >
             <ChevronLeftIcon />
           </IconButton>
@@ -778,7 +778,7 @@ const CustomerBalanceViewer = () => {
                   fontWeight: 800,
                   ...(d === date
                     ? { bgcolor: BAC.blue, "&:hover": { bgcolor: BAC.blue2 } }
-                    : { borderColor: BAC.border, color: BAC.blue }),
+                    : { borderColor: BAC.border, color: `var(--cm-primary-text, ${BAC.blue})` }),
                 }}
               >
                 {dayjs(d).format("DD/MM")}
@@ -791,7 +791,7 @@ const CustomerBalanceViewer = () => {
               setCurrentIndex((i) => Math.min(allDates.length - 1, i + 1))
             }
             disabled={currentIndex >= allDates.length - 1}
-            sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}
+            sx={{ border: `1px solid var(--cm-border, ${BAC.border})`, borderRadius: 2 }}
           >
             <ChevronRightIcon />
           </IconButton>
@@ -805,8 +805,8 @@ const CustomerBalanceViewer = () => {
           mb: 2,
           p: 2,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          bgcolor: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          bgcolor: "var(--cm-paper, #fff)",
         }}
       >
         <Stack
@@ -890,14 +890,14 @@ const CustomerBalanceViewer = () => {
           />
         </Stack>
 
-        <Typography sx={{ mt: 1.5, fontSize: 12, color: BAC.sub }}>
+        <Typography sx={{ mt: 1.5, fontSize: 12, color: `var(--cm-text-2, ${BAC.sub})` }}>
           Tip: escribe parte del nombre o cédula. La tabla se recalcula al
           consultar.
           <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
             <Button
               variant="text"
               onClick={() => setExpandedKeys({})}
-              sx={{ textTransform: "none", fontWeight: 800, color: BAC.blue }}
+              sx={{ textTransform: "none", fontWeight: 800, color: `var(--cm-primary-text, ${BAC.blue})` }}
             >
               Contraer
             </Button>
@@ -905,7 +905,7 @@ const CustomerBalanceViewer = () => {
             <Button
               variant="text"
               onClick={() => setExpandedKeys(buildExpandedAll(nodes))}
-              sx={{ textTransform: "none", fontWeight: 800, color: BAC.blue }}
+              sx={{ textTransform: "none", fontWeight: 800, color: `var(--cm-primary-text, ${BAC.blue})` }}
             >
               Expandir
             </Button>
@@ -920,12 +920,12 @@ const CustomerBalanceViewer = () => {
         sx={{
           p: 1.5,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          bgcolor: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          bgcolor: "var(--cm-paper, #fff)",
         }}
       >
         {!loading && globalTotals.count === 0 && (
-          <Typography sx={{ p: 2, textAlign: "center", color: BAC.sub, fontSize: 13 }}>
+          <Typography sx={{ p: 2, textAlign: "center", color: `var(--cm-text-2, ${BAC.sub})`, fontSize: 13 }}>
             No hay saldos generados para el {dayjs(date).format("DD/MM/YYYY")} (Tipo:{" "}
             {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}). Prueba otra fecha o
             genera los saldos desde "Crear saldos".

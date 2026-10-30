@@ -190,9 +190,9 @@ export default function CustomerList() {
             {amlEnabled && (
               <Tooltip title={params.row.identity_verified_at ? "Identidad verificada" : "Identidad sin verificar"}>
                 {params.row.identity_verified_at ? (
-                  <CheckCircleIcon fontSize="small" sx={{ color: "#2E7D32" }} />
+                  <CheckCircleIcon fontSize="small" sx={{ color: "var(--cm-success-text, #2E7D32)" }} />
                 ) : (
-                  <ErrorOutlineIcon fontSize="small" sx={{ color: "#ED6C02" }} />
+                  <ErrorOutlineIcon fontSize="small" sx={{ color: "var(--cm-warning-text, #ED6C02)" }} />
                 )}
               </Tooltip>
             )}
@@ -205,7 +205,7 @@ export default function CustomerList() {
         flex: 1,
         minWidth: 220,
         renderCell: (params) => (
-          <Typography fontWeight={700} color={BAC.text}>
+          <Typography fontWeight={700} color={`var(--cm-text, ${BAC.text})`}>
             {params.value || "-"}
           </Typography>
         ),
@@ -242,7 +242,7 @@ export default function CustomerList() {
         width: 140,
         renderCell: (params) =>
           params.value === 1 || params.value === true ? (
-            <Chip size="small" label="Congelado" sx={{ bgcolor: "#FEE2E2", color: "#B42318", fontWeight: 700 }} />
+            <Chip size="small" label="Congelado" sx={{ bgcolor: "var(--cm-error-soft, #FEE2E2)", color: "var(--cm-error-text, #B42318)", fontWeight: 700 }} />
           ) : null,
       },
       {
@@ -263,10 +263,10 @@ export default function CustomerList() {
                   component={RouterLink}
                   to={`/clientes/editar/${params.row.id}`}
                   sx={{
-                    color: BAC.primary,
-                    bgcolor: BAC.soft,
+                    color: `var(--cm-primary-text, ${BAC.primary})`,
+                    bgcolor: `var(--cm-soft, ${BAC.soft})`,
                     "&:hover": {
-                      bgcolor: BAC.border,
+                      bgcolor: `var(--cm-soft, ${BAC.border})`,
                     },
                   }}
                 >
@@ -282,10 +282,10 @@ export default function CustomerList() {
                   component={RouterLink}
                   to={`/clientes/ver/${params.row.id}`}
                   sx={{
-                    color: BAC.primaryDark,
-                    bgcolor: "#F3F4F6",
+                    color: `var(--cm-primary-text, ${BAC.primaryDark})`,
+                    bgcolor: "var(--cm-surface, #F3F4F6)",
                     "&:hover": {
-                      bgcolor: "#E5E7EB",
+                      bgcolor: "var(--cm-surface-3, #E5E7EB)",
                     },
                   }}
                 >
@@ -302,10 +302,10 @@ export default function CustomerList() {
                     onClick={() => handlePrintPic(params.row.id)}
                     disabled={printingId === params.row.id}
                     sx={{
-                      color: "#0F766E",
-                      bgcolor: "#ECFDF5",
+                      color: "var(--cm-info-text, #0F766E)",
+                      bgcolor: "var(--cm-success-soft, #ECFDF5)",
                       "&:hover": {
-                        bgcolor: "#D1FAE5",
+                        bgcolor: "var(--cm-success-soft, #D1FAE5)",
                       },
                     }}
                   >
@@ -323,10 +323,10 @@ export default function CustomerList() {
                     onClick={() => handlePrintProfile(params.row.id)}
                     disabled={printingProfileId === params.row.id}
                     sx={{
-                      color: BAC.primary,
-                      bgcolor: BAC.soft,
+                      color: `var(--cm-primary-text, ${BAC.primary})`,
+                      bgcolor: `var(--cm-soft, ${BAC.soft})`,
                       "&:hover": {
-                        bgcolor: BAC.border,
+                        bgcolor: `var(--cm-soft, ${BAC.border})`,
                       },
                     }}
                   >
@@ -501,7 +501,7 @@ export default function CustomerList() {
           overflow: "hidden",
           border: "1px solid",
           borderColor: BAC.border,
-          bgcolor: "#fff",
+          bgcolor: "var(--cm-paper, #fff)",
         }}
       >
         <Box
@@ -561,7 +561,7 @@ export default function CustomerList() {
                 onChange={handleSearchChange}
                 sx={{
                   minWidth: { xs: "100%", sm: 320 },
-                  bgcolor: "#fff",
+                  bgcolor: "var(--cm-paper, #fff)",
                   borderRadius: 2,
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 2,
@@ -604,7 +604,7 @@ export default function CustomerList() {
               <ReportExportButtons
                 report={buildReport}
                 disabled={loading || !rowCount}
-                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.6)", borderRadius: 2, "&:hover": { borderColor: "#fff" } }}
+                sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.6)", borderRadius: 2, "&:hover": { borderColor: "var(--cm-border, #fff)" } }}
               />
 
               {canCreate && (
@@ -614,13 +614,13 @@ export default function CustomerList() {
                   component={RouterLink}
                   to="/clientes/agregar"
                   sx={{
-                    bgcolor: "#fff",
-                    color: BAC.primary,
+                    bgcolor: "var(--cm-paper, #fff)",
+                    color: `var(--cm-primary-text, ${BAC.primary})`,
                     fontWeight: 800,
                     borderRadius: 2,
                     px: 2,
                     "&:hover": {
-                      bgcolor: BAC.soft,
+                      bgcolor: `var(--cm-soft, ${BAC.soft})`,
                     },
                   }}
                 >
@@ -669,23 +669,23 @@ export default function CustomerList() {
             sx={{
               border: 0,
               "& .MuiDataGrid-columnHeaders": {
-                bgcolor: "#F8FAFC",
-                color: BAC.text,
+                bgcolor: "var(--cm-surface, #F8FAFC)",
+                color: `var(--cm-text, ${BAC.text})`,
                 fontWeight: 900,
-                borderBottom: `1px solid ${BAC.border}`,
+                borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
               },
               "& .MuiDataGrid-columnHeaderTitle": {
                 fontWeight: 900,
               },
               "& .MuiDataGrid-row:hover": {
-                bgcolor: "#F8FBFF",
+                bgcolor: "var(--cm-paper, #F8FBFF)",
               },
               "& .MuiDataGrid-cell": {
-                borderBottom: "1px solid #EEF2F7",
+                borderBottom: "1px solid var(--cm-border, #EEF2F7)",
               },
               "& .MuiDataGrid-footerContainer": {
-                borderTop: `1px solid ${BAC.border}`,
-                bgcolor: "#FAFCFF",
+                borderTop: `1px solid var(--cm-border, ${BAC.border})`,
+                bgcolor: "var(--cm-paper, #FAFCFF)",
               },
             }}
           />

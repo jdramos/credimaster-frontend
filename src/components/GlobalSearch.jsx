@@ -250,7 +250,7 @@ export default function GlobalSearch() {
               "& .MuiOutlinedInput-root": {
                 height: 38,
                 borderRadius: 2.5,
-                bgcolor: "#F8FAFC",
+                bgcolor: "var(--cm-surface, #F8FAFC)",
                 fontSize: 13,
               },
             }}

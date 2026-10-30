@@ -305,10 +305,10 @@ export default function BankChecksList() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ReceiptLongIcon sx={{ color: "#0057B8" }} />
+            <ReceiptLongIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Typography variant="h6" fontWeight={700}>Cheques</Typography>
               <Typography variant="body2" color="text.secondary">Emisión y anulación de cheques</Typography>
@@ -350,9 +350,9 @@ export default function BankChecksList() {
             initialState={{ pagination: { pageSize: 25, page: 0 } }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }}
           />
         </Box>
@@ -360,12 +360,12 @@ export default function BankChecksList() {
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         <DialogTitle>Emitir cheque</DialogTitle>
-        <DialogContent sx={{ p: 3, bgcolor: "#F1F5F9" }}>
+        <DialogContent sx={{ p: 3, bgcolor: "var(--cm-surface, #F1F5F9)" }}>
           {/* Cuerpo del cheque, editable en vivo — misma ventana visual del detalle */}
           <Box sx={{
             position: "relative",
-            bgcolor: "#fff",
-            border: "1px solid #D8DEE9",
+            bgcolor: "var(--cm-paper, #fff)",
+            border: "1px solid var(--cm-border, #D8DEE9)",
             borderRadius: 2,
             overflow: "hidden",
             p: 3,
@@ -486,7 +486,7 @@ export default function BankChecksList() {
               </Box>
 
               {openInvoices.length > 0 && (
-                <Box sx={{ mt: 2, p: 1.5, border: "1px dashed #CBD5E1", borderRadius: 1 }}>
+                <Box sx={{ mt: 2, p: 1.5, border: "1px dashed var(--cm-border, #CBD5E1)", borderRadius: 1 }}>
                   <Typography variant="caption" color="text.secondary">
                     FACTURAS PENDIENTES DE {form.provider?.name} — marque las que paga este cheque
                   </Typography>
@@ -601,7 +601,7 @@ export default function BankChecksList() {
 
       <Dialog open={Boolean(detail)} onClose={() => setDetail(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         {detail && (
-          <DialogContent sx={{ p: 3, bgcolor: "#F1F5F9" }}>
+          <DialogContent sx={{ p: 3, bgcolor: "var(--cm-surface, #F1F5F9)" }}>
             {detail.check.status === "ANULADO" && (
               <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
                 Cheque ANULADO
@@ -613,8 +613,8 @@ export default function BankChecksList() {
             {/* Cuerpo del cheque, estilo físico — apaisado */}
             <Box sx={{
               position: "relative",
-              bgcolor: "#fff",
-              border: "1px solid #D8DEE9",
+              bgcolor: "var(--cm-paper, #fff)",
+              border: "1px solid var(--cm-border, #D8DEE9)",
               borderRadius: 2,
               overflow: "hidden",
               p: 3,

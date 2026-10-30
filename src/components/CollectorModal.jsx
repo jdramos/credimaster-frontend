@@ -181,7 +181,7 @@ export default function CollectorModal({
 
       <DialogContent
         sx={{
-          bgcolor: BAC.bg,
+          bgcolor: `var(--cm-surface, ${BAC.bg})`,
           px: 3,
           pt: "28px !important",
           pb: 3,
@@ -230,7 +230,7 @@ export default function CollectorModal({
 
       <Divider />
 
-      <DialogActions sx={{ px: 3, py: 2, bgcolor: BAC.white }}>
+      <DialogActions sx={{ px: 3, py: 2, bgcolor: `var(--cm-paper, ${BAC.white})` }}>
         <Button
           onClick={onClose}
           disabled={saving}
@@ -238,7 +238,7 @@ export default function CollectorModal({
           startIcon={<CancelIcon />}
           sx={{
             borderColor: BAC.border,
-            color: BAC.text,
+            color: `var(--cm-text, ${BAC.text})`,
           }}
         >
           Cancelar

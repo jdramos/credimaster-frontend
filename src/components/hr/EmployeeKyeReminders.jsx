@@ -80,9 +80,9 @@ export default function EmployeeKyeReminders() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", mb: 1 }}>
-          <PersonSearchIcon sx={{ color: "#B45309" }} />
+          <PersonSearchIcon sx={{ color: "var(--cm-warning-text, #B45309)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
@@ -109,9 +109,9 @@ export default function EmployeeKyeReminders() {
             initialState={{ pagination: { pageSize: 25, page: 0 } }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }}
           />
         </Box>

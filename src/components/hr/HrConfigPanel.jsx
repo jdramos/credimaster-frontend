@@ -355,9 +355,9 @@ export default function HrConfigPanel() {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <SettingsIcon sx={{ color: "#0057B8" }} />
+          <SettingsIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Configuración de RRHH</Typography>
@@ -399,7 +399,7 @@ export default function HrConfigPanel() {
         </Box>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>Tabla de IR (renta del trabajo)</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Tramos anuales en córdobas. Art. 23 Ley 822, reformada por Ley 891.
@@ -458,7 +458,7 @@ export default function HrConfigPanel() {
         </Box>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
           <Typography variant="h6" fontWeight={700}>Conceptos de planilla</Typography>
           <Button variant="outlined" startIcon={<AddIcon />} sx={{ textTransform: "none" }} onClick={() => setConceptDialogOpen(true)}>
@@ -502,9 +502,9 @@ export default function HrConfigPanel() {
         </Table>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          <DescriptionIcon sx={{ color: "#0057B8" }} />
+          <DescriptionIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Typography variant="h6" fontWeight={700}>Plantillas de documentos</Typography>
             <Typography variant="body2" color="text.secondary">
@@ -564,8 +564,8 @@ export default function HrConfigPanel() {
           <Box
             sx={{
               display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5,
-              border: "1px solid #D8E2F0", borderBottom: "none", borderRadius: "8px 8px 0 0",
-              background: "#F8FAFC", p: 0.5,
+              border: "1px solid var(--cm-border, #D8E2F0)", borderBottom: "none", borderRadius: "8px 8px 0 0",
+              background: "var(--cm-surface, #F8FAFC)", p: 0.5,
             }}
           >
             <ToggleButtonGroup size="small" onMouseDown={(e) => e.preventDefault()}>
@@ -600,7 +600,7 @@ export default function HrConfigPanel() {
               size="small" displayEmpty defaultValue=""
               onMouseDown={saveTemplateSelection}
               onChange={(e) => execTemplateCommand("fontName", e.target.value)}
-              sx={{ minWidth: 130, background: "#fff" }}
+              sx={{ minWidth: 130, background: "var(--cm-paper, #fff)" }}
             >
               <MenuItem value="" disabled>Tipo de letra</MenuItem>
               {FONT_FAMILIES.map((f) => (
@@ -612,7 +612,7 @@ export default function HrConfigPanel() {
               size="small" displayEmpty defaultValue=""
               onMouseDown={saveTemplateSelection}
               onChange={(e) => execTemplateCommand("fontSize", e.target.value)}
-              sx={{ minWidth: 110, background: "#fff" }}
+              sx={{ minWidth: 110, background: "var(--cm-paper, #fff)" }}
             >
               <MenuItem value="" disabled>Tamaño</MenuItem>
               {FONT_SIZE_OPTIONS.map((o) => (
@@ -641,9 +641,9 @@ export default function HrConfigPanel() {
             onMouseUp={saveTemplateSelection}
             onKeyUp={saveTemplateSelection}
             sx={{
-              border: "1px solid #D8E2F0", borderRadius: "0 0 8px 8px",
-              background: "#fff", p: 3, minHeight: 260, maxHeight: 420, overflowY: "auto",
-              fontFamily: "Arial, sans-serif", fontSize: 14, lineHeight: 1.8, color: "#0F172A",
+              border: "1px solid var(--cm-border, #D8E2F0)", borderRadius: "0 0 8px 8px",
+              background: "var(--cm-paper, #fff)", p: 3, minHeight: 260, maxHeight: 420, overflowY: "auto",
+              fontFamily: "Arial, sans-serif", fontSize: 14, lineHeight: 1.8, color: "var(--cm-text, #0F172A)",
               "&:focus": { outline: "none" },
               "& p": { margin: "0 0 10px 0" },
             }}
@@ -656,8 +656,8 @@ export default function HrConfigPanel() {
               </Typography>
               <Box
                 sx={{
-                  border: "1px dashed #94A3B8", borderRadius: 2, background: "#F8FAFC",
-                  p: 3, fontFamily: "Arial, sans-serif", fontSize: 14, lineHeight: 1.8, color: "#0F172A",
+                  border: "1px dashed #94A3B8", borderRadius: 2, background: "var(--cm-surface, #F8FAFC)",
+                  p: 3, fontFamily: "Arial, sans-serif", fontSize: 14, lineHeight: 1.8, color: "var(--cm-text, #0F172A)",
                   "& p": { margin: "0 0 10px 0" },
                 }}
                 dangerouslySetInnerHTML={{ __html: templatePreviewHtml }}

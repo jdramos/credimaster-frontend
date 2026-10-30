@@ -74,7 +74,7 @@ export default function PaymentEvidenceDialog({ payment, onClose }) {
                   width: "100%",
                   maxHeight: 420,
                   objectFit: "contain",
-                  bgcolor: "#fff",
+                  bgcolor: "var(--cm-paper, #fff)",
                   border: "1px solid",
                   borderColor: "divider",
                   borderRadius: 1,

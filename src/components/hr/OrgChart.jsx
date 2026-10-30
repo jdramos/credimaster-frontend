@@ -19,15 +19,15 @@ const NodeCard = ({ employee, children }) => (
       sx={{
         p: 1.5,
         borderRadius: 2,
-        border: `1px solid ${BAC.border}`,
-        bgcolor: BAC.white,
+        border: `1px solid var(--cm-border, ${BAC.border})`,
+        bgcolor: `var(--cm-paper, ${BAC.white})`,
         minWidth: 200,
         textAlign: "center",
       }}
     >
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
-        <PersonIcon sx={{ color: BAC.primary, fontSize: 20 }} />
-        <Typography sx={{ fontWeight: 800, color: BAC.text }}>{employee.full_name}</Typography>
+        <PersonIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontSize: 20 }} />
+        <Typography sx={{ fontWeight: 800, color: `var(--cm-text, ${BAC.text})` }}>{employee.full_name}</Typography>
       </Stack>
       {employee.position_title && (
         <Typography variant="caption" color="text.secondary" display="block">
@@ -41,7 +41,7 @@ const NodeCard = ({ employee, children }) => (
 
     {children.length > 0 && (
       <>
-        <Box sx={{ width: 2, height: 20, bgcolor: BAC.border }} />
+        <Box sx={{ width: 2, height: 20, bgcolor: `var(--cm-surface-2, ${BAC.border})` }} />
         <Stack direction="row" spacing={3} sx={{ pt: 0 }} alignItems="flex-start">
           {children}
         </Stack>
@@ -104,9 +104,9 @@ export default function OrgChart() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
-          <AccountTreeIcon sx={{ color: BAC.primary }} />
+          <AccountTreeIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>

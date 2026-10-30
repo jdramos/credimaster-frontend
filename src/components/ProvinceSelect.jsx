@@ -65,7 +65,7 @@ const ProvinceSelect = ({
             selectedValue === null ||
             selectedValue === undefined
           ) {
-            return <span style={{ color: "#9e9e9e" }}>Seleccione...</span>;
+            return <span style={{ color: "var(--cm-text-3, #9e9e9e)" }}>Seleccione...</span>;
           }
 
           const province = provinces.find(
@@ -76,7 +76,7 @@ const ProvinceSelect = ({
         }}
         sx={{
           borderRadius: 2,
-          backgroundColor: "#fff",
+          backgroundColor: "var(--cm-paper, #fff)",
         }}
       >
         <MenuItem value="">

@@ -227,7 +227,7 @@ export default function CollectorPortfolioDialog({ open, collector, collectors =
 
             {tab === 0 ? (
               <>
-                <TableContainer sx={{ maxHeight: 340, border: "1px solid #E5E7EB", borderRadius: 1 }}>
+                <TableContainer sx={{ maxHeight: 340, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 1 }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -279,7 +279,7 @@ export default function CollectorPortfolioDialog({ open, collector, collectors =
                 </TableContainer>
 
                 {canManage && isActive && loans.length > 0 ? (
-                  <Box sx={{ p: 1.5, border: "1px solid #D8E2F0", borderRadius: 1, bgcolor: "#F8FBFF" }}>
+                  <Box sx={{ p: 1.5, border: "1px solid var(--cm-border, #D8E2F0)", borderRadius: 1, bgcolor: "var(--cm-paper, #F8FBFF)" }}>
                     <Typography variant="subtitle2" fontWeight={800} gutterBottom>
                       Trasladar {selected.size} crédito(s) seleccionados
                     </Typography>
@@ -332,7 +332,7 @@ export default function CollectorPortfolioDialog({ open, collector, collectors =
                 ) : null}
               </>
             ) : (
-              <TableContainer sx={{ maxHeight: 380, border: "1px solid #E5E7EB", borderRadius: 1 }}>
+              <TableContainer sx={{ maxHeight: 380, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 1 }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
@@ -370,7 +370,7 @@ export default function CollectorPortfolioDialog({ open, collector, collectors =
             )}
 
             {canManage ? (
-              <Box sx={{ p: 1.5, border: "1px solid #FDE2E2", borderRadius: 1, bgcolor: isActive ? "#FFF8F8" : "#F6FFF8" }}>
+              <Box sx={{ p: 1.5, border: "1px solid var(--cm-border, #FDE2E2)", borderRadius: 1, bgcolor: isActive ? "var(--cm-paper, #FFF8F8)" : "var(--cm-surface, #F6FFF8)" }}>
                 {isActive ? (
                   <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} alignItems={{ md: "center" }}>
                     <Typography variant="body2" sx={{ flex: 1 }}>

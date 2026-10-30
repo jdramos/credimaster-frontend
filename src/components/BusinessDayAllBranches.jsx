@@ -132,7 +132,7 @@ export default function BusinessDayAllBranches() {
   const confirmList = confirm ? eligible(confirm) : [];
 
   return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
       <Stack spacing={2}>
         <Typography variant="body2" color="text.secondary">
           Cada sucursal avanza su próximo día pendiente. Marque las sucursales que quiere procesar; se procesan una

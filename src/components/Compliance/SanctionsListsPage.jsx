@@ -9,7 +9,7 @@ export default function SanctionsListsPage() {
   return (
     <Box sx={{ p: 2 }}>
       <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-        <PublicIcon sx={{ color: "#0057B8" }} />
+        <PublicIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
         <Box>
           <Typography variant="h6" fontWeight={700}>Listas OFAC / ONU</Typography>
           <Typography variant="body2" color="text.secondary">

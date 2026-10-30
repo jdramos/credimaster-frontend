@@ -352,7 +352,7 @@ const PermissionList = () => {
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: BAC.grey100, minHeight: "100%" }}>
+    <Box sx={{ p: 3, backgroundColor: `var(--cm-surface, ${BAC.grey100})`, minHeight: "100%" }}>
       <Paper
         elevation={0}
         sx={{
@@ -388,7 +388,7 @@ const PermissionList = () => {
                 fontWeight: 700,
                 borderRadius: 2,
                 borderColor: "rgba(255,255,255,0.5)",
-                "&:hover": { borderColor: "#fff", backgroundColor: alpha("#fff", 0.12) },
+                "&:hover": { borderColor: "var(--cm-border, #fff)", backgroundColor: alpha("#fff", 0.12) },
                 "&.Mui-disabled": { color: "rgba(255,255,255,0.5)", borderColor: "rgba(255,255,255,0.25)" },
               }}
             />
@@ -422,15 +422,15 @@ const PermissionList = () => {
                 setOpenDialog(true);
               }}
               sx={{
-                backgroundColor: "#fff",
-                color: BAC.primary,
+                backgroundColor: "var(--cm-paper, #fff)",
+                color: `var(--cm-primary-text, ${BAC.primary})`,
                 fontWeight: 700,
                 borderRadius: 2,
                 px: 2.5,
                 py: 1,
                 boxShadow: "none",
                 "&:hover": {
-                  backgroundColor: "#fff",
+                  backgroundColor: "var(--cm-paper, #fff)",
                   boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
                 },
               }}
@@ -470,12 +470,12 @@ const PermissionList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: "#fff",
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: "var(--cm-paper, #fff)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <SecurityIcon sx={{ color: BAC.primary }} />
+            <SecurityIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Total permisos
@@ -493,12 +493,12 @@ const PermissionList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: "#fff",
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: "var(--cm-paper, #fff)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <CategoryIcon sx={{ color: BAC.info }} />
+            <CategoryIcon sx={{ color: `var(--cm-primary-text, ${BAC.info})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Módulos
@@ -516,12 +516,12 @@ const PermissionList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: "#fff",
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: "var(--cm-paper, #fff)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Inventory2OutlinedIcon sx={{ color: BAC.success }} />
+            <Inventory2OutlinedIcon sx={{ color: `var(--cm-success-text, ${BAC.success})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Resultados filtrados
@@ -539,12 +539,12 @@ const PermissionList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: "#fff",
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: "var(--cm-paper, #fff)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <KeyIcon sx={{ color: BAC.warning }} />
+            <KeyIcon sx={{ color: `var(--cm-warning-text, ${BAC.warning})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Acciones detectadas
@@ -563,8 +563,8 @@ const PermissionList = () => {
           p: 2.5,
           mb: 2,
           borderRadius: 3,
-          border: `1px solid ${BAC.grey200}`,
-          backgroundColor: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.grey200})`,
+          backgroundColor: "var(--cm-paper, #fff)",
         }}
       >
         <Stack spacing={2}>
@@ -572,7 +572,7 @@ const PermissionList = () => {
             direction="row"
             spacing={1}
             alignItems="center"
-            sx={{ color: BAC.secondary }}
+            sx={{ color: `var(--cm-text, ${BAC.secondary})` }}
           >
             <FilterListIcon fontSize="small" />
             <Typography variant="subtitle1" fontWeight={700}>
@@ -596,13 +596,13 @@ const PermissionList = () => {
                 flex: 1.6,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
-                  backgroundColor: "#fff",
+                  backgroundColor: "var(--cm-paper, #fff)",
                 },
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: BAC.grey500 }} />
+                    <SearchIcon sx={{ color: `var(--cm-text-2, ${BAC.grey500})` }} />
                   </InputAdornment>
                 ),
               }}
@@ -667,7 +667,7 @@ const PermissionList = () => {
                 borderRadius: 2,
                 fontWeight: 700,
                 borderColor: BAC.grey300,
-                color: BAC.secondary,
+                color: `var(--cm-text, ${BAC.secondary})`,
               }}
             >
               Limpiar
@@ -681,7 +681,7 @@ const PermissionList = () => {
                 fontWeight: 700,
                 borderRadius: 2,
                 backgroundColor: alpha(BAC.primary, 0.08),
-                color: BAC.primary,
+                color: `var(--cm-primary-text, ${BAC.primary})`,
               }}
             />
           </Stack>
@@ -693,8 +693,8 @@ const PermissionList = () => {
         sx={{
           borderRadius: 3,
           overflow: "hidden",
-          border: `1px solid ${BAC.grey200}`,
-          backgroundColor: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.grey200})`,
+          backgroundColor: "var(--cm-paper, #fff)",
         }}
       >
         {loading ? (
@@ -707,7 +707,7 @@ const PermissionList = () => {
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: BAC.primary }} />
+            <CircularProgress sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />
             <Typography color="text.secondary">Cargando permisos...</Typography>
           </Box>
         ) : filteredPermissions.length === 0 ? (
@@ -717,7 +717,7 @@ const PermissionList = () => {
               sx={{
                 borderRadius: 2,
                 "& .MuiAlert-icon": {
-                  color: BAC.info,
+                  color: `var(--cm-primary-text, ${BAC.info})`,
                 },
               }}
             >
@@ -839,13 +839,13 @@ const PermissionList = () => {
                         hover
                         sx={{
                           backgroundColor:
-                            index % 2 === 0 ? "#fff" : alpha(BAC.grey200, 0.35),
+                            index % 2 === 0 ? "var(--cm-paper, #fff)" : alpha(BAC.grey200, 0.35),
                           transition: "all 0.2s ease",
                           "&:hover": {
                             backgroundColor: alpha(BAC.primary, 0.05),
                           },
                           "& .MuiTableCell-root": {
-                            borderBottom: `1px solid ${BAC.grey200}`,
+                            borderBottom: `1px solid var(--cm-border, ${BAC.grey200})`,
                             verticalAlign: "middle",
                           },
                         }}
@@ -858,7 +858,7 @@ const PermissionList = () => {
                               fontWeight: 700,
                               minWidth: 52,
                               backgroundColor: alpha(BAC.secondary, 0.08),
-                              color: BAC.secondary,
+                              color: `var(--cm-text, ${BAC.secondary})`,
                             }}
                           />
                         </TableCell>
@@ -880,7 +880,7 @@ const PermissionList = () => {
                               sx={{
                                 fontFamily: "monospace",
                                 backgroundColor: alpha(BAC.info, 0.06),
-                                color: BAC.secondary,
+                                color: `var(--cm-text, ${BAC.secondary})`,
                                 px: 1.25,
                                 py: 0.75,
                                 borderRadius: 2,
@@ -898,10 +898,10 @@ const PermissionList = () => {
                                   copyPermissionTag(perm.permission_tag)
                                 }
                                 sx={{
-                                  color: BAC.grey500,
+                                  color: `var(--cm-text-2, ${BAC.grey500})`,
                                   "&:hover": {
                                     backgroundColor: alpha(BAC.info, 0.08),
-                                    color: BAC.info,
+                                    color: `var(--cm-primary-text, ${BAC.info})`,
                                   },
                                 }}
                               >
@@ -932,7 +932,7 @@ const PermissionList = () => {
                               fontWeight: 600,
                               textTransform: "capitalize",
                               backgroundColor: alpha(BAC.warning, 0.08),
-                              color: BAC.warning,
+                              color: `var(--cm-warning-text, ${BAC.warning})`,
                               border: `1px solid ${alpha(BAC.warning, 0.2)}`,
                             }}
                           />
@@ -951,7 +951,7 @@ const PermissionList = () => {
                                   setOpenDialog(true);
                                 }}
                                 sx={{
-                                  color: BAC.info,
+                                  color: `var(--cm-primary-text, ${BAC.info})`,
                                   border: `1px solid ${alpha(BAC.info, 0.3)}`,
                                   "&:hover": {
                                     backgroundColor: alpha(BAC.info, 0.08),
@@ -969,7 +969,7 @@ const PermissionList = () => {
                                   setConfirmOpen(true);
                                 }}
                                 sx={{
-                                  color: BAC.danger,
+                                  color: `var(--cm-error-text, ${BAC.danger})`,
                                   border: `1px solid ${alpha(BAC.danger, 0.3)}`,
                                   "&:hover": {
                                     backgroundColor: alpha(BAC.danger, 0.08),

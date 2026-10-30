@@ -120,13 +120,13 @@ export default function CashFlowProjection() {
     {
       field: "net", headerName: "Neto", width: 150, type: "number",
       renderCell: (p) => (
-        <span style={{ color: Number(p.value) < 0 ? "#b91c1c" : "#166534", fontWeight: 600 }}>{money(p.value)}</span>
+        <span style={{ color: Number(p.value) < 0 ? "var(--cm-error-text, #b91c1c)" : "var(--cm-success-text, #166534)", fontWeight: 600 }}>{money(p.value)}</span>
       ),
     },
     {
       field: "balance", headerName: "Saldo proyectado", width: 170, type: "number",
       renderCell: (p) => (
-        <span style={{ color: Number(p.value) < 0 ? "#b91c1c" : "inherit", fontWeight: 700 }}>{money(p.value)}</span>
+        <span style={{ color: Number(p.value) < 0 ? "var(--cm-error-text, #b91c1c)" : "inherit", fontWeight: 700 }}>{money(p.value)}</span>
       ),
     },
   ], [gran]);
@@ -159,9 +159,9 @@ export default function CashFlowProjection() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <WaterfallChartIcon sx={{ color: "#0057B8" }} />
+          <WaterfallChartIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Flujo de Caja Proyectado</Typography>
@@ -218,8 +218,8 @@ export default function CashFlowProjection() {
           <DataGrid rows={rows} columns={columns} loading={loading} getRowId={(r) => r.id}
             density="compact" hideFooter={rows.length <= 100} disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB", borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2,
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }} />
         </Box>
 
@@ -311,7 +311,7 @@ function CashFlowChart({ rows, gran }) {
   const labelEvery = Math.max(1, Math.ceil(rows.length / 12));
 
   return (
-    <Box sx={{ overflowX: "auto", mb: 2, border: "1px solid #E5E7EB", borderRadius: 2, p: 1 }}>
+    <Box sx={{ overflowX: "auto", mb: 2, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2, p: 1 }}>
       <Typography variant="caption" color="text.secondary" sx={{ px: 1 }}>Saldo proyectado</Typography>
       <svg width={W} height={H} role="img">
         <polygon points={areaPts} fill="#0057B8" opacity="0.08" />

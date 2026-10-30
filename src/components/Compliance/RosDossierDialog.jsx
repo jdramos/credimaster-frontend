@@ -143,7 +143,7 @@ export default function RosDossierDialog({ rosCase, onClose }) {
             <Stack spacing={1}>
               {data.annexes.map((a) => (
                 <Stack key={a.key} direction="row" spacing={1} alignItems="flex-start">
-                  {a.ok ? <CheckCircleIcon sx={{ color: "#16A34A" }} fontSize="small" /> : <WarningAmberIcon sx={{ color: "#D97706" }} fontSize="small" />}
+                  {a.ok ? <CheckCircleIcon sx={{ color: "var(--cm-success-text, #16A34A)" }} fontSize="small" /> : <WarningAmberIcon sx={{ color: "var(--cm-warning-text, #D97706)" }} fontSize="small" />}
                   <Box>
                     <Typography fontSize={14} fontWeight={700}>{a.label}</Typography>
                     {a.detail && <Typography fontSize={12.5} color="text.secondary">{a.detail}</Typography>}

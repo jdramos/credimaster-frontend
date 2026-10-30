@@ -316,13 +316,13 @@ export default function IccReportPage() {
   });
 
   return (
-    <Box sx={{ p: 3, bgcolor: BAC.bg, minHeight: "100vh" }}>
+    <Box sx={{ p: 3, bgcolor: `var(--cm-surface, ${BAC.bg})`, minHeight: "100vh" }}>
       <Paper
         elevation={0}
         sx={{
           borderRadius: 4,
           overflow: "hidden",
-          border: `1px solid ${BAC.border}`,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
           mb: 3,
         }}
       >
@@ -363,7 +363,7 @@ export default function IccReportPage() {
                 width: { xs: "100%", md: 220 },
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
-                  bgcolor: BAC.white,
+                  bgcolor: `var(--cm-paper, ${BAC.white})`,
                 },
               }}
               InputLabelProps={{ shrink: true }}
@@ -378,7 +378,7 @@ export default function IccReportPage() {
                 width: { xs: "100%", md: 220 },
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
-                  bgcolor: BAC.white,
+                  bgcolor: `var(--cm-paper, ${BAC.white})`,
                 },
               }}
             />
@@ -424,17 +424,17 @@ export default function IccReportPage() {
         elevation={0}
         sx={{
           borderRadius: 4,
-          border: `1px solid ${BAC.border}`,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
           overflow: "hidden",
           mb: 3,
         }}
       >
         <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Box>
-            <Typography fontWeight={900} color={BAC.text}>
+            <Typography fontWeight={900} color={`var(--cm-text, ${BAC.text})`}>
               Historial de corridas ICC
             </Typography>
-            <Typography fontSize={13} color={BAC.muted}>
+            <Typography fontSize={13} color={`var(--cm-text-2, ${BAC.muted})`}>
               Corridas generadas, estado del proceso y descarga del ZIP
             </Typography>
           </Box>
@@ -445,7 +445,7 @@ export default function IccReportPage() {
 
         <Divider />
 
-        <Box sx={{ height: 430, bgcolor: BAC.white }}>
+        <Box sx={{ height: 430, bgcolor: `var(--cm-paper, ${BAC.white})` }}>
           <DataGrid
             rows={runs}
             columns={runColumns}
@@ -459,7 +459,7 @@ export default function IccReportPage() {
             sx={{
               border: 0,
               "& .MuiDataGrid-columnHeaders": {
-                bgcolor: BAC.soft,
+                bgcolor: `var(--cm-soft, ${BAC.soft})`,
                 fontWeight: 800,
               },
             }}
@@ -472,16 +472,16 @@ export default function IccReportPage() {
           elevation={0}
           sx={{
             borderRadius: 4,
-            border: `1px solid ${BAC.border}`,
+            border: `1px solid var(--cm-border, ${BAC.border})`,
             overflow: "hidden",
           }}
         >
           <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
             <Box>
-              <Typography fontWeight={900} color={BAC.text}>
+              <Typography fontWeight={900} color={`var(--cm-text, ${BAC.text})`}>
                 Errores de validación ICC
               </Typography>
-              <Typography fontSize={13} color={BAC.muted}>
+              <Typography fontSize={13} color={`var(--cm-text-2, ${BAC.muted})`}>
                 Corrida seleccionada #{selectedRun}
               </Typography>
             </Box>
@@ -492,7 +492,7 @@ export default function IccReportPage() {
 
           <Divider />
 
-          <Box sx={{ height: 420, bgcolor: BAC.white }}>
+          <Box sx={{ height: 420, bgcolor: `var(--cm-paper, ${BAC.white})` }}>
             <DataGrid
               rows={errors}
               columns={errorColumns}
@@ -505,7 +505,7 @@ export default function IccReportPage() {
               sx={{
                 border: 0,
                 "& .MuiDataGrid-columnHeaders": {
-                  bgcolor: BAC.soft,
+                  bgcolor: `var(--cm-soft, ${BAC.soft})`,
                   fontWeight: 800,
                 },
               }}

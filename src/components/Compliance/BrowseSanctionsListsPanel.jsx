@@ -376,7 +376,7 @@ export default function BrowseSanctionsListsPanel({ fullPage = false }) {
             const s = bySource[source];
             if (!s) return null;
             return (
-              <Box key={source} sx={{ flex: 1, p: 1.5, border: "1px solid #DBEAFE", bgcolor: "#F8FBFF", borderRadius: 2 }}>
+              <Box key={source} sx={{ flex: 1, p: 1.5, border: "1px solid var(--cm-border, #DBEAFE)", bgcolor: "var(--cm-paper, #F8FBFF)", borderRadius: 2 }}>
                 <Typography fontWeight={800} fontSize={14}>{source}</Typography>
                 <Typography fontSize={13} sx={{ mt: 0.25 }}>
                   Última actualización de la lista ({publisher}): <b>{fmtPublished(s.published_at)}</b>
@@ -517,10 +517,10 @@ export default function BrowseSanctionsListsPanel({ fullPage = false }) {
           onRowClick={(params) => setSelectedId(params.row.id)}
           localeText={{ noRowsLabel: "No hay entradas con esos filtros" }}
           sx={{
-            border: "1px solid #E5E7EB",
+            border: "1px solid var(--cm-border, #E5E7EB)",
             borderRadius: 2,
             cursor: "pointer",
-            "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+            "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
           }}
         />
       </Box>

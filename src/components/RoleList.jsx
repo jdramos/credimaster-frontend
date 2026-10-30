@@ -215,7 +215,7 @@ const RoleList = () => {
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: BAC.grey100, minHeight: "100%" }}>
+    <Box sx={{ p: 3, backgroundColor: `var(--cm-surface, ${BAC.grey100})`, minHeight: "100%" }}>
       <Paper
         elevation={0}
         sx={{
@@ -274,13 +274,13 @@ const RoleList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <SecurityIcon sx={{ color: BAC.primary }} />
+            <SecurityIcon sx={{ color: `var(--cm-error-text, ${BAC.primary})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Total roles
@@ -298,13 +298,13 @@ const RoleList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <VerifiedUserIcon sx={{ color: BAC.secondary }} />
+            <VerifiedUserIcon sx={{ color: `var(--cm-text, ${BAC.secondary})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Roles con permisos
@@ -322,13 +322,13 @@ const RoleList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <KeyIcon sx={{ color: BAC.info }} />
+            <KeyIcon sx={{ color: `var(--cm-primary-text, ${BAC.info})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Permisos asignados
@@ -346,13 +346,13 @@ const RoleList = () => {
             flex: 1,
             p: 2,
             borderRadius: 3,
-            border: `1px solid ${BAC.grey200}`,
-            backgroundColor: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.grey200})`,
+            backgroundColor: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <AdminPanelSettingsIcon sx={{ color: BAC.warning }} />
+            <AdminPanelSettingsIcon sx={{ color: `var(--cm-warning-text, ${BAC.warning})` }} />
             <Box>
               <Typography variant="body2" color="text.secondary">
                 Resultados visibles
@@ -371,8 +371,8 @@ const RoleList = () => {
           p: 2.5,
           mb: 2,
           borderRadius: 3,
-          border: `1px solid ${BAC.grey200}`,
-          backgroundColor: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.grey200})`,
+          backgroundColor: `var(--cm-paper, ${BAC.white})`,
         }}
       >
         <Stack
@@ -396,13 +396,13 @@ const RoleList = () => {
               maxWidth: { xs: "100%", md: 420 },
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                backgroundColor: BAC.white,
+                backgroundColor: `var(--cm-paper, ${BAC.white})`,
               },
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: BAC.grey500 }} />
+                  <SearchIcon sx={{ color: `var(--cm-text-2, ${BAC.grey500})` }} />
                 </InputAdornment>
               ),
             }}
@@ -413,8 +413,8 @@ const RoleList = () => {
             sx={{
               fontWeight: 700,
               borderRadius: 2,
-              color: BAC.primary,
-              backgroundColor: BAC.primaryLight,
+              color: `var(--cm-error-text, ${BAC.primary})`,
+              backgroundColor: `var(--cm-error-soft, ${BAC.primaryLight})`,
               border: `1px solid ${alpha(BAC.primary, 0.18)}`,
             }}
           />
@@ -426,8 +426,8 @@ const RoleList = () => {
         sx={{
           borderRadius: 3,
           overflow: "hidden",
-          border: `1px solid ${BAC.grey200}`,
-          backgroundColor: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.grey200})`,
+          backgroundColor: `var(--cm-paper, ${BAC.white})`,
         }}
       >
         {loading ? (
@@ -440,7 +440,7 @@ const RoleList = () => {
               gap: 2,
             }}
           >
-            <CircularProgress sx={{ color: BAC.primary }} />
+            <CircularProgress sx={{ color: `var(--cm-error-text, ${BAC.primary})` }} />
             <Typography color="text.secondary">Cargando roles...</Typography>
           </Box>
         ) : filteredRoles.length === 0 ? (
@@ -449,8 +449,8 @@ const RoleList = () => {
               severity="info"
               sx={{
                 borderRadius: 2,
-                backgroundColor: BAC.infoSoft,
-                color: BAC.info,
+                backgroundColor: `var(--cm-info-soft, ${BAC.infoSoft})`,
+                color: `var(--cm-primary-text, ${BAC.info})`,
                 border: `1px solid ${alpha(BAC.info, 0.18)}`,
               }}
             >
@@ -543,14 +543,14 @@ const RoleList = () => {
                         sx={{
                           backgroundColor:
                             index % 2 === 0
-                              ? BAC.white
+                              ? `var(--cm-paper, ${BAC.white})`
                               : alpha(BAC.grey200, 0.45),
                           transition: "all 0.2s ease",
                           "&:hover": {
                             backgroundColor: alpha(BAC.primary, 0.05),
                           },
                           "& .MuiTableCell-root": {
-                            borderBottom: `1px solid ${BAC.grey200}`,
+                            borderBottom: `1px solid var(--cm-border, ${BAC.grey200})`,
                             verticalAlign: "middle",
                           },
                         }}
@@ -562,9 +562,9 @@ const RoleList = () => {
                             sx={{
                               fontWeight: 700,
                               minWidth: 52,
-                              color: BAC.secondary,
-                              backgroundColor: BAC.grey100,
-                              border: `1px solid ${BAC.grey300}`,
+                              color: `var(--cm-text, ${BAC.secondary})`,
+                              backgroundColor: `var(--cm-surface, ${BAC.grey100})`,
+                              border: `1px solid var(--cm-border, ${BAC.grey300})`,
                             }}
                           />
                         </TableCell>
@@ -583,18 +583,18 @@ const RoleList = () => {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                backgroundColor: BAC.primaryLight,
+                                backgroundColor: `var(--cm-error-soft, ${BAC.primaryLight})`,
                                 border: `1px solid ${alpha(BAC.primary, 0.15)}`,
                               }}
                             >
-                              <BadgeIcon sx={{ color: BAC.primary }} />
+                              <BadgeIcon sx={{ color: `var(--cm-error-text, ${BAC.primary})` }} />
                             </Box>
 
                             <Box>
                               <Typography
                                 variant="subtitle2"
                                 fontWeight={700}
-                                sx={{ color: BAC.text }}
+                                sx={{ color: `var(--cm-text, ${BAC.text})` }}
                               >
                                 {role.role_name}
                               </Typography>
@@ -609,15 +609,15 @@ const RoleList = () => {
                             sx={{
                               fontWeight: 700,
                               color:
-                                permissionsCount > 0 ? BAC.info : BAC.grey700,
+                                permissionsCount > 0 ? `var(--cm-primary-text, ${BAC.info})` : `var(--cm-text-2, ${BAC.grey700})`,
                               backgroundColor:
                                 permissionsCount > 0
-                                  ? BAC.infoSoft
-                                  : BAC.grey100,
+                                  ? `var(--cm-info-soft, ${BAC.infoSoft})`
+                                  : `var(--cm-surface, ${BAC.grey100})`,
                               border:
                                 permissionsCount > 0
                                   ? `1px solid ${alpha(BAC.info, 0.18)}`
-                                  : `1px solid ${BAC.grey300}`,
+                                  : `1px solid var(--cm-border, ${BAC.grey300})`,
                             }}
                           />
                         </TableCell>
@@ -639,9 +639,9 @@ const RoleList = () => {
                           <Tooltip title="Editar rol">
                             <IconButton
                               sx={{
-                                color: BAC.info,
+                                color: `var(--cm-primary-text, ${BAC.info})`,
                                 border: `1px solid ${alpha(BAC.info, 0.25)}`,
-                                backgroundColor: BAC.white,
+                                backgroundColor: `var(--cm-paper, ${BAC.white})`,
                                 "&:hover": {
                                   backgroundColor: alpha(BAC.info, 0.08),
                                 },

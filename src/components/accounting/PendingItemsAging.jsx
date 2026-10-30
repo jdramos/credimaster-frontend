@@ -147,12 +147,12 @@ export default function PendingItemsAging() {
         sx={{
           p: 2,
           borderRadius: 3,
-          border: "1px solid #E5E7EB",
-          background: "#fff",
+          border: "1px solid var(--cm-border, #E5E7EB)",
+          background: "var(--cm-paper, #fff)",
         }}
       >
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-          <HourglassBottomIcon sx={{ color: "#0057B8" }} />
+          <HourglassBottomIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
@@ -247,7 +247,7 @@ export default function PendingItemsAging() {
               <Accordion
                 key={account.account_id}
                 defaultExpanded
-                sx={{ mb: 1, border: "1px solid #E5E7EB", borderRadius: 2, "&:before": { display: "none" } }}
+                sx={{ mb: 1, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2, "&:before": { display: "none" } }}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Box sx={{ display: "flex", gap: 2, alignItems: "center", width: "100%" }}>
@@ -274,10 +274,10 @@ export default function PendingItemsAging() {
                       disableSelectionOnClick
                       hideFooter={account.items.length <= 10}
                       sx={{
-                        border: "1px solid #E5E7EB",
+                        border: "1px solid var(--cm-border, #E5E7EB)",
                         borderRadius: 2,
                         "& .MuiDataGrid-columnHeaders": {
-                          backgroundColor: "#F8FAFC",
+                          backgroundColor: "var(--cm-surface, #F8FAFC)",
                           fontWeight: 700,
                         },
                       }}

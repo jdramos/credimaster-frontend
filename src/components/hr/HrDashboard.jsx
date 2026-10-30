@@ -46,8 +46,8 @@ function SectionHeader({ icon: Icon, title, subtitle }) {
           width: 32,
           height: 32,
           borderRadius: 2,
-          bgcolor: BAC.soft,
-          color: BAC.primary,
+          bgcolor: `var(--cm-soft, ${BAC.soft})`,
+          color: `var(--cm-primary-text, ${BAC.primary})`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -163,7 +163,7 @@ export default function HrDashboard() {
             <ReportExportButtons
               report={buildReport}
               disabled={loading}
-              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.7)", "&:hover": { borderColor: "#fff" } }}
+              sx={{ color: "#fff", borderColor: "rgba(255,255,255,0.7)", "&:hover": { borderColor: "var(--cm-border, #fff)" } }}
             />
           </Box>
         </Box>

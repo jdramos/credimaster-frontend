@@ -101,7 +101,7 @@ const BranchAllSelect = ({
           <span
             onClick={handleSelectAll}
             style={{
-              color: "#1976d2",
+              color: "var(--cm-primary-text, #1976d2)",
               cursor: "pointer",
               textDecoration: "underline",
               fontSize: "0.8rem",

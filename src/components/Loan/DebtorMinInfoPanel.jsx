@@ -118,7 +118,7 @@ export default function DebtorMinInfoPanel({ customerId, readOnly = false }) {
   return (
     <Paper
       elevation={0}
-      sx={{ p: 2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff", mt: 1.5 }}
+      sx={{ p: 2, borderRadius: 2, border: `1px solid var(--cm-border, ${BAC.border})`, bgcolor: "var(--cm-paper, #fff)", mt: 1.5 }}
     >
       <Stack spacing={1.5}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" useFlexGap>

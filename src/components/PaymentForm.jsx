@@ -443,7 +443,7 @@ const PaymentForm = ({
         <DialogContent
           sx={{
             p: 3,
-            background: "#F6F8FB",
+            background: "var(--cm-surface, #F6F8FB)",
           }}
         >
           {initialLoading ? (
@@ -633,7 +633,7 @@ const PaymentForm = ({
 
                     <Box
                       sx={{
-                        border: "1px solid #DDE7F3",
+                        border: "1px solid var(--cm-border, #DDE7F3)",
                         borderRadius: 3,
                         overflow: "hidden",
                       }}
@@ -642,10 +642,10 @@ const PaymentForm = ({
                         sx={{
                           px: 2,
                           py: 1.3,
-                          background: "#EEF5FF",
+                          background: "var(--cm-soft, #EEF5FF)",
                         }}
                       >
-                        <Typography fontWeight={900} color="#005EB8">
+                        <Typography fontWeight={900} color="var(--cm-primary-text, #005EB8)">
                           Aplicación del pago
                         </Typography>
                       </Box>
@@ -690,17 +690,17 @@ const PaymentForm = ({
                           <Typography fontWeight={900}>
                             Total a aplicar
                           </Typography>
-                          <Typography fontWeight={900} color="#005EB8">
+                          <Typography fontWeight={900} color="var(--cm-primary-text, #005EB8)">
                             C$ {money(paymentAmount)}
                           </Typography>
                         </Stack>
 
                         <Box
                           sx={{
-                            border: "1px dashed #DDE7F3",
+                            border: "1px dashed var(--cm-border, #DDE7F3)",
                             borderRadius: 3,
                             p: 2,
-                            background: "#FAFCFF",
+                            background: "var(--cm-paper, #FAFCFF)",
                           }}
                         >
                           <Typography fontWeight={900} mb={1}>
@@ -763,8 +763,8 @@ const PaymentForm = ({
           sx={{
             px: 3,
             py: 2,
-            borderTop: "1px solid #E3EAF3",
-            background: "#fff",
+            borderTop: "1px solid var(--cm-border, #E3EAF3)",
+            background: "var(--cm-paper, #fff)",
             justifyContent: "space-between",
           }}
         >
@@ -840,9 +840,9 @@ const PaymentForm = ({
 const cardSx = {
   p: 2,
   borderRadius: 4,
-  border: "1px solid #E1E8F0",
+  border: "1px solid var(--cm-border, #E1E8F0)",
   boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-  background: "#fff",
+  background: "var(--cm-paper, #fff)",
 };
 
 const SectionTitle = ({ icon, title, subtitle }) => (
@@ -855,7 +855,7 @@ const SectionTitle = ({ icon, title, subtitle }) => (
     <Stack direction="row" spacing={1.2} alignItems="center">
       <Box
         sx={{
-          color: "#005EB8",
+          color: "var(--cm-primary-text, #005EB8)",
           display: "flex",
           alignItems: "center",
         }}
@@ -864,7 +864,7 @@ const SectionTitle = ({ icon, title, subtitle }) => (
       </Box>
 
       <Box>
-        <Typography fontWeight={900} color="#005EB8">
+        <Typography fontWeight={900} color="var(--cm-primary-text, #005EB8)">
           {title}
         </Typography>
         {subtitle && (

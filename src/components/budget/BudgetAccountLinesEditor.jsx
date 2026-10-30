@@ -166,10 +166,10 @@ export default function BudgetAccountLinesEditor() {
         <Typography color="text.primary">Presupuesto operativo</Typography>
       </Breadcrumbs>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <EditNoteIcon sx={{ color: "#0057B8" }} />
+            <EditNoteIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Presupuesto operativo por cuenta</Typography>
@@ -203,7 +203,7 @@ export default function BudgetAccountLinesEditor() {
         <Box sx={{ overflowX: "auto" }}>
           <Table size="small" sx={{ minWidth: 1200 }}>
             <TableHead>
-              <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+              <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
                 <TableCell>Cuenta</TableCell>
                 <TableCell>Tipo</TableCell>
                 <TableCell align="center">Historial</TableCell>
@@ -259,7 +259,7 @@ export default function BudgetAccountLinesEditor() {
               ))}
 
               {rows.length > 0 && (
-                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid #E5E7EB" } }}>
+                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid var(--cm-border, #E5E7EB)" } }}>
                   <TableCell colSpan={2}>Total</TableCell>
                   <TableCell />
                   {totalsByMonth.map((t, idx) => (

@@ -376,9 +376,9 @@ export default function BankReconciliation() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <AccountBalanceWalletIcon sx={{ color: "#0057B8" }} />
+          <AccountBalanceWalletIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Conciliación Bancaria</Typography>
@@ -640,7 +640,7 @@ export default function BankReconciliation() {
       </Paper>
 
       {imports.length > 0 && (
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Estados de cuenta importados</Typography>
           <Table size="small">
             <TableHead>
@@ -680,7 +680,7 @@ export default function BankReconciliation() {
         </Paper>
       )}
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Historial de conciliaciones</Typography>
           <ReportExportButtons size="small" report={buildHistoryReport} disabled={!history.length} />

@@ -243,9 +243,9 @@ export default function FixedAssetDepreciation() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <EventRepeatIcon sx={{ color: "#0057B8" }} />
+          <EventRepeatIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Depreciación de Activos Fijos</Typography>
@@ -306,7 +306,7 @@ export default function FixedAssetDepreciation() {
         )}
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1 }}>Historial de depreciaciones generadas</Typography>
           <ReportExportButtons report={buildRunsReport} disabled={!runs.length} size="small" />
@@ -395,7 +395,7 @@ export default function FixedAssetDepreciation() {
               <TableBody>
                 {groupedDetail.map((g) => (
                   <React.Fragment key={g.category_code}>
-                    <TableRow sx={{ bgcolor: "#EEF2F7" }}>
+                    <TableRow sx={{ bgcolor: "var(--cm-surface-2, #EEF2F7)" }}>
                       <TableCell colSpan={9} sx={{ fontWeight: 900 }}>{g.label}</TableCell>
                     </TableRow>
                     {g.rows.map((row) => (
@@ -411,7 +411,7 @@ export default function FixedAssetDepreciation() {
                         <TableCell align="right">{money(row.book_value)}</TableCell>
                       </TableRow>
                     ))}
-                    <TableRow sx={{ bgcolor: "#F8FAFC" }}>
+                    <TableRow sx={{ bgcolor: "var(--cm-surface, #F8FAFC)" }}>
                       <TableCell colSpan={5} sx={{ fontWeight: 800 }}>Subtotal {g.label}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 800 }}>{money(g.subtotal.acquisition_cost)}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 800 }}>{money(g.subtotal.depreciation_amount)}</TableCell>

@@ -137,7 +137,7 @@ const GuaranteePhotosDialog = ({ open, onClose, guaranteeId, guaranteeLabel = ""
                       width: "100%",
                       height: imageHeight,
                       objectFit: photos.length === 1 ? "contain" : "cover",
-                      background: photos.length === 1 ? "#f3f4f6" : undefined,
+                      background: photos.length === 1 ? "var(--cm-surface, #f3f4f6)" : undefined,
                       borderRadius: 6,
                       display: "block",
                     }}

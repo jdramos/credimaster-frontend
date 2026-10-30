@@ -150,7 +150,7 @@ const ConamiDefaultsManager = () => {
         sx={{
           p: 2,
           borderRadius: 3,
-          border: "1px solid #e0e0e0",
+          border: "1px solid var(--cm-border, #e0e0e0)",
         }}
       >
         <Stack
@@ -206,7 +206,7 @@ const ConamiDefaultsManager = () => {
           <Paper
             elevation={0}
             sx={{
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--cm-border, #e0e0e0)",
               borderRadius: 2,
               overflow: "hidden",
               height: {
@@ -257,7 +257,7 @@ const ConamiDefaultsManager = () => {
               <TableContainer
                 component={Paper}
                 elevation={0}
-                sx={{ border: "1px solid #e0e0e0", borderRadius: 2 }}
+                sx={{ border: "1px solid var(--cm-border, #e0e0e0)", borderRadius: 2 }}
               >
                 <Table size="small">
                   <TableHead>

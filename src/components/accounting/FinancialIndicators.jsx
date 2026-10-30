@@ -27,10 +27,10 @@ import { printFinancialIndicatorsSummary } from "../../reports/financialIndicato
 // con" solo elige una IMF del reporte para ponerla al lado (no se guarda).
 
 const LEVEL_STYLE = {
-  FUERTE: { color: "#166534", bg: "#DCFCE7", label: "Fuerte" },
-  FAVORABLE: { color: "#1E40AF", bg: "#DBEAFE", label: "Favorable" },
-  OBSERVACION: { color: "#92400E", bg: "#FEF3C7", label: "En observación" },
-  DEBIL: { color: "#991B1B", bg: "#FEE2E2", label: "Débil" },
+  FUERTE: { color: "var(--cm-success-text, #166534)", bg: "#DCFCE7", label: "Fuerte" },
+  FAVORABLE: { color: "var(--cm-primary-text, #1E40AF)", bg: "#DBEAFE", label: "Favorable" },
+  OBSERVACION: { color: "var(--cm-warning-text, #92400E)", bg: "#FEF3C7", label: "En observación" },
+  DEBIL: { color: "var(--cm-error-text, #991B1B)", bg: "#FEE2E2", label: "Débil" },
 };
 
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -64,14 +64,14 @@ function SectorBar({ ind }) {
   const hi = Math.max(s.p75, ind.value);
   const span = hi - lo || 1;
   const pos = (x) => `${((x - lo) / span) * 100}%`;
-  const style = LEVEL_STYLE[ind.level] || { color: "#475569" };
+  const style = LEVEL_STYLE[ind.level] || { color: "var(--cm-text-2, #475569)" };
   return (
     <Tooltip title={`Sector: P25 ${fmt(s.p25, ind.unit)} · mediana ${fmt(s.median, ind.unit)} · P75 ${fmt(s.p75, ind.unit)}${ind.percentile != null ? ` · percentil ${ind.percentile}` : ""}`}>
       <Box sx={{ position: "relative", height: 18, minWidth: 140 }}>
-        <Box sx={{ position: "absolute", top: 7, left: 0, right: 0, height: 4, bgcolor: "#E5E7EB", borderRadius: 2 }} />
+        <Box sx={{ position: "absolute", top: 7, left: 0, right: 0, height: 4, bgcolor: "var(--cm-surface-3, #E5E7EB)", borderRadius: 2 }} />
         <Box sx={{ position: "absolute", top: 5, height: 8, left: pos(s.p25), width: `calc(${pos(s.p75)} - ${pos(s.p25)})`, bgcolor: "#CBD5E1", borderRadius: 2 }} />
         <Box sx={{ position: "absolute", top: 3, height: 12, width: 2, left: pos(s.median), bgcolor: "#475569" }} />
-        <Box sx={{ position: "absolute", top: 2, width: 14, height: 14, ml: "-7px", left: pos(ind.value), borderRadius: "50%", bgcolor: style.color, border: "2px solid #fff", boxShadow: "0 0 0 1px rgba(0,0,0,.15)" }} />
+        <Box sx={{ position: "absolute", top: 2, width: 14, height: 14, ml: "-7px", left: pos(ind.value), borderRadius: "50%", bgcolor: style.color, border: "2px solid var(--cm-border, #fff)", boxShadow: "0 0 0 1px rgba(0,0,0,.15)" }} />
       </Box>
     </Tooltip>
   );
@@ -81,7 +81,7 @@ function TrendIcon({ ind }) {
   if (ind.value == null || ind.previous == null) return null;
   const d = ind.value - ind.previous;
   const threshold = ind.unit === "veces" ? 1 : 0.05;
-  if (Math.abs(d) < threshold) return <TrendingFlatIcon fontSize="small" sx={{ color: "#94A3B8" }} />;
+  if (Math.abs(d) < threshold) return <TrendingFlatIcon fontSize="small" sx={{ color: "var(--cm-text-3, #94A3B8)" }} />;
   const improving = ind.polarity === "higher" ? d > 0 : ind.polarity === "lower" ? d < 0 : null;
   const color = improving == null ? "#64748B" : improving ? "#16A34A" : "#DC2626";
   return d > 0 ? <TrendingUpIcon fontSize="small" sx={{ color }} /> : <TrendingDownIcon fontSize="small" sx={{ color }} />;
@@ -101,7 +101,7 @@ function CalculationDetail({ ind }) {
     </TableRow>
   );
   return (
-    <Box sx={{ mt: 1.25, p: 1.25, bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: 2, maxWidth: 560 }}>
+    <Box sx={{ mt: 1.25, p: 1.25, bgcolor: "var(--cm-paper, #fff)", border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2, maxWidth: 560 }}>
       <Typography fontSize={11.5} fontWeight={800} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, mb: 0.5 }}>
         Cálculo al corte
       </Typography>
@@ -110,9 +110,9 @@ function CalculationDetail({ ind }) {
           {line("", p.num_label, p.num)}
           {line("÷", p.den_label, p.den)}
           <TableRow>
-            <TableCell sx={{ borderTop: "1px solid #E5E7EB", borderBottom: 0, py: 0.5, px: 0, color: "text.secondary", fontWeight: 700 }}>=</TableCell>
-            <TableCell sx={{ borderTop: "1px solid #E5E7EB", borderBottom: 0, py: 0.5, pl: 0.5, fontSize: 12.5 }}>{ind.label}</TableCell>
-            <TableCell align="right" sx={{ borderTop: "1px solid #E5E7EB", borderBottom: 0, py: 0.5, pr: 0, fontSize: 13, fontWeight: 800, whiteSpace: "nowrap" }}>
+            <TableCell sx={{ borderTop: "1px solid var(--cm-border, #E5E7EB)", borderBottom: 0, py: 0.5, px: 0, color: "text.secondary", fontWeight: 700 }}>=</TableCell>
+            <TableCell sx={{ borderTop: "1px solid var(--cm-border, #E5E7EB)", borderBottom: 0, py: 0.5, pl: 0.5, fontSize: 12.5 }}>{ind.label}</TableCell>
+            <TableCell align="right" sx={{ borderTop: "1px solid var(--cm-border, #E5E7EB)", borderBottom: 0, py: 0.5, pr: 0, fontSize: 13, fontWeight: 800, whiteSpace: "nowrap" }}>
               {ind.value == null ? "No aplica" : fmt(ind.value, ind.unit)}
             </TableCell>
           </TableRow>
@@ -179,7 +179,7 @@ function IndicatorRow({ ind, series, comparing }) {
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={comparing ? 7 : 6} sx={{ py: 0, bgcolor: "#F8FAFC" }}>
+        <TableCell colSpan={comparing ? 7 : 6} sx={{ py: 0, bgcolor: "var(--cm-surface, #F8FAFC)" }}>
           <Collapse in={open} unmountOnExit>
             <Stack direction={{ xs: "column", md: "row" }} spacing={3} sx={{ py: 2, px: 1 }}>
               <Box sx={{ flex: 1.4 }}>
@@ -342,10 +342,10 @@ export default function FinancialIndicators() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }} justifyContent="space-between" sx={{ mb: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <InsightsIcon sx={{ color: "#0057B8" }} />
+            <InsightsIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Indicadores financieros</Typography>
@@ -435,7 +435,7 @@ export default function FinancialIndicators() {
             )}
 
             {/* Resumen ejecutivo */}
-            <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, bgcolor: "#F8FAFC", border: "1px solid #E5E7EB" }}>
+            <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, bgcolor: "var(--cm-surface, #F8FAFC)", border: "1px solid var(--cm-border, #E5E7EB)" }}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems={{ md: "center" }} justifyContent="space-between" sx={{ mb: 1.5 }}>
                 <Typography fontWeight={800} fontSize={16}>Resumen ejecutivo — {periodLabel(data.period)}</Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -448,7 +448,7 @@ export default function FinancialIndicators() {
                 {data.summary.overview && <Typography fontSize={13.5} sx={{ lineHeight: 1.6 }}>{data.summary.overview}</Typography>}
                 {data.summary.paragraphs.map((p) => (
                   <Box key={p.pillar}>
-                    <Typography fontSize={12} fontWeight={800} color="#0057B8" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>{p.pillar}</Typography>
+                    <Typography fontSize={12} fontWeight={800} color="var(--cm-primary-text, #0057B8)" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>{p.pillar}</Typography>
                     <Typography fontSize={13.5} sx={{ lineHeight: 1.6 }}>{p.text}</Typography>
                   </Box>
                 ))}
@@ -456,15 +456,15 @@ export default function FinancialIndicators() {
               </Stack>
               <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mt: 2 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography fontSize={12} fontWeight={800} color="#166534" sx={{ textTransform: "uppercase" }}>Fortalezas</Typography>
+                  <Typography fontSize={12} fontWeight={800} color="var(--cm-success-text, #166534)" sx={{ textTransform: "uppercase" }}>Fortalezas</Typography>
                   {data.summary.strengths.length ? data.summary.strengths.map((s) => <Typography key={s} fontSize={13}>• {s}</Typography>) : <Typography fontSize={13} color="text.secondary">—</Typography>}
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography fontSize={12} fontWeight={800} color="#991B1B" sx={{ textTransform: "uppercase" }}>Alertas</Typography>
+                  <Typography fontSize={12} fontWeight={800} color="var(--cm-error-text, #991B1B)" sx={{ textTransform: "uppercase" }}>Alertas</Typography>
                   {data.summary.alerts.length ? data.summary.alerts.map((s) => <Typography key={s} fontSize={13}>• {s}</Typography>) : <Typography fontSize={13} color="text.secondary">—</Typography>}
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography fontSize={12} fontWeight={800} color="#92400E" sx={{ textTransform: "uppercase" }}>En observación</Typography>
+                  <Typography fontSize={12} fontWeight={800} color="var(--cm-warning-text, #92400E)" sx={{ textTransform: "uppercase" }}>En observación</Typography>
                   {data.summary.watch.length ? data.summary.watch.map((s) => <Typography key={s} fontSize={13}>• {s}</Typography>) : <Typography fontSize={13} color="text.secondary">—</Typography>}
                 </Box>
               </Stack>
@@ -474,7 +474,7 @@ export default function FinancialIndicators() {
             {data.groups.map((g) => {
               const items = data.indicators.filter((i) => i.group === g.key);
               return (
-                <Paper key={g.key} elevation={0} sx={{ mb: 2, borderRadius: 3, border: "1px solid #E5E7EB", overflow: "hidden" }}>
+                <Paper key={g.key} elevation={0} sx={{ mb: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", overflow: "hidden" }}>
                   <Box sx={{ px: 2, py: 1.25, bgcolor: "#0B3D91" }}>
                     <Typography fontWeight={800} color="#fff" fontSize={14.5}>{g.label}</Typography>
                   </Box>

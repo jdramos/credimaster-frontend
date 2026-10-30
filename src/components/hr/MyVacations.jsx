@@ -169,10 +169,10 @@ export default function MyVacations() {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <BeachAccessIcon sx={{ color: "#0057B8" }} />
+            <BeachAccessIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Mis Vacaciones</Typography>
@@ -190,7 +190,7 @@ export default function MyVacations() {
         </Box>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1 }}>
           <Typography variant="h6" fontWeight={700}>Mis solicitudes</Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
@@ -225,7 +225,7 @@ export default function MyVacations() {
         </Table>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1 }}>
           <Typography variant="h6" fontWeight={700}>Mis colillas</Typography>
           <Box sx={{ display: "flex", gap: 1 }}>

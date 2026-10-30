@@ -351,10 +351,10 @@ export default function CollectorArqueosList() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FactCheckIcon sx={{ color: "#0057B8" }} />
+            <FactCheckIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Arqueo de Cobradores</Typography>
@@ -401,9 +401,9 @@ export default function CollectorArqueosList() {
             initialState={{ pagination: { pageSize: 25, page: 0 } }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }}
           />
         </Box>
@@ -518,7 +518,7 @@ export default function CollectorArqueosList() {
 
             {useDenominations && (
               <Grid item xs={12}>
-                <Box sx={{ border: "1px solid #E5E7EB", borderRadius: 2, p: 1.5 }}>
+                <Box sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2, p: 1.5 }}>
                   {["Billetes", "Monedas"].map((group) => (
                     <Box key={group} sx={{ mb: group === "Billetes" ? 1.5 : 0 }}>
                       <Typography variant="caption" fontWeight={700} color="text.secondary">{group}</Typography>

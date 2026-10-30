@@ -166,7 +166,7 @@ function SpecTable({ section, actions, selection }) {
   const rows = section.rows.slice(0, MAX_ROWS_ON_SCREEN);
   const selectable = Boolean(selection);
   return (
-    <TableContainer sx={{ maxHeight: 560, border: "1px solid #E2E8F0", borderRadius: 1 }}>
+    <TableContainer sx={{ maxHeight: 560, border: "1px solid var(--cm-border, #E2E8F0)", borderRadius: 1 }}>
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
@@ -181,9 +181,9 @@ function SpecTable({ section, actions, selection }) {
               </TableCell>
             )}
             {section.columns.map((c) => (
-              <TableCell key={c.key} align={NUMERIC.includes(c.type) ? "right" : "left"} sx={{ fontWeight: 700, whiteSpace: "nowrap", bgcolor: "#F1F5F9" }}>{c.label}</TableCell>
+              <TableCell key={c.key} align={NUMERIC.includes(c.type) ? "right" : "left"} sx={{ fontWeight: 700, whiteSpace: "nowrap", bgcolor: "var(--cm-surface, #F1F5F9)" }}>{c.label}</TableCell>
             ))}
-            {actions && <TableCell sx={{ bgcolor: "#F1F5F9" }} />}
+            {actions && <TableCell sx={{ bgcolor: "var(--cm-surface, #F1F5F9)" }} />}
           </TableRow>
         </TableHead>
         <TableBody>

@@ -307,8 +307,8 @@ export default function PostingRuns() {
         sx={{
           p: 2,
           borderRadius: 3,
-          border: "1px solid #E5E7EB",
-          background: "#fff",
+          border: "1px solid var(--cm-border, #E5E7EB)",
+          background: "var(--cm-paper, #fff)",
         }}
       >
         <Box
@@ -319,7 +319,7 @@ export default function PostingRuns() {
             alignItems: "center",
           }}
         >
-          <AutoFixHighIcon sx={{ color: "#0057B8" }} />
+          <AutoFixHighIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
 
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
@@ -337,7 +337,7 @@ export default function PostingRuns() {
 
         <Box sx={{ mb: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-            <PendingActionsIcon fontSize="small" sx={{ color: "#D97706" }} />
+            <PendingActionsIcon fontSize="small" sx={{ color: "var(--cm-warning-text, #D97706)" }} />
             <Typography variant="subtitle2" fontWeight={700}>
               Operaciones pendientes de contabilizar
             </Typography>
@@ -355,8 +355,8 @@ export default function PostingRuns() {
                     p: 1.2,
                     borderRadius: 2,
                     cursor: "pointer",
-                    borderColor: p.count > 0 ? "#F59E0B" : "#E5E7EB",
-                    bgcolor: p.count > 0 ? "#FFFBEB" : "#fff",
+                    borderColor: p.count > 0 ? "#F59E0B" : "var(--cm-border, #E5E7EB)",
+                    bgcolor: p.count > 0 ? "var(--cm-warning-soft, #FFFBEB)" : "var(--cm-paper, #fff)",
                     "&:hover": { borderColor: "#D97706" },
                   }}
                 >
@@ -523,10 +523,10 @@ export default function PostingRuns() {
             }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
               "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#F8FAFC",
+                backgroundColor: "var(--cm-surface, #F8FAFC)",
                 fontWeight: 700,
               },
             }}

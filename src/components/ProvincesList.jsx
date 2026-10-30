@@ -41,7 +41,7 @@ export default function ProvincesList() {
         flex: 1,
         minWidth: 220,
         renderCell: (params) => (
-          <Typography fontWeight={700} color={BAC.text} fontSize={14}>
+          <Typography fontWeight={700} color={`var(--cm-text, ${BAC.text})`} fontSize={14}>
             {params.value}
           </Typography>
         ),
@@ -57,9 +57,9 @@ export default function ProvincesList() {
             size="small"
             sx={{
               fontWeight: 700,
-              bgcolor: params.value ? BAC.soft : "#F3F4F6",
-              color: params.value ? BAC.primaryDark : BAC.muted,
-              border: `1px solid ${BAC.border}`,
+              bgcolor: params.value ? `var(--cm-soft, ${BAC.soft})` : "var(--cm-surface, #F3F4F6)",
+              color: params.value ? `var(--cm-primary-text, ${BAC.primaryDark})` : `var(--cm-text-2, ${BAC.muted})`,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
             }}
           />
         ),
@@ -114,8 +114,8 @@ export default function ProvincesList() {
         sx={{
           borderRadius: 3,
           overflow: "hidden",
-          border: `1px solid ${BAC.border}`,
-          bgcolor: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          bgcolor: `var(--cm-paper, ${BAC.white})`,
           boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
         }}
       >
@@ -185,7 +185,7 @@ export default function ProvincesList() {
           </Stack>
         </Box>
 
-        <Box sx={{ p: 2.5, bgcolor: BAC.bg }}>
+        <Box sx={{ p: 2.5, bgcolor: `var(--cm-surface, ${BAC.bg})` }}>
           {error && (
             <Alert
               severity="error"
@@ -206,8 +206,8 @@ export default function ProvincesList() {
               width: "100%",
               borderRadius: 2.5,
               overflow: "hidden",
-              border: `1px solid ${BAC.border}`,
-              bgcolor: BAC.white,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
+              bgcolor: `var(--cm-paper, ${BAC.white})`,
             }}
           >
             <DataGrid
@@ -223,13 +223,13 @@ export default function ProvincesList() {
               sx={{
                 border: 0,
                 fontSize: 14,
-                color: BAC.text,
+                color: `var(--cm-text, ${BAC.text})`,
 
                 "& .MuiDataGrid-columnHeaders": {
-                  bgcolor: BAC.soft,
-                  color: BAC.primaryDark,
+                  bgcolor: `var(--cm-soft, ${BAC.soft})`,
+                  color: `var(--cm-primary-text, ${BAC.primaryDark})`,
                   fontWeight: 800,
-                  borderBottom: `1px solid ${BAC.border}`,
+                  borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                 },
 
                 "& .MuiDataGrid-columnHeaderTitle": {
@@ -237,16 +237,16 @@ export default function ProvincesList() {
                 },
 
                 "& .MuiDataGrid-row:hover": {
-                  bgcolor: "#F8FBFF",
+                  bgcolor: "var(--cm-paper, #F8FBFF)",
                 },
 
                 "& .MuiDataGrid-cell": {
-                  borderBottom: `1px solid ${BAC.border}`,
+                  borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                 },
 
                 "& .MuiDataGrid-footerContainer": {
-                  borderTop: `1px solid ${BAC.border}`,
-                  bgcolor: "#FBFCFE",
+                  borderTop: `1px solid var(--cm-border, ${BAC.border})`,
+                  bgcolor: "var(--cm-paper, #FBFCFE)",
                 },
               }}
             />

@@ -58,7 +58,7 @@ const fieldSx = {
   "& .MuiInputLabel-root": { fontWeight: 700 },
   "& .MuiOutlinedInput-root": {
     borderRadius: 12,
-    backgroundColor: BAC.white,
+    backgroundColor: `var(--cm-paper, ${BAC.white})`,
     "& fieldset": { borderColor: BAC.border },
     "&:hover fieldset": { borderColor: "rgba(0,87,184,0.45)" },
     "&.Mui-focused fieldset": { borderColor: BAC.primary, borderWidth: 2 },
@@ -136,13 +136,13 @@ const RiskIndicator = ({ label, value, hint, bad = false }) => (
       p: 1.25,
       borderRadius: 2,
       border: `1px solid ${bad ? "#FCA5A5" : BAC.border}`,
-      background: bad ? "#FEF2F2" : BAC.white,
+      background: bad ? "var(--cm-surface, #FEF2F2)" : `var(--cm-paper, ${BAC.white})`,
     }}
   >
     <Typography variant="caption" color="text.secondary">{label}</Typography>
-    <Typography sx={{ fontWeight: 800, color: bad ? "#B91C1C" : BAC.text }}>{value}</Typography>
+    <Typography sx={{ fontWeight: 800, color: bad ? "var(--cm-error-text, #B91C1C)" : `var(--cm-text, ${BAC.text})` }}>{value}</Typography>
     {hint && (
-      <Typography variant="caption" sx={{ display: "block", color: bad ? "#B91C1C" : "text.secondary" }}>
+      <Typography variant="caption" sx={{ display: "block", color: bad ? "var(--cm-error-text, #B91C1C)" : "text.secondary" }}>
         {hint}
       </Typography>
     )}
@@ -288,7 +288,7 @@ const LoanAddWizard = () => {
   const goBack = () => setActiveStep((s) => Math.max(s - 1, 0));
 
   return (
-    <Box sx={{ background: BAC.bg, minHeight: "calc(100vh - 64px)", p: { xs: 1, sm: 2 }, overflowX: "hidden" }}>
+    <Box sx={{ background: `var(--cm-surface, ${BAC.bg})`, minHeight: "calc(100vh - 64px)", p: { xs: 1, sm: 2 }, overflowX: "hidden" }}>
       <Paper
         elevation={0}
         sx={{
@@ -334,8 +334,8 @@ const LoanAddWizard = () => {
           mt: { xs: 1.5, sm: 2 },
           p: { xs: 1.5, sm: 2 },
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          background: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          background: `var(--cm-paper, ${BAC.white})`,
         }}
       >
         <Stepper activeStep={activeStep} alternativeLabel>
@@ -354,15 +354,15 @@ const LoanAddWizard = () => {
             mt: { xs: 1.5, sm: 2 },
             p: { xs: 1.5, sm: 2 },
             borderRadius: 3,
-            border: `1px solid ${BAC.border}`,
-            background: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.border})`,
+            background: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 8px 22px rgba(12, 36, 68, 0.08)",
             minHeight: 320,
           }}
         >
           {activeStep === 0 && (
             <>
-              <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 2 }}>
+              <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 2 }}>
                 Paso 1 de 3 — Cliente, monto y condiciones
               </Typography>
 
@@ -500,11 +500,11 @@ const LoanAddWizard = () => {
                         disabled={!selectedEvaluation}
                         sx={{
                           mt: "2px",
-                          border: `1px solid ${BAC.border}`,
+                          border: `1px solid var(--cm-border, ${BAC.border})`,
                           borderRadius: 2,
-                          color: BAC.primary,
-                          backgroundColor: BAC.white,
-                          "&:hover": { backgroundColor: BAC.soft },
+                          color: `var(--cm-primary-text, ${BAC.primary})`,
+                          backgroundColor: `var(--cm-paper, ${BAC.white})`,
+                          "&:hover": { backgroundColor: `var(--cm-soft, ${BAC.soft})` },
                         }}
                       >
                         <Visibility />
@@ -540,7 +540,7 @@ const LoanAddWizard = () => {
                   size="small"
                   fullWidth
                   sx={fieldSx}
-                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
+                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
 
                 <TextField
@@ -610,7 +610,7 @@ const LoanAddWizard = () => {
                   size="small"
                   fullWidth
                   sx={fieldSx}
-                  InputProps={{ endAdornment: <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>%</InputAdornment> }}
+                  InputProps={{ endAdornment: <InputAdornment position="end" sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}>%</InputAdornment> }}
                 />
 
                 <AmountOrPercentageField
@@ -639,7 +639,7 @@ const LoanAddWizard = () => {
                   size="small"
                   fullWidth
                   sx={fieldSx}
-                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
+                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
 
                 <AmountOrPercentageField
@@ -676,7 +676,7 @@ const LoanAddWizard = () => {
                   size="small"
                   fullWidth
                   sx={fieldSx}
-                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: BAC.primary, fontWeight: 900 }}>C$</InputAdornment> }}
+                  InputProps={{ startAdornment: <InputAdornment position="start" sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}>C$</InputAdornment> }}
                 />
               </Box>
 
@@ -702,7 +702,7 @@ const LoanAddWizard = () => {
 
           {activeStep === 1 && (
             <>
-              <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 2 }}>
+              <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 2 }}>
                 Paso 2 de 3 — Garantías y expediente documental
               </Typography>
 
@@ -744,8 +744,8 @@ const LoanAddWizard = () => {
                   maxWidth: "100%",
                 }}
               >
-                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid ${BAC.border}`, background: BAC.soft, height: "100%", minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>Garantías del cliente</Typography>
+                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid var(--cm-border, ${BAC.border})`, background: `var(--cm-soft, ${BAC.soft})`, height: "100%", minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>Garantías del cliente</Typography>
                   <LoanGuaranteeSelector
                     guarantees={guarantees}
                     selectedIds={selectedGuaranteeIds}
@@ -758,15 +758,15 @@ const LoanAddWizard = () => {
                   />
                 </Paper>
 
-                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid ${BAC.border}`, background: BAC.soft, height: "100%" }}>
+                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid var(--cm-border, ${BAC.border})`, background: `var(--cm-soft, ${BAC.soft})`, height: "100%" }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} flexWrap="wrap" gap={1}>
-                    <Typography sx={{ fontWeight: 900, color: BAC.text }}>Documentación del cliente</Typography>
+                    <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})` }}>Documentación del cliente</Typography>
                     <Button
                       size="small"
                       variant="outlined"
                       onClick={() => setShowCustomerDocs(true)}
                       disabled={!loan.customer_id}
-                      sx={{ fontWeight: 700, borderRadius: 2, borderColor: "rgba(0,87,184,0.35)", color: BAC.primary, "&:hover": { borderColor: BAC.primary, bgcolor: BAC.white } }}
+                      sx={{ fontWeight: 700, borderRadius: 2, borderColor: "rgba(0,87,184,0.35)", color: `var(--cm-primary-text, ${BAC.primary})`, "&:hover": { borderColor: BAC.primary, bgcolor: `var(--cm-paper, ${BAC.white})` } }}
                     >
                       Ver documentos
                     </Button>
@@ -777,13 +777,13 @@ const LoanAddWizard = () => {
                   {docSummary ? (
                     <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                       <Chip label={`Requeridos: ${docSummary.total_required || 0}`} />
-                      <Chip label={`Cargados: ${docSummary.uploaded || 0}`} sx={{ bgcolor: "#FFF3E0", color: "#ED6C02", fontWeight: 700 }} />
-                      <Chip label={`Verificados: ${docSummary.verified || 0}`} sx={{ bgcolor: "#E8F5E9", color: "#2E7D32", fontWeight: 700 }} />
+                      <Chip label={`Cargados: ${docSummary.uploaded || 0}`} sx={{ bgcolor: "var(--cm-warning-soft, #FFF3E0)", color: "var(--cm-warning-text, #ED6C02)", fontWeight: 700 }} />
+                      <Chip label={`Verificados: ${docSummary.verified || 0}`} sx={{ bgcolor: "var(--cm-surface-2, #E8F5E9)", color: "var(--cm-success-text, #2E7D32)", fontWeight: 700 }} />
                       <Chip
                         label={`Faltantes: ${docSummary.missing || 0}`}
                         sx={{
-                          bgcolor: Number(docSummary.missing || 0) > 0 ? "#FEE2E2" : "#E8F5E9",
-                          color: Number(docSummary.missing || 0) > 0 ? "#B42318" : "#2E7D32",
+                          bgcolor: Number(docSummary.missing || 0) > 0 ? "var(--cm-error-soft, #FEE2E2)" : "var(--cm-surface-2, #E8F5E9)",
+                          color: Number(docSummary.missing || 0) > 0 ? "var(--cm-error-text, #B42318)" : "var(--cm-success-text, #2E7D32)",
                           fontWeight: 700,
                         }}
                       />
@@ -793,9 +793,9 @@ const LoanAddWizard = () => {
                   )}
                 </Paper>
 
-                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid ${BAC.border}`, background: BAC.soft, height: "100%", minWidth: 0 }}>
+                <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 3, border: `1px solid var(--cm-border, ${BAC.border})`, background: `var(--cm-soft, ${BAC.soft})`, height: "100%", minWidth: 0 }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} flexWrap="wrap" gap={1}>
-                    <Typography sx={{ fontWeight: 900, color: BAC.text }}>
+                    <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})` }}>
                       Fiadores del crédito
                       {getPolicy("guarantor_requirement_mode") === "OBLIGATORIO" && (
                         <Chip label="Obligatorio" size="small" color="error" sx={{ ml: 1, fontWeight: 700 }} />
@@ -829,7 +829,7 @@ const LoanAddWizard = () => {
 
           {activeStep === 2 && (
             <>
-              <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 2 }}>
+              <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 2 }}>
                 Paso 3 de 3 — Resumen y tabla de amortización
               </Typography>
 
@@ -837,9 +837,9 @@ const LoanAddWizard = () => {
 
               <Paper
                 elevation={0}
-                sx={{ p: { xs: 1.5, sm: 2 }, mb: 2, borderRadius: 3, border: `1px solid ${BAC.border}`, background: BAC.soft }}
+                sx={{ p: { xs: 1.5, sm: 2 }, mb: 2, borderRadius: 3, border: `1px solid var(--cm-border, ${BAC.border})`, background: `var(--cm-soft, ${BAC.soft})` }}
               >
-                <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>Resumen de la solicitud</Typography>
+                <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>Resumen de la solicitud</Typography>
 
                 <Box
                   sx={{
@@ -871,14 +871,14 @@ const LoanAddWizard = () => {
                   ].map(([label, value]) => (
                     <Box key={label}>
                       <Typography variant="caption" color="text.secondary">{label}</Typography>
-                      <Typography sx={{ fontWeight: 700, color: BAC.text }}>{value}</Typography>
+                      <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>{value}</Typography>
                     </Box>
                   ))}
                 </Box>
 
                 <Divider sx={{ my: 1.5 }} />
 
-                <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>Costo del crédito</Typography>
+                <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>Costo del crédito</Typography>
                 <Box
                   sx={{
                     display: "grid",
@@ -897,14 +897,14 @@ const LoanAddWizard = () => {
                   ].map(([label, value]) => (
                     <Box key={label}>
                       <Typography variant="caption" color="text.secondary">{label}</Typography>
-                      <Typography sx={{ fontWeight: 700, color: BAC.text }}>{value}</Typography>
+                      <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>{value}</Typography>
                     </Box>
                   ))}
                 </Box>
 
                 <Divider sx={{ my: 1.5 }} />
 
-                <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>Indicadores de riesgo</Typography>
+                <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>Indicadores de riesgo</Typography>
                 <Box
                   sx={{
                     display: "grid",
@@ -958,7 +958,7 @@ const LoanAddWizard = () => {
 
                 <Divider sx={{ my: 1.5 }} />
 
-                <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>
+                <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>
                   Garantías seleccionadas ({selectedGuaranteeIds.length})
                 </Typography>
 
@@ -972,7 +972,7 @@ const LoanAddWizard = () => {
                           {Number(g.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </Typography>
                       ))}
-                    <Typography sx={{ fontWeight: 800, color: BAC.primary, mt: 0.5 }}>
+                    <Typography sx={{ fontWeight: 800, color: `var(--cm-primary-text, ${BAC.primary})`, mt: 0.5 }}>
                       Total garantías: C$ {Number(selectedGuaranteeValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </Typography>
                   </Stack>
@@ -1002,7 +1002,7 @@ const LoanAddWizard = () => {
               onClick={handleCancel}
               variant="outlined"
               startIcon={<Cancel />}
-              sx={{ borderRadius: 2, fontWeight: 900, px: 4, width: { xs: "100%", sm: "auto" }, borderColor: "rgba(0,87,184,0.35)", color: BAC.primary, "&:hover": { borderColor: BAC.primary, bgcolor: BAC.soft } }}
+              sx={{ borderRadius: 2, fontWeight: 900, px: 4, width: { xs: "100%", sm: "auto" }, borderColor: "rgba(0,87,184,0.35)", color: `var(--cm-primary-text, ${BAC.primary})`, "&:hover": { borderColor: BAC.primary, bgcolor: `var(--cm-soft, ${BAC.soft})` } }}
             >
               Cancelar
             </Button>
@@ -1078,7 +1078,7 @@ const LoanAddWizard = () => {
         </DialogTitle>
 
         {evaluationCustomer ? (
-          <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid ${BAC.border}`, backgroundColor: BAC.white }}>
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: `1px solid var(--cm-border, ${BAC.border})`, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
             <CustomerFinancialEvaluationTab
               form={evaluationViewForm}
               setForm={setEvaluationViewForm}
@@ -1092,7 +1092,7 @@ const LoanAddWizard = () => {
           <Alert severity="info">No hay evaluación seleccionada.</Alert>
         )}
 
-        <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
+        <DialogActions sx={{ p: 2, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
           <Button
             onClick={() => setEvaluationModalOpen(false)}
             variant="contained"

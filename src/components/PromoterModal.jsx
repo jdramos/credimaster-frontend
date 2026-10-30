@@ -216,7 +216,7 @@ export default function PromoterModal({
 
       <DialogContent
         sx={{
-          bgcolor: BAC.bg,
+          bgcolor: `var(--cm-surface, ${BAC.bg})`,
           px: 3,
           pt: "28px !important",
           pb: 3,
@@ -241,7 +241,7 @@ export default function PromoterModal({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                bgcolor: BAC.white,
+                bgcolor: `var(--cm-paper, ${BAC.white})`,
               },
             }}
           />
@@ -258,7 +258,7 @@ export default function PromoterModal({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                bgcolor: BAC.white,
+                bgcolor: `var(--cm-paper, ${BAC.white})`,
               },
             }}
           />
@@ -291,7 +291,7 @@ export default function PromoterModal({
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
-                  bgcolor: BAC.white,
+                  bgcolor: `var(--cm-paper, ${BAC.white})`,
                 },
               }}
             ></GenreSelect>
@@ -307,7 +307,7 @@ export default function PromoterModal({
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                bgcolor: BAC.white,
+                bgcolor: `var(--cm-paper, ${BAC.white})`,
               },
             }}
           />
@@ -328,7 +328,7 @@ export default function PromoterModal({
 
       <Divider />
 
-      <DialogActions sx={{ px: 3, py: 2, bgcolor: BAC.white }}>
+      <DialogActions sx={{ px: 3, py: 2, bgcolor: `var(--cm-paper, ${BAC.white})` }}>
         <Button
           onClick={onClose}
           disabled={saving}
@@ -336,7 +336,7 @@ export default function PromoterModal({
           startIcon={<CancelIcon />}
           sx={{
             borderColor: BAC.border,
-            color: BAC.text,
+            color: `var(--cm-text, ${BAC.text})`,
             borderRadius: 2,
             fontWeight: 700,
             textTransform: "none",

@@ -149,16 +149,18 @@ export default function CreditFileTemplatePage() {
       setErrorMessage("");
       setSuccessMessage("");
 
-      const payload = {
-        ...row,
-        [field]: !row[field],
-      };
+      const changes = { [field]: !row[field] };
+      // Un documento inactivo no se exige: al desactivarlo pasa a opcional
+      // (el backend aplica la misma regla).
+      if (field === "is_active" && !changes.is_active) changes.is_mandatory = false;
+
+      const payload = { ...row, ...changes };
 
       await updateCreditFileTemplate(row.id, payload);
 
       setRows((prev) =>
         prev.map((item) =>
-          item.id === row.id ? { ...item, [field]: !row[field] } : item,
+          item.id === row.id ? { ...item, ...changes } : item,
         ),
       );
 
@@ -210,7 +212,8 @@ export default function CreditFileTemplatePage() {
       field: "is_mandatory",
       headerName: "Tipo",
       width: 130,
-      renderCell: (params) => mandatoryChip(!!params.value),
+      // Inactivo = opcional, aunque venga marcado de antes.
+      renderCell: (params) => mandatoryChip(!!params.value && !!params.row.is_active),
     },
     {
       field: "is_active",

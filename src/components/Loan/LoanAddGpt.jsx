@@ -44,7 +44,7 @@ const fieldSx = {
   "& .MuiInputLabel-root": { fontWeight: 700 },
   "& .MuiOutlinedInput-root": {
     borderRadius: 12,
-    backgroundColor: BAC.white,
+    backgroundColor: `var(--cm-paper, ${BAC.white})`,
     "& fieldset": { borderColor: BAC.border },
     "&:hover fieldset": { borderColor: "rgba(0,87,184,0.45)" },
     "&.Mui-focused fieldset": { borderColor: BAC.primary, borderWidth: 2 },
@@ -97,7 +97,7 @@ const LoanAdd = () => {
   } = useLoanForm();
 
   return (
-    <Box sx={{ background: BAC.bg, minHeight: "calc(100vh - 64px)", p: { xs: 1, sm: 2 } }}>
+    <Box sx={{ background: `var(--cm-surface, ${BAC.bg})`, minHeight: "calc(100vh - 64px)", p: { xs: 1, sm: 2 } }}>
       <Paper
         elevation={0}
         sx={{
@@ -166,15 +166,15 @@ const LoanAdd = () => {
             mt: { xs: 1.5, sm: 2 },
             p: { xs: 1.5, sm: 2 },
             borderRadius: 3,
-            border: `1px solid ${BAC.border}`,
-            background: BAC.white,
+            border: `1px solid var(--cm-border, ${BAC.border})`,
+            background: `var(--cm-paper, ${BAC.white})`,
             boxShadow: "0 8px 22px rgba(12, 36, 68, 0.08)",
           }}
         >
-          <Typography sx={{ fontWeight: 900, color: BAC.text }}>
+          <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})` }}>
             Datos principales
           </Typography>
-          <Typography variant="body2" sx={{ color: BAC.muted, mb: 1 }}>
+          <Typography variant="body2" sx={{ color: `var(--cm-text-2, ${BAC.muted})`, mb: 1 }}>
             Los campos se validan contra políticas de crédito y el backend
             valida evaluación y expediente.
           </Typography>
@@ -307,11 +307,11 @@ const LoanAdd = () => {
                     disabled={!selectedEvaluation}
                     sx={{
                       mt: "2px",
-                      border: `1px solid ${BAC.border}`,
+                      border: `1px solid var(--cm-border, ${BAC.border})`,
                       borderRadius: 2,
-                      color: BAC.primary,
-                      backgroundColor: BAC.white,
-                      "&:hover": { backgroundColor: BAC.soft },
+                      color: `var(--cm-primary-text, ${BAC.primary})`,
+                      backgroundColor: `var(--cm-paper, ${BAC.white})`,
+                      "&:hover": { backgroundColor: `var(--cm-soft, ${BAC.soft})` },
                     }}
                   >
                     <Visibility />
@@ -358,7 +358,7 @@ const LoanAdd = () => {
                 startAdornment: (
                   <InputAdornment
                     position="start"
-                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                    sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}
                   >
                     C$
                   </InputAdornment>
@@ -398,7 +398,7 @@ const LoanAdd = () => {
                 startAdornment: (
                   <InputAdornment
                     position="start"
-                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                    sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}
                   >
                     C$
                   </InputAdornment>
@@ -434,7 +434,7 @@ const LoanAdd = () => {
                 startAdornment: (
                   <InputAdornment
                     position="start"
-                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                    sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}
                   >
                     C$
                   </InputAdornment>
@@ -506,7 +506,7 @@ const LoanAdd = () => {
                 endAdornment: (
                   <InputAdornment
                     position="end"
-                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                    sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}
                   >
                     %
                   </InputAdornment>
@@ -536,7 +536,7 @@ const LoanAdd = () => {
                 endAdornment: (
                   <InputAdornment
                     position="end"
-                    sx={{ color: BAC.primary, fontWeight: 900 }}
+                    sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}
                   >
                     %
                   </InputAdornment>
@@ -612,12 +612,12 @@ const LoanAdd = () => {
               sx={{
                 p: { xs: 1.5, sm: 2 },
                 borderRadius: 3,
-                border: `1px solid ${BAC.border}`,
-                background: BAC.soft,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
+                background: `var(--cm-soft, ${BAC.soft})`,
                 height: "100%",
               }}
             >
-              <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>
+              <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>
                 Garantías del cliente
               </Typography>
 
@@ -632,8 +632,8 @@ const LoanAdd = () => {
               sx={{
                 p: { xs: 1.5, sm: 2 },
                 borderRadius: 3,
-                border: `1px solid ${BAC.border}`,
-                background: BAC.soft,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
+                background: `var(--cm-soft, ${BAC.soft})`,
                 height: "100%",
               }}
             >
@@ -645,7 +645,7 @@ const LoanAdd = () => {
                 flexWrap="wrap"
                 gap={1}
               >
-                <Typography sx={{ fontWeight: 900, color: BAC.text }}>
+                <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})` }}>
                   Documentación del cliente
                 </Typography>
 
@@ -658,8 +658,8 @@ const LoanAdd = () => {
                     fontWeight: 700,
                     borderRadius: 2,
                     borderColor: "rgba(0,87,184,0.35)",
-                    color: BAC.primary,
-                    "&:hover": { borderColor: BAC.primary, bgcolor: BAC.white },
+                    color: `var(--cm-primary-text, ${BAC.primary})`,
+                    "&:hover": { borderColor: BAC.primary, bgcolor: `var(--cm-paper, ${BAC.white})` },
                   }}
                 >
                   Ver documentos
@@ -678,16 +678,16 @@ const LoanAdd = () => {
                   <Chip
                     label={`Cargados: ${docSummary.uploaded || 0}`}
                     sx={{
-                      bgcolor: "#FFF3E0",
-                      color: "#ED6C02",
+                      bgcolor: "var(--cm-warning-soft, #FFF3E0)",
+                      color: "var(--cm-warning-text, #ED6C02)",
                       fontWeight: 700,
                     }}
                   />
                   <Chip
                     label={`Verificados: ${docSummary.verified || 0}`}
                     sx={{
-                      bgcolor: "#E8F5E9",
-                      color: "#2E7D32",
+                      bgcolor: "var(--cm-surface-2, #E8F5E9)",
+                      color: "var(--cm-success-text, #2E7D32)",
                       fontWeight: 700,
                     }}
                   />
@@ -696,12 +696,12 @@ const LoanAdd = () => {
                     sx={{
                       bgcolor:
                         Number(docSummary.missing || 0) > 0
-                          ? "#FEE2E2"
-                          : "#E8F5E9",
+                          ? "var(--cm-error-soft, #FEE2E2)"
+                          : "var(--cm-surface-2, #E8F5E9)",
                       color:
                         Number(docSummary.missing || 0) > 0
-                          ? "#B42318"
-                          : "#2E7D32",
+                          ? "var(--cm-error-text, #B42318)"
+                          : "var(--cm-success-text, #2E7D32)",
                       fontWeight: 700,
                     }}
                   />
@@ -763,8 +763,8 @@ const LoanAdd = () => {
               px: 4,
               width: { xs: "100%", sm: "auto" },
               borderColor: "rgba(0,87,184,0.35)",
-              color: BAC.primary,
-              "&:hover": { borderColor: BAC.primary, bgcolor: BAC.soft },
+              color: `var(--cm-primary-text, ${BAC.primary})`,
+              "&:hover": { borderColor: BAC.primary, bgcolor: `var(--cm-soft, ${BAC.soft})` },
             }}
           >
             Cancelar
@@ -828,8 +828,8 @@ const LoanAdd = () => {
             sx={{
               p: 2,
               borderRadius: 3,
-              border: `1px solid ${BAC.border}`,
-              backgroundColor: BAC.white,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
+              backgroundColor: `var(--cm-paper, ${BAC.white})`,
             }}
           >
             <CustomerFinancialEvaluationTab
@@ -845,7 +845,7 @@ const LoanAdd = () => {
           <Alert severity="info">No hay evaluación seleccionada.</Alert>
         )}
 
-        <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
+        <DialogActions sx={{ p: 2, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
           <Button
             onClick={() => setEvaluationModalOpen(false)}
             variant="contained"

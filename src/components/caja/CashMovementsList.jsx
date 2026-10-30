@@ -297,9 +297,9 @@ export default function CashMovementsList() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <PaymentsIcon sx={{ color: "#0057B8" }} />
+          <PaymentsIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Movimientos de Caja</Typography>
@@ -369,7 +369,7 @@ export default function CashMovementsList() {
       </Paper>
 
       {statement && (
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
             Movimientos — {statement.cash_register.name}
           </Typography>
@@ -387,7 +387,7 @@ export default function CashMovementsList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              <TableRow sx={{ "& td": { fontWeight: 700, bgcolor: "#F8FAFC" } }}>
+              <TableRow sx={{ "& td": { fontWeight: 700, bgcolor: "var(--cm-surface, #F8FAFC)" } }}>
                 <TableCell>{statement.start_date}</TableCell>
                 <TableCell />
                 <TableCell />
@@ -650,7 +650,7 @@ export default function CashMovementsList() {
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, pt: 2, borderTop: "2px solid #0057B8" }}>
                 <Box sx={{ textAlign: "right" }}>
                   <Typography variant="caption" color="text.secondary">Monto del movimiento</Typography>
-                  <Typography variant="h5" fontWeight={800} sx={{ color: "#0057B8" }}>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: "var(--cm-primary-text, #0057B8)" }}>
                     {currencySymbol} {money(Math.abs(Number(detail.movement.debit || 0) - Number(detail.movement.credit || 0)))}
                   </Typography>
                 </Box>

@@ -149,7 +149,7 @@ export default function CustomerClaimsList() {
           p: 2,
           mb: 2,
           borderRadius: 3,
-          border: "1px solid #E6EAF2",
+          border: "1px solid var(--cm-border, #E6EAF2)",
           background: "linear-gradient(135deg, #0057B8 0%, #003E8A 100%)",
           color: "#fff",
         }}
@@ -281,8 +281,8 @@ export default function CustomerClaimsList() {
             gap: 1,
             px: 2,
             py: 1.5,
-            bgcolor: "#F7F9FC",
-            borderBottom: "1px solid #E6EAF2",
+            bgcolor: "var(--cm-surface, #F7F9FC)",
+            borderBottom: "1px solid var(--cm-border, #E6EAF2)",
             fontWeight: 700,
             fontSize: 14,
           }}

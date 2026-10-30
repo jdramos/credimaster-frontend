@@ -137,14 +137,14 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
         PaperProps={{
           sx: {
             borderRadius: 3,
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--cm-paper, #ffffff)",
           },
         }}
       >
         <DialogTitle
           sx={{
-            backgroundColor: "#f5f9ff",
-            borderBottom: "1px solid #e3e8ef",
+            backgroundColor: "var(--cm-surface, #f5f9ff)",
+            borderBottom: "1px solid var(--cm-border, #e3e8ef)",
             py: 2,
           }}
         >
@@ -153,7 +153,7 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b" }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: "var(--cm-text, #1e293b)" }}>
               Detalle de Garantías
             </Typography>
 
@@ -175,8 +175,8 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
                 </>
               }
               sx={{
-                backgroundColor: "#e6f4ea",
-                color: "#166534",
+                backgroundColor: "var(--cm-surface-2, #e6f4ea)",
+                color: "var(--cm-success-text, #166534)",
                 fontWeight: 600,
               }}
             />
@@ -252,9 +252,9 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
                   <TableRow
                     sx={{
                       "& th": {
-                        backgroundColor: "#f1f5f9",
+                        backgroundColor: "var(--cm-surface, #f1f5f9)",
                         fontWeight: 700,
-                        color: "#334155",
+                        color: "var(--cm-text-2, #334155)",
                       },
                     }}
                   >
@@ -282,9 +282,9 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
                   <TableRow
                     sx={{
                       "& td": {
-                        backgroundColor: "#f8fafc",
+                        backgroundColor: "var(--cm-surface, #f8fafc)",
                         fontWeight: 800,
-                        borderTop: "2px solid #e2e8f0",
+                        borderTop: "2px solid var(--cm-border, #e2e8f0)",
                       },
                     }}
                   >
@@ -312,8 +312,8 @@ const GuaranteesGet = ({ apiUrl, totalGuaranteeValue = 0 }) => {
 
         <DialogActions
           sx={{
-            backgroundColor: "#f8fafc",
-            borderTop: "1px solid #e2e8f0",
+            backgroundColor: "var(--cm-surface, #f8fafc)",
+            borderTop: "1px solid var(--cm-border, #e2e8f0)",
           }}
         >
           <Button

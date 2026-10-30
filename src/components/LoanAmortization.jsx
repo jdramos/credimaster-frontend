@@ -132,7 +132,7 @@ function LoanAmortization({
               sx={{
                 position: "sticky",
                 bottom: 0,
-                backgroundColor: "white",
+                backgroundColor: "var(--cm-paper, white)",
                 "& td": {
                   borderTop: "2px solid",
                   borderTopColor: "divider",

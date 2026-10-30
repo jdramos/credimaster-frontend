@@ -1103,16 +1103,16 @@ export default function AppLayoutMenu({
       : DRAWER_CLOSED;
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#F6F8FB" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "var(--cm-bg, #F6F8FB)" }}>
       <AppBar
         position="fixed"
         elevation={0}
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: "#fff",
-          color: "#0F172A",
-          borderBottom: "1px solid rgba(15,23,42,.08)",
+          bgcolor: "var(--cm-paper, #fff)",
+          color: "var(--cm-text, #0F172A)",
+          borderBottom: "1px solid var(--cm-border, rgba(15,23,42,.08))",
           transition: "all .2s ease",
         }}
       >
@@ -1205,8 +1205,8 @@ export default function AppLayoutMenu({
               px: { xs: 1.5, md: 2 },
               py: 1,
               overflowX: "auto",
-              bgcolor: "#fff",
-              borderBottom: "1px solid rgba(15,23,42,.08)",
+              bgcolor: "var(--cm-paper, #fff)",
+              borderBottom: "1px solid var(--cm-border, rgba(15,23,42,.08))",
             }}
           >
             <Stack direction="row" spacing={0.6} alignItems="center" sx={{ flexShrink: 0, color: "text.secondary" }}>
@@ -1229,8 +1229,8 @@ export default function AppLayoutMenu({
                   flexShrink: 0,
                   fontSize: 12,
                   fontWeight: 700,
-                  bgcolor: "#F1F5F9",
-                  "&:hover": { bgcolor: "#E2E8F0" },
+                  bgcolor: "var(--cm-surface-2, #F1F5F9)",
+                  "&:hover": { bgcolor: "var(--cm-surface-3, #E2E8F0)" },
                 }}
               />
             ))}
@@ -1357,7 +1357,7 @@ export default function AppLayoutMenu({
         <MenuItem
           onClick={handleLogout}
           sx={{
-            color: "#B91C1C",
+            color: "var(--cm-error-text, #B91C1C)",
             fontWeight: 800,
           }}
         >

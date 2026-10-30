@@ -305,7 +305,7 @@ export default function AssetAdjudicationModal({ open, onClose, loan, onSuccess 
           </Grid>
 
           <Grid item xs={12}>
-            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "#f5f7fa" }}>
+            <Box sx={{ p: 2, borderRadius: 2, bgcolor: "var(--cm-surface, #f5f7fa)" }}>
               <Typography>
                 Total aplicado: <strong>C$ {totalApplied.toLocaleString()}</strong>
               </Typography>

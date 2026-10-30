@@ -208,10 +208,10 @@ export default function DepartmentBudgetEditor() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <EditNoteIcon sx={{ color: "#0057B8" }} />
+            <EditNoteIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Mi presupuesto de departamento</Typography>
@@ -267,7 +267,7 @@ export default function DepartmentBudgetEditor() {
         <Box sx={{ overflowX: "auto" }}>
           <Table size="small" sx={{ minWidth: 1200 }}>
             <TableHead>
-              <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+              <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
                 <TableCell>Concepto</TableCell>
                 <TableCell align="center">Historial</TableCell>
                 {MONTH_LABELS.map((m) => (
@@ -315,7 +315,7 @@ export default function DepartmentBudgetEditor() {
               ))}
 
               {rows.length > 0 && (
-                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid #E5E7EB" } }}>
+                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid var(--cm-border, #E5E7EB)" } }}>
                   <TableCell>Total</TableCell>
                   <TableCell />
                   {totalsByMonth.map((t, idx) => (

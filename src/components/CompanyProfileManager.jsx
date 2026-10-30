@@ -123,8 +123,8 @@ export default function CompanyProfileManager() {
                   Logo de la empresa
                 </Typography>
                 <Stack direction="row" spacing={2} alignItems="center">
-                  <Avatar src={profile?.logo_url || undefined} variant="rounded" sx={{ width: 72, height: 72, bgcolor: "#F1F5F9" }}>
-                    <ImageIcon sx={{ color: "#94A3B8" }} />
+                  <Avatar src={profile?.logo_url || undefined} variant="rounded" sx={{ width: 72, height: 72, bgcolor: "var(--cm-surface, #F1F5F9)" }}>
+                    <ImageIcon sx={{ color: "var(--cm-text-3, #94A3B8)" }} />
                   </Avatar>
                   <Button size="small" variant="outlined" component="label" disabled={uploadingLogo} sx={{ textTransform: "none" }}>
                     {uploadingLogo ? "Subiendo..." : profile?.logo_url ? "Cambiar logo" : "Subir logo"}

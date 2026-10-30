@@ -380,7 +380,7 @@ export default function JournalForm({ open, onClose, onSaved, editId = null }) {
               mt: 2,
               p: 2,
               borderRadius: 2,
-              bgcolor: totals.balanced ? "#ECFDF5" : "#FEF2F2",
+              bgcolor: totals.balanced ? "var(--cm-success-soft, #ECFDF5)" : "var(--cm-surface, #FEF2F2)",
               border: totals.balanced
                 ? "1px solid #A7F3D0"
                 : "1px solid #FECACA",

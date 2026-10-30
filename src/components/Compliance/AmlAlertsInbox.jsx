@@ -224,9 +224,9 @@ export default function AmlAlertsInbox() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-          <WarningAmberIcon sx={{ color: "#B45309" }} />
+          <WarningAmberIcon sx={{ color: "var(--cm-warning-text, #B45309)" }} />
           <Box flexGrow={1}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
@@ -275,15 +275,15 @@ export default function AmlAlertsInbox() {
             initialState={{ pagination: { pageSize: 25, page: 0 } }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+              "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
             }}
           />
         </Box>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2, mt: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, mt: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
           <Typography variant="subtitle1" fontWeight={800} flexGrow={1}>
             Frecuencia de alertas por cliente (últimos 90 días)

@@ -22,7 +22,7 @@ const ChecklistDialog = ({ open, onClose, customerId, customerName }) => (
       Checklist documental del cliente
     </DialogTitle>
 
-    <DialogContent sx={{ p: 2, backgroundColor: BAC.white }}>
+    <DialogContent sx={{ p: 2, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
       {open && customerId ? (
         <CustomerChecklist
           customerId={customerId}
@@ -37,7 +37,7 @@ const ChecklistDialog = ({ open, onClose, customerId, customerName }) => (
       )}
     </DialogContent>
 
-    <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
+    <DialogActions sx={{ p: 2, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
       <Button
         onClick={onClose}
         variant="contained"

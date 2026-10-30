@@ -109,7 +109,7 @@ const FieldsTab = () => {
                         justifyContent="space-between"
                         alignItems="center"
                         sx={{
-                          border: "1px solid #e0e0e0",
+                          border: "1px solid var(--cm-border, #e0e0e0)",
                           borderRadius: 1,
                           p: 1,
                         }}
@@ -175,7 +175,7 @@ const FieldsTab = () => {
                   spacing={1}
                   alignItems="center"
                   sx={{
-                    border: "1px solid #e0e0e0",
+                    border: "1px solid var(--cm-border, #e0e0e0)",
                     borderRadius: 1,
                     p: 1,
                   }}

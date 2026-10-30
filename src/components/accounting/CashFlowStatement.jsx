@@ -92,7 +92,7 @@ export default function CashFlowStatement() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, border: "1px solid #E5E7EB", borderRadius: 3 }}>
+      <Paper elevation={0} sx={{ p: 2, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 3 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
           <WavesIcon color="primary" />
           <Box>
@@ -139,9 +139,9 @@ export default function CashFlowStatement() {
             disableSelectionOnClick
             getRowClassName={(p) => (p.row.total ? "cf-total-row" : "")}
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
-              "& .cf-total-row": { backgroundColor: "#F8FAFC" },
+              "& .cf-total-row": { backgroundColor: "var(--cm-surface, #F8FAFC)" },
             }}
           />
         </Box>

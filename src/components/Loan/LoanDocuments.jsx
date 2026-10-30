@@ -60,11 +60,11 @@ const getFileIcon = (mimeType = "", docName = "") => {
   const name = String(docName).toLowerCase();
 
   if (mime.includes("pdf") || name.endsWith(".pdf")) {
-    return <PictureAsPdfIcon sx={{ color: BAC.primary }} />;
+    return <PictureAsPdfIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
   }
 
   if (mime.startsWith("image/")) {
-    return <ImageIcon sx={{ color: BAC.primary }} />;
+    return <ImageIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
   }
 
   if (
@@ -73,10 +73,10 @@ const getFileIcon = (mimeType = "", docName = "") => {
     mime.includes("sheet") ||
     mime.includes("document")
   ) {
-    return <DescriptionIcon sx={{ color: BAC.primary }} />;
+    return <DescriptionIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
   }
 
-  return <InsertDriveFileIcon sx={{ color: BAC.primary }} />;
+  return <InsertDriveFileIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
 };
 
 export default function LoanDocuments({ loanId }) {
@@ -234,15 +234,15 @@ export default function LoanDocuments({ loanId }) {
       sx={{
         p: 2.5,
         borderRadius: 3,
-        border: `1px solid ${BAC.border}`,
-        background: "#fff",
+        border: `1px solid var(--cm-border, ${BAC.border})`,
+        background: "var(--cm-paper, #fff)",
       }}
     >
       <Stack spacing={2.5}>
         <Box>
           <Typography
             variant="h6"
-            sx={{ fontWeight: 800, color: BAC.text, mb: 0.5 }}
+            sx={{ fontWeight: 800, color: `var(--cm-text, ${BAC.text})`, mb: 0.5 }}
           >
             Documentos del crédito
           </Typography>
@@ -266,7 +266,7 @@ export default function LoanDocuments({ loanId }) {
           }}
         >
           <Stack spacing={2}>
-            <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+            <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
               Subir nuevo documento
             </Typography>
 
@@ -309,7 +309,7 @@ export default function LoanDocuments({ loanId }) {
                   textTransform: "none",
                   fontWeight: 700,
                   borderColor: BAC.primary,
-                  color: BAC.primary,
+                  color: `var(--cm-primary-text, ${BAC.primary})`,
                 }}
               >
                 Seleccionar archivo
@@ -322,7 +322,7 @@ export default function LoanDocuments({ loanId }) {
               </Button>
 
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" sx={{ color: BAC.text, fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ color: `var(--cm-text, ${BAC.text})`, fontWeight: 600 }}>
                   {file ? file.name : "Ningún archivo seleccionado"}
                 </Typography>
                 {file && (
@@ -358,7 +358,7 @@ export default function LoanDocuments({ loanId }) {
           alignItems="center"
           sx={{ mt: 1 }}
         >
-          <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+          <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
             Documentos cargados
           </Typography>
 
@@ -367,7 +367,7 @@ export default function LoanDocuments({ loanId }) {
               onClick={loadDocuments}
               disabled={loadingDocs}
               sx={{
-                border: `1px solid ${BAC.border}`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 borderRadius: 2,
               }}
             >
@@ -385,8 +385,8 @@ export default function LoanDocuments({ loanId }) {
               p: 3,
               textAlign: "center",
               borderRadius: 3,
-              border: `1px solid ${BAC.border}`,
-              backgroundColor: "#FAFCFF",
+              border: `1px solid var(--cm-border, ${BAC.border})`,
+              backgroundColor: "var(--cm-paper, #FAFCFF)",
             }}
           >
             <Typography sx={{ color: "text.secondary" }}>
@@ -399,7 +399,7 @@ export default function LoanDocuments({ loanId }) {
             elevation={0}
             sx={{
               borderRadius: 3,
-              border: `1px solid ${BAC.border}`,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
               overflow: "hidden",
             }}
           >
@@ -410,8 +410,8 @@ export default function LoanDocuments({ loanId }) {
                     backgroundColor: BAC.secondary,
                     "& th": {
                       fontWeight: 800,
-                      color: BAC.text,
-                      borderBottom: `1px solid ${BAC.border}`,
+                      color: `var(--cm-text, ${BAC.text})`,
+                      borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                     },
                   }}
                 >
@@ -431,7 +431,7 @@ export default function LoanDocuments({ loanId }) {
                     hover
                     sx={{
                       "& td": {
-                        borderBottom: `1px solid ${BAC.border}`,
+                        borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                       },
                     }}
                   >
@@ -439,7 +439,7 @@ export default function LoanDocuments({ loanId }) {
                       <Stack direction="row" spacing={1.2} alignItems="center">
                         {getFileIcon(doc.mime_type, doc.doc_name)}
                         <Box>
-                          <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                          <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
                             {doc.doc_name}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -456,7 +456,7 @@ export default function LoanDocuments({ loanId }) {
                         sx={{
                           fontWeight: 700,
                           backgroundColor: BAC.secondary,
-                          color: BAC.primary,
+                          color: `var(--cm-primary-text, ${BAC.primary})`,
                         }}
                       />
                     </TableCell>
@@ -471,9 +471,9 @@ export default function LoanDocuments({ loanId }) {
                           <IconButton
                             onClick={() => handleView(doc.id)}
                             sx={{
-                              border: `1px solid ${BAC.border}`,
+                              border: `1px solid var(--cm-border, ${BAC.border})`,
                               borderRadius: 2,
-                              color: BAC.primary,
+                              color: `var(--cm-primary-text, ${BAC.primary})`,
                             }}
                           >
                             <VisibilityIcon fontSize="small" />
@@ -484,9 +484,9 @@ export default function LoanDocuments({ loanId }) {
                           <IconButton
                             onClick={() => handleDelete(doc.id)}
                             sx={{
-                              border: `1px solid ${BAC.border}`,
+                              border: `1px solid var(--cm-border, ${BAC.border})`,
                               borderRadius: 2,
-                              color: "#B42318",
+                              color: "var(--cm-error-text, #B42318)",
                             }}
                           >
                             <DeleteIcon fontSize="small" />

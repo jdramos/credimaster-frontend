@@ -54,10 +54,10 @@ const fmtDate = (value) =>
 
 const InfoItem = ({ label, value }) => (
   <Box>
-    <Typography sx={{ fontSize: 10, fontWeight: 800, color: BAC.sub }}>
+    <Typography sx={{ fontSize: 10, fontWeight: 800, color: `var(--cm-text-2, ${BAC.sub})` }}>
       {label}
     </Typography>
-    <Typography sx={{ fontSize: 12, fontWeight: 800, color: BAC.text }}>
+    <Typography sx={{ fontSize: 12, fontWeight: 800, color: `var(--cm-text, ${BAC.text})` }}>
       {value || "—"}
     </Typography>
   </Box>
@@ -67,20 +67,20 @@ const Kpi = ({ label, value, color }) => (
   <Paper
     elevation={0}
     sx={{
-      border: `1px solid ${BAC.border}`,
+      border: `1px solid var(--cm-border, ${BAC.border})`,
       borderRadius: 2,
       px: 1.2,
       py: 0.7,
-      bgcolor: "#fff",
+      bgcolor: "var(--cm-paper, #fff)",
       minHeight: 52,
     }}
   >
-    <Typography sx={{ fontSize: 10, fontWeight: 800, color: BAC.sub }}>
+    <Typography sx={{ fontSize: 10, fontWeight: 800, color: `var(--cm-text-2, ${BAC.sub})` }}>
       {label}
     </Typography>
 
     <Typography
-      sx={{ fontSize: 13, fontWeight: 900, color: color || BAC.text }}
+      sx={{ fontSize: 13, fontWeight: 900, color: color || `var(--cm-text, ${BAC.text})` }}
     >
       {value}
     </Typography>
@@ -379,13 +379,13 @@ export default function AccountStatementModal({
                   startIcon={<PrintIcon />}
                   sx={{
                     minHeight: 30,
-                    bgcolor: "#fff",
-                    color: BAC.blue,
+                    bgcolor: "var(--cm-paper, #fff)",
+                    color: `var(--cm-primary-text, ${BAC.blue})`,
                     fontWeight: 900,
                     textTransform: "none",
                     borderRadius: 1.5,
                     px: 1.2,
-                    "&:hover": { bgcolor: "#F1F6FF" },
+                    "&:hover": { bgcolor: "var(--cm-surface, #F1F6FF)" },
                   }}
                 >
                   Imprimir
@@ -398,13 +398,13 @@ export default function AccountStatementModal({
                   startIcon={<FileDownloadIcon />}
                   sx={{
                     minHeight: 30,
-                    bgcolor: "#fff",
-                    color: BAC.blue,
+                    bgcolor: "var(--cm-paper, #fff)",
+                    color: `var(--cm-primary-text, ${BAC.blue})`,
                     fontWeight: 900,
                     textTransform: "none",
                     borderRadius: 1.5,
                     px: 1.2,
-                    "&:hover": { bgcolor: "#F1F6FF" },
+                    "&:hover": { bgcolor: "var(--cm-surface, #F1F6FF)" },
                   }}
                 >
                   Exportar
@@ -419,7 +419,7 @@ export default function AccountStatementModal({
         </Stack>
       </Box>
 
-      <DialogContent sx={{ bgcolor: BAC.bg, p: 1.3 }}>
+      <DialogContent sx={{ bgcolor: `var(--cm-surface, ${BAC.bg})`, p: 1.3 }}>
         {loading ? (
           <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
             <CircularProgress />
@@ -432,8 +432,8 @@ export default function AccountStatementModal({
                 p: 1.2,
                 mb: 1.2,
                 borderRadius: 2,
-                border: `1px solid ${BAC.border}`,
-                bgcolor: "#fff",
+                border: `1px solid var(--cm-border, ${BAC.border})`,
+                bgcolor: "var(--cm-paper, #fff)",
               }}
             >
               <Grid container spacing={1}>
@@ -513,9 +513,9 @@ export default function AccountStatementModal({
 
             <Paper
               elevation={0}
-              sx={{ p: 1.2, mb: 1.2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff" }}
+              sx={{ p: 1.2, mb: 1.2, borderRadius: 2, border: `1px solid var(--cm-border, ${BAC.border})`, bgcolor: "var(--cm-paper, #fff)" }}
             >
-              <Typography sx={{ fontWeight: 900, fontSize: 13, mb: 0.75, color: BAC.blue }}>
+              <Typography sx={{ fontWeight: 900, fontSize: 13, mb: 0.75, color: `var(--cm-primary-text, ${BAC.blue})` }}>
                 Estado y comportamiento de pago al {fmtDate(finalCutDate)}
               </Typography>
               <LoanPaymentProfile loanId={loanId} asOfDate={finalCutDate} onLoaded={setPaymentProfile} />
@@ -524,9 +524,9 @@ export default function AccountStatementModal({
             {adjustments.length ? (
               <Paper
                 elevation={0}
-                sx={{ p: 1.2, mb: 1.2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff" }}
+                sx={{ p: 1.2, mb: 1.2, borderRadius: 2, border: `1px solid var(--cm-border, ${BAC.border})`, bgcolor: "var(--cm-paper, #fff)" }}
               >
-                <Typography sx={{ fontWeight: 900, fontSize: 13, mb: 0.75, color: BAC.blue }}>
+                <Typography sx={{ fontWeight: 900, fontSize: 13, mb: 0.75, color: `var(--cm-primary-text, ${BAC.blue})` }}>
                   Notas de crédito y débito
                 </Typography>
                 <Table size="small">
@@ -594,8 +594,8 @@ export default function AccountStatementModal({
               elevation={0}
               sx={{
                 borderRadius: 2,
-                border: `1px solid ${BAC.border}`,
-                bgcolor: "#fff",
+                border: `1px solid var(--cm-border, ${BAC.border})`,
+                bgcolor: "var(--cm-paper, #fff)",
                 overflow: "hidden",
               }}
             >
@@ -613,8 +613,8 @@ export default function AccountStatementModal({
                     size="small"
                     label={`${rows.length} cuotas`}
                     sx={{
-                      bgcolor: "#F1F6FF",
-                      color: BAC.blue,
+                      bgcolor: "var(--cm-surface, #F1F6FF)",
+                      color: `var(--cm-primary-text, ${BAC.blue})`,
                       fontWeight: 800,
                       height: 22,
                     }}
@@ -636,7 +636,7 @@ export default function AccountStatementModal({
                       whiteSpace: "nowrap",
                     },
                     "& .MuiTableHead-root .MuiTableCell-root": {
-                      bgcolor: "#F1F5F9",
+                      bgcolor: "var(--cm-surface, #F1F5F9)",
                       fontWeight: 900,
                       fontSize: 10.5,
                       textTransform: "uppercase",
@@ -711,14 +711,14 @@ export default function AccountStatementModal({
 
                         <TableCell
                           align="right"
-                          sx={{ fontWeight: 900, color: BAC.green }}
+                          sx={{ fontWeight: 900, color: `var(--cm-success-text, ${BAC.green})` }}
                         >
                           {money(r.paid_total)}
                         </TableCell>
 
                         <TableCell
                           align="right"
-                          sx={{ fontWeight: 900, color: BAC.red }}
+                          sx={{ fontWeight: 900, color: `var(--cm-error-text, ${BAC.red})` }}
                         >
                           {money(r.pending_total)}
                         </TableCell>
@@ -730,7 +730,7 @@ export default function AccountStatementModal({
                         <TableCell
                           colSpan={13}
                           align="center"
-                          sx={{ py: 4, color: BAC.sub }}
+                          sx={{ py: 4, color: `var(--cm-text-2, ${BAC.sub})` }}
                         >
                           No hay cuotas para mostrar.
                         </TableCell>
@@ -748,7 +748,7 @@ export default function AccountStatementModal({
                 size="small"
                 sx={{
                   borderColor: BAC.border,
-                  color: BAC.blue,
+                  color: `var(--cm-primary-text, ${BAC.blue})`,
                   fontWeight: 900,
                   textTransform: "none",
                   borderRadius: 1.5,

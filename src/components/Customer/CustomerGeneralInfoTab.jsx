@@ -384,9 +384,9 @@ const CustomerGeneralInfoTab = forwardRef(
               customer?.id ? (
                 <Tooltip title={customer?.identity_verified_at ? "Identidad verificada" : "Identidad sin verificar"}>
                   {customer?.identity_verified_at ? (
-                    <CheckCircleIcon fontSize="small" sx={{ color: "#2E7D32" }} />
+                    <CheckCircleIcon fontSize="small" sx={{ color: "var(--cm-success-text, #2E7D32)" }} />
                   ) : (
-                    <ErrorOutlineIcon fontSize="small" sx={{ color: "#ED6C02" }} />
+                    <ErrorOutlineIcon fontSize="small" sx={{ color: "var(--cm-warning-text, #ED6C02)" }} />
                   )}
                 </Tooltip>
               ) : null

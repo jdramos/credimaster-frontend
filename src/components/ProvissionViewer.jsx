@@ -366,7 +366,7 @@ const ProvissionViewer = () => {
   }, [currentIndex, allDates]);
 
   return (
-    <Box sx={{ background: BAC.bg, minHeight: "calc(100vh - 64px)", p: 2 }}>
+    <Box sx={{ background: `var(--cm-surface, ${BAC.bg})`, minHeight: "calc(100vh - 64px)", p: 2 }}>
       {/* Header BAC */}
       <Paper
         elevation={0}
@@ -433,8 +433,8 @@ const ProvissionViewer = () => {
           mt: 2,
           p: 1,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          background: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          background: `var(--cm-paper, ${BAC.white})`,
           boxShadow: "0 8px 22px rgba(12, 36, 68, 0.08)",
         }}
       >
@@ -442,7 +442,7 @@ const ProvissionViewer = () => {
           <IconButton
             onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
             disabled={currentIndex === 0}
-            sx={{ color: BAC.primary }}
+            sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }}
           >
             <ChevronLeftIcon fontSize="large" />
           </IconButton>
@@ -468,8 +468,8 @@ const ProvissionViewer = () => {
                     }
                   : {
                       borderColor: "rgba(0,87,184,0.35)",
-                      color: BAC.primary,
-                      "&:hover": { bgcolor: BAC.soft },
+                      color: `var(--cm-primary-text, ${BAC.primary})`,
+                      "&:hover": { bgcolor: `var(--cm-soft, ${BAC.soft})` },
                     }),
               }}
             >
@@ -482,7 +482,7 @@ const ProvissionViewer = () => {
               setCurrentIndex((i) => Math.min(allDates.length - 1, i + 1))
             }
             disabled={currentIndex >= allDates.length - 1}
-            sx={{ color: BAC.primary }}
+            sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }}
           >
             <ChevronRightIcon fontSize="large" />
           </IconButton>
@@ -493,7 +493,7 @@ const ProvissionViewer = () => {
             report={buildReport}
             excel={false}
             disabled={!nodes.some((n) => n.children?.length)}
-            sx={{ borderRadius: 2, fontWeight: 900, borderColor: "rgba(0,87,184,0.35)", color: BAC.primary }}
+            sx={{ borderRadius: 2, fontWeight: 900, borderColor: "rgba(0,87,184,0.35)", color: `var(--cm-primary-text, ${BAC.primary})` }}
           />
           <Tooltip title="Exportar a Excel">
             <Button
@@ -504,8 +504,8 @@ const ProvissionViewer = () => {
                 borderRadius: 2,
                 fontWeight: 900,
                 borderColor: "rgba(0,87,184,0.35)",
-                color: BAC.primary,
-                "&:hover": { borderColor: BAC.primary, bgcolor: BAC.soft },
+                color: `var(--cm-primary-text, ${BAC.primary})`,
+                "&:hover": { borderColor: BAC.primary, bgcolor: `var(--cm-soft, ${BAC.soft})` },
               }}
             >
               Exportar
@@ -521,12 +521,12 @@ const ProvissionViewer = () => {
           mt: 2,
           p: 2,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          background: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          background: `var(--cm-paper, ${BAC.white})`,
           boxShadow: "0 8px 22px rgba(12, 36, 68, 0.08)",
         }}
       >
-        <Typography sx={{ fontWeight: 900, color: BAC.text, mb: 1 }}>
+        <Typography sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.text})`, mb: 1 }}>
           Filtros
         </Typography>
         <Divider sx={{ mb: 2, borderColor: BAC.border }} />
@@ -612,7 +612,7 @@ const ProvissionViewer = () => {
           <Button
             variant="text"
             onClick={() => setExpandedKeys({})}
-            sx={{ fontWeight: 900, color: BAC.primary }}
+            sx={{ fontWeight: 900, color: `var(--cm-primary-text, ${BAC.primary})` }}
           >
             Contraer todo
           </Button>
@@ -629,7 +629,7 @@ const ProvissionViewer = () => {
               });
               setExpandedKeys(allKeys);
             }}
-            sx={{ fontWeight: 900, color: BAC.primary }}
+            sx={{ fontWeight: 900, color: `var(--cm-primary-text, ${BAC.primary})` }}
           >
             Expandir todo
           </Button>
@@ -641,9 +641,9 @@ const ProvissionViewer = () => {
         {!loading && globalTotals.count === 0 && (
           <Paper
             elevation={0}
-            sx={{ p: 2, mb: 2, borderRadius: 3, border: `1px solid ${BAC.border}`, textAlign: "center" }}
+            sx={{ p: 2, mb: 2, borderRadius: 3, border: `1px solid var(--cm-border, ${BAC.border})`, textAlign: "center" }}
           >
-            <Typography sx={{ color: BAC.muted, fontSize: 13 }}>
+            <Typography sx={{ color: `var(--cm-text-2, ${BAC.muted})`, fontSize: 13 }}>
               No hay saldos generados para el {dayjs(date).format("DD/MM/YYYY")} (Tipo:{" "}
               {balanceType === "FINAL" ? "Saldo Final" : "Saldo Inicial"}). Prueba otra fecha o
               genera los saldos desde "Crear saldos".

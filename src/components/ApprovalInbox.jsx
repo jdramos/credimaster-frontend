@@ -180,7 +180,7 @@ const SummaryCard = ({ title, value, icon, color = "#0057B8" }) => {
       sx={{
         borderRadius: 3,
         boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-        border: "1px solid #E6EAF2",
+        border: "1px solid var(--cm-border, #E6EAF2)",
       }}
     >
       <CardContent>
@@ -528,7 +528,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
             title="Pendientes"
             value={summary.total}
             icon={<AssignmentTurnedInIcon />}
-            color="#0057B8"
+            color="var(--cm-primary-text, #0057B8)"
           />
         </Grid>
 
@@ -537,7 +537,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
             title="Créditos nuevos"
             value={summary.loans}
             icon={<AccountBalanceWalletIcon />}
-            color="#0D47A1"
+            color="var(--cm-primary-text, #0D47A1)"
           />
         </Grid>
 
@@ -546,7 +546,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
             title="Modificaciones"
             value={summary.modifications}
             icon={<AutorenewIcon />}
-            color="#7B1FA2"
+            color="var(--cm-purple-text, #7B1FA2)"
           />
         </Grid>
       </Grid>
@@ -555,7 +555,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
         sx={{
           p: 2,
           borderRadius: 3,
-          border: "1px solid #E6EAF2",
+          border: "1px solid var(--cm-border, #E6EAF2)",
           mb: 2,
         }}
       >
@@ -673,7 +673,7 @@ export default function ApprovalInbox({ onViewLoan, onViewModification }) {
         sx={{
           borderRadius: 3,
           overflow: "hidden",
-          border: "1px solid #E6EAF2",
+          border: "1px solid var(--cm-border, #E6EAF2)",
         }}
       >
         {loading ? (

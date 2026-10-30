@@ -1762,7 +1762,7 @@ const LoanDetailsModal = ({
           )}
         </DialogContent>
 
-        <DialogActions sx={{ bgcolor: "white", py: 1, px: 2 }}>
+        <DialogActions sx={{ bgcolor: "var(--cm-paper, white)", py: 1, px: 2 }}>
           {canCancelLoan && (
             <Button
               onClick={() => {
@@ -1897,7 +1897,7 @@ const LoanDetailsModal = ({
             Checklist documental del cliente
           </DialogTitle>
 
-          <DialogContent sx={{ p: 2, backgroundColor: BAC.white }}>
+          <DialogContent sx={{ p: 2, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
             {showDocuments && currentClientId ? (
               <CustomerChecklist
                 customerId={currentClientId}
@@ -1912,7 +1912,7 @@ const LoanDetailsModal = ({
             )}
           </DialogContent>
 
-          <DialogActions sx={{ p: 2, backgroundColor: BAC.white }}>
+          <DialogActions sx={{ p: 2, backgroundColor: `var(--cm-paper, ${BAC.white})` }}>
             <Button
               onClick={async () => {
                 setShowDocuments(false);

@@ -21,7 +21,7 @@ const toggleSx = {
     fontSize: 10,
     fontWeight: 800,
     lineHeight: 1,
-    color: BAC.primary,
+    color: `var(--cm-primary-text, ${BAC.primary})`,
   },
 };
 
@@ -86,7 +86,7 @@ const AmountOrPercentageField = ({
         InputProps={{
           startAdornment: <ModeToggle mode={mode} onChange={onModeChange} />,
           endAdornment: (
-            <InputAdornment position="end" sx={{ color: BAC.primary, fontWeight: 900 }}>
+            <InputAdornment position="end" sx={{ color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 900 }}>
               %
             </InputAdornment>
           ),

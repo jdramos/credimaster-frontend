@@ -26,8 +26,8 @@ const money = (value) => Number(value || 0).toLocaleString("es-NI", {
 });
 const today = () => new Date().toISOString().slice(0, 10);
 const dmy = (v) => (v ? String(v).slice(0, 10).split("-").reverse().join("/") : "—");
-const headSx = { "& th": { backgroundColor: "#F8FAFC", fontWeight: 700, whiteSpace: "nowrap" } };
-const paperSx = { p: 2, borderRadius: 3, border: "1px solid #E5E7EB" };
+const headSx = { "& th": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700, whiteSpace: "nowrap" } };
+const paperSx = { p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" };
 
 const DifferenceChip = ({ value, label = "Diferencia" }) => (
   <Chip
@@ -103,7 +103,7 @@ function IntegrationDetail({ data, filter = "" }) {
 
   return (
     <>
-      <TableContainer sx={{ maxHeight: 480, border: "1px solid #E5E7EB", borderRadius: 2 }}>
+      <TableContainer sx={{ maxHeight: 480, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2 }}>
         <Table size="small" stickyHeader>
           <TableHead sx={headSx}>
             <TableRow>
@@ -384,7 +384,7 @@ export default function AccountIntegration() {
     <Box sx={{ p: 2 }}>
       <Paper elevation={0} sx={{ ...paperSx, mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-          <AccountBalanceWalletIcon sx={{ color: "#0057B8" }} />
+          <AccountBalanceWalletIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Integración de cuentas</Typography>
@@ -396,7 +396,7 @@ export default function AccountIntegration() {
           </Box>
         </Stack>
 
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: "1px solid #E5E7EB" }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: "1px solid var(--cm-border, #E5E7EB)" }}>
           <Tab label="Por cuenta" sx={{ textTransform: "none" }} />
           <Tab label="Resumen de cuentas con auxiliar" sx={{ textTransform: "none" }} />
         </Tabs>

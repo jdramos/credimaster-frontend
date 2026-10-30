@@ -74,6 +74,8 @@ export default function CreditFileTemplateDialog({
     setForm((prev) => ({
       ...prev,
       [field]: value,
+      // Un documento inactivo no se exige: al desactivarlo pasa a opcional.
+      ...(field === "is_active" && !value ? { is_mandatory: false } : {}),
     }));
   };
 
@@ -199,7 +201,8 @@ export default function CreditFileTemplateDialog({
               <FormControlLabel
                 control={
                   <Switch
-                    checked={form.is_mandatory}
+                    checked={form.is_mandatory && form.is_active}
+                    disabled={!form.is_active}
                     onChange={(e) =>
                       handleChange("is_mandatory", e.target.checked)
                     }

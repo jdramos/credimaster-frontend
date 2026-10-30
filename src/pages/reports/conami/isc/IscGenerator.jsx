@@ -212,7 +212,7 @@ export default function IscGenerator() {
         elevation={0}
         sx={{
           borderRadius: 4,
-          border: "1px solid #D8E2EF",
+          border: "1px solid var(--cm-border, #D8E2EF)",
           overflow: "hidden",
         }}
       >
@@ -384,10 +384,10 @@ export default function IscGenerator() {
                     }}
                     disableSelectionOnClick
                     sx={{
-                      border: "1px solid #D8E2EF",
+                      border: "1px solid var(--cm-border, #D8E2EF)",
                       borderRadius: 3,
                       "& .MuiDataGrid-columnHeaders": {
-                        backgroundColor: "#F4F7FB",
+                        backgroundColor: "var(--cm-surface, #F4F7FB)",
                         fontWeight: 800,
                       },
                       "& .MuiDataGrid-cell": {

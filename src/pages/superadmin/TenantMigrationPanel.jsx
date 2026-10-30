@@ -257,7 +257,7 @@ export default function TenantMigrationPanel() {
 
   return (
     <Box>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
           <IconButton onClick={() => navigate("/superadmin")} size="small">
             <ArrowBackIcon />

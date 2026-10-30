@@ -157,9 +157,9 @@ export default function AccountMovementsDialog({ open, onClose, account, filters
               initialState={{ pagination: { pageSize: 25, page: 0 } }}
               disableSelectionOnClick
               sx={{
-                border: "1px solid #E5E7EB",
+                border: "1px solid var(--cm-border, #E5E7EB)",
                 borderRadius: 2,
-                "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F8FAFC", fontWeight: 700 },
+                "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700 },
               }}
             />
           </Box>

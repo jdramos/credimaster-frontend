@@ -99,7 +99,7 @@ const MunicipalitySelect = ({
             selectedValue === null ||
             selectedValue === undefined
           ) {
-            return <span style={{ color: "#9e9e9e" }}>Seleccione...</span>;
+            return <span style={{ color: "var(--cm-text-3, #9e9e9e)" }}>Seleccione...</span>;
           }
 
           const municipality = filteredCities.find(
@@ -110,7 +110,7 @@ const MunicipalitySelect = ({
         }}
         sx={{
           borderRadius: 2,
-          backgroundColor: "#fff",
+          backgroundColor: "var(--cm-paper, #fff)",
         }}
       >
         <MenuItem value="">

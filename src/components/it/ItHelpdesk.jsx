@@ -152,7 +152,7 @@ function TicketDetail({ ticketId, catalog, onClose, onChanged }) {
               <Divider sx={{ my: 1.5 }} />
               <Typography fontWeight={700} sx={{ mb: 1 }}>Seguimiento</Typography>
               {t.comments.map((c) => (
-                <Box key={c.id} sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: Number(c.is_internal) ? "#FFF7ED" : c.status_change ? "#F1F5F9" : "#F8FAFC" }}>
+                <Box key={c.id} sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: Number(c.is_internal) ? "var(--cm-warning-soft, #FFF7ED)" : c.status_change ? "var(--cm-surface, #F1F5F9)" : "var(--cm-surface, #F8FAFC)" }}>
                   <Typography variant="caption" color="text.secondary">{c.user_name} · {c.created_at}{Number(c.is_internal) ? " · nota interna de TI" : ""}</Typography>
                   <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{c.comment}</Typography>
                 </Box>

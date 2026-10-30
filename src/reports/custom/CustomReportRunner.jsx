@@ -139,7 +139,7 @@ const CustomReportRunner = ({ report, onBack }) => {
             height: "75vh",
             overflow: "auto",
             borderRadius: 2,
-            background: "#f3f4f6",
+            background: "var(--cm-surface, #f3f4f6)",
             p: 2,
           }}
         >
@@ -153,7 +153,7 @@ const CustomReportRunner = ({ report, onBack }) => {
               width: "100%",
               minHeight: "1000px",
               border: "none",
-              background: "#fff",
+              background: "var(--cm-paper, #fff)",
               boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
             }}
           />

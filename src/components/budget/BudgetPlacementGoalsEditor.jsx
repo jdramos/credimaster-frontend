@@ -152,10 +152,10 @@ export default function BudgetPlacementGoalsEditor() {
         <Typography color="text.primary">Metas de colocación</Typography>
       </Breadcrumbs>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FlagIcon sx={{ color: "#0057B8" }} />
+            <FlagIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Metas de colocación de cartera</Typography>
@@ -189,7 +189,7 @@ export default function BudgetPlacementGoalsEditor() {
         <Box sx={{ overflowX: "auto" }}>
           <Table size="small" sx={{ minWidth: 1100 }}>
             <TableHead>
-              <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+              <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
                 <TableCell>Sucursal</TableCell>
                 {MONTH_LABELS.map((m) => (
                   <TableCell key={m} align="right">{m}</TableCell>
@@ -199,7 +199,7 @@ export default function BudgetPlacementGoalsEditor() {
             </TableHead>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.key} hover sx={row.branch_id === null ? { backgroundColor: "#F8FAFC" } : undefined}>
+                <TableRow key={row.key} hover sx={row.branch_id === null ? { backgroundColor: "var(--cm-surface, #F8FAFC)" } : undefined}>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography variant="body2" fontWeight={row.branch_id === null ? 700 : 600}>{row.branch_name}</Typography>
                   </TableCell>
@@ -233,7 +233,7 @@ export default function BudgetPlacementGoalsEditor() {
               ))}
 
               {rows.some((r) => r.branch_id !== null) && (
-                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid #E5E7EB" } }}>
+                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid var(--cm-border, #E5E7EB)" } }}>
                   <TableCell>Total por sucursales</TableCell>
                   {totalsByMonth.map((t, idx) => (
                     <TableCell key={idx} align="right">{formatCurrency(t)}</TableCell>

@@ -543,8 +543,8 @@ export default function CustomerFinancialEvaluationTab({
         sx={{
           p: 1.5,
           borderRadius: 2,
-          border: `1px solid ${BAC.border}`,
-          background: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          background: "var(--cm-paper, #fff)",
         }}
       >
         <Box display="flex" alignItems="center" gap={1.5}>
@@ -563,8 +563,8 @@ export default function CustomerFinancialEvaluationTab({
       sx={{
         p: 1.25,
         borderRadius: 2,
-        border: `1px solid ${BAC.border}`,
-        background: "#fff",
+        border: `1px solid var(--cm-border, ${BAC.border})`,
+        background: "var(--cm-paper, #fff)",
       }}
     >
       <Stack spacing={1.25}>
@@ -586,14 +586,14 @@ export default function CustomerFinancialEvaluationTab({
               variant="subtitle1"
               sx={{
                 fontWeight: 900,
-                color: BAC.textMain,
+                color: `var(--cm-text, ${BAC.textMain})`,
                 lineHeight: 1.1,
               }}
             >
               Evaluación financiera {customerName || ""}
             </Typography>
 
-            <Typography variant="caption" sx={{ color: BAC.textSoft }}>
+            <Typography variant="caption" sx={{ color: `var(--cm-text-2, ${BAC.textSoft})` }}>
               {customerIdentification || ""} · Capacidad de pago, riesgo y
               documentos
             </Typography>
@@ -684,7 +684,7 @@ export default function CustomerFinancialEvaluationTab({
                 return (
                   <React.Fragment key={type}>
                     <Grid item xs={12}>
-                      <Typography variant="caption" sx={{ color: BAC.textSoft, fontWeight: 700 }}>
+                      <Typography variant="caption" sx={{ color: `var(--cm-text-2, ${BAC.textSoft})`, fontWeight: 700 }}>
                         {CONCEPT_GROUP_LABELS[type]}
                       </Typography>
                     </Grid>
@@ -838,7 +838,7 @@ export default function CustomerFinancialEvaluationTab({
                 </Typography>
 
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="caption" color={BAC.textSoft}>
+                  <Typography variant="caption" color={`var(--cm-text-2, ${BAC.textSoft})`}>
                     Ingresos
                   </Typography>
                   <Typography variant="caption" fontWeight={800}>
@@ -847,7 +847,7 @@ export default function CustomerFinancialEvaluationTab({
                 </Box>
 
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="caption" color={BAC.textSoft}>
+                  <Typography variant="caption" color={`var(--cm-text-2, ${BAC.textSoft})`}>
                     Gastos
                   </Typography>
                   <Typography variant="caption" fontWeight={800}>
@@ -856,7 +856,7 @@ export default function CustomerFinancialEvaluationTab({
                 </Box>
 
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="caption" color={BAC.textSoft}>
+                  <Typography variant="caption" color={`var(--cm-text-2, ${BAC.textSoft})`}>
                     Flujo
                   </Typography>
                   <Typography variant="caption" fontWeight={800}>
@@ -865,7 +865,7 @@ export default function CustomerFinancialEvaluationTab({
                 </Box>
 
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="caption" color={BAC.textSoft}>
+                  <Typography variant="caption" color={`var(--cm-text-2, ${BAC.textSoft})`}>
                     Capacidad
                   </Typography>
                   <Typography variant="caption" fontWeight={800}>
@@ -874,7 +874,7 @@ export default function CustomerFinancialEvaluationTab({
                 </Box>
 
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="caption" color={BAC.textSoft}>
+                  <Typography variant="caption" color={`var(--cm-text-2, ${BAC.textSoft})`}>
                     Endeudamiento
                   </Typography>
                   <Typography variant="caption" fontWeight={800}>
@@ -931,7 +931,7 @@ export default function CustomerFinancialEvaluationTab({
                   onClick={onViewChecklist}
                   sx={{
                     borderColor: BAC.primary,
-                    color: BAC.primary,
+                    color: `var(--cm-error-text, ${BAC.primary})`,
                     textTransform: "none",
                     borderRadius: 2,
                   }}

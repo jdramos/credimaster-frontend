@@ -356,7 +356,7 @@ export default function EmployeeDetailDialog({ open, onClose, employee }) {
                     Registrar movimiento
                   </Button>
                 ) : (
-                  <Box sx={{ border: "1px solid #E5E7EB", borderRadius: 2, p: 2 }}>
+                  <Box sx={{ border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 2, p: 2 }}>
                     {movementError && <Typography variant="body2" color="error" sx={{ mb: 1 }}>{movementError}</Typography>}
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>

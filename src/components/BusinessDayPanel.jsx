@@ -278,7 +278,7 @@ const BusinessDayPanel = () => {
       {!loadingStatus && status && (
         <Paper
           elevation={0}
-          sx={{ p: 2.5, borderRadius: 3, border: "1px solid #E5E7EB" }}
+          sx={{ p: 2.5, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}
         >
           <Stack spacing={2}>
             {status.is_backlog && (
@@ -384,7 +384,7 @@ const BusinessDayPanel = () => {
             )}
 
             {!isDayDone && (
-            <Accordion elevation={0} sx={{ border: "1px solid #E5E7EB", "&:before": { display: "none" } }}>
+            <Accordion elevation={0} sx={{ border: "1px solid var(--cm-border, #E5E7EB)", "&:before": { display: "none" } }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="body2" color="text.secondary">
                   Avanzado: aperturar/cerrar manualmente sin generar saldo

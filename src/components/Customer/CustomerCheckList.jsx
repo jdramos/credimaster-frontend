@@ -84,8 +84,8 @@ function getStatusChip(row) {
         size="small"
         sx={{
           fontWeight: 700,
-          bgcolor: "#FEE2E2",
-          color: "#B42318",
+          bgcolor: "var(--cm-error-soft, #FEE2E2)",
+          color: "var(--cm-error-text, #B42318)",
         }}
       />
     );
@@ -98,8 +98,8 @@ function getStatusChip(row) {
         size="small"
         sx={{
           fontWeight: 700,
-          bgcolor: "#E8F5E9",
-          color: BAC.success,
+          bgcolor: "var(--cm-surface-2, #E8F5E9)",
+          color: `var(--cm-success-text, ${BAC.success})`,
         }}
       />
     );
@@ -111,8 +111,8 @@ function getStatusChip(row) {
       size="small"
       sx={{
         fontWeight: 700,
-        bgcolor: "#FFF3E0",
-        color: BAC.warning,
+        bgcolor: "var(--cm-warning-soft, #FFF3E0)",
+        color: `var(--cm-warning-text, ${BAC.warning})`,
       }}
     />
   );
@@ -369,13 +369,13 @@ export default function CustomerChecklist({
         sx={{
           p: 2.5,
           borderRadius: 3,
-          border: `1px solid ${BAC.border}`,
-          background: "#fff",
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          background: "var(--cm-paper, #fff)",
         }}
       >
         <Typography
           variant="h6"
-          sx={{ fontWeight: 900, color: BAC.accent, lineHeight: 1.2, mb: 2 }}
+          sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.accent})`, lineHeight: 1.2, mb: 2 }}
         >
           {title}
         </Typography>
@@ -394,8 +394,8 @@ export default function CustomerChecklist({
       sx={{
         p: 2.5,
         borderRadius: 3,
-        border: `1px solid ${BAC.border}`,
-        background: "#fff",
+        border: `1px solid var(--cm-border, ${BAC.border})`,
+        background: "var(--cm-paper, #fff)",
       }}
     >
       <Stack
@@ -408,7 +408,7 @@ export default function CustomerChecklist({
         <Box>
           <Typography
             variant="h6"
-            sx={{ fontWeight: 900, color: BAC.accent, lineHeight: 1.2 }}
+            sx={{ fontWeight: 900, color: `var(--cm-text, ${BAC.accent})`, lineHeight: 1.2 }}
           >
             {title}
           </Typography>
@@ -440,8 +440,8 @@ export default function CustomerChecklist({
             p: 2,
             mb: 2,
             borderRadius: 3,
-            backgroundColor: BAC.bgSoft,
-            border: `1px solid ${BAC.border}`,
+            backgroundColor: `var(--cm-surface, ${BAC.bgSoft})`,
+            border: `1px solid var(--cm-border, ${BAC.border})`,
           }}
         >
           <Stack
@@ -460,7 +460,7 @@ export default function CustomerChecklist({
                 sx={{
                   height: 10,
                   borderRadius: 999,
-                  backgroundColor: "#E5E7EB",
+                  backgroundColor: "var(--cm-surface-3, #E5E7EB)",
                   "& .MuiLinearProgress-bar": {
                     borderRadius: 999,
                     backgroundColor: BAC.primary,
@@ -473,17 +473,17 @@ export default function CustomerChecklist({
               <Chip label={`Total: ${progress.total}`} />
               <Chip
                 label={`Completos: ${progress.completed}`}
-                sx={{ bgcolor: "#E8F5E9", color: BAC.success, fontWeight: 700 }}
+                sx={{ bgcolor: "var(--cm-surface-2, #E8F5E9)", color: `var(--cm-success-text, ${BAC.success})`, fontWeight: 700 }}
               />
               <Chip
                 label={`Pendientes: ${progress.pending}`}
-                sx={{ bgcolor: "#FFF3E0", color: BAC.warning, fontWeight: 700 }}
+                sx={{ bgcolor: "var(--cm-warning-soft, #FFF3E0)", color: `var(--cm-warning-text, ${BAC.warning})`, fontWeight: 700 }}
               />
               <Chip
                 label={`${progress.percent}%`}
                 sx={{
-                  bgcolor: "#FEE2E2",
-                  color: BAC.primaryDark,
+                  bgcolor: "var(--cm-error-soft, #FEE2E2)",
+                  color: `var(--cm-error-text, ${BAC.primaryDark})`,
                   fontWeight: 800,
                 }}
               />
@@ -507,12 +507,12 @@ export default function CustomerChecklist({
               <Chip
                 label={`Cargados: ${summary.uploaded_mandatory}`}
                 size="small"
-                sx={{ bgcolor: "#FFF3E0", color: BAC.warning, fontWeight: 700 }}
+                sx={{ bgcolor: "var(--cm-warning-soft, #FFF3E0)", color: `var(--cm-warning-text, ${BAC.warning})`, fontWeight: 700 }}
               />
               <Chip
                 label={`Validados: ${summary.validated_mandatory}`}
                 size="small"
-                sx={{ bgcolor: "#E8F5E9", color: BAC.success, fontWeight: 700 }}
+                sx={{ bgcolor: "var(--cm-surface-2, #E8F5E9)", color: `var(--cm-success-text, ${BAC.success})`, fontWeight: 700 }}
               />
               <Chip
                 label={`Faltantes: ${summary.missing_mandatory}`}
@@ -520,12 +520,12 @@ export default function CustomerChecklist({
                 sx={{
                   bgcolor:
                     Number(summary.missing_mandatory || 0) > 0
-                      ? "#FEE2E2"
-                      : "#E8F5E9",
+                      ? "var(--cm-error-soft, #FEE2E2)"
+                      : "var(--cm-surface-2, #E8F5E9)",
                   color:
                     Number(summary.missing_mandatory || 0) > 0
-                      ? "#B42318"
-                      : BAC.success,
+                      ? "var(--cm-error-text, #B42318)"
+                      : `var(--cm-success-text, ${BAC.success})`,
                   fontWeight: 700,
                 }}
               />
@@ -550,7 +550,7 @@ export default function CustomerChecklist({
 
       <TableContainer
         sx={{
-          border: `1px solid ${BAC.border}`,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
           borderRadius: 3,
           overflowX: "auto",
         }}
@@ -559,10 +559,10 @@ export default function CustomerChecklist({
           <TableHead>
             <TableRow
               sx={{
-                bgcolor: "#F9FAFB",
+                bgcolor: "var(--cm-surface, #F9FAFB)",
                 "& .MuiTableCell-root": {
                   fontWeight: 800,
-                  color: BAC.accent,
+                  color: `var(--cm-text, ${BAC.accent})`,
                   whiteSpace: "nowrap",
                 },
               }}
@@ -772,8 +772,8 @@ export default function CustomerChecklist({
             alignItems: "center",
             justifyContent: "space-between",
             fontWeight: 800,
-            color: BAC.accent,
-            borderBottom: `1px solid ${BAC.border}`,
+            color: `var(--cm-text, ${BAC.accent})`,
+            borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
             pr: 1,
           }}
         >
@@ -798,7 +798,7 @@ export default function CustomerChecklist({
           dividers
           sx={{
             p: 0,
-            backgroundColor: "#F9FAFB",
+            backgroundColor: "var(--cm-surface, #F9FAFB)",
             minHeight: "70vh",
           }}
         >
@@ -810,7 +810,7 @@ export default function CustomerChecklist({
                 alignItems: "center",
                 justifyContent: "center",
                 p: 4,
-                backgroundColor: "#fff",
+                backgroundColor: "var(--cm-paper, #fff)",
               }}
             >
               <Stack spacing={2} alignItems="center">
@@ -843,7 +843,7 @@ export default function CustomerChecklist({
                   objectFit: "contain",
                   borderRadius: 2,
                   boxShadow: 3,
-                  backgroundColor: "#fff",
+                  backgroundColor: "var(--cm-paper, #fff)",
                 }}
               />
             </Box>
@@ -851,7 +851,7 @@ export default function CustomerChecklist({
 
           {!previewLoading && previewFile?.type === "pdf" && (
             <Box
-              sx={{ width: "100%", height: "70vh", backgroundColor: "#fff" }}
+              sx={{ width: "100%", height: "70vh", backgroundColor: "var(--cm-paper, #fff)" }}
             >
               <iframe
                 src={previewFile.url}

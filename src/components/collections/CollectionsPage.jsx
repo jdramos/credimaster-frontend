@@ -10,7 +10,7 @@ export default function CollectionsPage() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+      <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pr: 1 }}>
           <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ px: 2 }}>
             <Tab label="Cartera en mora" />
@@ -24,12 +24,12 @@ export default function CollectionsPage() {
       {/* La pestaña de mora ya trae su propio contenedor y estado. */}
       {tab === 0 && <CollectionsWorklist />}
       {tab === 1 && (
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
           <LegalCasesTab />
         </Paper>
       )}
       {tab === 2 && (
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
           <PromisesTab />
         </Paper>
       )}

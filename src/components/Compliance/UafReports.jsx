@@ -64,7 +64,7 @@ function RteCustomerRow({ c }) {
         <TableCell>{c.fractioned ? <Chip size="small" color="warning" label="Fraccionado" /> : ""}</TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={6} sx={{ py: 0, bgcolor: "#F8FAFC" }}>
+        <TableCell colSpan={6} sx={{ py: 0, bgcolor: "var(--cm-surface, #F8FAFC)" }}>
           <Collapse in={open} unmountOnExit>
             <Table size="small" sx={{ my: 1 }}>
               <TableHead><TableRow><TableCell>Fecha</TableCell><TableCell>Tipo</TableCell><TableCell>Crédito</TableCell><TableCell align="right">Monto</TableCell><TableCell align="right">T/C</TableCell><TableCell align="right">US$</TableCell></TableRow></TableHead>
@@ -389,10 +389,10 @@ export default function UafReports() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between" alignItems={{ md: "center" }} sx={{ mb: 2 }}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <AccountBalanceIcon sx={{ color: "#B91C1C" }} />
+            <AccountBalanceIcon sx={{ color: "var(--cm-error-text, #B91C1C)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Reportes a la UAF</Typography>
@@ -423,7 +423,7 @@ export default function UafReports() {
               </Alert>
             )}
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: "1px solid #E5E7EB" }}>
+            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: "1px solid var(--cm-border, #E5E7EB)" }}>
               <Tab value="control" label="Control del mes" />
               <Tab value="rte" label={`RTE (${rte?.reportable.length ?? 0})`} />
               <Tab value="inmov" label="Detección e inmovilización" />

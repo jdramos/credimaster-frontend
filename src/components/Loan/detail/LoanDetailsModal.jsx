@@ -314,7 +314,7 @@ const LoanDetailsModal = ({
           )}
         </DialogContent>
 
-        <DialogActions sx={{ bgcolor: "white", py: 1, px: 2 }}>
+        <DialogActions sx={{ bgcolor: "var(--cm-paper, white)", py: 1, px: 2 }}>
           <CancelLoanDialog
             canCancelLoan={canCancelLoan}
             loanId={loanId}

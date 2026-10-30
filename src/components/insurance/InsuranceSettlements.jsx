@@ -69,8 +69,8 @@ const COMMISSION_STATUS = {
   VOID: { label: "Anulada", color: "default" },
 };
 
-const headSx = { "& th": { backgroundColor: "#F8FAFC", fontWeight: 700, whiteSpace: "nowrap" } };
-const paperSx = { p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" };
+const headSx = { "& th": { backgroundColor: "var(--cm-surface, #F8FAFC)", fontWeight: 700, whiteSpace: "nowrap" } };
+const paperSx = { p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" };
 
 const StatusChip = ({ status }) =>
   status === "VOID" ? <Chip size="small" label="Anulada" /> : <Chip size="small" color="success" label="Vigente" />;
@@ -319,7 +319,7 @@ function SettlementDialog({ open, initial, providers, sources, onClose, onSaved 
           </Grid>
         </Grid>
 
-        <Paper variant="outlined" sx={{ p: 1.5, my: 2, borderRadius: 2, background: "#F8FAFC" }}>
+        <Paper variant="outlined" sx={{ p: 1.5, my: 2, borderRadius: 2, background: "var(--cm-surface, #F8FAFC)" }}>
           {loading ? (
             <Stack direction="row" spacing={1} alignItems="center"><CircularProgress size={18} /><Typography variant="body2">Calculando primas pendientes…</Typography></Stack>
           ) : preview ? (
@@ -930,7 +930,7 @@ export default function InsuranceSettlements() {
       <Paper elevation={0} sx={paperSx}>
         <Box sx={{ mb: 1, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ReceiptLongIcon sx={{ color: "#0057B8" }} />
+            <ReceiptLongIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Typography variant="h6" fontWeight={700}>Liquidación de Seguros</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -947,7 +947,7 @@ export default function InsuranceSettlements() {
           </Box>
         </Box>
 
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: "1px solid #E5E7EB" }}>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: "1px solid var(--cm-border, #E5E7EB)" }}>
           <Tab label="Pendiente de liquidar" sx={{ textTransform: "none" }} />
           <Tab label="Liquidaciones" sx={{ textTransform: "none" }} />
           <Tab label="Comisiones" sx={{ textTransform: "none" }} />

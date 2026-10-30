@@ -326,8 +326,8 @@ export default function SinRiesgoReportPage() {
   };
 
   return (
-    <Box sx={{ p: 3, bgcolor: BAC.bg, minHeight: "100vh" }}>
-      <Paper elevation={0} sx={{ borderRadius: 4, overflow: "hidden", border: `1px solid ${BAC.border}`, mb: 3 }}>
+    <Box sx={{ p: 3, bgcolor: `var(--cm-surface, ${BAC.bg})`, minHeight: "100vh" }}>
+      <Paper elevation={0} sx={{ borderRadius: 4, overflow: "hidden", border: `1px solid var(--cm-border, ${BAC.border})`, mb: 3 }}>
         <Box sx={{ p: 3, background: `linear-gradient(135deg, ${BAC.primaryDark}, ${BAC.primary})`, color: BAC.white }}>
           <Typography variant="h5" fontWeight={900}>
             Reporte Sin Riesgo
@@ -351,7 +351,7 @@ export default function SinRiesgoReportPage() {
               size="small"
               value={reportMonth}
               onChange={(e) => setReportMonth(e.target.value)}
-              sx={{ width: { xs: "100%", md: 220 }, "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: BAC.white } }}
+              sx={{ width: { xs: "100%", md: 220 }, "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: `var(--cm-paper, ${BAC.white})` } }}
               InputLabelProps={{ shrink: true }}
             />
 
@@ -360,7 +360,7 @@ export default function SinRiesgoReportPage() {
               size="small"
               value={getCutoffDate(reportMonth)}
               disabled
-              sx={{ width: { xs: "100%", md: 220 }, "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: BAC.white } }}
+              sx={{ width: { xs: "100%", md: 220 }, "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: `var(--cm-paper, ${BAC.white})` } }}
             />
 
             <Button
@@ -400,13 +400,13 @@ export default function SinRiesgoReportPage() {
         </Box>
       </Paper>
 
-      <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid ${BAC.border}`, overflow: "hidden", mb: 3 }}>
+      <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid var(--cm-border, ${BAC.border})`, overflow: "hidden", mb: 3 }}>
         <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Box>
-            <Typography fontWeight={900} color={BAC.text}>
+            <Typography fontWeight={900} color={`var(--cm-text, ${BAC.text})`}>
               Historial de corridas
             </Typography>
-            <Typography fontSize={13} color={BAC.muted}>
+            <Typography fontSize={13} color={`var(--cm-text-2, ${BAC.muted})`}>
               Corridas generadas, estado del proceso y descarga del ZIP (Base de Crédito + Base de Contacto)
             </Typography>
           </Box>
@@ -417,7 +417,7 @@ export default function SinRiesgoReportPage() {
 
         <Divider />
 
-        <Box sx={{ height: 430, bgcolor: BAC.white }}>
+        <Box sx={{ height: 430, bgcolor: `var(--cm-paper, ${BAC.white})` }}>
           <DataGrid
             rows={runs}
             columns={runColumns}
@@ -426,19 +426,19 @@ export default function SinRiesgoReportPage() {
             rowsPerPageOptions={[5, 10, 25]}
             initialState={{ pagination: { pageSize: 10, page: 0 } }}
             disableSelectionOnClick
-            sx={{ border: 0, "& .MuiDataGrid-columnHeaders": { bgcolor: BAC.soft, fontWeight: 800 } }}
+            sx={{ border: 0, "& .MuiDataGrid-columnHeaders": { bgcolor: `var(--cm-soft, ${BAC.soft})`, fontWeight: 800 } }}
           />
         </Box>
       </Paper>
 
       {findings.length > 0 && (
-        <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid ${BAC.border}`, overflow: "hidden" }}>
+        <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid var(--cm-border, ${BAC.border})`, overflow: "hidden" }}>
           <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
             <Box>
-              <Typography fontWeight={900} color={BAC.text}>
+              <Typography fontWeight={900} color={`var(--cm-text, ${BAC.text})`}>
                 Hallazgos {selectedRun ? `— corrida #${selectedRun}` : "(previsualización)"}
               </Typography>
-              <Typography fontSize={13} color={BAC.muted}>
+              <Typography fontSize={13} color={`var(--cm-text-2, ${BAC.muted})`}>
                 Los errores bloquean la generación; las advertencias solo se muestran para revisión antes de emitir.
               </Typography>
             </Box>
@@ -449,7 +449,7 @@ export default function SinRiesgoReportPage() {
 
           <Divider />
 
-          <Box sx={{ height: 420, bgcolor: BAC.white }}>
+          <Box sx={{ height: 420, bgcolor: `var(--cm-paper, ${BAC.white})` }}>
             <DataGrid
               rows={findings}
               columns={findingColumns}
@@ -457,7 +457,7 @@ export default function SinRiesgoReportPage() {
               rowsPerPageOptions={[5, 10, 25, 50]}
               initialState={{ pagination: { pageSize: 10, page: 0 } }}
               disableSelectionOnClick
-              sx={{ border: 0, "& .MuiDataGrid-columnHeaders": { bgcolor: BAC.soft, fontWeight: 800 } }}
+              sx={{ border: 0, "& .MuiDataGrid-columnHeaders": { bgcolor: `var(--cm-soft, ${BAC.soft})`, fontWeight: 800 } }}
             />
           </Box>
         </Paper>

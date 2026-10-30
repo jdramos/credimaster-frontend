@@ -15,7 +15,7 @@ const StudioWorkArea = () => {
       sx={{
         flex: 1,
         overflow: "auto",
-        bgcolor: "#f5f6f8",
+        bgcolor: "var(--cm-surface, #f5f6f8)",
         p: 2,
       }}
     >

@@ -91,9 +91,9 @@ export default function DepartmentsConfig() {
         <Typography color="text.primary">Departamentos</Typography>
       </Breadcrumbs>
 
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <ApartmentIcon sx={{ color: "#0057B8" }} />
+          <ApartmentIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box sx={{ flexGrow: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Departamentos</Typography>
@@ -122,7 +122,7 @@ export default function DepartmentsConfig() {
 
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+            <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
               <TableCell>Nombre</TableCell>
               <TableCell align="center">Activo</TableCell>
             </TableRow>

@@ -220,10 +220,10 @@ export default function DepartmentBudgetApprovalInbox() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FactCheckIcon sx={{ color: "#0057B8" }} />
+            <FactCheckIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                 <Typography variant="h6" fontWeight={700}>Aprobación de presupuesto por departamento</Typography>
@@ -250,7 +250,7 @@ export default function DepartmentBudgetApprovalInbox() {
 
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "#F8FAFC" } }}>
+            <TableRow sx={{ "& th": { fontWeight: 700, backgroundColor: "var(--cm-surface, #F8FAFC)" } }}>
               <TableCell>Departamento</TableCell>
               <TableCell align="right">Total</TableCell>
               <TableCell>Estado</TableCell>
@@ -324,7 +324,7 @@ export default function DepartmentBudgetApprovalInbox() {
                     {row.months.map((v, idx) => <TableCell key={idx} align="right">{formatCurrency(v)}</TableCell>)}
                   </TableRow>
                 ))}
-                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid #E5E7EB" } }}>
+                <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid var(--cm-border, #E5E7EB)" } }}>
                   <TableCell>Total</TableCell>
                   {detailTotals.totals.map((t, idx) => <TableCell key={idx} align="right">{formatCurrency(t)}</TableCell>)}
                 </TableRow>

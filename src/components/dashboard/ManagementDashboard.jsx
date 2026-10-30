@@ -306,7 +306,7 @@ export default function ManagementDashboard({ params, reloadKey, products = [] }
     <Paper sx={{ p: 2.5, borderRadius: 3, mb: 3, position: "relative" }} data-testid="management-dashboard">
       {state.loading && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, right: 0, borderRadius: "12px 12px 0 0" }} />}
       <Stack direction="row" spacing={1.2} alignItems="center" flexWrap="wrap" useFlexGap>
-        <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: BAC.soft, color: BAC.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: `var(--cm-soft, ${BAC.soft})`, color: `var(--cm-primary-text, ${BAC.primary})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <InsightsIcon sx={{ fontSize: 18 }} />
         </Box>
         <Box sx={{ flexGrow: 1 }}>

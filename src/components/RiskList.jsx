@@ -52,7 +52,7 @@ export default function RiskList() {
         flex: 1,
         minWidth: 180,
         renderCell: (params) => (
-          <Typography fontWeight={700} color={BAC.text} fontSize={14}>
+          <Typography fontWeight={700} color={`var(--cm-text, ${BAC.text})`} fontSize={14}>
             {params.value}
           </Typography>
         ),
@@ -83,9 +83,9 @@ export default function RiskList() {
             size="small"
             sx={{
               fontWeight: 700,
-              bgcolor: BAC.soft,
-              color: BAC.primaryDark,
-              border: `1px solid ${BAC.border}`,
+              bgcolor: `var(--cm-soft, ${BAC.soft})`,
+              color: `var(--cm-primary-text, ${BAC.primaryDark})`,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
             }}
           />
         ),
@@ -102,7 +102,7 @@ export default function RiskList() {
 
           if (!color) {
             return (
-              <Typography fontSize={12} color={BAC.muted}>
+              <Typography fontSize={12} color={`var(--cm-text-2, ${BAC.muted})`}>
                 —
               </Typography>
             );
@@ -116,7 +116,7 @@ export default function RiskList() {
                   height: 24,
                   borderRadius: "50%",
                   backgroundColor: color,
-                  border: `2px solid ${BAC.white}`,
+                  border: `2px solid var(--cm-border, ${BAC.white})`,
                   boxShadow: "0 0 0 1px rgba(0,0,0,0.18)",
                 }}
               />
@@ -140,9 +140,9 @@ export default function RiskList() {
               state={{ risk: params.row }}
               size="small"
               sx={{
-                color: BAC.primary,
-                bgcolor: BAC.soft,
-                border: `1px solid ${BAC.border}`,
+                color: `var(--cm-primary-text, ${BAC.primary})`,
+                bgcolor: `var(--cm-soft, ${BAC.soft})`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 "&:hover": {
                   bgcolor: BAC.primary,
                   color: BAC.white,
@@ -211,8 +211,8 @@ export default function RiskList() {
         sx={{
           borderRadius: 3,
           overflow: "hidden",
-          border: `1px solid ${BAC.border}`,
-          bgcolor: BAC.white,
+          border: `1px solid var(--cm-border, ${BAC.border})`,
+          bgcolor: `var(--cm-paper, ${BAC.white})`,
           boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
         }}
       >
@@ -282,7 +282,7 @@ export default function RiskList() {
           </Stack>
         </Box>
 
-        <Box sx={{ p: 2.5, bgcolor: BAC.bg }}>
+        <Box sx={{ p: 2.5, bgcolor: `var(--cm-surface, ${BAC.bg})` }}>
           {error && (
             <Alert
               severity="error"
@@ -303,8 +303,8 @@ export default function RiskList() {
               width: "100%",
               borderRadius: 2.5,
               overflow: "hidden",
-              border: `1px solid ${BAC.border}`,
-              bgcolor: BAC.white,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
+              bgcolor: `var(--cm-paper, ${BAC.white})`,
             }}
           >
             <DataGrid
@@ -320,13 +320,13 @@ export default function RiskList() {
               sx={{
                 border: 0,
                 fontSize: 14,
-                color: BAC.text,
+                color: `var(--cm-text, ${BAC.text})`,
 
                 "& .MuiDataGrid-columnHeaders": {
-                  bgcolor: BAC.soft,
-                  color: BAC.primaryDark,
+                  bgcolor: `var(--cm-soft, ${BAC.soft})`,
+                  color: `var(--cm-primary-text, ${BAC.primaryDark})`,
                   fontWeight: 800,
-                  borderBottom: `1px solid ${BAC.border}`,
+                  borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                 },
 
                 "& .MuiDataGrid-columnHeaderTitle": {
@@ -334,20 +334,20 @@ export default function RiskList() {
                 },
 
                 "& .MuiDataGrid-row:hover": {
-                  bgcolor: "#F8FBFF",
+                  bgcolor: "var(--cm-paper, #F8FBFF)",
                 },
 
                 "& .MuiDataGrid-cell": {
-                  borderBottom: `1px solid ${BAC.border}`,
+                  borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                 },
 
                 "& .MuiDataGrid-footerContainer": {
-                  borderTop: `1px solid ${BAC.border}`,
-                  bgcolor: "#FBFCFE",
+                  borderTop: `1px solid var(--cm-border, ${BAC.border})`,
+                  bgcolor: "var(--cm-paper, #FBFCFE)",
                 },
 
                 "& .MuiTablePagination-root": {
-                  color: BAC.text,
+                  color: `var(--cm-text, ${BAC.text})`,
                 },
               }}
             />

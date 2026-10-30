@@ -455,9 +455,9 @@ export default function BankMovementsList() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <SwapHorizIcon sx={{ color: "#0057B8" }} />
+          <SwapHorizIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>Movimientos Bancarios</Typography>
@@ -529,7 +529,7 @@ export default function BankMovementsList() {
       </Paper>
 
       {statement && (
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
             Movimientos — {statement.bank_account.bank_name} - {statement.bank_account.account_alias}
           </Typography>
@@ -547,7 +547,7 @@ export default function BankMovementsList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              <TableRow sx={{ "& td": { fontWeight: 700, bgcolor: "#F8FAFC" } }}>
+              <TableRow sx={{ "& td": { fontWeight: 700, bgcolor: "var(--cm-surface, #F8FAFC)" } }}>
                 <TableCell>{statement.start_date}</TableCell>
                 <TableCell />
                 <TableCell />
@@ -641,11 +641,11 @@ export default function BankMovementsList() {
       {/* ========== Diálogo CHEQUE — vista visual sin cambios ========== */}
       <Dialog open={checkDialogOpen} onClose={() => setCheckDialogOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         <DialogTitle>Emitir cheque</DialogTitle>
-        <DialogContent sx={{ p: 3, bgcolor: "#F1F5F9" }}>
+        <DialogContent sx={{ p: 3, bgcolor: "var(--cm-surface, #F1F5F9)" }}>
           <Box sx={{
             position: "relative",
-            bgcolor: "#fff",
-            border: "1px solid #D8DEE9",
+            bgcolor: "var(--cm-paper, #fff)",
+            border: "1px solid var(--cm-border, #D8DEE9)",
             borderRadius: 2,
             overflow: "hidden",
             p: 3,
@@ -956,7 +956,7 @@ export default function BankMovementsList() {
       {/* ========== DETALLE CHEQUE — vista visual sin cambios ========== */}
       <Dialog open={Boolean(checkDetail)} onClose={() => setCheckDetail(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         {checkDetail?.check && (
-          <DialogContent sx={{ p: 3, bgcolor: "#F1F5F9" }}>
+          <DialogContent sx={{ p: 3, bgcolor: "var(--cm-surface, #F1F5F9)" }}>
             {checkDetail.check.status === "ANULADO" && (
               <Alert severity="error" sx={{ mb: 2, fontWeight: 700 }}>
                 Cheque ANULADO
@@ -967,8 +967,8 @@ export default function BankMovementsList() {
             )}
             <Box sx={{
               position: "relative",
-              bgcolor: "#fff",
-              border: "1px solid #D8DEE9",
+              bgcolor: "var(--cm-paper, #fff)",
+              border: "1px solid var(--cm-border, #D8DEE9)",
               borderRadius: 2,
               overflow: "hidden",
               p: 3,
@@ -1230,7 +1230,7 @@ export default function BankMovementsList() {
               <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, pt: 2, borderTop: "2px solid #0057B8" }}>
                 <Box sx={{ textAlign: "right" }}>
                   <Typography variant="caption" color="text.secondary">Monto del movimiento</Typography>
-                  <Typography variant="h5" fontWeight={800} sx={{ color: "#0057B8" }}>C$ {money(depositDetail.deposit.amount)}</Typography>
+                  <Typography variant="h5" fontWeight={800} sx={{ color: "var(--cm-primary-text, #0057B8)" }}>C$ {money(depositDetail.deposit.amount)}</Typography>
                 </Box>
               </Box>
 

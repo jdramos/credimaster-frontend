@@ -62,7 +62,7 @@ const LoanGuaranteeSelector = ({
 
         <Chip
           label={`Seleccionado: C$ ${money(selectedValue)}`}
-          sx={{ bgcolor: BAC.soft, color: BAC.primary, fontWeight: 800 }}
+          sx={{ bgcolor: `var(--cm-soft, ${BAC.soft})`, color: `var(--cm-primary-text, ${BAC.primary})`, fontWeight: 800 }}
         />
       </Stack>
 
@@ -75,10 +75,10 @@ const LoanGuaranteeSelector = ({
             <Box
               key={g.id}
               sx={{
-                border: `1px solid ${BAC.border}`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 borderRadius: 2,
                 p: 1,
-                bgcolor: disabled ? "#F5F5F5" : BAC.white,
+                bgcolor: disabled ? "var(--cm-surface, #F5F5F5)" : `var(--cm-paper, ${BAC.white})`,
                 opacity: disabled ? 0.7 : 1,
               }}
             >
@@ -94,14 +94,14 @@ const LoanGuaranteeSelector = ({
                 }
                 label={
                   <Box>
-                    <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                    <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
                       {[g.article, g.brand].filter(Boolean).join(" - ") || "Garantía sin descripción"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {g.series ? `Serie: ${g.series} — ` : ""}Valor: C$ {money(g.value)}
                     </Typography>
                     {disabled && (
-                      <Typography variant="caption" sx={{ color: "#B42318", fontWeight: 700 }}>
+                      <Typography variant="caption" sx={{ color: "var(--cm-error-text, #B42318)", fontWeight: 700 }}>
                         Comprometida con crédito #{g.committed_credit_code || g.committed_loan_id}
                       </Typography>
                     )}

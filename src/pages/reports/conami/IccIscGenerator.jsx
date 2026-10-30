@@ -185,7 +185,7 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
   });
 
   return (
-    <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid #D8E2EF", overflow: "hidden", height: "100%" }}>
+    <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid var(--cm-border, #D8E2EF)", overflow: "hidden", height: "100%" }}>
       <Box sx={{ px: 2.5, py: 2, background: "linear-gradient(135deg, #003E8A, #0057B8)", color: "#fff" }}>
         <Typography variant="h6" fontWeight={800}>{title}</Typography>
         <Typography variant="body2" sx={{ opacity: 0.9 }}>{subtitle}</Typography>
@@ -261,8 +261,8 @@ const ReportPanel = React.forwardRef(function ReportPanel({ code, label, title, 
                   disableSelectionOnClick
                   density="compact"
                   sx={{
-                    border: "1px solid #D8E2EF", borderRadius: 3,
-                    "& .MuiDataGrid-columnHeaders": { backgroundColor: "#F4F7FB", fontWeight: 800 },
+                    border: "1px solid var(--cm-border, #D8E2EF)", borderRadius: 3,
+                    "& .MuiDataGrid-columnHeaders": { backgroundColor: "var(--cm-surface, #F4F7FB)", fontWeight: 800 },
                     "& .MuiDataGrid-cell": { fontSize: 12.5 },
                   }}
                 />
@@ -385,7 +385,7 @@ export default function IccIscGenerator() {
 
   return (
     <Box sx={{ p: 2.5 }}>
-      <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid #D8E2EF", overflow: "hidden", mb: 2.5 }}>
+      <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid var(--cm-border, #D8E2EF)", overflow: "hidden", mb: 2.5 }}>
         <Box sx={{ px: 3, py: 2.5, background: "linear-gradient(135deg, #003E8A, #0057B8)", color: "#fff" }}>
           <Typography variant="h5" fontWeight={800}>Generador ICC / ISC CONAMI</Typography>
           <Typography variant="body2" sx={{ opacity: 0.9 }}>

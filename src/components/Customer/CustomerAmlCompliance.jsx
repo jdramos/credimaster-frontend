@@ -49,7 +49,7 @@ const BAC = {
 const Section = ({ title, subtitle, children }) => (
   <Paper
     elevation={0}
-    sx={{ p: 2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff" }}
+    sx={{ p: 2, borderRadius: 2, border: `1px solid var(--cm-border, ${BAC.border})`, bgcolor: "var(--cm-paper, #fff)" }}
   >
     <Stack spacing={1.5}>
       <Box>
@@ -520,7 +520,7 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                 <Chip
                   icon={<AcUnitIcon fontSize="small" />}
                   label="Cliente congelado"
-                  sx={{ bgcolor: "#FEE2E2", color: "#B42318", fontWeight: 700 }}
+                  sx={{ bgcolor: "var(--cm-error-soft, #FEE2E2)", color: "var(--cm-error-text, #B42318)", fontWeight: 700 }}
                 />
               ) : (
                 <Chip label="Sin inmovilización" size="small" variant="outlined" />
@@ -578,13 +578,13 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
                 <Chip
                   icon={<CheckCircleIcon fontSize="small" />}
                   label="Identidad verificada"
-                  sx={{ bgcolor: "#E8F5E9", color: BAC.success, fontWeight: 700 }}
+                  sx={{ bgcolor: "var(--cm-surface-2, #E8F5E9)", color: `var(--cm-success-text, ${BAC.success})`, fontWeight: 700 }}
                 />
               ) : (
                 <Chip
                   icon={<ErrorOutlineIcon fontSize="small" />}
                   label="Identidad sin verificar"
-                  sx={{ bgcolor: "#FFF3E0", color: BAC.warning, fontWeight: 700 }}
+                  sx={{ bgcolor: "var(--cm-warning-soft, #FFF3E0)", color: `var(--cm-warning-text, ${BAC.warning})`, fontWeight: 700 }}
                 />
               )}
               {isIdentityVerified && customer?.identity_verified_at && (
@@ -729,10 +729,10 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
           {liveSearchError && <Alert severity="error">{liveSearchError}</Alert>}
 
           {liveMatches !== null && liveMatches.length > 0 && (
-            <TableContainer sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}>
+            <TableContainer sx={{ border: `1px solid var(--cm-border, ${BAC.border})`, borderRadius: 2 }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: "#FEF2F2" }}>
+                  <TableRow sx={{ bgcolor: "var(--cm-surface, #FEF2F2)" }}>
                     <TableCell sx={{ fontWeight: 800 }}>Nombre</TableCell>
                     <TableCell sx={{ fontWeight: 800 }}>Lista</TableCell>
                     <TableCell sx={{ fontWeight: 800 }}>Identificación</TableCell>
@@ -802,10 +802,10 @@ const CustomerAmlCompliance = forwardRef(function CustomerAmlCompliance(
 
           <Divider />
 
-          <TableContainer sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}>
+          <TableContainer sx={{ border: `1px solid var(--cm-border, ${BAC.border})`, borderRadius: 2 }}>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+                <TableRow sx={{ bgcolor: "var(--cm-surface, #F9FAFB)" }}>
                   <TableCell sx={{ fontWeight: 800 }}>Lista</TableCell>
                   <TableCell sx={{ fontWeight: 800 }}>Resultado</TableCell>
                   <TableCell sx={{ fontWeight: 800 }}>Notas</TableCell>

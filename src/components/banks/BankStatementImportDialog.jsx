@@ -244,7 +244,7 @@ export default function BankStatementImportDialog({ open, onClose, bankAccount, 
                 </Stack>
                 {parsed.warnings.map((w) => <Alert key={w} severity="warning" sx={{ mb: 1 }}>{w}</Alert>)}
 
-                <Box sx={{ maxHeight: 320, overflow: "auto", mb: 2, border: "1px solid #E5E7EB", borderRadius: 1 }}>
+                <Box sx={{ maxHeight: 320, overflow: "auto", mb: 2, border: "1px solid var(--cm-border, #E5E7EB)", borderRadius: 1 }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>

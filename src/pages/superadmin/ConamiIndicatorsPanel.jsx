@@ -62,7 +62,7 @@ export default function ConamiIndicatorsPanel() {
   };
 
   return (
-    <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+    <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "center" }} justifyContent="space-between">
         <Box>
           <Typography variant="subtitle1" fontWeight={800}>Indicadores financieros del sector (CONAMI)</Typography>

@@ -109,9 +109,9 @@ export default function CashRegisterStatement() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", mb: 2 }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", mb: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-          <AccountBalanceWalletIcon sx={{ color: "#0057B8" }} />
+          <AccountBalanceWalletIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Typography variant="h6" fontWeight={700}>Estado de Cuenta de Caja</Typography>
             <Typography variant="body2" color="text.secondary">
@@ -171,7 +171,7 @@ export default function CashRegisterStatement() {
       </Paper>
 
       {statement && (
-        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB" }}>
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)" }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
             Movimientos — {statement.cash_register.name}
           </Typography>
@@ -188,7 +188,7 @@ export default function CashRegisterStatement() {
               </TableRow>
             </TableHead>
             <TableBody>
-              <TableRow sx={{ "& td": { fontWeight: 700, bgcolor: "#F8FAFC" } }}>
+              <TableRow sx={{ "& td": { fontWeight: 700, bgcolor: "var(--cm-surface, #F8FAFC)" } }}>
                 <TableCell>{statement.start_date}</TableCell>
                 <TableCell />
                 <TableCell />

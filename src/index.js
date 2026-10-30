@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { UserProvider } from './contexts/UserContext';
 import "./styles/bac-prime.css";
 import "./styles/bac-mui.css";
+import "./styles/dark-mode.css";
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

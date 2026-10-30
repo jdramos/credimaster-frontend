@@ -366,7 +366,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
           </Stack>
         </Box>
 
-        <DialogContent sx={{ p: 2.5, background: "#F8FAFC" }}>
+        <DialogContent sx={{ p: 2.5, background: "var(--cm-surface, #F8FAFC)" }}>
           {loadingLoan ? (
             <Box display="flex" justifyContent="center" py={6}>
               <CircularProgress size={28} />
@@ -374,7 +374,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
           ) : success ? (
             <Box textAlign="center">
               <SuccessCheck />
-              <Typography variant="h6" fontWeight={900} color="#059669">
+              <Typography variant="h6" fontWeight={900} color="var(--cm-success-text, #059669)">
                 ¡Pago registrado!
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -450,9 +450,9 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
                           cursor: "pointer",
                           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                           gap: 0.5, width: 78, height: 66, borderRadius: 3,
-                          border: isSelected ? "2px solid #059669" : "1px solid #E2E8F0",
-                          background: isSelected ? "#ECFDF5" : "#fff",
-                          color: isSelected ? "#059669" : "#64748B",
+                          border: isSelected ? "2px solid #059669" : "1px solid var(--cm-border, #E2E8F0)",
+                          background: isSelected ? "var(--cm-success-soft, #ECFDF5)" : "var(--cm-paper, #fff)",
+                          color: isSelected ? "var(--cm-success-text, #059669)" : "var(--cm-text-2, #64748B)",
                           transition: "all 0.15s ease",
                           "&:hover": { borderColor: "#059669" },
                         }}
@@ -468,8 +468,8 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
               </Box>
 
               {paymentAmount > 0 && (
-                <Box sx={{ border: "1px solid #E2E8F0", borderRadius: 3, overflow: "hidden", background: "#fff" }}>
-                  <Box sx={{ px: 2, py: 1.2, background: "#F1F5F9" }}>
+                <Box sx={{ border: "1px solid var(--cm-border, #E2E8F0)", borderRadius: 3, overflow: "hidden", background: "var(--cm-paper, #fff)" }}>
+                  <Box sx={{ px: 2, py: 1.2, background: "var(--cm-surface, #F1F5F9)" }}>
                     <Typography variant="caption" fontWeight={800} color="text.secondary">
                       Cómo se aplicará el pago
                     </Typography>
@@ -480,7 +480,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
                       <Alert severity="error" sx={{ borderRadius: 2 }}>{simulateError}</Alert>
                     ) : (
                       <>
-                        <Box sx={{ display: "flex", height: 14, borderRadius: 999, overflow: "hidden", background: "#F1F5F9", mb: 1.5 }}>
+                        <Box sx={{ display: "flex", height: 14, borderRadius: 999, overflow: "hidden", background: "var(--cm-surface, #F1F5F9)", mb: 1.5 }}>
                           {segments.map((s) => (
                             <Box
                               key={s.key}
@@ -515,7 +515,7 @@ export default function QuickPaymentModal({ open, onClose, onSuccess, loan }) {
         </DialogContent>
 
         {!success && !loadingLoan && (
-          <DialogActions sx={{ px: 2.5, py: 1.75, borderTop: "1px solid #E2E8F0", background: "#fff" }}>
+          <DialogActions sx={{ px: 2.5, py: 1.75, borderTop: "1px solid var(--cm-border, #E2E8F0)", background: "var(--cm-paper, #fff)" }}>
             <Button onClick={handleClose} disabled={submitting} startIcon={<CloseIcon />} sx={{ fontWeight: 800, borderRadius: 2 }}>
               Cancelar
             </Button>

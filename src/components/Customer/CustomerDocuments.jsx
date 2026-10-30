@@ -71,11 +71,11 @@ const getFileIcon = (mimeType = "", docName = "") => {
   const name = String(docName).toLowerCase();
 
   if (mime.includes("pdf") || name.endsWith(".pdf")) {
-    return <PictureAsPdfIcon sx={{ color: BAC.primary }} />;
+    return <PictureAsPdfIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
   }
 
   if (mime.startsWith("image/")) {
-    return <ImageIcon sx={{ color: BAC.primary }} />;
+    return <ImageIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
   }
 
   if (
@@ -84,10 +84,10 @@ const getFileIcon = (mimeType = "", docName = "") => {
     mime.includes("sheet") ||
     mime.includes("document")
   ) {
-    return <DescriptionIcon sx={{ color: BAC.primary }} />;
+    return <DescriptionIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
   }
 
-  return <InsertDriveFileIcon sx={{ color: BAC.primary }} />;
+  return <InsertDriveFileIcon sx={{ color: `var(--cm-primary-text, ${BAC.primary})` }} />;
 };
 
 const getChecklistStatus = (item) => {
@@ -340,15 +340,15 @@ export default function CustomerDocuments({ customerId }) {
       sx={{
         p: 2.5,
         borderRadius: 3,
-        border: `1px solid ${BAC.border}`,
-        background: "#fff",
+        border: `1px solid var(--cm-border, ${BAC.border})`,
+        background: "var(--cm-paper, #fff)",
       }}
     >
       <Stack spacing={2.5}>
         <Box>
           <Typography
             variant="h6"
-            sx={{ fontWeight: 800, color: BAC.text, mb: 0.5 }}
+            sx={{ fontWeight: 800, color: `var(--cm-text, ${BAC.text})`, mb: 0.5 }}
           >
             Documentos del cliente
           </Typography>
@@ -383,7 +383,7 @@ export default function CustomerDocuments({ customerId }) {
           alignItems="center"
         >
           <Box>
-            <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+            <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
               Checklist documental
             </Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -397,7 +397,7 @@ export default function CustomerDocuments({ customerId }) {
               onClick={loadAll}
               disabled={isLoadingAny || !customerId}
               sx={{
-                border: `1px solid ${BAC.border}`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 borderRadius: 2,
               }}
             >
@@ -414,8 +414,8 @@ export default function CustomerDocuments({ customerId }) {
             sx={{
               p: 2,
               borderRadius: 3,
-              border: `1px solid ${BAC.border}`,
-              backgroundColor: "#FAFCFF",
+              border: `1px solid var(--cm-border, ${BAC.border})`,
+              backgroundColor: "var(--cm-paper, #FAFCFF)",
             }}
           >
             <Stack spacing={2}>
@@ -425,7 +425,7 @@ export default function CustomerDocuments({ customerId }) {
                 justifyContent="space-between"
                 alignItems={{ xs: "flex-start", md: "center" }}
               >
-                <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
                   Estado general del expediente
                 </Typography>
 
@@ -479,12 +479,12 @@ export default function CustomerDocuments({ customerId }) {
                         sx={{
                           p: 1.5,
                           borderRadius: 2,
-                          border: `1px solid ${BAC.border}`,
-                          backgroundColor: "#fff",
+                          border: `1px solid var(--cm-border, ${BAC.border})`,
+                          backgroundColor: "var(--cm-paper, #fff)",
                         }}
                       >
                         <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                          <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
                             {item.title}
                           </Typography>
 
@@ -505,7 +505,7 @@ export default function CustomerDocuments({ customerId }) {
                           ) : (
                             <Typography
                               variant="body2"
-                              sx={{ color: "#B42318", mt: 0.5 }}
+                              sx={{ color: "var(--cm-error-text, #B42318)", mt: 0.5 }}
                             >
                               No se ha cargado documento para este ítem.
                             </Typography>
@@ -561,7 +561,7 @@ export default function CustomerDocuments({ customerId }) {
           alignItems="center"
           sx={{ mt: 1 }}
         >
-          <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+          <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
             Documentos cargados
           </Typography>
 
@@ -570,7 +570,7 @@ export default function CustomerDocuments({ customerId }) {
               onClick={loadAll}
               disabled={isLoadingAny || !customerId}
               sx={{
-                border: `1px solid ${BAC.border}`,
+                border: `1px solid var(--cm-border, ${BAC.border})`,
                 borderRadius: 2,
               }}
             >
@@ -588,8 +588,8 @@ export default function CustomerDocuments({ customerId }) {
               p: 3,
               textAlign: "center",
               borderRadius: 3,
-              border: `1px solid ${BAC.border}`,
-              backgroundColor: "#FAFCFF",
+              border: `1px solid var(--cm-border, ${BAC.border})`,
+              backgroundColor: "var(--cm-paper, #FAFCFF)",
             }}
           >
             <Typography sx={{ color: "text.secondary" }}>
@@ -602,7 +602,7 @@ export default function CustomerDocuments({ customerId }) {
             elevation={0}
             sx={{
               borderRadius: 3,
-              border: `1px solid ${BAC.border}`,
+              border: `1px solid var(--cm-border, ${BAC.border})`,
               overflow: "hidden",
             }}
           >
@@ -613,8 +613,8 @@ export default function CustomerDocuments({ customerId }) {
                     backgroundColor: BAC.secondary,
                     "& th": {
                       fontWeight: 800,
-                      color: BAC.text,
-                      borderBottom: `1px solid ${BAC.border}`,
+                      color: `var(--cm-text, ${BAC.text})`,
+                      borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                     },
                   }}
                 >
@@ -634,7 +634,7 @@ export default function CustomerDocuments({ customerId }) {
                     hover
                     sx={{
                       "& td": {
-                        borderBottom: `1px solid ${BAC.border}`,
+                        borderBottom: `1px solid var(--cm-border, ${BAC.border})`,
                       },
                     }}
                   >
@@ -642,7 +642,7 @@ export default function CustomerDocuments({ customerId }) {
                       <Stack direction="row" spacing={1.2} alignItems="center">
                         {getFileIcon(doc.mime_type, doc.doc_name)}
                         <Box>
-                          <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+                          <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
                             {doc.doc_name}
                           </Typography>
                           <Typography
@@ -662,7 +662,7 @@ export default function CustomerDocuments({ customerId }) {
                         sx={{
                           fontWeight: 700,
                           backgroundColor: BAC.secondary,
-                          color: BAC.primary,
+                          color: `var(--cm-primary-text, ${BAC.primary})`,
                         }}
                       />
                     </TableCell>
@@ -681,9 +681,9 @@ export default function CustomerDocuments({ customerId }) {
                           <IconButton
                             onClick={() => handleView(doc.id)}
                             sx={{
-                              border: `1px solid ${BAC.border}`,
+                              border: `1px solid var(--cm-border, ${BAC.border})`,
                               borderRadius: 2,
-                              color: BAC.primary,
+                              color: `var(--cm-primary-text, ${BAC.primary})`,
                             }}
                           >
                             <VisibilityIcon fontSize="small" />
@@ -695,9 +695,9 @@ export default function CustomerDocuments({ customerId }) {
                             <IconButton
                               onClick={() => handleDelete(doc.id)}
                               sx={{
-                                border: `1px solid ${BAC.border}`,
+                                border: `1px solid var(--cm-border, ${BAC.border})`,
                                 borderRadius: 2,
-                                color: "#B42318",
+                                color: "var(--cm-error-text, #B42318)",
                               }}
                             >
                               <DeleteIcon fontSize="small" />
@@ -723,7 +723,7 @@ export default function CustomerDocuments({ customerId }) {
           }}
         >
           <Stack spacing={2}>
-            <Typography sx={{ fontWeight: 700, color: BAC.text }}>
+            <Typography sx={{ fontWeight: 700, color: `var(--cm-text, ${BAC.text})` }}>
               Subir nuevo documento
             </Typography>
 
@@ -775,7 +775,7 @@ export default function CustomerDocuments({ customerId }) {
                   textTransform: "none",
                   fontWeight: 700,
                   borderColor: BAC.primary,
-                  color: BAC.primary,
+                  color: `var(--cm-primary-text, ${BAC.primary})`,
                 }}
               >
                 Seleccionar archivo
@@ -790,7 +790,7 @@ export default function CustomerDocuments({ customerId }) {
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="body2"
-                  sx={{ color: BAC.text, fontWeight: 600 }}
+                  sx={{ color: `var(--cm-text, ${BAC.text})`, fontWeight: 600 }}
                 >
                   {file ? file.name : "Ningún archivo seleccionado"}
                 </Typography>

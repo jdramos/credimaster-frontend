@@ -107,7 +107,7 @@ export default function RiskBureauQueryPanel({ customerId, loanId, readOnly = fa
   return (
     <Paper
       elevation={0}
-      sx={{ p: 2, borderRadius: 2, border: `1px solid ${BAC.border}`, bgcolor: "#fff", mt: 1.5 }}
+      sx={{ p: 2, borderRadius: 2, border: `1px solid var(--cm-border, ${BAC.border})`, bgcolor: "var(--cm-paper, #fff)", mt: 1.5 }}
     >
       <Stack spacing={1.5}>
         <Typography variant="subtitle2" fontWeight={900}>
@@ -184,10 +184,10 @@ export default function RiskBureauQueryPanel({ customerId, loanId, readOnly = fa
 
         <Divider />
 
-        <TableContainer sx={{ border: `1px solid ${BAC.border}`, borderRadius: 2 }}>
+        <TableContainer sx={{ border: `1px solid var(--cm-border, ${BAC.border})`, borderRadius: 2 }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: "#F9FAFB" }}>
+              <TableRow sx={{ bgcolor: "var(--cm-surface, #F9FAFB)" }}>
                 <TableCell sx={{ fontWeight: 800 }}>Rol</TableCell>
                 <TableCell sx={{ fontWeight: 800 }}>Central</TableCell>
                 <TableCell sx={{ fontWeight: 800 }}>Nivel de riesgo</TableCell>

@@ -1,0 +1,164 @@
+/* src/styles/dark-mode.css
+ *
+ * Modo oscuro para los colores fijos de las pantallas.
+ *
+ * App.js pone data-theme="light|dark" (y data-bs-theme para Bootstrap) en
+ * <html>. Las variables --cm-* SOLO existen en modo oscuro: cada pantalla las
+ * usa con su color claro original como respaldo, p. ej.
+ *
+ *   bgcolor: "var(--cm-paper, #fff)"
+ *   color: "var(--cm-text, #0F172A)"
+ *
+ * En modo claro la variable no existe y se usa el respaldo, así que el modo
+ * claro se ve idéntico a antes. En modo oscuro se usa el valor de aquí.
+ * Al imprimir se anulan (initial) para que lo impreso siempre salga claro.
+ *
+ * Los valores siguen la paleta oscura del tema MUI de App.js
+ * (background.paper #151B22, divider #2A3441, text.secondary #B8C0CC).
+ */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Superficies */
+  --cm-bg: #0F141A;
+  --cm-paper: #151B22;
+  --cm-surface: #1A222C;
+  --cm-surface-2: #202A36;
+  --cm-surface-3: #283443;
+  --cm-soft: #172A40;
+  --cm-border: #2A3441;
+
+  /* Texto */
+  --cm-text: #E8EEF5;
+  --cm-text-2: #B8C0CC;
+  --cm-text-3: #8C98A8;
+  --cm-primary-text: #8CB8F2;
+
+  /* Estados: texto */
+  --cm-success-text: #81C784;
+  --cm-error-text: #F28B82;
+  --cm-warning-text: #FFB74D;
+  --cm-info-text: #4FC3F7;
+  --cm-purple-text: #CE93D8;
+
+  /* Estados: fondos suaves */
+  --cm-success-soft: rgba(102, 187, 106, 0.16);
+  --cm-error-soft: rgba(239, 83, 80, 0.16);
+  --cm-warning-soft: rgba(255, 167, 38, 0.16);
+  --cm-info-soft: rgba(41, 182, 246, 0.14);
+  --cm-purple-soft: rgba(186, 104, 200, 0.16);
+
+  /* Bootstrap (data-bs-theme="dark") usa #212529; se iguala al tema MUI */
+  --bs-body-bg: #0F141A;
+  --bs-body-color: #E8EEF5;
+
+  /* Tokens de bac-prime.css / bac-mui.css */
+  --bac-soft: #172A40;
+  --bac-border: #2A3441;
+  --bac-text: #E8EEF5;
+  --bac-muted: #B8C0CC;
+  --bac-bg: #0F141A;
+  --bac-white: #151B22;
+  --bac-050: #1A222C;
+  --bac-100: #172A40;
+  --text-900: #E8EEF5;
+  --text-600: #B8C0CC;
+  --border-200: #2A3441;
+}
+
+/* Lo impreso siempre sale en claro */
+@media print {
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --cm-bg: initial;
+    --cm-paper: initial;
+    --cm-surface: initial;
+    --cm-surface-2: initial;
+    --cm-surface-3: initial;
+    --cm-soft: initial;
+    --cm-border: initial;
+    --cm-text: initial;
+    --cm-text-2: initial;
+    --cm-text-3: initial;
+    --cm-primary-text: initial;
+    --cm-success-text: initial;
+    --cm-error-text: initial;
+    --cm-warning-text: initial;
+    --cm-info-text: initial;
+    --cm-purple-text: initial;
+    --cm-success-soft: initial;
+    --cm-error-soft: initial;
+    --cm-warning-soft: initial;
+    --cm-info-soft: initial;
+    --cm-purple-soft: initial;
+  }
+}
+
+/* ===== Clases de bac-*.css con blanco fijo ===== */
+:root[data-theme="dark"] .bac-chip--outline {
+  background: var(--cm-paper) !important;
+}
+:root[data-theme="dark"] .bac-tile {
+  background: var(--cm-paper);
+}
+:root[data-theme="dark"] .bac-drawer-header {
+  background: var(--cm-surface);
+}
+:root[data-theme="dark"] .bac-row-vendor td {
+  background: var(--cm-soft) !important;
+  color: var(--cm-text);
+}
+:root[data-theme="dark"] .bac-menu-item-danger {
+  color: var(--cm-error-text) !important;
+}
+
+/* ===== PrimeReact (tema lara-light-blue, Balances / Provisiones) ===== */
+:root[data-theme="dark"] .p-treetable .p-treetable-tbody > tr,
+:root[data-theme="dark"] .p-treetable .p-treetable-tfoot > tr > td,
+:root[data-theme="dark"] .p-treetable .p-treetable-header,
+:root[data-theme="dark"] .p-treetable .p-treetable-footer,
+:root[data-theme="dark"] .p-treetable .p-paginator {
+  background: var(--cm-paper);
+  color: var(--cm-text);
+}
+:root[data-theme="dark"] .p-treetable .p-treetable-tbody > tr > td {
+  border-color: var(--cm-border);
+}
+:root[data-theme="dark"] .p-treetable .p-treetable-tbody > tr:not(.p-highlight):hover {
+  background: var(--cm-surface-2);
+  color: var(--cm-text);
+}
+:root[data-theme="dark"] .p-treetable .p-treetable-toggler {
+  color: var(--cm-primary-text);
+}
+
+/* ===== Recharts: el tooltip por defecto es blanco con texto heredado ===== */
+:root[data-theme="dark"] .recharts-default-tooltip {
+  background-color: var(--cm-paper) !important;
+  border-color: var(--cm-border) !important;
+  color: var(--cm-text);
+}
+:root[data-theme="dark"] .recharts-default-tooltip .recharts-tooltip-label {
+  color: var(--cm-text);
+}
+:root[data-theme="dark"] .recharts-legend-item-text {
+  color: var(--cm-text-2) !important;
+}
+:root[data-theme="dark"] .recharts-cartesian-axis-tick-value {
+  fill: var(--cm-text-2);
+}
+:root[data-theme="dark"] .recharts-cartesian-grid line {
+  stroke: var(--cm-border);
+}
+
+/* Texto en azul de marca (--bac-primary) sobre superficie oscura */
+:root[data-theme="dark"] .bac-summary-card h6,
+:root[data-theme="dark"] .bac-btn-ghost,
+:root[data-theme="dark"] .bac-btn-muted,
+:root[data-theme="dark"] .bac-item.active .bac-item-text,
+:root[data-theme="dark"] .bac-item.active .bac-item-icon,
+:root[data-theme="dark"] .bac-dialog .MuiInputLabel-root.Mui-focused,
+:root[data-theme="dark"] .bac-drawer-search .MuiInputLabel-root.Mui-focused {
+  color: var(--cm-primary-text) !important;
+}

@@ -140,10 +140,10 @@ export default function ScreenHelpAdminPage() {
 
   return (
     <Box>
-      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid #E5E7EB", background: "#fff" }}>
+      <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid var(--cm-border, #E5E7EB)", background: "var(--cm-paper, #fff)" }}>
         <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <HelpOutlineIcon sx={{ color: "#0057B8" }} />
+            <HelpOutlineIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
             <Box>
               <Typography variant="h6" fontWeight={700}>Ayuda de pantallas</Typography>
               <Typography variant="body2" color="text.secondary">

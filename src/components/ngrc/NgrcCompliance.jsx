@@ -44,7 +44,7 @@ function ObligationsTab({ data, onRegister, onComplete, onOpenReport }) {
           <TableContainer component={Paper} variant="outlined">
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "#F1F5F9" } }}>
+                <TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "var(--cm-surface, #F1F5F9)" } }}>
                   <TableCell>Artículo</TableCell>
                   <TableCell>Obligación</TableCell>
                   <TableCell>Frecuencia</TableCell>
@@ -166,7 +166,7 @@ function RecordsTab({ refreshKey, onChanged }) {
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "#F1F5F9" } }}>
+            <TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "var(--cm-surface, #F1F5F9)" } }}>
               <TableCell>Obligación</TableCell><TableCell>Período</TableCell><TableCell>Sesión de Junta</TableCell><TableCell>Acta</TableCell>
               <TableCell>Cumplido</TableCell><TableCell>Referencia</TableCell><TableCell>Registró</TableCell><TableCell>Estado</TableCell><TableCell />
             </TableRow>

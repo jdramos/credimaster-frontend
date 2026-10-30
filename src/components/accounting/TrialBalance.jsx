@@ -320,12 +320,12 @@ export default function TrialBalance() {
         sx={{
           p: 2,
           borderRadius: 3,
-          border: "1px solid #E5E7EB",
-          background: "#fff",
+          border: "1px solid var(--cm-border, #E5E7EB)",
+          background: "var(--cm-paper, #fff)",
         }}
       >
         <Box sx={{ display: "flex", gap: 1, alignItems: "center", mb: 2 }}>
-          <FactCheckIcon sx={{ color: "#0057B8" }} />
+          <FactCheckIcon sx={{ color: "var(--cm-primary-text, #0057B8)" }} />
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
               <Typography variant="h6" fontWeight={700}>
@@ -478,14 +478,14 @@ export default function TrialBalance() {
             }}
             disableSelectionOnClick
             sx={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--cm-border, #E5E7EB)",
               borderRadius: 2,
               "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#F8FAFC",
+                backgroundColor: "var(--cm-surface, #F8FAFC)",
                 fontWeight: 700,
               },
               "& .tb-header-cell": {
-                backgroundColor: "#F1F5F9",
+                backgroundColor: "var(--cm-surface, #F1F5F9)",
                 fontWeight: 700,
               },
             }}

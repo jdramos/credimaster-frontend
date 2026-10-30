@@ -312,8 +312,8 @@ export default function LoginPage() {
       <Dialog open={sessionDialog} maxWidth="sm" fullWidth>
         <DialogTitle
           sx={{
-            bgcolor: "#FFF3CD",
-            color: "#851104",
+            bgcolor: "var(--cm-warning-soft, #FFF3CD)",
+            color: "var(--cm-error-text, #851104)",
             fontWeight: 700,
             textAlign: "center",
           }}
