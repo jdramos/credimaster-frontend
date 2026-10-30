@@ -35,15 +35,17 @@ import { fetchWithCache } from "../hooks/useCachedFetch";
 // botón abría un formulario que siempre terminaba en error.
 const LOAN_MODIFICATIONS_ENABLED = false;
 
+// Superficies y textos con var(--bac-*, claro): en modo oscuro las redefine
+// styles/dark-mode.css; en claro quedan los mismos colores de siempre.
 const BAC = {
   primary: "#0057B8",
   primaryDark: "#003E8A",
-  soft: "#EAF2FF",
-  bg: "#F6F8FC",
-  border: "#D8E2F0",
-  text: "#1F2937",
-  muted: "#6B7280",
-  white: "#FFFFFF",
+  soft: "var(--bac-soft, #EAF2FF)",
+  bg: "var(--bac-bg, #F6F8FC)",
+  border: "var(--bac-border, #D8E2F0)",
+  text: "var(--bac-text, #1F2937)",
+  muted: "var(--bac-muted, #6B7280)",
+  white: "var(--bac-white, #FFFFFF)",
 };
 
 const API_URL = "/api/loans";
@@ -377,7 +379,7 @@ const LoanList = () => {
             px: 3,
             py: 1.25,
             background: `linear-gradient(135deg, ${BAC.primaryDark}, ${BAC.primary})`,
-            color: BAC.white,
+            color: "#FFFFFF", // texto sobre el encabezado azul: blanco en ambos modos
           }}
         >
           <Stack
@@ -420,7 +422,7 @@ const LoanList = () => {
                 size="small"
                 sx={{
                   bgcolor: "rgba(255,255,255,0.18)",
-                  color: BAC.white,
+                  color: "#FFFFFF",
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.25)",
                 }}
