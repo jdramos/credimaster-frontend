@@ -43,3 +43,32 @@ describe("Desembolso por lote con deducción", () => {
     expect(screen.getByText(/Total a entregar/).textContent).toContain("C$ 29,500.00");
   });
 });
+
+describe("Responsable de entrega", () => {
+  beforeEach(() => API.get.mockReset());
+
+  test("solo ofrece usuarios con permiso de entregar desembolsos", async () => {
+    const AGENTS = [{ id: 7, user_name: "dhernandez", full_name: "David Hernandez" }];
+    API.get.mockImplementation((url) =>
+      Promise.resolve({
+        data: /disbursable/.test(url)
+          ? { ok: true, data: LOANS }
+          : /delivery-agents/.test(url)
+          ? { ok: true, data: AGENTS }
+          : /\/api\/users/.test(url)
+          ? [{ id: 18, full_name: "Cajero Ventanilla Managua", user_status: 1 }]
+          : { ok: true, data: [] },
+      }),
+    );
+    render(
+      <UserContext.Provider value={{ user: 1 }}>
+        <LoanBatchDisbursementDialog open onClose={() => {}} onSuccess={() => {}} />
+      </UserContext.Provider>,
+    );
+    await screen.findByText("Gabriela Renee Reyes Portocarrero");
+    expect(API.get).toHaveBeenCalledWith("/api/loans/remittances/delivery-agents");
+    fireEvent.mouseDown(screen.getByLabelText(/Quién le va a entregar/));
+    expect(await screen.findByText("David Hernandez (dhernandez)")).toBeTruthy();
+    expect(screen.queryByText(/Cajero Ventanilla Managua/)).toBeNull();
+  });
+});

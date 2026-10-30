@@ -74,10 +74,13 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
     API.get("/api/caja/registers", { params: { status: "ACTIVA" } })
       .then((res) => setCashRegisters(res.data?.data || []))
       .catch(() => setCashRegisters([]));
-    API.get("/api/users")
+    // Solo usuarios con permiso de entregar: los demás no verían la entrega
+    // en "Mis entregas pendientes".
+    API.get("/api/loans/remittances/delivery-agents")
       .then((res) => {
-        const active = (res.data || []).filter((u) => u.user_status === 1 || u.user_status === undefined);
-        setDeliveryAgents(active);
+        const agents = res.data?.data || [];
+        setDeliveryAgents(agents);
+        setDeliveryAgentId((cur) => (agents.some((u) => u.id === cur) ? cur : null));
       })
       .catch(() => setDeliveryAgents([]));
 
@@ -296,7 +299,8 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
 
           <Autocomplete
             options={deliveryAgents}
-            getOptionLabel={(o) => o.full_name || ""}
+            getOptionLabel={(o) => (o.full_name ? `${o.full_name} (${o.user_name})` : o.user_name || "")}
+            noOptionsText="Ningún usuario tiene permiso para entregar desembolsos"
             isOptionEqualToValue={(o, v) => o.id === v.id}
             value={deliveryAgents.find((u) => u.id === deliveryAgentId) || null}
             onChange={(_, newValue) => setDeliveryAgentId(newValue?.id || null)}
@@ -304,7 +308,7 @@ export default function LoanBatchDisbursementDialog({ open, onClose, onSuccess, 
               <TextField
                 {...params}
                 label="¿Quién le va a entregar el cheque/efectivo al cliente?"
-                helperText="Puede ser usted mismo, o un gestor que lo entregará después"
+                helperText="Solo aparecen usuarios con permiso para entregar desembolsos"
               />
             )}
           />

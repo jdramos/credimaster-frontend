@@ -324,11 +324,12 @@ function LoanListDataTable({
       setDisburseDialogOpen(true);
 
       try {
-        const usersResp = await API.get("/api/users");
-        const active = (usersResp.data || []).filter(
-          (u) => u.user_status === 1 || u.user_status === undefined,
-        );
-        setDeliveryAgents(active);
+        // Solo usuarios con permiso de entregar: los demás no verían la
+        // entrega en "Mis entregas pendientes".
+        const agentsResp = await API.get("/api/loans/remittances/delivery-agents");
+        const agents = agentsResp.data?.data || [];
+        setDeliveryAgents(agents);
+        setDeliveryAgentId((cur) => (agents.some((u) => u.id === cur) ? cur : null));
       } catch (usersError) {
         console.error("Error al cargar usuarios:", usersError);
         setDeliveryAgents([]);
@@ -1195,7 +1196,8 @@ function LoanListDataTable({
 
           <Autocomplete
             options={deliveryAgents}
-            getOptionLabel={(o) => o.full_name || ""}
+            getOptionLabel={(o) => (o.full_name ? `${o.full_name} (${o.user_name})` : o.user_name || "")}
+            noOptionsText="Ningún usuario tiene permiso para entregar desembolsos"
             isOptionEqualToValue={(o, v) => o.id === v.id}
             value={deliveryAgents.find((u) => u.id === deliveryAgentId) || null}
             onChange={(_, newValue) => setDeliveryAgentId(newValue?.id || null)}
@@ -1203,7 +1205,7 @@ function LoanListDataTable({
               <TextField
                 {...params}
                 label="¿Quién le va a entregar el cheque/efectivo al cliente?"
-                helperText="Puede ser usted mismo, o un gestor que lo entregará después"
+                helperText="Solo aparecen usuarios con permiso para entregar desembolsos"
               />
             )}
           />
