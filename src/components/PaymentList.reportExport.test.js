@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import PaymentList from "./PaymentList";
 import { UserContext } from "../contexts/UserContext";
 import API from "../api";
@@ -24,7 +25,7 @@ const SUMMARY = { payments_count: 2, total_principal: 300.5, total_interest: 50,
 const setup = () =>
   render(
     <UserContext.Provider value={{ permissions: [], role: 1 }}>
-      <PaymentList />
+      <MemoryRouter><PaymentList /></MemoryRouter>
     </UserContext.Provider>,
   );
 

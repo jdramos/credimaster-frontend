@@ -1,5 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import JournalList from "./JournalList";
 import { UserContext } from "../../contexts/UserContext";
 import API from "../../api";
@@ -42,7 +43,7 @@ beforeEach(() => {
 
 const setup = () => render(
   <UserContext.Provider value={{ role: 1, permissions: [] }}>
-    <JournalList />
+    <MemoryRouter><JournalList /></MemoryRouter>
   </UserContext.Provider>,
 );
 

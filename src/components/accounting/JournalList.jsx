@@ -27,6 +27,7 @@ import ReportExportButtons from "../common/ReportExportButtons";
 import { reportFilters, reportMoney, reportPeriod } from "../common/reportFormat";
 import API from "../../api";
 import { UserContext } from "../../contexts/UserContext";
+import useOpenOnNuevo from "../../hooks/useOpenOnNuevo";
 
 const API_URL = `/api/accounting/journal`;
 const EMPTY_FILTERS = { from_date: "", to_date: "", search: "", branch_id: "", branch_name: "" };
@@ -188,6 +189,9 @@ export default function JournalList() {
     setVoidTarget(entry);
     setVoidDate(String(entry.entry_date || "").slice(0, 10) || new Date().toISOString().slice(0, 10));
   };
+
+  // "+ Nuevo" > Comprobante contable llega con ?nuevo=1.
+  useOpenOnNuevo(() => { setEditId(null); setFormOpen(true); });
 
   const openEdit = (entry) => {
     setDetailOpen(false);

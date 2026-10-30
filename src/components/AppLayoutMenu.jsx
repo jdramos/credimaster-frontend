@@ -32,6 +32,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import GlobalSearch from "./GlobalSearch";
+import QuickCreateMenu from "./QuickCreateMenu";
 import KeyboardShortcuts, { SHORTCUT_BY_PATH } from "./KeyboardShortcuts";
 import KeyboardRoundedIcon from "@mui/icons-material/KeyboardRounded";
 import AssessmentIcon from "@mui/icons-material/Assessment";
@@ -1137,6 +1138,8 @@ export default function AppLayoutMenu({
           {isSectionEnabled("it") && (enabledModules === null || enabledModules.includes("it_risk")) && hasPermission("riesgo_tecnologico.ver") && <ItRiskDeadlineAlert />}
 
           {conamiRegulated && isModuleEnabled(enabledModules, "risk_classification_ngrc") && hasPermission("ngrc.cumplimiento.ver") && <NgrcDeadlineAlert />}
+
+          <QuickCreateMenu visiblePaths={visibleMenuPaths} hasPermission={hasPermission} compact={isMobile} />
 
           <GlobalSearch />
 

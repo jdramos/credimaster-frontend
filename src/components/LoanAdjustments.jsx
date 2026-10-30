@@ -31,6 +31,7 @@ import HelpButton from "./help/HelpButton";
 import ReportExportButtons from "./common/ReportExportButtons";
 import { reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
 import AccountingSimulationButton from "./accounting/simulation/AccountingSimulationButton";
+import useOpenOnNuevo from "../hooks/useOpenOnNuevo";
 
 // Notas de crédito y débito sobre créditos (api/loan/loanAdjustmentsController.js).
 // Registro -> aprobación por OTRO usuario (se aplica) o rechazo -> anulación.
@@ -72,6 +73,8 @@ export default function LoanAdjustments() {
   const [message, setMessage] = useState(null);
 
   const [createOpen, setCreateOpen] = useState(false);
+  // "+ Nuevo" > Nota de crédito o débito llega con ?nuevo=1.
+  useOpenOnNuevo(() => setCreateOpen(true));
   const [form, setForm] = useState(emptyForm);
   const [loanInfo, setLoanInfo] = useState(null);
   const [preview, setPreview] = useState(null);

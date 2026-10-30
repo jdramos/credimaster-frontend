@@ -39,6 +39,7 @@ import dayjs from "dayjs";
 import EmployeeDetailDialog from "./EmployeeDetailDialog";
 import ReportExportButtons from "../common/ReportExportButtons";
 import { reportMoney } from "../common/reportFormat";
+import useOpenOnNuevo from "../../hooks/useOpenOnNuevo";
 
 const API_URL = "/api/hr/employees";
 
@@ -180,6 +181,8 @@ export default function EmployeesList() {
     setForm(emptyForm);
     setDialogOpen(true);
   };
+  // "+ Nuevo" > Empleado llega con ?nuevo=1.
+  useOpenOnNuevo(handleOpenCreate);
 
   const handleOpenEdit = (row) => {
     setEditingId(row.id);

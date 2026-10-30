@@ -33,6 +33,7 @@ import PaymentEvidenceDialog from "./PaymentEvidenceDialog";
 import API from "../api";
 import ReportExportButtons from "./common/ReportExportButtons";
 import { reportDate, reportFilters, reportMoney, reportPeriod } from "./common/reportFormat";
+import useOpenOnNuevo from "../hooks/useOpenOnNuevo";
 
 const API_URL = "/api/payments";
 
@@ -82,6 +83,8 @@ const PaymentList = () => {
   const [correctionPayment, setCorrectionPayment] = useState(null);
 
   const handleOpen = () => setOpen(true);
+  // "+ Nuevo" > Registrar pago llega con ?nuevo=1.
+  useOpenOnNuevo(handleOpen);
   const handleClose = () => setOpen(false);
 
   const fetchBranches = async () => {
