@@ -455,6 +455,7 @@ const menuItems = {
     { label: "Calendarios laborales", iconName: "FaCalendarAlt", to: "/configuracion/calendarios" },
     { label: "Tipos de cambio", iconName: "FaExchangeAlt", to: "/configuracion/tipos-cambio", permission: "configuracion.tipos_cambio.gestionar" },
     { label: "Notificaciones", iconName: "FaBell", to: "/notificaciones", permission: "configuracion.ver" },
+    { label: "Respaldo de datos", iconName: "FaCloudDownloadAlt", to: "/configuracion/respaldo-datos", permission: "respaldos.generar" },
   ],
   users: [
     { label: "Usuarios", iconName: "FaUser", to: "/usuarios", permission: "menu.usuarios" },

@@ -158,6 +158,7 @@ export const SCREEN_PERMISSIONS = {
   "/configuracion/calendarios": ["sucursales.ver", "configuracion.ver"],
   "/configuracion/tipos-cambio": "configuracion.tipos_cambio.gestionar",
   "/notificaciones": "configuracion.ver",
+  "/configuracion/respaldo-datos": "respaldos.generar",
 
   // Usuarios y permisos
   "/usuarios": "usuarios.ver",

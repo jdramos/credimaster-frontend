@@ -203,6 +203,7 @@ const SecurityPage = lazy(() => import("./pages/SecurityPage"));
 const ProvisionConfigManager = lazy(() => import("./components/ProvisionConfigManager"));
 const LoanProductsManager = lazy(() => import("./components/loanProducts/LoanProductsManager"));
 const CustomFieldsManager = lazy(() => import("./components/customFields/CustomFieldsManager"));
+const DataBackupsPage = lazy(() => import("./components/dataBackups/DataBackupsPage"));
 const LoanAdjustments = lazy(() => import("./components/LoanAdjustments"));
 const TenantsPage = lazy(() => import("./pages/superadmin/TenantsPage"));
 const TenantMigrationPanel = lazy(() => import("./pages/superadmin/TenantMigrationPanel"));
@@ -906,6 +907,7 @@ function AppRoutes({ themeMode, setThemeMode }) {
           <Route path="/configuracion/provision-cartera" element={<PageContainer><ProvisionConfigManager /></PageContainer>} />
           <Route path="/configuracion/productos-financieros" element={<PageContainer><LoanProductsManager /></PageContainer>} />
           <Route path="/configuracion/campos-personalizados" element={<PageContainer><CustomFieldsManager /></PageContainer>} />
+          <Route path="/configuracion/respaldo-datos" element={<PageContainer><DataBackupsPage /></PageContainer>} />
           <Route path="/creditos/notas" element={<PageContainer><LoanAdjustments /></PageContainer>} />
 
           <Route
