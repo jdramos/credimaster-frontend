@@ -207,7 +207,7 @@ export default function AccountStatementModal({
         Vencimiento: fmtDate(h.due_date),
         Corte: fmtDate(h.cut_date || finalCutDate),
         "Monto aprobado": totals.approvedAmount,
-        Plazo: h.approved_term || h.term || "",
+        "Plazo (meses)": h.approved_term || h.term || "",
         Tasa: h.approved_rate || h.interest_rate || "",
         Frecuencia: h.frequency_name || h.frequency || "",
         "Saldo capital": totals.capitalBalance,
@@ -491,7 +491,7 @@ export default function AccountStatementModal({
                 <Grid item xs={6} md={1}>
                   <InfoItem
                     label="Plazo"
-                    value={`${h.approved_term || h.term || 0}`}
+                    value={`${h.approved_term || h.term || 0} meses`}
                   />
                 </Grid>
 

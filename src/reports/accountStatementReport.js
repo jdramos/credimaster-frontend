@@ -139,7 +139,7 @@ export const printAccountStatementReport = ({
             },
             {
               label: "Plazo",
-              value: `${header.approved_term || header.term} cuotas`,
+              value: `${header.approved_term || header.term} meses`,
               align: "center",
             },
             {

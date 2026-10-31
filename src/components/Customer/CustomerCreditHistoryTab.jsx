@@ -229,7 +229,7 @@ export default function CustomerCreditHistoryTab({ customerId }) {
                   <TableCell><Chip size="small" label={st.label} color={st.color} variant={st.color === "default" ? "outlined" : "filled"} /></TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{l.disbursement_date ? dmy(l.disbursement_date) : `Solicitud ${dmy(l.request_date)}`}</TableCell>
                   <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{money(l.amount)}</TableCell>
-                  <TableCell sx={{ whiteSpace: "nowrap" }}>{l.term} {l.frequency ? `· ${l.frequency}` : ""}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{l.term} meses {l.frequency ? `· ${l.frequency}` : ""}</TableCell>
                   <TableCell align="right">{l.interest_rate == null ? "—" : `${l.interest_rate}%`}</TableCell>
                   <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>{l.status === "WRITTEN_OFF" ? `${money(l.writeoff_amount)} saneado` : money(l.balance)}</TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{b ? `${b.paid_installments}/${b.installments}${b.overdue_installments ? ` (${b.overdue_installments} vencidas)` : ""}` : "—"}</TableCell>
