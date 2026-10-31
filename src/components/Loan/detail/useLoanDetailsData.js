@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import API from "../../../api";
+import { useAuth } from "../../../contexts/AuthContext";
+import { isConamiRegulated } from "../../../utils/moduleAccess";
 
 // Datos del crédito para el modal de detalle: montos editables, tabla de
 // amortización, cumplimiento normativo y el snackbar compartido por todas las
@@ -8,6 +10,9 @@ import API from "../../../api";
 export default function useLoanDetailsData({ open, loan, clientId }) {
   const loanData = loan?.data || loan;
   const loanId = loanData?.id || loanData?.loan_id || loanData?.credit_id;
+  // Empresa no normada: no hay "requisitos para aprobar" (el backend tampoco
+  // los exige, ver computeComplianceStatus).
+  const conamiRegulated = isConamiRegulated(useAuth()?.tenant);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -158,6 +163,7 @@ export default function useLoanDetailsData({ open, loan, clientId }) {
     editableRate <= 100;
 
   const isComplianceValid = useMemo(() => {
+    if (!conamiRegulated) return true;
     if (!compliance) return false;
 
     return (
@@ -172,12 +178,12 @@ export default function useLoanDetailsData({ open, loan, clientId }) {
       Boolean(compliance.bureau_acceptable) &&
       Boolean(compliance.score_valid)
     );
-  }, [compliance]);
+  }, [compliance, conamiRegulated]);
 
   const complianceMissingItems = useMemo(() => {
-    if (!compliance?.summary?.missing_items) return [];
+    if (!conamiRegulated || !compliance?.summary?.missing_items) return [];
     return compliance.summary.missing_items;
-  }, [compliance]);
+  }, [compliance, conamiRegulated]);
 
   const financialEvaluation = compliance?.financial_evaluation || null;
 

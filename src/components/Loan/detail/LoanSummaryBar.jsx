@@ -11,6 +11,8 @@ import PaymentsIcon from "@mui/icons-material/Payments";
 import { printLoanApplicationReport } from "../../../reports/loanApplicationReport";
 import { CompactCard } from "./primitives";
 import { writeSandboxedDocument } from "../../../reports/safeDocument";
+import { useAuth } from "../../../contexts/AuthContext";
+import { isConamiRegulated } from "../../../utils/moduleAccess";
 
 const disclosureLabels = {
   SUMMARY_SHEET: "Hoja Resumen",
@@ -37,6 +39,8 @@ const LoanSummaryBar = ({
   notify,
 }) => {
   const [disclosures, setDisclosures] = useState([]);
+  // El estado CONAMI solo aplica a una empresa normada.
+  const conamiRegulated = isConamiRegulated(useAuth()?.tenant);
   const [acceptingDisclosure, setAcceptingDisclosure] = useState("");
 
   const loadDisclosures = useCallback(async () => {
@@ -145,19 +149,21 @@ const LoanSummaryBar = ({
             />
           )}
 
-          <Chip
-            icon={
-              isComplianceValid ? (
-                <VerifiedUserIcon fontSize="small" />
-              ) : (
-                <WarningAmberIcon fontSize="small" />
-              )
-            }
-            label={isComplianceValid ? "CONAMI OK" : "CONAMI pendiente"}
-            color={isComplianceValid ? "success" : "warning"}
-            size="small"
-            variant="outlined"
-          />
+          {conamiRegulated && (
+            <Chip
+              icon={
+                isComplianceValid ? (
+                  <VerifiedUserIcon fontSize="small" />
+                ) : (
+                  <WarningAmberIcon fontSize="small" />
+                )
+              }
+              label={isComplianceValid ? "CONAMI OK" : "CONAMI pendiente"}
+              color={isComplianceValid ? "success" : "warning"}
+              size="small"
+              variant="outlined"
+            />
+          )}
         </Stack>
 
         <Stack

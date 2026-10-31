@@ -23,10 +23,8 @@ import RiskBureauQueryPanel from "../RiskBureauQueryPanel";
 import DebtorMinInfoPanel from "../DebtorMinInfoPanel";
 import { CompactAccordion, ComplianceChip } from "./primitives";
 
-// `conamiRegulated: false` (empresa no normada): el panel queda como los
-// requisitos propios del crédito, sin la consulta a la central de riesgo ni
-// la información mínima del deudor que pide la norma (el backend tampoco los
-// exige para aprobar, ver computeComplianceStatus).
+// `conamiRegulated: false` (empresa no normada): no se muestra. Ninguno de
+// estos requisitos se le exige para aprobar (ver computeComplianceStatus).
 const LoanComplianceSection = ({
   compliance,
   loadingCompliance,
@@ -36,7 +34,7 @@ const LoanComplianceSection = ({
   clientId,
   loanId,
   conamiRegulated = true,
-}) => (
+}) => !conamiRegulated ? null : (
   <Grid item xs={12}>
     <CompactAccordion
       title={conamiRegulated ? "Cumplimiento Normativo (CONAMI)" : "Requisitos para aprobar"}
