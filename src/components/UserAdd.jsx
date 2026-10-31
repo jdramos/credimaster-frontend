@@ -468,19 +468,30 @@ const UserAdd = ({ onClose, userToEdit }) => {
                     {[
                       ["web_access", "Aplicación web", quota.web],
                       ["app_access", "App móvil", quota.app],
-                    ].map(([name, label, q]) => (
-                      <FormControlLabel
-                        key={name}
-                        control={
-                          <Checkbox
-                            name={name}
-                            checked={!!user[name]}
-                            onChange={(e) => setUser({ ...user, [name]: e.target.checked })}
-                          />
-                        }
-                        label={q.max === null ? `${label} (${q.used} en uso, sin límite)` : `${label} (${q.used} de ${q.max} en uso)`}
-                      />
-                    ))}
+                    ].map(([name, label, q]) => {
+                      // Un usuario activo que ya tiene el acceso no toma un cupo nuevo.
+                      const holdsSlot = !!userToEdit && userToEdit.user_status === "Activo" && Number(userToEdit[name]) === 1;
+                      const free = q.max === null ? null : Math.max(q.max - q.used, 0);
+                      const noSlot = free === 0 && !holdsSlot && !user[name];
+                      return (
+                        <FormControlLabel
+                          key={name}
+                          disabled={noSlot}
+                          control={
+                            <Checkbox
+                              name={name}
+                              checked={!!user[name]}
+                              onChange={(e) => setUser({ ...user, [name]: e.target.checked })}
+                            />
+                          }
+                          label={
+                            free === null
+                              ? `${label} (ocupados: ${q.used}, sin límite)`
+                              : `${label} (ocupados: ${q.used}, disponibles: ${free} de ${q.max})${noSlot ? " — sin cupo" : ""}`
+                          }
+                        />
+                      );
+                    })}
                   </FormGroup>
                   <FormHelperText>
                     {errors.access || "Cada acceso marcado ocupa un usuario contratado de ese canal mientras el usuario esté activo."}

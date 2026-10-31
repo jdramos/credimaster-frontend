@@ -32,14 +32,20 @@ export const accessLabel = (user) => {
     return parts.join(' + ') || 'Sin acceso';
 };
 
-const quotaText = (label, q) => (q.max === null ? `${label}: ${q.used} (sin límite)` : `${label}: ${q.used} de ${q.max}`);
+// Cupos libres de un canal; null = sin límite.
+export const availableSlots = (q) => (q.max === null ? null : Math.max(q.max - q.used, 0));
+
+export const quotaText = (label, q) =>
+    q.max === null
+        ? `${label} — ocupados: ${q.used} · sin límite`
+        : `${label} — ocupados: ${q.used} · disponibles: ${availableSlots(q)} (de ${q.max})`;
 
 // Usuarios activos por canal frente a lo contratado por la empresa.
 export const UserQuotaIndicator = ({ quota }) => {
     if (!quota?.enabled) return null;
     return (
         <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" mb={1} data-testid="user-quota">
-            <Typography variant="body2" color="text.secondary">Usuarios contratados:</Typography>
+            <Typography variant="body2" color="text.secondary">Usuarios contratados (activos):</Typography>
             {[['Web', quota.web], ['App móvil', quota.app]].map(([label, q]) => {
                 const full = q.max !== null && q.used >= q.max;
                 return (
@@ -47,7 +53,7 @@ export const UserQuotaIndicator = ({ quota }) => {
                         key={label}
                         title={full ? 'Cupo lleno: para dar este acceso a otro usuario desactive uno o amplíe el plan con su proveedor.' : 'Usuarios activos con este acceso / contratados'}
                     >
-                        <Chip label={quotaText(label, q)} size="small" color={full ? 'warning' : 'default'} variant={full ? 'filled' : 'outlined'} />
+                        <Chip label={quotaText(label, q)} color={full ? 'warning' : 'primary'} variant={full ? 'filled' : 'outlined'} />
                     </Tooltip>
                 );
             })}
@@ -269,9 +275,16 @@ const UsersList = () => {
         ...(quota?.enabled ? [{
             field: 'access',
             headerName: 'Acceso',
-            width: 140,
+            width: 170,
             sortable: false,
             valueGetter: (params) => accessLabel(params.row),
+            renderCell: (params) => (
+                <Box display="flex" gap={0.5} alignItems="center" height="100%">
+                    {Number(params.row.web_access) === 1 && <Chip label="Web" size="small" color="primary" variant="outlined" />}
+                    {Number(params.row.app_access) === 1 && <Chip label="App móvil" size="small" color="secondary" variant="outlined" />}
+                    {Number(params.row.web_access) !== 1 && Number(params.row.app_access) !== 1 && <Chip label="Sin acceso" size="small" />}
+                </Box>
+            ),
         }] : []),
         {
             field: 'branch_name',

@@ -61,14 +61,15 @@ describe("Usuarios contratados por canal", () => {
     expect(accessLabel({ user_name: "x" })).toBe("");
   });
 
-  it("indicador: usados de contratados; sin límite; nada si la empresa no lo maneja", () => {
+  it("indicador: ocupados y disponibles; sin límite; nada si la empresa no lo maneja", () => {
     const { rerender } = render(<UserQuotaIndicator quota={QUOTA} />);
-    expect(screen.getByText("Web: 1 de 2")).toBeTruthy();
-    expect(screen.getByText("App móvil: 1 de 1")).toBeTruthy();
+    expect(screen.getByText("Web — ocupados: 1 · disponibles: 1 (de 2)")).toBeTruthy();
+    expect(screen.getByText("App móvil — ocupados: 1 · disponibles: 0 (de 1)")).toBeTruthy();
 
-    rerender(<UserQuotaIndicator quota={{ enabled: true, web: { used: 4, max: null }, app: { used: 0, max: 0 } }} />);
-    expect(screen.getByText("Web: 4 (sin límite)")).toBeTruthy();
-    expect(screen.getByText("App móvil: 0 de 0")).toBeTruthy();
+    rerender(<UserQuotaIndicator quota={{ enabled: true, web: { used: 4, max: null }, app: { used: 3, max: 2 } }} />);
+    expect(screen.getByText("Web — ocupados: 4 · sin límite")).toBeTruthy();
+    // Si el superadmin bajó el cupo por debajo de lo ocupado, disponibles no queda negativo.
+    expect(screen.getByText("App móvil — ocupados: 3 · disponibles: 0 (de 2)")).toBeTruthy();
 
     rerender(<UserQuotaIndicator quota={{ enabled: false }} />);
     expect(screen.queryByTestId("user-quota")).toBeNull();
@@ -78,7 +79,7 @@ describe("Usuarios contratados por canal", () => {
     API.put.mockResolvedValue({ data: { message: "ok" } });
     renderList();
 
-    expect(await screen.findByText("App móvil: 1 de 1")).toBeTruthy();
+    expect(await screen.findByText("App móvil — ocupados: 1 · disponibles: 0 (de 1)")).toBeTruthy();
     const cobra = await screen.findByTestId("row-cobra");
     expect(within(cobra).getByText("App móvil")).toBeTruthy();
 
@@ -105,16 +106,25 @@ describe("Usuarios contratados por canal", () => {
     expect(API.put).toHaveBeenCalledWith("/api/users/3/status", { active: true });
   });
 
-  it("formulario: casillas de acceso con el uso de cada canal", async () => {
+  it("formulario nuevo: casillas con ocupados/disponibles; el canal sin cupo queda deshabilitado", async () => {
     render(<UserAdd onClose={jest.fn()} />);
 
-    const web = await screen.findByLabelText("Aplicación web (1 de 2 en uso)");
-    const app = screen.getByLabelText("App móvil (1 de 1 en uso)");
+    const web = await screen.findByLabelText("Aplicación web (ocupados: 1, disponibles: 1 de 2)");
+    const app = screen.getByLabelText("App móvil (ocupados: 1, disponibles: 0 de 1) — sin cupo");
     expect(web.checked).toBe(true);
     expect(app.checked).toBe(false);
+    expect(app.disabled).toBe(true);
 
-    fireEvent.click(app);
+    fireEvent.click(web);
+    expect(web.checked).toBe(false);
+  });
+
+  it("formulario de edición: quien ya ocupa el cupo de la app puede conservarlo", async () => {
+    render(<UserAdd onClose={jest.fn()} userToEdit={{ ...user(2, "cobra", { web_access: 0, app_access: 1 }), user_status: "Activo", branch_ids: [1] }} />);
+
+    const app = await screen.findByLabelText("App móvil (ocupados: 1, disponibles: 0 de 1)");
     expect(app.checked).toBe(true);
+    expect(app.disabled).toBe(false);
   });
 
   it("formulario sin acceso por canal (empresa sin migración): no muestra las casillas", async () => {
