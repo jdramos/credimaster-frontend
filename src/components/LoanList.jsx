@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import AddCircle from "./AddCircle";
 import HelpButton from "./help/HelpButton";
 import {
@@ -198,7 +198,12 @@ const LoanList = () => {
   const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ open: false, type: "", message: "" });
+  // searchInput es lo que se escribe; search (lo que se consulta) se
+  // actualiza 400 ms después de la última tecla: antes cada tecla era una
+  // consulta al servidor y con muchos créditos se acumulaban.
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const requestSeq = useRef(0);
   const [branchId, setBranchId] = useState("");
 
   const [openModificationModal, setOpenModificationModal] = useState(false);
@@ -207,6 +212,9 @@ const LoanList = () => {
   const { permissions, role } = useContext(UserContext);
 
   const fetchApi = async () => {
+    // Solo la respuesta de la última consulta se muestra: una más lenta que
+    // llega después no pisa los filtros actuales.
+    const seq = ++requestSeq.current;
     setLoading(true);
 
     try {
@@ -231,11 +239,13 @@ const LoanList = () => {
       if (search) params.append("search", search);
 
       const response = await API.get(`${API_URL}?${params.toString()}`);
+      if (seq !== requestSeq.current) return;
       const json = response.data;
 
       setData(Array.isArray(json.data) ? json.data : []);
       setTotal(Number(json.total || 0));
     } catch (error) {
+      if (seq !== requestSeq.current) return;
       console.error("Error al obtener créditos:", error);
 
       setAlert({
@@ -248,9 +258,21 @@ const LoanList = () => {
             error.message),
       });
     } finally {
-      setLoading(false);
+      if (seq === requestSeq.current) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const next = searchInput.trim();
+      if (next !== search) {
+        setPage(0);
+        setSearch(next);
+      }
+    }, 400);
+    return () => clearTimeout(id);
+  }, [searchInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     fetchApi();
   }, [
@@ -455,11 +477,8 @@ const LoanList = () => {
               <TextField
                 size="small"
                 label="Buscar por nombre o cédula"
-                value={search}
-                onChange={(e) => {
-                  setPage(0);
-                  setSearch(e.target.value);
-                }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <SearchOutlinedIcon
