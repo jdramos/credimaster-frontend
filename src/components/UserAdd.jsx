@@ -12,6 +12,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormControlLabel,
+  FormGroup,
+  FormHelperText,
+  Checkbox,
+  Typography,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -43,9 +48,14 @@ const UserAdd = ({ onClose, userToEdit }) => {
     department_id: "",
     collector_id: "",
     promoter_id: "",
+    web_access: true,
+    app_access: false,
   });
 
   const [departments, setDepartments] = useState([]);
+  // Usuarios web / app móvil en uso frente a lo contratado; null si la empresa
+  // aún no maneja acceso por canal.
+  const [quota, setQuota] = useState(null);
   const [collectors, setCollectors] = useState([]);
   const [promoters, setPromoters] = useState([]);
 
@@ -61,6 +71,9 @@ const UserAdd = ({ onClose, userToEdit }) => {
       .catch(() => {});
     API.get("/api/promoters")
       .then((res) => setPromoters(Array.isArray(res.data) ? res.data : res.data?.data || []))
+      .catch(() => {});
+    API.get("/api/users/quota")
+      .then((res) => setQuota(res.data?.enabled ? res.data : null))
       .catch(() => {});
   }, []);
 
@@ -96,6 +109,8 @@ const UserAdd = ({ onClose, userToEdit }) => {
         department_id: userToEdit.department_id || "",
         collector_id: userToEdit.collector_id || "",
         promoter_id: userToEdit.promoter_id || "",
+        web_access: userToEdit.web_access === undefined ? true : Number(userToEdit.web_access) === 1,
+        app_access: Number(userToEdit.app_access) === 1,
       });
     } else {
       setUser({
@@ -108,6 +123,8 @@ const UserAdd = ({ onClose, userToEdit }) => {
         department_id: "",
         collector_id: "",
         promoter_id: "",
+        web_access: true,
+        app_access: false,
       });
     }
 
@@ -118,7 +135,8 @@ const UserAdd = ({ onClose, userToEdit }) => {
   }, [userToEdit]);
 
   function handleCancel() {
-    const hasData = Object.values(user).some((value) => {
+    const { web_access, app_access, ...fields } = user;
+    const hasData = Object.values(fields).some((value) => {
       if (typeof value === "string") return value.trim() !== "";
       if (Array.isArray(value)) return value.length > 0;
       return !!value;
@@ -200,6 +218,11 @@ const UserAdd = ({ onClose, userToEdit }) => {
       valid = false;
     }
 
+    if (quota && !data.web_access && !data.app_access) {
+      errors.access = "Marque al menos un acceso: aplicación web o app móvil";
+      valid = false;
+    }
+
     setErrors(errors);
     return valid;
   }
@@ -255,6 +278,10 @@ const UserAdd = ({ onClose, userToEdit }) => {
           alertType: "error",
           alertMessage: "Mensaje del servidor: " + errorMessages,
         });
+        setOpenDialog(false);
+      } else if (responseData?.message) {
+        // p. ej. límite de usuarios contratados (409) o falta de permisos (403)
+        setAlert({ alertType: "error", alertMessage: responseData.message });
         setOpenDialog(false);
       } else {
         toast.error("Error al crear el usuario:", error);
@@ -433,6 +460,34 @@ const UserAdd = ({ onClose, userToEdit }) => {
                 </Select>
               </FormControl>
             </Grid>
+            {quota && (
+              <Grid item xs={12}>
+                <FormControl error={!!errors.access} component="fieldset">
+                  <Typography variant="subtitle2">Acceso a CrediMaster</Typography>
+                  <FormGroup row>
+                    {[
+                      ["web_access", "Aplicación web", quota.web],
+                      ["app_access", "App móvil", quota.app],
+                    ].map(([name, label, q]) => (
+                      <FormControlLabel
+                        key={name}
+                        control={
+                          <Checkbox
+                            name={name}
+                            checked={!!user[name]}
+                            onChange={(e) => setUser({ ...user, [name]: e.target.checked })}
+                          />
+                        }
+                        label={q.max === null ? `${label} (${q.used} en uso, sin límite)` : `${label} (${q.used} de ${q.max} en uso)`}
+                      />
+                    ))}
+                  </FormGroup>
+                  <FormHelperText>
+                    {errors.access || "Cada acceso marcado ocupa un usuario contratado de ese canal mientras el usuario esté activo."}
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
+            )}
             {userToEdit && (
               <Grid item xs={12}>
                 <Button
@@ -467,7 +522,7 @@ const UserAdd = ({ onClose, userToEdit }) => {
       </form>
 
       <ToastContainer />
-      <Snackbar open={state.open} autoHideDuration={3000} onClose={handleClose}>
+      <Snackbar open={state.open} autoHideDuration={alert.alertType === "error" ? 8000 : 3000} onClose={handleClose}>
         <Alert
           onClose={handleClose}
           severity={alert.alertType}

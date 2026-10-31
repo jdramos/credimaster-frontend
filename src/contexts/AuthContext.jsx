@@ -201,6 +201,9 @@ export const AuthProvider = ({ children }) => {
       const res = await API.post(url, {
         username,
         password,
+        // Web y app móvil se contratan por separado: el backend deja entrar
+        // solo a usuarios con acceso web por este canal.
+        client_channel: "web",
         ...(trustedDeviceToken ? { trusted_device_token: trustedDeviceToken } : {}),
       });
 

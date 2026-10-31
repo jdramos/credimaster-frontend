@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import BlockIcon from '@mui/icons-material/Block';
 import LocationOffIcon from '@mui/icons-material/LocationOff';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Chip, Paper, Divider } from '@mui/material';
 import { Button } from '@mui/material';
 import { Dialog, DialogContent, DialogTitle, DialogActions, Alert } from '@mui/material';
@@ -21,6 +22,38 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import ReportExportButtons from './common/ReportExportButtons';
 import { reportFilters } from './common/reportFormat';
+
+// Accesos del usuario (web / app móvil) en texto, para la grilla y los reportes.
+export const accessLabel = (user) => {
+    if (user.web_access === undefined) return '';
+    const parts = [];
+    if (Number(user.web_access) === 1) parts.push('Web');
+    if (Number(user.app_access) === 1) parts.push('App móvil');
+    return parts.join(' + ') || 'Sin acceso';
+};
+
+const quotaText = (label, q) => (q.max === null ? `${label}: ${q.used} (sin límite)` : `${label}: ${q.used} de ${q.max}`);
+
+// Usuarios activos por canal frente a lo contratado por la empresa.
+export const UserQuotaIndicator = ({ quota }) => {
+    if (!quota?.enabled) return null;
+    return (
+        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" mb={1} data-testid="user-quota">
+            <Typography variant="body2" color="text.secondary">Usuarios contratados:</Typography>
+            {[['Web', quota.web], ['App móvil', quota.app]].map(([label, q]) => {
+                const full = q.max !== null && q.used >= q.max;
+                return (
+                    <Tooltip
+                        key={label}
+                        title={full ? 'Cupo lleno: para dar este acceso a otro usuario desactive uno o amplíe el plan con su proveedor.' : 'Usuarios activos con este acceso / contratados'}
+                    >
+                        <Chip label={quotaText(label, q)} size="small" color={full ? 'warning' : 'default'} variant={full ? 'filled' : 'outlined'} />
+                    </Tooltip>
+                );
+            })}
+        </Box>
+    );
+};
 
 const UsersList = () => {
     const { permissions = [], role } = useContext(UserContext) || {};
@@ -40,6 +73,11 @@ const UsersList = () => {
     const [locationReason, setLocationReason] = useState('');
     const [locationError, setLocationError] = useState('');
     const [locationSaving, setLocationSaving] = useState(false);
+    const [quota, setQuota] = useState(null);
+    // { user, active } del usuario a activar/desactivar (confirmación).
+    const [statusUser, setStatusUser] = useState(null);
+    const [statusError, setStatusError] = useState('');
+    const [statusSaving, setStatusSaving] = useState(false);
 
 
     const exportToExcel = () => {
@@ -50,6 +88,7 @@ const UsersList = () => {
             Email: user.email,
             Rol: user.role_name,
             Estado: user.user_status,
+            Acceso: accessLabel(user),
             Sucursales: user.branch_name,
             'Ubicación en la app': exemptions[user.id] ? 'Exenta' : 'Obligatoria',
         }));
@@ -69,7 +108,11 @@ const UsersList = () => {
     // Impresión con las mismas columnas y filas que el Excel.
     const buildReport = () => ({
         title: 'Lista de Usuarios',
-        subtitle: reportFilters([['Búsqueda', search.trim()], ['Inactivos', showInactive ? '' : 'ocultos']]),
+        subtitle: reportFilters([
+            ['Búsqueda', search.trim()],
+            ['Inactivos', showInactive ? '' : 'ocultos'],
+            ['Contratados', quota?.enabled ? `${quotaText('web', quota.web)} · ${quotaText('app móvil', quota.app)}` : ''],
+        ]),
         columns: [
             { field: 'id', label: 'ID' },
             { field: 'user_name', label: 'Usuario' },
@@ -77,11 +120,12 @@ const UsersList = () => {
             { field: 'email', label: 'Email' },
             { field: 'role_name', label: 'Rol' },
             { field: 'user_status', label: 'Estado' },
+            { label: 'Acceso', value: accessLabel },
             { field: 'branch_name', label: 'Sucursales' },
             { label: 'Ubicación en la app', value: (r) => (exemptions[r.id] ? 'Exenta' : 'Obligatoria') },
         ],
         rows: filteredRows,
-        totals: [{ value: `Usuarios: ${filteredRows.length}`, colspan: 8 }],
+        totals: [{ value: `Usuarios: ${filteredRows.length}`, colspan: 9 }],
         orientation: 'landscape',
     });
 
@@ -101,6 +145,12 @@ const UsersList = () => {
             .finally(() => setLoading(false));
     };
 
+    const fetchQuota = () => {
+        API.get('/api/users/quota')
+            .then(res => setQuota(res.data?.enabled ? res.data : null))
+            .catch(() => setQuota(null));
+    };
+
     const fetchExemptions = () => {
         API.get('/api/users/location-exemptions')
             .then(res => setExemptions(Object.fromEntries((res.data?.data || []).map(e => [e.user_id, e]))))
@@ -110,6 +160,7 @@ const UsersList = () => {
     useEffect(() => {
         fetchUsers();
         fetchExemptions();
+        fetchQuota();
     }, []);
 
     const openLocationDialog = (user) => {
@@ -166,8 +217,21 @@ const UsersList = () => {
         console.log('Ver:', user);
     };
 
-    const handleDisable = (user) => {
-        console.log('Desactivar:', user);
+    const saveStatus = async () => {
+        const { user, active } = statusUser;
+        setStatusSaving(true);
+        setStatusError('');
+        try {
+            await API.put(`/api/users/${user.id}/status`, { active });
+            toast.success(active ? 'Usuario activado' : 'Usuario desactivado', { position: 'top-center', autoClose: 3000 });
+            setStatusUser(null);
+            fetchUsers();
+            fetchQuota();
+        } catch (err) {
+            setStatusError(err.response?.data?.message || 'No se pudo cambiar el estado del usuario');
+        } finally {
+            setStatusSaving(false);
+        }
     };
 
     const notifySuccess = () => {
@@ -202,6 +266,13 @@ const UsersList = () => {
             )
         },
 
+        ...(quota?.enabled ? [{
+            field: 'access',
+            headerName: 'Acceso',
+            width: 140,
+            sortable: false,
+            valueGetter: (params) => accessLabel(params.row),
+        }] : []),
         {
             field: 'branch_name',
             headerName: 'Sucursales',
@@ -242,7 +313,7 @@ const UsersList = () => {
         {
             field: 'acciones',
             headerName: 'Acciones',
-            width: 200,
+            width: 220,
             sortable: false,
             renderCell: (params) => (
                 <>
@@ -273,13 +344,19 @@ const UsersList = () => {
                             </IconButton>
                         </Tooltip>
                     )}
-                    {canEditUser && (
+                    {canEditUser && (params.row.user_status === 'Activo' ? (
                         <Tooltip title="Desactivar">
-                            <IconButton onClick={() => handleDisable(params.row)} color="error">
+                            <IconButton onClick={() => { setStatusError(''); setStatusUser({ user: params.row, active: false }); }} color="error">
                                 <BlockIcon />
                             </IconButton>
                         </Tooltip>
-                    )}
+                    ) : (
+                        <Tooltip title="Activar">
+                            <IconButton onClick={() => { setStatusError(''); setStatusUser({ user: params.row, active: true }); }} color="success">
+                                <CheckCircleOutlineIcon />
+                            </IconButton>
+                        </Tooltip>
+                    ))}
                 </>
             )
         }
@@ -326,6 +403,7 @@ const UsersList = () => {
                 </Box>
 
                 <>
+                    <UserQuotaIndicator quota={quota} />
 
                     <TextField
                         label="Buscar usuario..."
@@ -364,6 +442,7 @@ const UsersList = () => {
                             setOpenAddModal(false);
                             setEditUser(null);
                             fetchUsers();
+                            fetchQuota();
                             if (wasCreated) {
                                 notifySuccess(); // ✅ Solo se muestra si fue creación
                             }
@@ -391,6 +470,9 @@ const UsersList = () => {
                             <Typography><strong>Email:</strong> {viewUser?.email}</Typography>
                             <Typography><strong>Rol:</strong> {viewUser?.role_name}</Typography>
                             <Typography><strong>Estado:</strong> {viewUser?.user_status}</Typography>
+                            {viewUser?.web_access !== undefined && (
+                                <Typography><strong>Acceso:</strong> {accessLabel(viewUser)}</Typography>
+                            )}
                             <Box>
                                 <Typography><strong>Sucursales:</strong></Typography>
                                 <Box display="flex" flexWrap="wrap" gap={0.5} mt={1}>
@@ -437,6 +519,27 @@ const UsersList = () => {
                     <Button disabled={locationSaving} onClick={() => setLocationUser(null)}>Cancelar</Button>
                     <Button variant="contained" disabled={locationSaving} onClick={() => saveLocationExemption(true)}>
                         {locationUser && exemptions[locationUser.id] ? 'Guardar motivo' : 'Crear excepción'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={Boolean(statusUser)} onClose={() => !statusSaving && setStatusUser(null)} fullWidth maxWidth="sm">
+                <DialogTitle>{statusUser?.active ? 'Activar' : 'Desactivar'} usuario — {statusUser?.user.full_name}</DialogTitle>
+                <DialogContent dividers>
+                    <Typography variant="body2">
+                        {statusUser?.active
+                            ? 'El usuario podrá volver a iniciar sesión. Ocupará un usuario contratado en cada acceso que tenga (web y/o app móvil).'
+                            : 'El usuario no podrá iniciar sesión y su sesión abierta se cerrará. Libera su cupo de usuarios contratados.'}
+                    </Typography>
+                    {statusUser && accessLabel(statusUser.user) && (
+                        <Typography variant="body2" sx={{ mt: 1 }}><strong>Acceso:</strong> {accessLabel(statusUser.user)}</Typography>
+                    )}
+                    {statusError && <Alert severity="error" sx={{ mt: 2 }}>{statusError}</Alert>}
+                </DialogContent>
+                <DialogActions>
+                    <Button disabled={statusSaving} onClick={() => setStatusUser(null)}>Cancelar</Button>
+                    <Button variant="contained" color={statusUser?.active ? 'success' : 'error'} disabled={statusSaving} onClick={saveStatus}>
+                        {statusUser?.active ? 'Activar' : 'Desactivar'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -3,19 +3,20 @@ import API from "../api";
 // Verificación en dos pasos (2FA). Las rutas /api/login/mfa/* son públicas y
 // usan el token "mfa pendiente" del primer paso; el resto requiere sesión
 // (tenant en /api/security/mfa, superadmin en /api/superadmin/security/mfa).
+// client_channel: el backend valida que el usuario tenga acceso web.
 
 export const verifyLoginCode = async ({ mfa_token, code, remember_device }) => {
-  const { data } = await API.post("/api/login/mfa/verify", { mfa_token, code, remember_device });
+  const { data } = await API.post("/api/login/mfa/verify", { mfa_token, code, remember_device, client_channel: "web" });
   return data;
 };
 
 export const startLoginEnrollment = async (mfa_token) => {
-  const { data } = await API.post("/api/login/mfa/enroll/start", { mfa_token });
+  const { data } = await API.post("/api/login/mfa/enroll/start", { mfa_token, client_channel: "web" });
   return data;
 };
 
 export const confirmLoginEnrollment = async ({ mfa_token, code, remember_device }) => {
-  const { data } = await API.post("/api/login/mfa/enroll/confirm", { mfa_token, code, remember_device });
+  const { data } = await API.post("/api/login/mfa/enroll/confirm", { mfa_token, code, remember_device, client_channel: "web" });
   return data;
 };
 

@@ -59,6 +59,9 @@ const MUNICIPALITIES_CATALOG_URL = "/api/superadmin/catalogs/municipalities";
 const TENANTS_URL = "/api/superadmin/tenants";
 const MODULES_URL = "/api/superadmin/modules";
 
+// Usuarios contratados por canal (web / app móvil). Vacío = sin límite.
+export const formatQuota = (value) => (value === null || value === undefined || value === "" ? "Sin límite" : String(value));
+
 const emptyForm = {
   tenant_code: "",
   legal_name: "",
@@ -66,7 +69,8 @@ const emptyForm = {
   tax_id: "",
   database_name: "",
   plan_code: "",
-  max_users: "",
+  max_web_users: "",
+  max_app_users: "",
   max_branches: "",
   phone: "",
   email: "",
@@ -189,6 +193,8 @@ export default function TenantsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTenant, setEditTenant] = useState(null);
   const [editForm, setEditForm] = useState(null);
+  // Usuarios activos por canal de la empresa en edición ({ enabled, web, app }).
+  const [editUserUsage, setEditUserUsage] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const [billingDialogOpen, setBillingDialogOpen] = useState(false);
@@ -391,7 +397,8 @@ export default function TenantsPage() {
       commercial_name: row.commercial_name || "",
       tax_id: row.tax_id || "",
       plan_code: row.plan_code || "",
-      max_users: row.max_users ?? "",
+      max_web_users: row.max_web_users ?? "",
+      max_app_users: row.max_app_users ?? "",
       max_branches: row.max_branches ?? "",
       phone: row.phone || "",
       email: row.email || "",
@@ -407,6 +414,10 @@ export default function TenantsPage() {
     setEditAliadoInitial(emptyAssignmentForm());
     setEditAliadoHistory([]);
     setEditDialogOpen(true);
+    setEditUserUsage(null);
+    API.get(`${TENANTS_URL}/${row.id}/user-usage`)
+      .then((res) => setEditUserUsage(res.data?.data || null))
+      .catch(() => setEditUserUsage(null));
     if (!aliadosUnavailable) {
       API.get(`${TENANTS_URL}/${row.id}/aliado`)
         .then((res) => {
@@ -633,6 +644,13 @@ export default function TenantsPage() {
     },
     { field: "plan_code", headerName: "Plan", width: 100 },
     {
+      field: "user_quotas",
+      headerName: "Usuarios web / app",
+      width: 150,
+      sortable: false,
+      valueGetter: (params) => `${formatQuota(params.row.max_web_users)} / ${formatQuota(params.row.max_app_users)}`,
+    },
+    {
       field: "module_package",
       headerName: "Paquete",
       width: 160,
@@ -788,7 +806,10 @@ export default function TenantsPage() {
               <TextField label="Plan" fullWidth size="small" value={form.plan_code} onChange={handleFieldChange("plan_code")} />
             </Grid>
             <Grid item xs={6} md={2}>
-              <TextField label="Máx. usuarios" type="number" fullWidth size="small" value={form.max_users} onChange={handleFieldChange("max_users")} />
+              <TextField label="Usuarios web" type="number" fullWidth size="small" value={form.max_web_users} onChange={handleFieldChange("max_web_users")} inputProps={{ min: 0 }} helperText="Vacío = sin límite" />
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <TextField label="Usuarios app móvil" type="number" fullWidth size="small" value={form.max_app_users} onChange={handleFieldChange("max_app_users")} inputProps={{ min: 0 }} helperText="Vacío = sin límite" />
             </Grid>
             <Grid item xs={6} md={2}>
               <TextField label="Máx. sucursales" type="number" fullWidth size="small" value={form.max_branches} onChange={handleFieldChange("max_branches")} />
@@ -969,9 +990,23 @@ export default function TenantsPage() {
                 <Grid item xs={12} md={4}>
                   <TextField label="Plan" fullWidth size="small" value={editForm.plan_code} onChange={handleEditFieldChange("plan_code")} />
                 </Grid>
-                <Grid item xs={6} md={2}>
-                  <TextField label="Máx. usuarios" type="number" fullWidth size="small" value={editForm.max_users} onChange={handleEditFieldChange("max_users")} />
-                </Grid>
+                {[
+                  ["max_web_users", "Usuarios web", "web"],
+                  ["max_app_users", "Usuarios app móvil", "app"],
+                ].map(([field, label, channel]) => (
+                  <Grid item xs={6} md={2} key={field}>
+                    <TextField
+                      label={label}
+                      type="number"
+                      fullWidth
+                      size="small"
+                      value={editForm[field]}
+                      onChange={handleEditFieldChange(field)}
+                      inputProps={{ min: 0 }}
+                      helperText={editUserUsage?.enabled ? `En uso: ${editUserUsage[channel].used} · vacío = sin límite` : "Vacío = sin límite"}
+                    />
+                  </Grid>
+                ))}
                 <Grid item xs={6} md={2}>
                   <TextField label="Máx. sucursales" type="number" fullWidth size="small" value={editForm.max_branches} onChange={handleEditFieldChange("max_branches")} />
                 </Grid>

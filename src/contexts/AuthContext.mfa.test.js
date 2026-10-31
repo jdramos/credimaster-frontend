@@ -82,7 +82,7 @@ describe("AuthContext: login en dos pasos", () => {
     await act(async () => {
       await auth.login("Ana", "x");
     });
-    expect(API.post).toHaveBeenCalledWith("/api/login", { username: "Ana", password: "x", trusted_device_token: "device-old" });
+    expect(API.post).toHaveBeenCalledWith("/api/login", { username: "Ana", password: "x", client_channel: "web", trusted_device_token: "device-old" });
 
     await act(async () => {
       auth.completeMfaLogin({ token: "jwt-1", user_id: 7, user_name: "ana", full_name: "Ana", permissions: [], trusted_device_token: "device-new" }, "Ana");
@@ -100,7 +100,7 @@ describe("AuthContext: login en dos pasos", () => {
     await act(async () => {
       result = await auth.login("pedro", "x");
     });
-    expect(API.post).toHaveBeenCalledWith("/api/login", { username: "pedro", password: "x" });
+    expect(API.post).toHaveBeenCalledWith("/api/login", { username: "pedro", password: "x", client_channel: "web" });
     expect(result).toEqual({ ok: true, type: "TENANT" });
     expect(JSON.parse(localStorage.getItem("session")).permissions).toEqual(["clientes.ver"]);
   });
