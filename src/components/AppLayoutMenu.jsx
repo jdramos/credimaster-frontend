@@ -67,6 +67,7 @@ import {
   isRegulatedOnlyPath,
   MODULE_LABELS,
 } from "../utils/moduleAccess";
+import { canOpenScreen } from "./menuScreenPermissions";
 
 // Secciones del menú respaldadas por un módulo opcional habilitable por
 // tenant desde superadmin (ver api/superadmin/moduleRegistry.js — la
@@ -475,16 +476,25 @@ function MenuIcon({ iconName, size = 17 }) {
   return <Icon size={size} />;
 }
 
-// Mapa plano to -> {label, iconName} para resolver el nombre amigable de la
-// pantalla al registrar el historial de "recientes" (no depende de en qué
-// sección del menú viva el item, ni de si esa sección está habilitada por
-// módulo para el tenant actual).
+// Mapa plano to -> ítem del menú: nombre amigable de la pantalla para el
+// historial de "recientes" (no depende de en qué sección del menú viva el
+// item, ni de si esa sección está habilitada por módulo para el tenant
+// actual), y sus restricciones para filtrar favoritos y recientes igual que
+// el menú.
 const flatMenuByPath = Object.values(menuItems)
   .flat()
   .reduce((acc, item) => {
-    acc[item.to] = { label: item.label, iconName: item.iconName };
+    acc[item.to] = item;
     return acc;
   }, {});
+
+// Restricciones del ítem del menú de esa ruta (un favorito o una pantalla
+// reciente se filtran con las mismas reglas que la opción del menú).
+const pathRestrictions = (path) => {
+  const item = flatMenuByPath[path];
+  if (!item) return {};
+  return { permission: item.permission, moduleKey: item.moduleKey, regulatedOnly: item.regulatedOnly };
+};
 
 const RECENT_SCREENS_MAX = 6;
 const recentScreensKey = (userId) => `recentScreens:${userId || "anon"}`;
@@ -677,7 +687,6 @@ export default function AppLayoutMenu({
 
   const isCompact = !isMobile && !drawerOpen;
 
-  const visibleRecentScreens = recentScreens.filter((screen) => !blockedModuleForPath(screen.to, enabledModules));
 
   const favoritesSection = useMemo(() => {
     if (!favorites?.length) return [];
@@ -685,6 +694,7 @@ export default function AppLayoutMenu({
     return favorites
       .filter((f) => !blockedModuleForPath(f.route, enabledModules))
       .map((f) => ({
+        ...pathRestrictions(f.route),
         label: f.label,
         to: f.route,
         iconName: f.icon || "FaStar",
@@ -701,9 +711,14 @@ export default function AppLayoutMenu({
   // ítems declaran su propio moduleKey para ocultarse individualmente sin
   // afectar al resto de "Reportes" cuando el tenant no tiene ese módulo
   // habilitado (ver AVAILABLE_MODULES en moduleRegistry.js, backend).
+  //
+  // Además, la opción se oculta si el usuario no tiene el permiso que el
+  // backend exige para cargar la pantalla (menuScreenPermissions.js): antes
+  // se veía y al abrirla decía "No tiene permiso para realizar esta acción".
   const hasItemAccess = (item) => {
     if (item.regulatedOnly && !conamiRegulated) return false;
     if (item.permission && role !== 1 && !permissions.includes(item.permission)) return false;
+    if (role !== 1 && !canOpenScreen(item.to, (tag) => permissions.includes(tag))) return false;
     if (item.moduleKey && enabledModules !== null) {
       // moduleKey puede ser un solo código o una lista -- una lista se
       // trata como OR (ej. ICC/ISC combinados en un mismo ítem de menú:
@@ -713,6 +728,11 @@ export default function AppLayoutMenu({
     }
     return true;
   };
+
+  // Recientes: mismas reglas que el menú (permisos, módulo, régimen).
+  const visibleRecentScreens = recentScreens.filter(
+    (screen) => !blockedModuleForPath(screen.to, enabledModules) && hasItemAccess({ ...pathRestrictions(screen.to), to: screen.to }),
+  );
 
   const fullMenu = useMemo(() => {
     const base = {

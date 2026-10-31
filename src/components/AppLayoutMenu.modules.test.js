@@ -104,3 +104,44 @@ describe("Rutas por módulo", () => {
     expect(blockedModuleForPath("/contabilidad/mayor", null)).toBeNull();
   });
 });
+
+describe("Opciones según los permisos del usuario", () => {
+  const renderAs = ({ role, permissions, favorites = [] }) => {
+    useAuth.mockReturnValue({ tenant: { enabled_modules: null, legal_name: "Prestamos SA", conami_regulated: true } });
+    return render(
+      <MemoryRouter initialEntries={["/"]}>
+        <UserContext.Provider value={{ role, permissions, favorites, user: 1, fullName: "Ana" }}>
+          <AppLayoutMenu>
+            <div data-testid="screen">pantalla</div>
+          </AppLayoutMenu>
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+  };
+
+  it("oculta las opciones cuya pantalla el backend le negaría", () => {
+    renderAs({ role: 7, permissions: ["menu.creditos", "creditos.ver", "menu.pagos"] });
+    expect(screen.getAllByText("Créditos").length).toBeGreaterThan(0);
+    // menu.pagos sin pagos.ver: la pantalla respondería 403.
+    expect(screen.queryAllByText("Pagos")).toHaveLength(0);
+    // Sin permiso de menú propio, pero el backend exige aprobaciones.ver.
+    expect(screen.queryAllByText("Bandeja aprobación")).toHaveLength(0);
+    expect(screen.queryAllByText("Día operativo")).toHaveLength(0);
+    // Autoservicio: siempre visible.
+    expect(screen.getAllByText("Soporte").length).toBeGreaterThan(0);
+  });
+
+  it("un favorito a una pantalla sin permiso tampoco se muestra", () => {
+    renderAs({
+      role: 7,
+      permissions: ["menu.creditos", "creditos.ver"],
+      favorites: [{ route: "/bandeja-de-aprobacion", label: "Mi bandeja favorita", icon: "FaInbox" }],
+    });
+    expect(screen.queryAllByText("Mi bandeja favorita")).toHaveLength(0);
+  });
+
+  it("con el permiso, la opción aparece", () => {
+    renderAs({ role: 7, permissions: ["aprobaciones.ver"] });
+    expect(screen.getAllByText("Bandeja aprobación").length).toBeGreaterThan(0);
+  });
+});
