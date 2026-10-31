@@ -12,6 +12,7 @@ jest.mock("./GlobalSearch", () => () => null);
 jest.mock("./KeyboardShortcuts", () => ({ __esModule: true, default: () => null, SHORTCUT_BY_PATH: {} }));
 jest.mock("./BusinessDayAlert", () => () => null);
 jest.mock("./itRisk/ItRiskDeadlineAlert", () => () => null);
+jest.mock("./dataBackups/BackupStatusAlert", () => () => null);
 
 const renderMenu = (enabledModules, path = "/", { conamiRegulated = true } = {}) => {
   useAuth.mockReturnValue({

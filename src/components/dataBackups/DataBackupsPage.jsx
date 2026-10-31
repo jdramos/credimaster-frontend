@@ -21,6 +21,7 @@ import CloudDownloadRoundedIcon from "@mui/icons-material/CloudDownloadRounded";
 import BackupRoundedIcon from "@mui/icons-material/BackupRounded";
 import API from "../../api";
 import ReportExportButtons from "../common/ReportExportButtons";
+import { BACKUP_LEVELS, BACKUPS_CHANGED_EVENT, backupStatusText } from "./backupAlert";
 
 const STATUS = {
   GENERANDO: { label: "Generando…", color: "info" },
@@ -42,6 +43,9 @@ const formatNumber = (n) => (n === null || n === undefined ? "—" : Number(n).t
 const formatDateTime = (value) => (value ? String(value).slice(0, 16) : "—");
 
 const apiMessage = (err, fallback) => err?.response?.data?.message || fallback;
+
+// La alerta de la barra superior se actualiza al generar o descargar.
+const notifyChanged = () => window.dispatchEvent(new Event(BACKUPS_CHANGED_EVENT));
 
 // Configuración → Respaldo de datos: la empresa genera y descarga su propia
 // copia de la información (base de datos completa + Excel por módulo).
@@ -80,6 +84,7 @@ export default function DataBackupsPage() {
       const before = rows.find((r) => r.status === "GENERANDO");
       const after = before && fresh?.data?.find((r) => r.id === before.id);
       if (after?.status === "LISTO") setNotice("El respaldo está listo. Use \"Descargar\" para guardarlo.");
+      if (after && after.status !== "GENERANDO") notifyChanged();
     }, POLL_MS);
     return () => clearTimeout(timer.current);
   }, [generating, rows, load]);
@@ -91,6 +96,7 @@ export default function DataBackupsPage() {
       await API.post("/api/data-backups");
       setNotice("Se está generando el respaldo. Puede seguir trabajando; tarda unos minutos.");
       await load();
+      notifyChanged();
     } catch (err) {
       setError(apiMessage(err, "No se pudo iniciar el respaldo."));
     } finally {
@@ -110,6 +116,7 @@ export default function DataBackupsPage() {
       link.click();
       link.remove();
       await load();
+      notifyChanged();
     } catch (err) {
       setError(apiMessage(err, "No se pudo descargar el respaldo."));
       await load();
@@ -138,6 +145,8 @@ export default function DataBackupsPage() {
   });
 
   const migrated = data?.migrated !== false;
+  const backupStatus = data?.backup_status;
+  const level = backupStatus && BACKUP_LEVELS[backupStatus.level];
   const allBranches = data?.all_branches !== false;
 
   return (
@@ -158,6 +167,15 @@ export default function DataBackupsPage() {
         </Stack>
       </Stack>
 
+      {level && (
+        <Alert
+          severity={level.severity}
+          variant="filled"
+          sx={{ mb: 2, bgcolor: level.bg, color: level.fg, "& .MuiAlert-icon": { color: level.fg } }}
+        >
+          <b>{level.title}.</b> {backupStatusText(backupStatus)}
+        </Alert>
+      )}
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
       {notice && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setNotice("")}>{notice}</Alert>}
       {data && !migrated && (

@@ -57,6 +57,7 @@ import BrandMark from "./BrandMark";
 import BusinessDayAlert from "./BusinessDayAlert";
 import ItRiskDeadlineAlert from "./itRisk/ItRiskDeadlineAlert";
 import NgrcDeadlineAlert from "./ngrc/NgrcDeadlineAlert";
+import BackupStatusAlert from "./dataBackups/BackupStatusAlert";
 import { UserContext } from "../contexts/UserContext";
 import { useAuth } from "../contexts/AuthContext";
 import API from "../api";
@@ -1160,6 +1161,8 @@ export default function AppLayoutMenu({
           {isSectionEnabled("it") && (enabledModules === null || enabledModules.includes("it_risk")) && hasPermission("riesgo_tecnologico.ver") && <ItRiskDeadlineAlert />}
 
           {conamiRegulated && isModuleEnabled(enabledModules, "risk_classification_ngrc") && hasPermission("ngrc.cumplimiento.ver") && <NgrcDeadlineAlert />}
+
+          {hasPermission("respaldos.generar") && <BackupStatusAlert compact={isMobile} />}
 
           <QuickCreateMenu visiblePaths={visibleMenuPaths} hasPermission={hasPermission} compact={isMobile} />
 
